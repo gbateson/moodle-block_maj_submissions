@@ -26,6 +26,6 @@
 
 $plugin->component = 'block_maj_submissions';
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->requires  = 2010112400; // Moodle 2.0
+$plugin->requires  = 2012062500; // Moodle 2.3
 $plugin->version   = 2016090100;
-$plugin->release   = '2016-09-01 (00)';
+$plugin->release   = '2016-09-01 (01)';
