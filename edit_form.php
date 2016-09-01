@@ -38,9 +38,6 @@ defined('MOODLE_INTERNAL') || die();
  */
 class block_maj_submissions_edit_form extends block_edit_form {
 
-    public $modnames = null;
-    public $langnames = null;
-
     /**
      * specific_definition
      *
@@ -59,7 +56,10 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $this->add_header($mform, $plugin, 'title');
         //-----------------------------------------------------------------------------
 
-        $element = $mform->addElement('static', 'description', get_string('description'), get_string('blockdescription', $plugin));
+        $name = 'description';
+        $label = get_string($name);
+        $text = get_string('blockdescription', $plugin);
+        $element = $mform->addElement('static', $name, $label, $text);
 
         $name = 'title';
         $config_name = 'config_'.$name;
@@ -93,18 +93,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
         //-----------------------------------------------------------------------------
 
         $this->add_time_startfinish($mform, $plugin, 'collect');
-
-        $name = 'collectcmid';
-        $config_name = 'config_'.$name;
-        $label = get_string($name, $plugin);
-        $options = array(
-            0 => get_string('none')
-        );
-        $mform->addElement('select', $config_name, $label, $options);
-        $mform->setType($config_name, PARAM_INT);
-        $mform->setDefault($config_name, $this->defaultvalue($name));
-        $mform->addHelpButton($config_name, $name, $plugin);
-
+        $this->add_cmid($mform, $plugin, 'data', 'collectcmid');
         $this->add_repeat_elements($mform, $plugin, 'filterfields');
 
         //-----------------------------------------------------------------------------
@@ -112,18 +101,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
         //-----------------------------------------------------------------------------
 
         $this->add_time_startfinish($mform, $plugin, 'review');
-
-        $name = 'reviewsectionid';
-        $config_name = 'config_'.$name;
-        $label = get_string($name, $plugin);
-        $options = array(
-            0 => get_string('none')
-        );
-        $mform->addElement('select', $config_name, $label, $options);
-        $mform->setType($config_name, PARAM_INT);
-        $mform->setDefault($config_name, $this->defaultvalue($name));
-        $mform->addHelpButton($config_name, $name, $plugin);
-
+        $this->add_sectionid($mform, $plugin, 'reviewsectionid');
         $this->add_repeat_elements($mform, $plugin, 'reviewcmids');
 
         //-----------------------------------------------------------------------------
@@ -131,18 +109,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
         //-----------------------------------------------------------------------------
 
         $this->add_time_startfinish($mform, $plugin, 'revise');
-
-        $name = 'revisesectionid';
-        $config_name = 'config_'.$name;
-        $label = get_string($name, $plugin);
-        $options = array(
-            0 => get_string('none')
-        );
-        $mform->addElement('select', $config_name, $label, $options);
-        $mform->setType($config_name, PARAM_INT);
-        $mform->setDefault($config_name, $this->defaultvalue($name));
-        $mform->addHelpButton($config_name, $name, $plugin);
-
+        $this->add_sectionid($mform, $plugin, 'revisesectionid');
         $this->add_repeat_elements($mform, $plugin, 'revisecmids');
 
         //-----------------------------------------------------------------------------
@@ -150,17 +117,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
         //-----------------------------------------------------------------------------
 
         $this->add_time_startfinish($mform, $plugin, 'publish');
-
-        $name = 'publishcmid';
-        $config_name = 'config_'.$name;
-        $label = get_string($name, $plugin);
-        $options = array(
-            0 => get_string('none')
-        );
-        $mform->addElement('select', $config_name, $label, $options);
-        $mform->setType($config_name, PARAM_INT);
-        $mform->setDefault($config_name, $this->defaultvalue($name));
-        $mform->addHelpButton($config_name, $name, $plugin);
+        $this->add_cmid($mform, $plugin, 'data', 'publishcmid');
     }
 
     /**
@@ -219,14 +176,55 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $name = $type.'timestart';
         $config_name = 'config_'.$name;
         $label = get_string($name, $plugin);
-        $mform->addElement('date_time_selector', $config_name, get_string($name, $plugin));
+        $mform->addElement('date_time_selector', $config_name, $label);
         $mform->setDefault($config_name, $this->defaultvalue($name));
         $mform->addHelpButton($config_name, $name, $plugin);
 
         $name = $type.'timefinish';
         $config_name = 'config_'.$name;
         $label = get_string($name, $plugin);
-        $mform->addElement('date_time_selector', $config_name, get_string($name, $plugin));
+        $mform->addElement('date_time_selector', $config_name, $label);
+        $mform->setDefault($config_name, $this->defaultvalue($name));
+        $mform->addHelpButton($config_name, $name, $plugin);
+    }
+
+    /**
+     * add_cmid
+     *
+     * @param object  $mform
+     * @param string  $plugin
+     * @param string  $type
+     * @param string  $name
+     * @return void, but will update $mform
+     */
+    protected function add_cmid($mform, $plugin, $type, $name) {
+        $config_name = 'config_'.$name;
+        $label = get_string($name, $plugin);
+        $options = array(
+            0 => get_string('none')
+        );
+        $mform->addElement('select', $config_name, $label, $options);
+        $mform->setType($config_name, PARAM_INT);
+        $mform->setDefault($config_name, $this->defaultvalue($name));
+        $mform->addHelpButton($config_name, $name, $plugin);
+    }
+
+    /**
+     * add_sectionid
+     *
+     * @param object  $mform
+     * @param string  $plugin
+     * @param string  $name
+     * @return void, but will update $mform
+     */
+    protected function add_sectionid($mform, $plugin, $name) {
+        $config_name = 'config_'.$name;
+        $label = get_string($name, $plugin);
+        $options = array(
+            0 => get_string('none')
+        );
+        $mform->addElement('select', $config_name, $label, $options);
+        $mform->setType($config_name, PARAM_INT);
         $mform->setDefault($config_name, $this->defaultvalue($name));
         $mform->addHelpButton($config_name, $name, $plugin);
     }
@@ -242,11 +240,13 @@ class block_maj_submissions_edit_form extends block_edit_form {
     protected function add_repeat_elements($mform, $plugin, $name) {
         global $OUTPUT;
         $config_name = 'config_'.$name;
+
         $label = get_string($name, $plugin);
-        $get_options = 'get_options_'.$name;
-        $options = $this->$get_options($plugin);
+        $options = 'get_options_'.$name;
+        $options = $this->$options($plugin);
         $element = $mform->createElement('select', $config_name, $label, $options);
         $element->_helpbutton = $OUTPUT->help_icon($name, $plugin, '');
+
         $options = array($name => array('type' => PARAM_INT));
         $repeats = count($this->block->config->$name);
         $button  = get_string('add'.$name, $plugin, 1);
@@ -257,7 +257,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
      * get_options_filterfields
      *
      * @param string  $plugin
-     * @return void, but will update $mform
+     * @return array($fieldid => $fieldname) of fields from the collectcmid for this block
      */
     protected function get_options_filterfields($plugin) {
         return array(0 => get_string('none'));
@@ -267,7 +267,8 @@ class block_maj_submissions_edit_form extends block_edit_form {
      * get_options_reviewcmids
      *
      * @param string  $plugin
-     * @return void, but will update $mform
+     * @return array($cmid => $cmname) of fields from the reviewsectionid for this block
+     *                                 or from the whole course (if reviewsectionid==0)
      */
     protected function get_options_reviewcmids($plugin) {
         return array(0 => get_string('none'));
@@ -277,7 +278,8 @@ class block_maj_submissions_edit_form extends block_edit_form {
      * get_options_revisecmids
      *
      * @param string  $plugin
-     * @return void, but will update $mform
+     * @return array($cmid => $cmname) of fields from the revisesectionid for this block
+     *                                 or from the whole course (if revisesectionid==0)
      */
     protected function get_options_revisecmids($plugin) {
         return array(0 => get_string('none'));
