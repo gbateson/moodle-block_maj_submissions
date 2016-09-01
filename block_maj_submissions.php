@@ -97,7 +97,7 @@ class block_maj_submissions extends block_base {
             // data is reviewed,
             // during the start and finish times,
             // in one or more WORKSHOP activities
-            'reviewsectionid'   => 0,
+            'reviewsectionnum'  => 0,
             'reviewcmids'       => array(),
             'reviewtimestart'   => 0,
             'reviewtimefinish'  => 0,
@@ -105,7 +105,7 @@ class block_maj_submissions extends block_base {
             // data is revised,
             // during the start and finish times,
             // in one or more ASSIGNMENT activities
-            'revisesectionid'   => 0,
+            'revisesectionnum'  => 0,
             'revisecmids'       => array(),
             'revisetimestart'   => 0,
             'revisetimefinish'  => 0,
@@ -155,7 +155,6 @@ class block_maj_submissions extends block_base {
      * @return xxx
      */
     function get_content() {
-        global $CFG, $COURSE, $DB, $PAGE, $USER;
 
         if ($this->content !== null) {
             return $this->content;
@@ -166,27 +165,62 @@ class block_maj_submissions extends block_base {
             'footer' => ''
         );
 
-        if (empty($this->instance)) {
-            return $this->content; // shouldn't happen !!
-        }
-
-        if (empty($COURSE)) {
-            return $this->content; // shouldn't happen !!
-        }
-
-        if (empty($COURSE->context)) {
-            $COURSE->context = self::context(CONTEXT_COURSE, $COURSE->id);
-        }
-
         // quick check to filter out students
-        if (! has_capability('moodle/grade:viewall', $COURSE->context)) {
+        if (! has_capability('moodle/course:manageactivities', $this->context)) {
             return $this->content;
         }
 
         $plugin = 'block_maj_submissions';
 
-        $this->content = 'MAJ Submissions content';
+        $dateformat = get_string('strftimerecent');
+
+        $options = array();
+        foreach (self::get_states() as $state) {
+            $timestart = $state.'timestart';
+            $timefinish = $state.'timefinish';
+            if ($this->config->$timefinish - $this->config->$timestart < HOURSECS) {
+                $name = get_string($state.'submissions', $plugin);
+                $href = false;
+                if ($state=='collect' || $state=='publish') {
+                    $cmid = $state.'cmid';
+                    if (isset($this->config->$cmid) && ($cmid = $this->config->$cmid)) {
+                        $href = new moodle_url('/mod/data/view.php', array('id' => $cmid));
+                        $name = html_writer::tag('a', $name, array('href' => $href));
+                    }
+                }
+                if ($state=='review' || $state=='revise') {
+                    $sectionnum = $state.'sectionnum';
+                    if (isset($this->config->$sectionnum) && ($sectionnum = $this->config->$sectionnum)) {
+                        $params = array('id' => $this->page->course->id, 'section' => $sectionnum);
+                        $href = new moodle_url('/course/view.php', $params);
+                        $name = html_writer::tag('a', $name, array('href' => $href));
+                    }
+                }
+                $date = userdate($this->config->$timestart, $dateformat).' - '.
+                        userdate($this->config->$timefinish, $dateformat);
+                $option = html_writer::tag('b', $name).
+                          html_writer::empty_tag('br').
+                          html_writer::tag('span', $date);
+                $options[] = html_writer::tag('li', $option, array('class' => 'date'));
+            }
+
+        }
+        if ($options = implode('', $options)) {
+            $heading = get_string('importantdates', $plugin);
+            $this->content->text .= html_writer::tag('h4', $heading, array('class' => 'importantdates'));
+            $this->content->text .= html_writer::tag('ul', $options, array('class' => 'dates'));
+        }
+
         return $this->content;
+    }
+
+    /**
+     * get_states
+     *
+     * @return array
+     */
+    static public function get_states() {
+        return array('collect', 'review', 'revise', 'publish');
     }
 
     /**

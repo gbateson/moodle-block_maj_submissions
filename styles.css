@@ -37,5 +37,17 @@
  * styles for the maj_submissions block
  */
 
-div.block_maj_submissions div.ungradedactivity {
+div.block_maj_submissions h4.importantdates {
+    color: #cc3333;
+}
+div.block_maj_submissions ul.dates {
+    list-style: none;
+    margin: 0px 12px;
+    padding: 0px;
+}
+div.block_maj_submissions ul.dates li.date {
+    margin: 4px 0px;
+}
+div.block_maj_submissions ul.dates li.date span {
+    font-size: 0.9em;
 }

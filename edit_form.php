@@ -101,7 +101,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
         //-----------------------------------------------------------------------------
 
         $this->add_time_startfinish($mform, $plugin, 'review');
-        $this->add_sectionid($mform, $plugin, 'reviewsectionid');
+        $this->add_sectionnum($mform, $plugin, 'reviewsectionnum');
         $this->add_repeat_elements($mform, $plugin, 'reviewcmids');
 
         //-----------------------------------------------------------------------------
@@ -109,7 +109,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
         //-----------------------------------------------------------------------------
 
         $this->add_time_startfinish($mform, $plugin, 'revise');
-        $this->add_sectionid($mform, $plugin, 'revisesectionid');
+        $this->add_sectionnum($mform, $plugin, 'revisesectionnum');
         $this->add_repeat_elements($mform, $plugin, 'revisecmids');
 
         //-----------------------------------------------------------------------------
@@ -229,17 +229,17 @@ class block_maj_submissions_edit_form extends block_edit_form {
     }
 
     /**
-     * add_sectionid
+     * add_sectionnum
      *
      * @param object  $mform
      * @param string  $plugin
      * @param string  $name
      * @return void, but will update $mform
      */
-    protected function add_sectionid($mform, $plugin, $name) {
+    protected function add_sectionnum($mform, $plugin, $name) {
         $config_name = 'config_'.$name;
         $label = get_string($name, $plugin);
-        $options = $this->get_options_sectionids($mform, $plugin);
+        $options = $this->get_options_sectionnum($mform, $plugin);
         $mform->addElement('select', $config_name, $label, $options);
         $mform->setType($config_name, PARAM_INT);
         $mform->setDefault($config_name, $this->get_original_value($name));
@@ -268,18 +268,18 @@ class block_maj_submissions_edit_form extends block_edit_form {
     }
 
     /**
-     * get_options_sectionids
+     * get_options_sectionnum
      *
      * @param object $mform
      * @param string $plugin
-     * @return array($sectionid => $sectionname) of sections in this course
+     * @return array($sectionnum => $sectionname) of sections in this course
      */
-    protected function get_options_sectionids($mform, $plugin) {
+    protected function get_options_sectionnum($mform, $plugin) {
         $options = array();
         $course = $this->get_course();
         $sections = get_fast_modinfo($course)->get_section_info_all();
         foreach ($sections as $sectionnum => $section) {
-            $options[$section->id] = $this->get_sectionname($course, $section);
+            $options[$sectionnum] = $this->get_sectionname($course, $section);
         }
         return $this->format_select_options($plugin, $options, 'section');
     }
@@ -310,12 +310,12 @@ class block_maj_submissions_edit_form extends block_edit_form {
      *
      * @param object $mform
      * @param string $plugin
-     * @return array($cmid => $cmname) of fields from the reviewsectionid for this block
-     *                                 or from the whole course (if reviewsectionid==0)
+     * @return array($cmid => $cmname) of fields from the reviewsectionnum for this block
+     *                                 or from the whole course (if reviewsectionnum==0)
      */
     protected function get_options_reviewcmids($mform, $plugin) {
-        $sectionid = $this->get_value($mform, 'reviewsectionid');
-        return $this->get_options_cmids($mform, $plugin, 'workshop', $sectionid);
+        $sectionnum = $this->get_value($mform, 'reviewsectionnum');
+        return $this->get_options_cmids($mform, $plugin, 'workshop', $sectionnum);
     }
 
     /**
@@ -323,12 +323,12 @@ class block_maj_submissions_edit_form extends block_edit_form {
      *
      * @param object $mform
      * @param string $plugin
-     * @return array($cmid => $cmname) of fields from the revisesectionid for this block
-     *                                 or from the whole course (if revisesectionid==0)
+     * @return array($cmid => $cmname) of fields from the revisesectionnum for this block
+     *                                 or from the whole course (if revisesectionnum==0)
      */
     protected function get_options_revisecmids($mform, $plugin) {
-        $sectionid = $this->get_value($mform, 'revisesectionid');
-        return $this->get_options_cmids($mform, $plugin, 'assign', $sectionid);
+        $sectionnum = $this->get_value($mform, 'revisesectionnum');
+        return $this->get_options_cmids($mform, $plugin, 'assign', $sectionnum);
     }
 
     /**
@@ -337,16 +337,16 @@ class block_maj_submissions_edit_form extends block_edit_form {
      * @param object  $mform
      * @param string  $plugin
      * @param string  $modname (optional, default="")
-     * @param integer $sectionid (optional, default=0)
-     * @return array($cmid => $name) of activities from the specified $sectionid
-     *                               or from the whole course (if $sectionid==0)
+     * @param integer $sectionnum (optional, default=0)
+     * @return array($cmid => $name) of activities from the specified $sectionnum
+     *                               or from the whole course (if $sectionnum==0)
      */
-    protected function get_options_cmids($mform, $plugin, $modname='', $sectionid=0) {
+    protected function get_options_cmids($mform, $plugin, $modname='', $sectionnum=0) {
         $options = array();
         $modinfo = $this->get_course_modinfo();
         $sections = $modinfo->get_section_info_all();
-        foreach ($sections as $sectionnum => $section) {
-            if ($sectionid==0 || $sectionid==$section->id) {
+        foreach ($sections as $section) {
+            if ($sectionnum==0 || $sectionnum==$section->section) {
                 $cmids = explode(',', $section->sequence);
                 $cmids = array_filter($cmids);
                 foreach ($cmids as $cmid) {
