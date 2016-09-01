@@ -219,27 +219,43 @@ class block_maj_submissions extends block_base {
         return $lang;
     }
 
+
     /**
-     * context
+     * filter_text
      *
-     * a wrapper method to offer consistent API to get contexts
-     * in Moodle 2.0 and 2.1, we use self::context() function
-     * in Moodle >= 2.2, we use static context_xxx::instance() method
-     *
-     * @param integer $contextlevel
-     * @param integer $instanceid (optional, default=0)
-     * @param int $strictness (optional, default=0 i.e. IGNORE_MISSING)
-     * @return required context
-     * @todo Finish documenting this function
+     * @param string $text
+     * @return string
      */
-    static public function context($contextlevel, $instanceid=0, $strictness=0) {
-        if (class_exists('context_helper')) {
-            // use call_user_func() to prevent syntax error in PHP 5.2.x
-            $class = context_helper::get_class_for_level($contextlevel);
-            return call_user_func(array($class, 'instance'), $instanceid, $strictness);
-        } else {
-            return self::context($contextlevel, $instanceid);
+    static public function filter_text($text) {
+        global $COURSE, $PAGE;
+
+        $filter = filter_manager::instance();
+
+        if (method_exists($filter, 'setup_page_for_filters')) {
+            // Moodle >= 2.3
+            $filter->setup_page_for_filters($PAGE, $PAGE->context);
         }
+
+        return $filter->filter_text($text, $PAGE->context);
+    }
+
+    /**
+     * trim_text
+     *
+     * @param   string   $text
+     * @param   integer  $textlength (optional, default=28)
+     * @param   integer  $headlength (optional, default=10)
+     * @param   integer  $taillength (optional, default=10)
+     * @return  string
+     */
+    static function trim_text($text, $textlength=28, $headlength=10, $taillength=10) {
+        $strlen = self::textlib('strlen', $text);
+        if ($strlen > $textlength) {
+            $head = self::textlib('substr', $text, 0, $headlength);
+            $tail = self::textlib('substr', $text, $strlen - $taillength, $taillength);
+            $text = $head.' ... '.$tail;
+        }
+        return $text;
     }
 
     /**
@@ -273,21 +289,25 @@ class block_maj_submissions extends block_base {
     }
 
     /**
-     * filter_text
+     * context
      *
-     * @param string $text
-     * @return string
+     * a wrapper method to offer consistent API to get contexts
+     * in Moodle 2.0 and 2.1, we use self::context() function
+     * in Moodle >= 2.2, we use static context_xxx::instance() method
+     *
+     * @param integer $contextlevel
+     * @param integer $instanceid (optional, default=0)
+     * @param int $strictness (optional, default=0 i.e. IGNORE_MISSING)
+     * @return required context
+     * @todo Finish documenting this function
      */
-    static public function filter_text($text) {
-        global $COURSE, $PAGE;
-
-        $filter = filter_manager::instance();
-
-        if (method_exists($filter, 'setup_page_for_filters')) {
-            // Moodle >= 2.3
-            $filter->setup_page_for_filters($PAGE, $PAGE->context);
+    static public function context($contextlevel, $instanceid=0, $strictness=0) {
+        if (class_exists('context_helper')) {
+            // use call_user_func() to prevent syntax error in PHP 5.2.x
+            $class = context_helper::get_class_for_level($contextlevel);
+            return call_user_func(array($class, 'instance'), $instanceid, $strictness);
+        } else {
+            return self::context($contextlevel, $instanceid);
         }
-
-        return $filter->filter_text($text, $PAGE->context);
     }
 }

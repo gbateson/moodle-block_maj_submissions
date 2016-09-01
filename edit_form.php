@@ -66,7 +66,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $label = get_string($name, $plugin);
         $mform->addElement('text', $config_name, $label, array('size' => 50));
         $mform->setType($config_name, PARAM_TEXT);
-        $mform->setDefault($config_name, $this->defaultvalue($name));
+        $mform->setDefault($config_name, $this->get_original_value($name));
         $mform->addHelpButton($config_name, $name, $plugin);
 
         //-----------------------------------------------------------------------------
@@ -85,7 +85,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
         );
         $mform->addElement('select', $config_name, $label, $options);
         $mform->setType($config_name, PARAM_INT);
-        $mform->setDefault($config_name, $this->defaultvalue($name));
+        $mform->setDefault($config_name, $this->get_original_value($name));
         $mform->addHelpButton($config_name, $name, $plugin);
 
         //-----------------------------------------------------------------------------
@@ -134,16 +134,37 @@ class block_maj_submissions_edit_form extends block_edit_form {
     }
 
     /**
-     * get default value for a setting in this block
+     * get the value of a block config setting
+     * either the NEW value from the incoming form data
+     * or the OLD value from the block->config object
+     *
+     * @param  object $mform of setting
+     * @param  string $name of element
+     * @param  mixed  $default (optional, default=NULL)
+     * @return mixed  the value of the required $mform element
+     */
+    protected function get_value($mform, $name, $paramtype=PARAM_INT, $default=null) {
+        $config_name = 'config_'.$name;
+        $value = optional_param($config_name, null, $paramtype);
+        if (isset($value)) {
+            return $value;
+        } else {
+            return $this->get_original_value($name, $default);
+        }
+    }
+
+    /**
+     * get original value for a config setting in this block
      *
      * @param  string $name of setting
+     * @param  mixed  $default (optional, default=NULL)
      * @return mixed default value of setting
      */
-    protected function defaultvalue($name) {
+    protected function get_original_value($name, $default=null) {
         if (isset($this->block->config->$name)) {
             return $this->block->config->$name;
         } else {
-            return null;
+            return $default;
         }
     }
 
@@ -177,14 +198,14 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $config_name = 'config_'.$name;
         $label = get_string($name, $plugin);
         $mform->addElement('date_time_selector', $config_name, $label);
-        $mform->setDefault($config_name, $this->defaultvalue($name));
+        $mform->setDefault($config_name, $this->get_original_value($name));
         $mform->addHelpButton($config_name, $name, $plugin);
 
         $name = $type.'timefinish';
         $config_name = 'config_'.$name;
         $label = get_string($name, $plugin);
         $mform->addElement('date_time_selector', $config_name, $label);
-        $mform->setDefault($config_name, $this->defaultvalue($name));
+        $mform->setDefault($config_name, $this->get_original_value($name));
         $mform->addHelpButton($config_name, $name, $plugin);
     }
 
@@ -200,12 +221,10 @@ class block_maj_submissions_edit_form extends block_edit_form {
     protected function add_cmid($mform, $plugin, $type, $name) {
         $config_name = 'config_'.$name;
         $label = get_string($name, $plugin);
-        $options = array(
-            0 => get_string('none')
-        );
+        $options = $this->get_options_cmids($mform, $plugin, 'data');
         $mform->addElement('select', $config_name, $label, $options);
         $mform->setType($config_name, PARAM_INT);
-        $mform->setDefault($config_name, $this->defaultvalue($name));
+        $mform->setDefault($config_name, $this->get_original_value($name));
         $mform->addHelpButton($config_name, $name, $plugin);
     }
 
@@ -220,12 +239,10 @@ class block_maj_submissions_edit_form extends block_edit_form {
     protected function add_sectionid($mform, $plugin, $name) {
         $config_name = 'config_'.$name;
         $label = get_string($name, $plugin);
-        $options = array(
-            0 => get_string('none')
-        );
+        $options = $this->get_options_sectionids($mform, $plugin);
         $mform->addElement('select', $config_name, $label, $options);
         $mform->setType($config_name, PARAM_INT);
-        $mform->setDefault($config_name, $this->defaultvalue($name));
+        $mform->setDefault($config_name, $this->get_original_value($name));
         $mform->addHelpButton($config_name, $name, $plugin);
     }
 
@@ -240,48 +257,241 @@ class block_maj_submissions_edit_form extends block_edit_form {
     protected function add_repeat_elements($mform, $plugin, $name) {
         global $OUTPUT;
         $config_name = 'config_'.$name;
-
         $label = get_string($name, $plugin);
-        $options = 'get_options_'.$name;
-        $options = $this->$options($plugin);
-        $element = $mform->createElement('select', $config_name, $label, $options);
-        $element->_helpbutton = $OUTPUT->help_icon($name, $plugin, '');
-
-        $options = array($name => array('type' => PARAM_INT));
+        $get_options = 'get_options_'.$name;
+        $options = $this->$get_options($mform, $plugin);
+        $elements = array($mform->createElement('select', $config_name, $label, $options));
         $repeats = count($this->block->config->$name);
-        $button  = get_string('add'.$name, $plugin, 1);
-        $this->repeat_elements(array($element), $repeats, $options, 'count'.$name, 'add'.$name, 1, $button);
+        $options = array($config_name => array('type' => PARAM_INT, 'helpbutton' => array($name, $plugin)));
+        $buttontext = get_string('add'.$name, $plugin, 1);
+        $this->repeat_elements($elements, $repeats, $options, 'count'.$name, 'add'.$name, 1, $buttontext);
+    }
+
+    /**
+     * get_options_sectionids
+     *
+     * @param object $mform
+     * @param string $plugin
+     * @return array($sectionid => $sectionname) of sections in this course
+     */
+    protected function get_options_sectionids($mform, $plugin) {
+        $options = array();
+        $course = $this->get_course();
+        $sections = get_fast_modinfo($course)->get_section_info_all();
+        foreach ($sections as $sectionnum => $section) {
+            $options[$section->id] = $this->get_sectionname($course, $section);
+        }
+        return $this->format_select_options($plugin, $options, 'section');
     }
 
     /**
      * get_options_filterfields
      *
-     * @param string  $plugin
+     * @param object $mform
+     * @param string $plugin
      * @return array($fieldid => $fieldname) of fields from the collectcmid for this block
      */
-    protected function get_options_filterfields($plugin) {
-        return array(0 => get_string('none'));
+    protected function get_options_filterfields($mform, $plugin) {
+        global $DB;
+        if ($cmid = $this->get_value($mform, 'collectcmid')) {
+            $dataid = $this->get_course_modinfo()->get_cm($cmid)->instance;
+            $options = $DB->get_records_menu('data_fields', array('dataid' => $dataid), null, 'id,name');
+        } else {
+            $options = false;
+        }
+        if ($options==false) {
+            $options = array();
+        }
+        return $this->format_select_options($plugin, $options, 'field');
     }
 
     /**
      * get_options_reviewcmids
      *
-     * @param string  $plugin
+     * @param object $mform
+     * @param string $plugin
      * @return array($cmid => $cmname) of fields from the reviewsectionid for this block
      *                                 or from the whole course (if reviewsectionid==0)
      */
-    protected function get_options_reviewcmids($plugin) {
-        return array(0 => get_string('none'));
+    protected function get_options_reviewcmids($mform, $plugin) {
+        $sectionid = $this->get_value($mform, 'reviewsectionid');
+        return $this->get_options_cmids($mform, $plugin, 'workshop', $sectionid);
     }
 
     /**
      * get_options_revisecmids
      *
-     * @param string  $plugin
+     * @param object $mform
+     * @param string $plugin
      * @return array($cmid => $cmname) of fields from the revisesectionid for this block
      *                                 or from the whole course (if revisesectionid==0)
      */
-    protected function get_options_revisecmids($plugin) {
-        return array(0 => get_string('none'));
+    protected function get_options_revisecmids($mform, $plugin) {
+        $sectionid = $this->get_value($mform, 'revisesectionid');
+        return $this->get_options_cmids($mform, $plugin, 'assign', $sectionid);
+    }
+
+    /**
+     * get_options_revisecmids
+     *
+     * @param object  $mform
+     * @param string  $plugin
+     * @param string  $modname (optional, default="")
+     * @param integer $sectionid (optional, default=0)
+     * @return array($cmid => $name) of activities from the specified $sectionid
+     *                               or from the whole course (if $sectionid==0)
+     */
+    protected function get_options_cmids($mform, $plugin, $modname='', $sectionid=0) {
+        $options = array();
+        $modinfo = $this->get_course_modinfo();
+        $sections = $modinfo->get_section_info_all();
+        foreach ($sections as $sectionnum => $section) {
+            if ($sectionid==0 || $sectionid==$section->id) {
+                $cmids = explode(',', $section->sequence);
+                $cmids = array_filter($cmids);
+                foreach ($cmids as $cmid) {
+                    if (array_key_exists($cmid, $modinfo->cms)) {
+                        $cm = $modinfo->get_cm($cmid);
+                        if ($modname=='' || $modname==$cm->modname) {
+                            $name = $cm->name;
+                            $name = block_maj_submissions::filter_text($name);
+                            $name = block_maj_submissions::trim_text($name);
+                            $options[$cmid] = $name;
+                        }
+                    }
+                }
+            }
+        }
+        return $this->format_select_options($plugin, $options, 'activity');
+    }
+
+    /**
+     * format_select_options
+     *
+     * @param string  $plugin
+     * @param array   $options
+     * @param string  $type ("", "" or "")
+     * @return array  $option for a select element in $mform
+     */
+    protected function format_select_options($plugin, $options, $type) {
+        $createnew = get_string('createnew'.$type, $plugin);
+        return array(0 => '') + $options + array(-1 => "($createnew)");
+    }
+
+    /**
+     * get_sectionname
+     *
+     * names longer than $namelength will be trancated to to HEAD ... TAIL
+     * where the number of characters in HEAD is $headlength
+     * and the number of characters in TIAL is $taillength
+     *
+     * @param object   $course
+     * @param object   $section
+     * @param integer  $namelength of section name (optional, default=28)
+     * @param integer  $headlength of head of section name (optional, default=10)
+     * @param integer  $taillength of tail of section name (optional, default=10)
+     * @param string   $weekdateformat (optional, default='%b %d')
+     * @return string  name of $section
+     */
+    protected function get_sectionname($course, $section, $namelength=28, $headlength=10, $taillength=10, $weekdateformat='%b %d') {
+
+        // extract section title from section name or summary
+        if ($text = block_maj_submissions::filter_text($section->name)) {
+            $text = block_maj_submissions::trim_text($text, $namelength, $headlength, $taillength);
+        } else if ($text = block_maj_submissions::filter_text($section->summary)) {
+            // remove script and style blocks
+            $select = '/\s*<(script|style)[^>]*>.*?<\/\1>\s*/is';
+            $text = preg_replace($select, '', $text);
+
+            $tags = 'h1|h2|h3|h4|h5|h6';
+            if (preg_match('/<('.$tags.')\b[^>]*>(.*?)<\/\1>/is', $text, $matches)) {
+                $text = $matches[2];
+            } else {
+                // otherwise, get first line of text
+                $text = preg_split('/<br[^>]*>/', $text);
+                $text = array_map('strip_tags', $text);
+                $text = array_map('trim', $text);
+                $text = array_filter($text);
+                if (empty($text)) {
+                    $text = '';
+                } else {
+                    $text = reset($text);
+                }
+            }
+            $text = trim(strip_tags($text));
+            $text = block_maj_submissions::trim_text($text, $namelength, $headlength, $taillength);
+        }
+
+        // set default section title, if necessary
+        if ($text=='') {
+
+            // get string manager object
+            $strman = get_string_manager();
+
+            // set course section type
+            if ($course->format=='weeks') {
+                $sectiontype = 'week';
+            } else if ($course->format=='topics') {
+                $sectiontype = 'topic';
+            } else {
+                $sectiontype = 'section';
+            }
+
+            // shortcut to section number
+            $sectionnum = $section->section;
+
+            $format = 'format_'.$course->format;
+            switch (true) {
+                case ($sectiontype=='week' && $sectionnum > 0):
+                    if ($weekdateformat=='') {
+                        $weekdateformat = get_string('strftimedateshort');
+                    }
+                    // 604800 : number of seconds in 7 days i.e. WEEKSECS
+                    // 518400 : number of seconds in 6 days i.e. WEEKSECS - DAYSECS
+                    $date = $course->startdate + 7200 + (($sectionnum - 1) * 604800);
+                    $text = userdate($date, $fmt).' - '.userdate($date + 518400, $fmt);
+                    break;
+
+                case $strman->string_exists('section'.$sectionnum.'name', $format):
+                    $text = get_string('section'.$sectionnum.'name', $format);
+                    break;
+
+                case $strman->string_exists('sectionname', $format):
+                    $text = get_string('sectionname', $format).' '.$sectionnum;
+                    break;
+
+                case $strman->string_exists($sectiontype, 'moodle'):
+                    $text = get_string('sectionname').' '.$sectionnum;
+                    break;
+
+                default:
+                    $text = $sectiontype.' '.$sectionnum;
+            }
+        }
+
+        return $text;
+    }
+
+    /**
+     * get_course
+     *
+     * @return course record for this block
+     */
+    protected function get_course_modinfo() {
+        $course = $this->get_course();
+        return get_fast_modinfo($course);
+    }
+
+    /**
+     * get_course
+     *
+     * @return course record for this block
+     */
+    protected function get_course() {
+        if (isset($this->block->course)) {
+            return $this->block->course;
+        } else {
+            return $this->block->page->course;
+        }
     }
 }
