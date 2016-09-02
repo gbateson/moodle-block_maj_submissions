@@ -180,27 +180,40 @@ class block_maj_submissions extends block_base {
             $timefinish = $state.'timefinish';
             if ($this->config->$timefinish - $this->config->$timestart < HOURSECS) {
                 $name = get_string($state.'submissions', $plugin);
-                $href = false;
-                if ($state=='collect' || $state=='publish') {
-                    $cmid = $state.'cmid';
-                    if (isset($this->config->$cmid) && ($cmid = $this->config->$cmid)) {
-                        $href = new moodle_url('/mod/data/view.php', array('id' => $cmid));
-                        $name = html_writer::tag('a', $name, array('href' => $href));
-                    }
+                switch ($state) {
+                    case 'collect':
+                    case 'publish':
+                        $cmid = $state.'cmid';
+                        if (isset($this->config->$cmid)) {
+                            $cmid = $this->config->$cmid;
+                            if (is_numeric($cmid) && $cmid > 0) {
+                                $href = new moodle_url('/mod/data/view.php', array('id' => $cmid));
+                                $name = html_writer::tag('a', $name, array('href' => $href));
+                            }
+                        }
+                        break;
+                        
+                    case 'review':
+                    case 'revise':
+                        $sectionnum = $state.'sectionnum';
+                        if (isset($this->config->$sectionnum)) {
+                            $sectionnum = $this->config->$sectionnum;
+                            if (is_numeric($sectionnum) && $sectionnum >= 0) { // 0 is allowed ;-)
+                                $params = array('id' => $this->page->course->id, 'section' => $sectionnum);
+                                $href = new moodle_url('/course/view.php', $params);
+                                $name = html_writer::tag('a', $name, array('href' => $href));
+                            }
+                        }
+                        break;
                 }
-                if ($state=='review' || $state=='revise') {
-                    $sectionnum = $state.'sectionnum';
-                    if (isset($this->config->$sectionnum) && ($sectionnum = $this->config->$sectionnum)) {
-                        $params = array('id' => $this->page->course->id, 'section' => $sectionnum);
-                        $href = new moodle_url('/course/view.php', $params);
-                        $name = html_writer::tag('a', $name, array('href' => $href));
-                    }
-                }
+
                 $date = userdate($this->config->$timestart, $dateformat).' - '.
                         userdate($this->config->$timefinish, $dateformat);
+
                 $option = html_writer::tag('b', $name).
                           html_writer::empty_tag('br').
                           html_writer::tag('span', $date);
+
                 $options[] = html_writer::tag('li', $option, array('class' => 'date'));
             }
 

@@ -194,6 +194,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
      * @return void, but will update $mform
      */
     protected function add_time_startfinish($mform, $plugin, $type) {
+
         $name = $type.'timestart';
         $config_name = 'config_'.$name;
         $label = get_string($name, $plugin);
@@ -279,9 +280,119 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $course = $this->get_course();
         $sections = get_fast_modinfo($course)->get_section_info_all();
         foreach ($sections as $sectionnum => $section) {
-            $options[$sectionnum] = $this->get_sectionname($course, $section);
+            if ($name = $this->get_sectionname($course, $section)) {
+                $options[$sectionnum] = $name;
+            } else {
+                $options[$sectionnum] = $this->get_sectionname_default($course, $sectionnum);
+            }
         }
         return $this->format_select_options($plugin, $options, 'section');
+    }
+
+    /**
+     * get_sectionname
+     *
+     * names longer than $namelength will be trancated to to HEAD ... TAIL
+     * where the number of characters in HEAD is $headlength
+     * and the number of characters in TIAL is $taillength
+     *
+     * @param object   $course
+     * @param object   $section
+     * @param integer  $namelength of section name (optional, default=28)
+     * @param integer  $headlength of head of section name (optional, default=10)
+     * @param integer  $taillength of tail of section name (optional, default=10)
+     * @return string  name of $section
+     */
+    protected function get_sectionname($course, $section, $namelength=28, $headlength=10, $taillength=10) {
+
+        // extract section title from section name
+        if ($name = block_maj_submissions::filter_text($section->name)) {
+            return block_maj_submissions::trim_text($name, $namelength, $headlength, $taillength);
+        }
+
+        // extract section title from section summary
+        if ($name = block_maj_submissions::filter_text($section->summary)) {
+
+            // remove script and style blocks
+            $select = '/\s*<(script|style)[^>]*>.*?<\/\1>\s*/is';
+            $name = preg_replace($select, '', $name);
+
+            // look for HTML H1-5 tags or the first line of text
+            $tags = 'h1|h2|h3|h4|h5|h6';
+            if (preg_match('/<('.$tags.')\b[^>]*>(.*?)<\/\1>/is', $name, $matches)) {
+                $name = $matches[2];
+            } else {
+                // otherwise, get first line of text
+                $name = preg_split('/<br[^>]*>/', $name);
+                $name = array_map('strip_tags', $name);
+                $name = array_map('trim', $name);
+                $name = array_filter($name);
+                if (empty($name)) {
+                    $name = '';
+                } else {
+                    $name = reset($name);
+                }
+            }
+            $name = trim(strip_tags($name));
+            return block_maj_submissions::trim_text($name, $namelength, $headlength, $taillength);
+        }
+
+        return ''; // section name and summary are empty 
+    }
+
+    /**
+     * get_sectionname_default
+     *
+     * @param object   $course
+     * @param object   $section
+     * @param string   $dateformat (optional, default='%b %d')
+     * @return string  name of $section
+     */
+    protected function get_sectionname_default($course, $sectionnum, $dateformat='%b %d') {
+
+        // set course section type
+        if ($course->format=='weeks') {
+            $sectiontype = 'week';
+        } else if ($course->format=='topics') {
+            $sectiontype = 'topic';
+        } else {
+            $sectiontype = 'section';
+        }
+
+        // "weeks" format
+        if ($sectiontype=='week' && $sectionnum > 0) {
+            if ($dateformat=='') {
+                $dateformat = get_string('strftimedateshort');
+            }
+            // 604800 : number of seconds in 7 days i.e. WEEKSECS
+            // 518400 : number of seconds in 6 days i.e. WEEKSECS - DAYSECS
+            $date = $course->startdate + 7200 + (($sectionnum - 1) * 604800);
+            return userdate($date, $dateformat).' - '.userdate($date + 518400, $dateformat);
+        }
+
+        // get string manager object
+        $strman = get_string_manager();
+
+        // specify course format plugin name
+        $courseformat = 'format_'.$course->format;
+
+        if ($strman->string_exists('section'.$sectionnum.'name', $courseformat)) {
+            return get_string('section'.$sectionnum.'name', $courseformat);
+        }
+
+        if ($strman->string_exists('sectionname', $courseformat)) {
+            return get_string('sectionname', $courseformat).' '.$sectionnum;
+        }
+
+        if ($strman->string_exists($sectiontype, 'moodle')) {
+            return get_string($sectiontype).' '.$sectionnum;
+        }
+
+        if ($strman->string_exists('sectionname', 'moodle')) {
+            return get_string('sectionname').' '.$sectionnum;
+        }
+
+        return $sectiontype.' '.$sectionnum;
     }
 
     /**
@@ -375,101 +486,10 @@ class block_maj_submissions_edit_form extends block_edit_form {
      */
     protected function format_select_options($plugin, $options, $type) {
         $createnew = get_string('createnew'.$type, $plugin);
-        return array(0 => '') + $options + array(-1 => "($createnew)");
-    }
-
-    /**
-     * get_sectionname
-     *
-     * names longer than $namelength will be trancated to to HEAD ... TAIL
-     * where the number of characters in HEAD is $headlength
-     * and the number of characters in TIAL is $taillength
-     *
-     * @param object   $course
-     * @param object   $section
-     * @param integer  $namelength of section name (optional, default=28)
-     * @param integer  $headlength of head of section name (optional, default=10)
-     * @param integer  $taillength of tail of section name (optional, default=10)
-     * @param string   $weekdateformat (optional, default='%b %d')
-     * @return string  name of $section
-     */
-    protected function get_sectionname($course, $section, $namelength=28, $headlength=10, $taillength=10, $weekdateformat='%b %d') {
-
-        // extract section title from section name or summary
-        if ($text = block_maj_submissions::filter_text($section->name)) {
-            $text = block_maj_submissions::trim_text($text, $namelength, $headlength, $taillength);
-        } else if ($text = block_maj_submissions::filter_text($section->summary)) {
-            // remove script and style blocks
-            $select = '/\s*<(script|style)[^>]*>.*?<\/\1>\s*/is';
-            $text = preg_replace($select, '', $text);
-
-            $tags = 'h1|h2|h3|h4|h5|h6';
-            if (preg_match('/<('.$tags.')\b[^>]*>(.*?)<\/\1>/is', $text, $matches)) {
-                $text = $matches[2];
-            } else {
-                // otherwise, get first line of text
-                $text = preg_split('/<br[^>]*>/', $text);
-                $text = array_map('strip_tags', $text);
-                $text = array_map('trim', $text);
-                $text = array_filter($text);
-                if (empty($text)) {
-                    $text = '';
-                } else {
-                    $text = reset($text);
-                }
-            }
-            $text = trim(strip_tags($text));
-            $text = block_maj_submissions::trim_text($text, $namelength, $headlength, $taillength);
+        if (! array_key_exists(0, $options)) {
+            $options = array(0 => '') + $options;
         }
-
-        // set default section title, if necessary
-        if ($text=='') {
-
-            // get string manager object
-            $strman = get_string_manager();
-
-            // set course section type
-            if ($course->format=='weeks') {
-                $sectiontype = 'week';
-            } else if ($course->format=='topics') {
-                $sectiontype = 'topic';
-            } else {
-                $sectiontype = 'section';
-            }
-
-            // shortcut to section number
-            $sectionnum = $section->section;
-
-            $format = 'format_'.$course->format;
-            switch (true) {
-                case ($sectiontype=='week' && $sectionnum > 0):
-                    if ($weekdateformat=='') {
-                        $weekdateformat = get_string('strftimedateshort');
-                    }
-                    // 604800 : number of seconds in 7 days i.e. WEEKSECS
-                    // 518400 : number of seconds in 6 days i.e. WEEKSECS - DAYSECS
-                    $date = $course->startdate + 7200 + (($sectionnum - 1) * 604800);
-                    $text = userdate($date, $fmt).' - '.userdate($date + 518400, $fmt);
-                    break;
-
-                case $strman->string_exists('section'.$sectionnum.'name', $format):
-                    $text = get_string('section'.$sectionnum.'name', $format);
-                    break;
-
-                case $strman->string_exists('sectionname', $format):
-                    $text = get_string('sectionname', $format).' '.$sectionnum;
-                    break;
-
-                case $strman->string_exists($sectiontype, 'moodle'):
-                    $text = get_string('sectionname').' '.$sectionnum;
-                    break;
-
-                default:
-                    $text = $sectiontype.' '.$sectionnum;
-            }
-        }
-
-        return $text;
+        return $options + array(-1 => "($createnew)");
     }
 
     /**
