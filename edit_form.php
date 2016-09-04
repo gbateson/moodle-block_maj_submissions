@@ -337,7 +337,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
             return block_maj_submissions::trim_text($name, $namelength, $headlength, $taillength);
         }
 
-        return ''; // section name and summary are empty 
+        return ''; // section name and summary are empty
     }
 
     /**
