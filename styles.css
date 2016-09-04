@@ -37,8 +37,14 @@
  * styles for the maj_submissions block
  */
 
+div.block_maj_submissions p.editsettings {
+    font-size: 0.8em;
+    text-align: right;
+    margin: 0px;
+}
 div.block_maj_submissions h4.importantdates {
     color: #cc3333;
+    margin: 0px auto;
 }
 div.block_maj_submissions ul.dates {
     list-style: none;

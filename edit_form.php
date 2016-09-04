@@ -76,13 +76,8 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $name = 'currentstate';
         $config_name = 'config_'.$name;
         $label = get_string($name, $plugin);
-        $options = array(
-            0 => get_string('none'),
-            1 => get_string('collect', $plugin),
-            2 => get_string('review',  $plugin),
-            3 => get_string('revise',  $plugin),
-            4 => get_string('publish', $plugin),
-        );
+        $options = array(0 => get_string('none'));
+        $options = block_maj_submissions:: get_state_names($plugin, $options);
         $mform->addElement('select', $config_name, $label, $options);
         $mform->setType($config_name, PARAM_INT);
         $mform->setDefault($config_name, $this->get_original_value($name));
@@ -118,6 +113,13 @@ class block_maj_submissions_edit_form extends block_edit_form {
 
         $this->add_time_startfinish($mform, $plugin, 'publish');
         $this->add_cmid($mform, $plugin, 'data', 'publishcmid');
+
+        //-----------------------------------------------------------------------------
+        $this->add_header($mform, $plugin, 'registerparticipation');
+        //-----------------------------------------------------------------------------
+
+        $this->add_time_startfinish($mform, $plugin, 'register');
+        $this->add_cmid($mform, $plugin, 'data', 'registercmid');
     }
 
     /**
@@ -194,15 +196,19 @@ class block_maj_submissions_edit_form extends block_edit_form {
      * @return void, but will update $mform
      */
     protected function add_time_startfinish($mform, $plugin, $type) {
+        $this->add_time($mform, $plugin, $type.'timestart');
+        $this->add_time($mform, $plugin, $type.'timefinish');
+    }
 
-        $name = $type.'timestart';
-        $config_name = 'config_'.$name;
-        $label = get_string($name, $plugin);
-        $mform->addElement('date_time_selector', $config_name, $label);
-        $mform->setDefault($config_name, $this->get_original_value($name));
-        $mform->addHelpButton($config_name, $name, $plugin);
-
-        $name = $type.'timefinish';
+    /**
+     * add_time
+     *
+     * @param object  $mform
+     * @param string  $plugin
+     * @param string  $name
+     * @return void, but will update $mform
+     */
+    protected function add_time($mform, $plugin, $name) {
         $config_name = 'config_'.$name;
         $label = get_string($name, $plugin);
         $mform->addElement('date_time_selector', $config_name, $label);

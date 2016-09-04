@@ -84,6 +84,7 @@ class block_maj_submissions extends block_base {
                                       // 2 = review
                                       // 3 = revise
                                       // 4 = publish
+                                      // 5 = register
 
             // data is collected in a database activity
             'collectcmid'       => 0,
@@ -113,7 +114,12 @@ class block_maj_submissions extends block_base {
             // data is published in a DATABASE activity
             'publishcmid'       => 0,
             'publishtimestart'  => 0,
-            'publishtimefinish' => 0
+            'publishtimefinish' => 0,
+
+            // delegates are registered in a DATABASE activity
+            'registercmid'       => 0,
+            'registertimestart'  => 0,
+            'registertimefinish' => 0
         );
 
         if (empty($this->config)) {
@@ -155,6 +161,7 @@ class block_maj_submissions extends block_base {
      * @return xxx
      */
     function get_content() {
+        global $USER;
 
         if ($this->content !== null) {
             return $this->content;
@@ -175,22 +182,45 @@ class block_maj_submissions extends block_base {
         $dateformat = get_string('strftimerecent');
         $timenow = time();
 
+        // if edit mode is NOT enabled, add a link to edit settings
+        if ($this->user_can_edit() && $USER->editing==0) {
+
+            // the "return" url which leads to the block edit page
+            $params = array('id' => $this->page->course->id,
+                            'sesskey' => sesskey(),
+                            'bui_editid' => $this->instance->id);
+            $edit = new moodle_url('/course/view.php', $params);
+            $edit = $edit->out_as_local_url(false);
+
+            // the URL to enable editing and redirect to $return url
+            $params = array('id' => $this->page->course->id,
+                            'edit' => 'on',
+                            'sesskey' => sesskey(),
+                            'return' => $edit);
+            $edit = new moodle_url('/course/view.php', $params);
+            $edit = html_writer::tag('a', get_string('editsettings'), array('href' => $edit));
+
+            $this->content->text .= html_writer::tag('p', $edit, array('class' => 'editsettings'));
+        }
+
         $options = array();
-        foreach (self::get_states() as $state) {
+        foreach (self::get_state_types() as $statetype) {
 
             // require finish time to be at least an hour after the start time
-            $timestart = $state.'timestart';
-            $timefinish = $state.'timefinish';
+            $timestart = $statetype.'timestart';
+            $timefinish = $statetype.'timefinish';
             if (HOURSECS > ($this->config->$timefinish - $this->config->$timestart)) {
                 continue;
             }
 
-            // format $state $name
-            $name = get_string($state.'submissions', $plugin);
-            switch ($state) {
+            $name = self::get_state_name($plugin, $statetype);
+
+            // format $statetype $name
+            switch ($statetype) {
                 case 'collect':
                 case 'publish':
-                    $cmid = $state.'cmid';
+                case 'register':
+                    $cmid = $statetype.'cmid';
                     if (isset($this->config->$cmid)) {
                         $cmid = $this->config->$cmid;
                         if (is_numeric($cmid) && $cmid > 0) {
@@ -202,7 +232,7 @@ class block_maj_submissions extends block_base {
 
                 case 'review':
                 case 'revise':
-                    $sectionnum = $state.'sectionnum';
+                    $sectionnum = $statetype.'sectionnum';
                     if (isset($this->config->$sectionnum)) {
                         $sectionnum = $this->config->$sectionnum;
                         if (is_numeric($sectionnum) && $sectionnum >= 0) { // 0 is allowed ;-)
@@ -220,8 +250,8 @@ class block_maj_submissions extends block_base {
             $class = 'date';
             switch (true) {
                 case ($timenow < $this->config->$timestart): $class .= ' early'; break;
-                case ($timenow < $this->config->$timefinish): $class .= ' open'; break;
-                default: $class .= ' late';
+                case ($timenow > $this->config->$timefinish): $class .= ' late'; break;
+                default: $class .= ' open';
             }
 
             $option = html_writer::tag('b', $name).
@@ -241,12 +271,53 @@ class block_maj_submissions extends block_base {
     }
 
     /**
-     * get_states
+     * get_state_types
      *
      * @return array
      */
-    static public function get_states() {
-        return array('collect', 'review', 'revise', 'publish');
+    static public function get_state_types() {
+        return array(1 => 'collect',
+                     2 => 'review',
+                     3 => 'revise',
+                     4 => 'publish',
+                     5 => 'register');
+    }
+
+    /**
+     * get_state_name
+     *
+     * @param string  $plugin name of plugin
+     * @param integer $statetype
+     * @return string name of $statetype in current locale
+     */
+    static public function get_state_name($plugin, $statetype) {
+        if ($statetype=='register') {
+            return get_string($statetype.'participation', $plugin);
+        } else {
+            return get_string($statetype.'submissions', $plugin);
+        }
+    }
+
+    /**
+     * get_state_names
+     *
+     * @param string $plugin name of plugin
+     * @param array  $prepend (optional, default=null)
+     * @param array  $append  (optional, default=null)
+     * @return array
+     */
+    static public function get_state_names($plugin, $prepend=null, $append=null) {
+        $statetypes = self::get_state_types();
+        foreach ($statetypes as $state => $type) {
+            $names[$state] = self::get_state_name($plugin, $type);
+        }
+        if ($prepend) {
+            $names = ($prepend + $names);
+        }
+        if ($append) {
+            $names = ($names + $append);
+        }
+        return $names;
     }
 
     /**
@@ -303,12 +374,12 @@ class block_maj_submissions extends block_base {
      * trim_text
      *
      * @param   string   $text
-     * @param   integer  $textlength (optional, default=28)
-     * @param   integer  $headlength (optional, default=10)
-     * @param   integer  $taillength (optional, default=10)
+     * @param   integer  $textlength (optional, default=42)
+     * @param   integer  $headlength (optional, default=16)
+     * @param   integer  $taillength (optional, default=16)
      * @return  string
      */
-    static function trim_text($text, $textlength=28, $headlength=10, $taillength=10) {
+    static function trim_text($text, $textlength=42, $headlength=16, $taillength=16) {
         $strlen = self::textlib('strlen', $text);
         if ($strlen > $textlength) {
             $head = self::textlib('substr', $text, 0, $headlength);
