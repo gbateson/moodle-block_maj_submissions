@@ -63,16 +63,25 @@ div.block_maj_submissions p.editsettings {
     text-align: right;
     margin:       0px;
 }
-div.block_maj_submissions h4.importantdates {
+div.block_maj_submissions h4.importantdates,
+div.block_maj_submissions h4.toollinks {
     color:    #cc3333;
     margin:  0px auto;
 }
+div.block_maj_submissions h4.importantdates a.editicon {
+    float:      right;
+}
+div.block_maj_submissions h4.importantdates a.editicon img {
+    margin-right: 4px;
+    margin-top:  -4px;
+}
 div.block_maj_submissions ul.importantdates {
     list-style:  none;
-    margin:  0px 12px;
+    margin:   8px 0px;
     padding:      0px;
 }
-div.block_maj_submissions ul.importantdates li.date {
+div.block_maj_submissions ul.importantdates li.date,
+div.block_maj_submissions p.toollink {
     margin:   4px 0px;
 }
 div.block_maj_submissions ul.importantdates li.date span {

@@ -198,13 +198,6 @@ class block_maj_submissions extends block_base {
         }
         $time = time();
 
-        // if edit mode is NOT enabled, add a link to edit settings
-        if ($this->user_can_edit() && $USER->editing==0) {
-            $this->content->text .= html_writer::tag('p',
-                                                     $this->get_edit_link(),
-                                                     array('class' => 'editsettings'));
-        }
-
         $dates = array();
         $options = array();
 
@@ -300,34 +293,76 @@ class block_maj_submissions extends block_base {
 
         if ($dates = implode('', $dates)) {
             $heading = get_string('importantdates', $plugin);
+            if ($this->user_can_edit() && $USER->editing==0) {
+                $heading .= ' '.$this->get_edit_icon();
+            }
             $this->content->text .= html_writer::tag('h4', $heading, array('class' => 'importantdates'));
             $this->content->text .= html_writer::tag('ul', $dates,   array('class' => 'importantdates'));
         }
 
+        if ($this->user_can_edit()) {
+            $this->content->text .= html_writer::tag('h4', get_string('conversiontools', $plugin), array('class' => 'toollinks'));
+            $this->content->text .= $this->get_tool_link($plugin, 'data2workshop');
+            $this->content->text .= $this->get_tool_link($plugin, 'workshop2assign');
+            $this->content->text .= $this->get_tool_link($plugin, 'assign2data');
+        }
         return $this->content;
     }
 
     /**
-     * get_edit_link
+     * get_tool_link
+     *
+     * @param string $type
+     * @return array
+     */
+    protected function get_tool_link($plugin, $type) {
+
+        $text = get_string('tool'.$type, $plugin);
+        $text = html_writer::tag('b', $text);
+
+        $desc = get_string('tool'.$type.'_desc', $plugin);
+
+        $params = array('id' => $this->page->course->id,
+                        'bui' => $this->instance->id);
+        $link = new moodle_url("/blocks/maj_submissions/tools/$type.php", $params);
+
+        $link = html_writer::tag('a', $text, array('href' => $link)).
+                html_writer::empty_tag('br').
+                html_writer::tag('span', $desc);
+
+        return html_writer::tag('p', $link, array('class' => 'toollink'));
+    }
+
+    /**
+     * get_edit_icon
      *
      * @return array
      */
-    protected function get_edit_link() {
+    protected function get_edit_icon() {
+        global $OUTPUT;
+
         // the "return" url which leads to the block edit page
         $params = array('id' => $this->page->course->id,
                         'sesskey' => sesskey(),
                         'bui_editid' => $this->instance->id);
-        $link = new moodle_url('/course/view.php', $params);
-        $link = $link->out_as_local_url(false);
+        $href = new moodle_url('/course/view.php', $params);
 
-        // the URL to enable editing and redirect to $return url
+        // the URL to enable editing and redirect to the block edit page
         $params = array('id' => $this->page->course->id,
                         'edit' => 'on',
                         'sesskey' => sesskey(),
-                        'return' => $link);
-        $link = new moodle_url('/course/view.php', $params);
-        $link = html_writer::tag('a', get_string('editsettings'), array('href' => $link));
-        return $link;
+                        'return' => $href->out_as_local_url(false));
+        $href = new moodle_url('/course/view.php', $params);
+
+        // the edit icon image
+        $params = array('src' => $OUTPUT->pix_url('t/edit'),
+                        'title' => get_string('editsettings'));
+        $icon = html_writer::empty_tag('img', $params);
+
+        // return edit icon image
+        // linking to edit enable page
+        // with redirect to block settings page
+        return html_writer::tag('a', $icon, array('href' => $href, 'class' => 'editicon'));
     }
 
     /**
@@ -390,10 +425,48 @@ class block_maj_submissions extends block_base {
      */
     protected function userdate($date, $format, $removetime) {
 
+        $current_language = substr(current_language(), 0, 2);
+
         if ($removetime) {
             // http://php.net/manual/en/function.strftime.php
             $search = '/[ :\.,-]*[\[\{\(]*?%[HkIlMpPrRSTX][\)\}\]]?/';
             $format = preg_replace($search, '', $format);
+        }
+
+        if ($current_language=='ja' || $current_language=='zh') {
+            $replace = array();
+            if (strpos($format, '年')===false) {
+                $replace['%Y'] = '%Y年';
+                $replace['%y'] = '%y年';
+            }
+            if (strpos($format, '月')===false) {
+                $replace['%m'] = '%m月';
+                $replace['%b'] = '%b月';
+                $replace['%h'] = '%h月';
+            }
+            if (strpos($format, '日')===false) {
+                $replace['%d'] = '%d日';
+            }
+            if (count($replace)) {
+                $format = strtr($format, $replace);
+            }
+        } else if ($current_language=='ko') {
+            $replace = array();
+            if (strpos($format, '년')===false) {
+                $replace['%Y'] = '%Y년';
+                $replace['%y'] = '%y년';
+            }
+            if (strpos($format, '월')===false) {
+                $replace['%m'] = '%m월';
+                $replace['%b'] = '%b월';
+                $replace['%h'] = '%h월';
+            }
+            if (strpos($format, '일')===false) {
+                $replace['%d'] = '%d일';
+            }
+            if (count($replace)) {
+                $format = strtr($format, $replace);
+            }
         }
 
         if ($fixmonth = ($this->config->fixmonth && is_numeric(strpos($format, '%m')))) {
@@ -408,7 +481,6 @@ class block_maj_submissions extends block_base {
 
         $userdate = userdate($date, $format, 99, false, false);
 
-
         if ($fixmonth || $fixday || $fixhour) {
             $search = array(' 0', ' ');
             $replace = array();
@@ -418,8 +490,12 @@ class block_maj_submissions extends block_base {
                 $replace['MM'] = ltrim($month);
             }
             if ($fixday) {
-                $day = strftime(' %d', $date);
-                $day = str_replace($search, '', $day);
+                if ($current_language=='en') {
+                    $day = date(' jS', $date);
+                } else {
+                    $day = strftime(' %d', $date);
+                    $day = str_replace($search, '', $day);
+                }
                 $replace['DD'] = ltrim($day);
             }
             if ($fixhour) {
