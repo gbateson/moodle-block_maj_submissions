@@ -62,32 +62,16 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $element = $mform->addElement('static', $name, $label, $text);
 
         $name = 'title';
-        $config_name = 'config_'.$name;
-        $label = get_string($name, $plugin);
-        $mform->addElement('text', $config_name, $label, array('size' => 50));
-        $mform->setType($config_name, PARAM_TEXT);
-        $mform->setDefault($config_name, $this->get_original_value($name));
-        $mform->addHelpButton($config_name, $name, $plugin);
-
-        //-----------------------------------------------------------------------------
-        $this->add_header($mform, $plugin, 'state');
-        //-----------------------------------------------------------------------------
-
-        $name = 'currentstate';
-        $config_name = 'config_'.$name;
-        $label = get_string($name, $plugin);
-        $options = array(0 => get_string('none'));
-        $options = block_maj_submissions:: get_state_names($plugin, $options);
-        $mform->addElement('select', $config_name, $label, $options);
-        $mform->setType($config_name, PARAM_INT);
-        $mform->setDefault($config_name, $this->get_original_value($name));
-        $mform->addHelpButton($config_name, $name, $plugin);
+        $this->add_field($mform, $plugin, $name, 'text', PARAM_TEXT, array('size' => 50));
 
         //-----------------------------------------------------------------------------
         $this->add_header($mform, $plugin, 'collectsubmissions');
         //-----------------------------------------------------------------------------
 
         $this->add_time_startfinish($mform, $plugin, 'collect');
+        $this->add_time_startfinish($mform, $plugin, 'collectworkshop');
+        $this->add_time_startfinish($mform, $plugin, 'collectsponsored');
+
         $this->add_cmid($mform, $plugin, 'data', 'collectcmid');
         $this->add_repeat_elements($mform, $plugin, 'filterfields');
 
@@ -119,7 +103,16 @@ class block_maj_submissions_edit_form extends block_edit_form {
         //-----------------------------------------------------------------------------
 
         $this->add_time_startfinish($mform, $plugin, 'register');
+        $this->add_time_startfinish($mform, $plugin, 'registerpresenter');
         $this->add_cmid($mform, $plugin, 'data', 'registercmid');
+
+        //-----------------------------------------------------------------------------
+        $this->add_header($mform, $plugin, 'dateformats');
+        //-----------------------------------------------------------------------------
+
+        $this->add_field_moodledatefmt($mform, $plugin);
+        $this->add_field_customdatefmt($mform, $plugin);
+        $this->add_field_fixdates($mform, $plugin);
     }
 
     /**
@@ -192,28 +185,32 @@ class block_maj_submissions_edit_form extends block_edit_form {
      *
      * @param object  $mform
      * @param string  $plugin
-     * @param string  $type
+     * @param string  $type e.g. collect, collectworkshop, collectsponsored,
+     *                review, revise, publish, register, registerpresenter
      * @return void, but will update $mform
      */
     protected function add_time_startfinish($mform, $plugin, $type) {
-        $this->add_time($mform, $plugin, $type.'timestart');
-        $this->add_time($mform, $plugin, $type.'timefinish');
-    }
-
-    /**
-     * add_time
-     *
-     * @param object  $mform
-     * @param string  $plugin
-     * @param string  $name
-     * @return void, but will update $mform
-     */
-    protected function add_time($mform, $plugin, $name) {
+        $name = $type.'time';
         $config_name = 'config_'.$name;
+        $elements_name = 'elements_'.$name;
         $label = get_string($name, $plugin);
-        $mform->addElement('date_time_selector', $config_name, $label);
-        $mform->setDefault($config_name, $this->get_original_value($name));
-        $mform->addHelpButton($config_name, $name, $plugin);
+
+        $dateoptions = array('optional' => true);
+        $timestart = html_writer::tag('b', get_string('timestart', $plugin).' :');
+        $timefinish = html_writer::tag('b', get_string('timefinish', $plugin).' :');
+
+        $elements = array(
+            $mform->createElement('static', '', '', $timestart),
+            $mform->createElement('date_time_selector', $config_name.'start', '', $dateoptions),
+            $mform->createElement('static', '', '', html_writer::empty_tag('br')),
+            $mform->createElement('static', '', '', $timefinish),
+            $mform->createElement('date_time_selector', $config_name.'finish', '', $dateoptions)
+        );
+
+        $mform->addGroup($elements, $elements_name, $label, '', false);
+        $mform->setDefault($config_name.'start', $this->get_original_value($name.'start'));
+        $mform->setDefault($config_name.'finish', $this->get_original_value($name.'finish'));
+        $mform->addHelpButton($elements_name, $name, $plugin);
     }
 
     /**
@@ -226,13 +223,8 @@ class block_maj_submissions_edit_form extends block_edit_form {
      * @return void, but will update $mform
      */
     protected function add_cmid($mform, $plugin, $type, $name) {
-        $config_name = 'config_'.$name;
-        $label = get_string($name, $plugin);
         $options = $this->get_options_cmids($mform, $plugin, 'data');
-        $mform->addElement('select', $config_name, $label, $options);
-        $mform->setType($config_name, PARAM_INT);
-        $mform->setDefault($config_name, $this->get_original_value($name));
-        $mform->addHelpButton($config_name, $name, $plugin);
+        $this->add_field($mform, $plugin, $name, 'select', PARAM_INT, $options);
     }
 
     /**
@@ -244,13 +236,8 @@ class block_maj_submissions_edit_form extends block_edit_form {
      * @return void, but will update $mform
      */
     protected function add_sectionnum($mform, $plugin, $name) {
-        $config_name = 'config_'.$name;
-        $label = get_string($name, $plugin);
         $options = $this->get_options_sectionnum($mform, $plugin);
-        $mform->addElement('select', $config_name, $label, $options);
-        $mform->setType($config_name, PARAM_INT);
-        $mform->setDefault($config_name, $this->get_original_value($name));
-        $mform->addHelpButton($config_name, $name, $plugin);
+        $this->add_field($mform, $plugin, $name, 'select', PARAM_INT, $options);
     }
 
     /**
@@ -496,6 +483,173 @@ class block_maj_submissions_edit_form extends block_edit_form {
             $options = array(0 => '') + $options;
         }
         return $options + array(-1 => "($createnew)");
+    }
+
+    /**
+     * add_field_moodledatefmt
+     *
+     * @param object $mform
+     * @param string $plugin
+     * @return void, but will modify $mform
+     */
+    protected function add_field_moodledatefmt($mform, $plugin) {
+        global $CFG, $PAGE;
+
+        $name = 'moodledatefmt';
+        $config_name = 'config_'.$name;
+        $elements_name = 'elements_'.$name;
+
+        $time = time();
+        $switch_plus = $PAGE->theme->pix_url('t/switch_plus', 'core')->out();
+
+        $string = array();
+        include($CFG->dirroot.'/lang/en/langconfig.php');
+        $options = array_flip(preg_grep('/^strftime(da|re)/', array_keys($string)));
+
+        // add examples of each date format string
+        $elements = array();
+        foreach (array_keys($options) as $i => $option) {
+            $fmt = get_string($option);
+            $text = userdate($time, $fmt);
+
+            $params = array('src' => $switch_plus, 'onclick' => 'toggledateformat(this, '.$i.')');
+            $text .= ' '.html_writer::empty_tag('img', $params);
+
+            $params = array('id' => 'id_dateformat_'.$i, 'class' => 'dateformat', 'style' => 'display: none;');
+            $text .= html_writer::tag('div', $option.': '.$fmt, $params);
+
+            $elements[] = $mform->createElement('radio', $config_name, '', $text, $option);
+        }
+
+        usort($elements, array($this, 'sort_by_text'));
+
+        $js = '';
+        $js .= '<script type="text/javascript">'."\n";
+        $js .= "//<![CDATA[\n";
+        $js .= "function toggledateformat(img, i) {\n";
+        $js .= "    var obj = document.getElementById('id_dateformat_' + i);\n";
+        $js .= "    if (obj) {\n";
+        $js .= "        if (obj.style.display=='none') {\n";
+        $js .= "            obj.style.display = '';\n";
+        $js .= "            img.src = img.src.replace('plus','minus');\n";
+        $js .= "        } else {\n";
+        $js .= "            obj.style.display = 'none';\n";
+        $js .= "            img.src = img.src.replace('minus','plus');;\n";
+        $js .= "        }\n";
+        $js .= "    }\n";
+        $js .= "    return false;\n";
+        $js .= "}\n";
+        $js .= "//]]>\n";
+        $js .= "</script>\n";
+        $elements[] = $mform->createElement('static', '', '', $js);
+
+        $label = get_string($name, $plugin);
+        $mform->addGroup($elements, $elements_name, $label, '<br />', false);
+        $mform->addHelpButton($elements_name, $name, $plugin);
+        $mform->setType($config_name, PARAM_ALPHANUM);
+        $mform->setDefault($config_name, $this->get_original_value($name));
+    }
+
+    /**
+     * sort_by_text
+     *
+     * @param object $a
+     * @param string $b
+     * @return integer
+     */
+    protected function sort_by_text($a, $b) {
+        if ($a->_text < $b->_text) {
+            return -1;
+        }
+        if ($a->_text > $b->_text) {
+            return 1;
+        }
+        return 0;
+    }
+
+    /**
+     * add_field_customdatefmt
+     *
+     * @param object $mform
+     * @param string $plugin
+     * @return void, but will modify $mform
+     */
+    protected function add_field_customdatefmt($mform, $plugin) {
+        $name = 'customdatefmt';
+        $config_name = 'config_'.$name;
+        $elements_name = 'elements_'.$name;
+        $label = get_string($name, $plugin);
+
+        $help = 'http://php.net/manual/'.substr(current_language(), 0, 2).'/function.strftime.php';
+        $help = html_writer::tag('a', get_string('help'), array('href' => $help, 'target' => '_blank'));
+        $help = html_writer::tag('small', $help);
+
+        $elements = array(
+            $mform->createElement('text', $config_name, '', array('size' => 30)),
+            $mform->createElement('static', '', '', $help)
+        );
+
+        $mform->addGroup($elements, $elements_name, $label, ' ', false);
+        $mform->addHelpButton($elements_name, $name, $plugin);
+        $mform->setType($config_name, PARAM_TEXT);
+        $mform->setDefault($config_name, $this->get_original_value($name));
+    }
+
+    /**
+     * add_field_fixdates
+     *
+     * @param object $mform
+     * @param string $plugin
+     * @return void, but will modify $mform
+     */
+    protected function add_field_fixdates($mform, $plugin) {
+        $elements = array();
+
+        $types = array('month', 'day', 'hour');
+        foreach ($types as $type) {
+            $name = 'fix'.$type;
+            $config_name = 'config_'.$name;
+            $label = get_string($type, 'form');
+            $label = html_writer::tag('b', $label.' :');
+            if (count($elements)) {
+                $elements[] = $mform->createElement('static', '', '', html_writer::empty_tag('br'));
+            }
+            $elements[] = $mform->createElement('static', '', '', $label);
+            $elements[] = $mform->createElement('selectyesno', $config_name);
+        }
+
+        $name = 'fixdates';
+        $label = get_string($name, $plugin);
+        $elements_name = 'elements_'.$name;
+
+        $mform->addGroup($elements, $elements_name, $label, ' ', false);
+        $mform->addHelpButton($elements_name, $name, $plugin);
+        $mform->setType($config_name, PARAM_TEXT);
+        $mform->setDefault($config_name, $this->get_original_value($name));
+
+        foreach ($types as $type) {
+            $name = 'fix'.$type;
+            $config_name = 'config_'.$name;
+            $mform->setType($config_name, PARAM_INT);
+            $mform->setDefault($config_name, $this->get_original_value($name));
+        }
+    }
+
+    /**
+     * get_field
+     *
+     * @param object $mform
+     * @param string $plugin
+     * @param string $type e.g. month, day, hour
+     * @return void, but will modify $mform
+     */
+    protected function add_field($mform, $plugin, $name, $elementtype, $paramtype, $options=null) {
+        $config_name = 'config_'.$name;
+        $label = get_string($name, $plugin);
+        $mform->addElement($elementtype, $config_name, $label, $options);
+        $mform->setType($config_name, $paramtype);
+        $mform->setDefault($config_name, $this->get_original_value($name));
+        $mform->addHelpButton($config_name, $name, $plugin);
     }
 
     /**

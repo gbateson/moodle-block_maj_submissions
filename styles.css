@@ -29,8 +29,29 @@
  * styles for block settings edit form
  */
 
-#block_maj_submissions_edit_form {
+#block_maj_submissions_edit_form.mform #fgroup_id_config_collecttime_elements div.fitemtitle,
+#block_maj_submissions_edit_form.mform #fgroup_id_config_collectworkshoptime_elements div.fitemtitle,
+#block_maj_submissions_edit_form.mform #fgroup_id_config_collectsponsoredtime_elements div.fitemtitle,
+#block_maj_submissions_edit_form.mform #fgroup_id_config_reviewtime_elements div.fitemtitle,
+#block_maj_submissions_edit_form.mform #fgroup_id_config_revisetime_elements div.fitemtitle,
+#block_maj_submissions_edit_form.mform #fgroup_id_config_publishtime_elements div.fitemtitle,
+#block_maj_submissions_edit_form.mform #fgroup_id_config_registertime_elements div.fitemtitle,
+#block_maj_submissions_edit_form.mform #fgroup_id_config_registerpresenterstime_elements div.fitemtitle {
+    padding-top: 10px;
+}
+#block_maj_submissions_edit_form b {
+    display:  inline-block;
+    min-width:        48px;
+    padding-bottom:    6px;
+    padding-right:     6px;
+    text-align:      right;
+    vertical-align: middle;
+}
 
+#block_maj_submissions_edit_form div.dateformat {
+    height:       0px;
+    font-size:  0.8em;
+    margin-left: 24px;
 }
 
 /*
@@ -38,22 +59,22 @@
  */
 
 div.block_maj_submissions p.editsettings {
-    font-size: 0.8em;
+    font-size:  0.8em;
     text-align: right;
-    margin: 0px;
+    margin:       0px;
 }
 div.block_maj_submissions h4.importantdates {
-    color: #cc3333;
-    margin: 0px auto;
+    color:    #cc3333;
+    margin:  0px auto;
 }
-div.block_maj_submissions ul.dates {
-    list-style: none;
-    margin: 0px 12px;
-    padding: 0px;
+div.block_maj_submissions ul.importantdates {
+    list-style:  none;
+    margin:  0px 12px;
+    padding:      0px;
 }
-div.block_maj_submissions ul.dates li.date {
-    margin: 4px 0px;
+div.block_maj_submissions ul.importantdates li.date {
+    margin:   4px 0px;
 }
-div.block_maj_submissions ul.dates li.date span {
-    font-size: 0.9em;
+div.block_maj_submissions ul.importantdates li.date span {
+    font-size:  0.9em;
 }

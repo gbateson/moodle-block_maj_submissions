@@ -90,6 +90,10 @@ class block_maj_submissions extends block_base {
             'collectcmid'       => 0,
             'collecttimestart'  => 0,
             'collecttimefinish' => 0,
+            'collecttimeworkshopstart'   => 0,
+            'collecttimeworkshopfinish'  => 0,
+            'collecttimesponsoredstart'  => 0,
+            'collecttimesponsoredfinish' => 0,
 
             // fields used to filter data into workshops
             // e.g. submissiontype AND submissionlanguage
@@ -119,7 +123,14 @@ class block_maj_submissions extends block_base {
             // delegates are registered in a DATABASE activity
             'registercmid'       => 0,
             'registertimestart'  => 0,
-            'registertimefinish' => 0
+            'registertimefinish' => 0,
+
+            // date settings
+            'moodledatefmt'      => 'strftimerecent', // 11 Nov, 10:12
+            'customdatefmt'      => '',
+            'fixmonth'           => 1, // 0=no, 1=remove leading "0" from months
+            'fixday'             => 1, // 0=no, 1=remove leading "0" from days
+            'fixhour'            => 1  // 0=no, 1=remove leading "0" from hours
         );
 
         if (empty($this->config)) {
@@ -179,95 +190,144 @@ class block_maj_submissions extends block_base {
 
         $plugin = 'block_maj_submissions';
 
-        $dateformat = get_string('strftimerecent');
-        $timenow = time();
+        if (! $dateformat = $this->config->customdatefmt) {
+            if (! $dateformat = $this->config->moodledatefmt) {
+                $dateformat = 'strftimerecent'; // default: 11 Nov, 10:12
+            }
+            $dateformat = get_string($dateformat);
+        }
+        $time = time();
 
         // if edit mode is NOT enabled, add a link to edit settings
         if ($this->user_can_edit() && $USER->editing==0) {
-
-            // the "return" url which leads to the block edit page
-            $params = array('id' => $this->page->course->id,
-                            'sesskey' => sesskey(),
-                            'bui_editid' => $this->instance->id);
-            $edit = new moodle_url('/course/view.php', $params);
-            $edit = $edit->out_as_local_url(false);
-
-            // the URL to enable editing and redirect to $return url
-            $params = array('id' => $this->page->course->id,
-                            'edit' => 'on',
-                            'sesskey' => sesskey(),
-                            'return' => $edit);
-            $edit = new moodle_url('/course/view.php', $params);
-            $edit = html_writer::tag('a', get_string('editsettings'), array('href' => $edit));
-
-            $this->content->text .= html_writer::tag('p', $edit, array('class' => 'editsettings'));
+            $this->content->text .= html_writer::tag('p',
+                                                     $this->get_edit_link(),
+                                                     array('class' => 'editsettings'));
         }
 
+        $dates = array();
         $options = array();
-        foreach (self::get_state_types() as $statetype) {
 
-            // require finish time to be at least an hour after the start time
-            $timestart = $statetype.'timestart';
-            $timefinish = $statetype.'timefinish';
-            if (HOURSECS > ($this->config->$timefinish - $this->config->$timestart)) {
-                continue;
-            }
+        $types = array(
+            'collect'  => array('', 'workshop', 'sponsored'),
+            'review'   => array(''),
+            'revise'   => array(''),
+            'publish'  => array(''),
+            'register' => array('', 'presenter')
+        );
+        foreach ($types as $type => $times) {
 
-            $name = self::get_state_name($plugin, $statetype);
-
-            // format $statetype $name
-            switch ($statetype) {
+            // set up $url
+            $url = '';
+            switch ($type) {
                 case 'collect':
                 case 'publish':
                 case 'register':
-                    $cmid = $statetype.'cmid';
+                    $cmid = $type.'cmid';
                     if (isset($this->config->$cmid)) {
                         $cmid = $this->config->$cmid;
                         if (is_numeric($cmid) && $cmid > 0) {
-                            $href = new moodle_url('/mod/data/view.php', array('id' => $cmid));
-                            $name = html_writer::tag('a', $name, array('href' => $href));
+                            $url = new moodle_url('/mod/data/view.php', array('id' => $cmid));
                         }
                     }
                     break;
 
                 case 'review':
                 case 'revise':
-                    $sectionnum = $statetype.'sectionnum';
+                    $sectionnum = $type.'sectionnum';
                     if (isset($this->config->$sectionnum)) {
                         $sectionnum = $this->config->$sectionnum;
                         if (is_numeric($sectionnum) && $sectionnum >= 0) { // 0 is allowed ;-)
                             $params = array('id' => $this->page->course->id, 'section' => $sectionnum);
-                            $href = new moodle_url('/course/view.php', $params);
-                            $name = html_writer::tag('a', $name, array('href' => $href));
+                            $url = new moodle_url('/course/view.php', $params);
                         }
                     }
                     break;
             }
 
-            $date = userdate($this->config->$timestart, $dateformat).' - '.
-                    userdate($this->config->$timefinish, $dateformat);
+            foreach ($times as $time) {
 
-            $class = 'date';
-            switch (true) {
-                case ($timenow < $this->config->$timestart): $class .= ' early'; break;
-                case ($timenow > $this->config->$timefinish): $class .= ' late'; break;
-                default: $class .= ' open';
+                $timestart = $type.$time.'timestart';
+                $timefinish = $type.$time.'timefinish';
+
+                $removestart  = (isset($this->config->$timestart) && strftime('%H:%M', $this->config->$timestart)=='00:00');
+                $removefinish = (isset($this->config->$timefinish) && strftime('%H:%M', $this->config->$timefinish)=='23:55');
+                $removetime   = ($removestart && $removefinish);
+
+                if ($this->config->$timestart && $this->config->$timefinish) {
+                    $date = $this->userdate($this->config->$timestart, $dateformat, $removetime).
+                            ' - '.
+                            $this->userdate($this->config->$timefinish, $dateformat, $removetime);
+                } else if ($this->config->$timestart) {
+                    $date = $this->userdate($this->config->$timestart, $dateformat, $removestart);
+                    if ($this->config->$timestart < $time) {
+                        $date = get_string('openedon', $plugin, $date);
+                    } else {
+                        $date = get_string('openson', $plugin, $date);
+                    }
+                } else if ($this->config->$timefinish) {
+                    $date = $this->userdate($this->config->$timefinish, $dateformat, $removefinish);
+                    if ($this->config->$timefinish < $time) {
+                        $date = get_string('closedon', $plugin, $date);
+                    } else {
+                        $date = get_string('closeson', $plugin, $date);
+                    }
+                } else {
+                    $date = '';
+                }
+
+                if ($date) {
+                    $text = html_writer::tag('b', get_string($type.$time.'time', $plugin));
+                    if ($url) {
+                        $text = html_writer::tag('a', $text, array('href' => $url));
+                    }
+                    $date = $text.html_writer::empty_tag('br').$date;
+
+                    $class = 'date';
+                    if (($time >= $this->config->$timestart) && ($time <= $this->config->$timefinish)) {
+                        $class .= ' open';
+                    }
+                    if ($this->config->$timestart && ($this->config->$timestart > $time)) {
+                        $class .= ' early';
+                    }
+                    if ($this->config->$timefinish && ($this->config->$timefinish < $time)) {
+                        $class .= ' late';
+                    }
+                    $dates[] = html_writer::tag('li', $date, array('class' => $class));
+                }
             }
-
-            $option = html_writer::tag('b', $name).
-                      html_writer::empty_tag('br').
-                      html_writer::tag('span', $date);
-
-            $options[] = html_writer::tag('li', $option, array('class' => $class));
         }
 
-        if ($options = implode('', $options)) {
+        if ($dates = implode('', $dates)) {
             $heading = get_string('importantdates', $plugin);
             $this->content->text .= html_writer::tag('h4', $heading, array('class' => 'importantdates'));
-            $this->content->text .= html_writer::tag('ul', $options, array('class' => 'dates'));
+            $this->content->text .= html_writer::tag('ul', $dates,   array('class' => 'importantdates'));
         }
 
         return $this->content;
+    }
+
+    /**
+     * get_edit_link
+     *
+     * @return array
+     */
+    protected function get_edit_link() {
+        // the "return" url which leads to the block edit page
+        $params = array('id' => $this->page->course->id,
+                        'sesskey' => sesskey(),
+                        'bui_editid' => $this->instance->id);
+        $link = new moodle_url('/course/view.php', $params);
+        $link = $link->out_as_local_url(false);
+
+        // the URL to enable editing and redirect to $return url
+        $params = array('id' => $this->page->course->id,
+                        'edit' => 'on',
+                        'sesskey' => sesskey(),
+                        'return' => $link);
+        $link = new moodle_url('/course/view.php', $params);
+        $link = html_writer::tag('a', get_string('editsettings'), array('href' => $link));
+        return $link;
     }
 
     /**
@@ -287,14 +347,14 @@ class block_maj_submissions extends block_base {
      * get_state_name
      *
      * @param string  $plugin name of plugin
-     * @param integer $statetype
-     * @return string name of $statetype in current locale
+     * @param integer $type
+     * @return string name of $type in current locale
      */
-    static public function get_state_name($plugin, $statetype) {
-        if ($statetype=='register') {
-            return get_string($statetype.'participation', $plugin);
+    static public function get_state_name($plugin, $type) {
+        if ($type=='register') {
+            return get_string($type.'participation', $plugin);
         } else {
-            return get_string($statetype.'submissions', $plugin);
+            return get_string($type.'submissions', $plugin);
         }
     }
 
@@ -307,8 +367,8 @@ class block_maj_submissions extends block_base {
      * @return array
      */
     static public function get_state_names($plugin, $prepend=null, $append=null) {
-        $statetypes = self::get_state_types();
-        foreach ($statetypes as $state => $type) {
+        $types = self::get_state_types();
+        foreach ($types as $state => $type) {
             $names[$state] = self::get_state_name($plugin, $type);
         }
         if ($prepend) {
@@ -321,35 +381,57 @@ class block_maj_submissions extends block_base {
     }
 
     /**
-     * get_lang_code
+     * userdate
      *
-     * @return string
+     * @param integer $date
+     * @param string  $format (optional, default='')
+     * @param integer $timezone (optional, default = 99)
+     * @return string representation of $date
      */
-    function get_lang_code() {
-        static $lang = null;
+    protected function userdate($date, $format, $removetime) {
 
-        if (isset($lang)) {
-            return $lang;
+        if ($removetime) {
+            // http://php.net/manual/en/function.strftime.php
+            $search = '/[ :\.,-]*[\[\{\(]*?%[HkIlMpPrRSTX][\)\}\]]?/';
+            $format = preg_replace($search, '', $format);
         }
 
-        $lang = substr(current_language(), 0, 2);
-
-        $namelength = 'namelength'.$lang;
-        if (isset($this->config->$namelength)) {
-            return $lang;
+        if ($fixmonth = ($this->config->fixmonth && is_numeric(strpos($format, '%m')))) {
+            $format = str_replace('%m', 'MM', $format);
+        }
+        if ($fixday = ($this->config->fixday && is_numeric(strpos($format, '%d')))) {
+            $format = str_replace('%d', 'DD', $format);
+        }
+        if ($fixhour = ($this->config->fixhour && is_numeric(strpos($format, '%I')))) {
+            $format = str_replace('%I', 'II', $format);
         }
 
-        $lang = 'en';
+        $userdate = userdate($date, $format, 99, false, false);
 
-        $namelength = 'namelength'.$lang;
-        if (isset($this->config->$namelength)) {
-            return $lang;
+
+        if ($fixmonth || $fixday || $fixhour) {
+            $search = array(' 0', ' ');
+            $replace = array();
+            if ($fixmonth) {
+                $month = strftime(' %m', $date);
+                $month = str_replace($search, '', $month);
+                $replace['MM'] = ltrim($month);
+            }
+            if ($fixday) {
+                $day = strftime(' %d', $date);
+                $day = str_replace($search, '', $day);
+                $replace['DD'] = ltrim($day);
+            }
+            if ($fixhour) {
+                $hour = strftime(' %I', $date);
+                $hour = str_replace($search, '', $hour);
+                $replace['II'] = ltrim($hour);
+            }
+            $userdate = strtr($userdate, $replace);
         }
 
-        $lang = '';
-        return $lang;
+        return $userdate;
     }
-
 
     /**
      * filter_text
