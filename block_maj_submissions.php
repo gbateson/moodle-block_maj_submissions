@@ -133,6 +133,7 @@ class block_maj_submissions extends block_base {
             'fixhour'            => 1, // 0=no, 1=remove leading "0" from hours
 
             // conference events
+            'conferencecmid'         => 0,
             'conferencetimestart'    => 0,
             'conferencetimefinish'   => 0,
 
@@ -195,11 +196,6 @@ class block_maj_submissions extends block_base {
             'footer' => ''
         );
 
-        // quick check to filter out students
-        if (! has_capability('moodle/course:manageactivities', $this->context)) {
-            return $this->content;
-        }
-
         $plugin = 'block_maj_submissions';
 
         if (! $dateformat = $this->config->customdatefmt) {
@@ -230,6 +226,7 @@ class block_maj_submissions extends block_base {
             // set up $url
             $url = '';
             switch ($type) {
+                case 'conference':
                 case 'workshops':
                 case 'reception':
                 case 'collect':
@@ -273,9 +270,9 @@ class block_maj_submissions extends block_base {
                         date('m', $this->config->$timestart)==date('m', $this->config->$timefinish) &&
                         date('Y', $this->config->$timestart)==date('Y', $this->config->$timefinish)) {
                         // the dates are on the same day,
-                        // so don't remove times,
+                        // so don't remove times ...
                         $removetime = false;
-                        // but remove the finish date ;-)
+                        // ... but remove the finish date ;-)
                         $removedate = true;
                     }
                     $date = $this->userdate($this->config->$timestart, $dateformat, $removetime).
@@ -331,7 +328,8 @@ class block_maj_submissions extends block_base {
         }
 
         if ($this->user_can_edit()) {
-            $this->content->text .= html_writer::tag('h4', get_string('conversiontools', $plugin), array('class' => 'toollinks'));
+            $heading = get_string('conversiontools', $plugin);
+            $this->content->text .= html_writer::tag('h4', $heading, array('class' => 'toollinks'));
             $this->content->text .= $this->get_tool_link($plugin, 'data2workshop');
             $this->content->text .= $this->get_tool_link($plugin, 'workshop2assign');
             $this->content->text .= $this->get_tool_link($plugin, 'assign2data');

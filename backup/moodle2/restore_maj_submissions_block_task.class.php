@@ -66,7 +66,7 @@ class restore_maj_submissions_block_task extends restore_block_task {
             $config = unserialize(base64_decode($configdata));
             $update = false;
 
-            $types = array(,'workshops', 'reception', 'collect', 'publish', 'register');
+            $types = array('conference', 'workshops', 'reception', 'collect', 'publish', 'register');
             foreach ($types as $type) {
                 if ($this->after_restore_fix_cmid($config, $type)) {
                     $update = true;
