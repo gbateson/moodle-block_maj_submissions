@@ -69,11 +69,11 @@ class block_maj_submissions_edit_form extends block_edit_form {
         //-----------------------------------------------------------------------------
 
         $this->add_time_startfinish($mform, $plugin, 'conference');
-        $this->add_cmid($mform, $plugin, 'page,url', 'conferencecmid');
+        $this->add_cmid($mform, $plugin, 'resource,file,page,url', 'conferencecmid');
         $this->add_time_startfinish($mform, $plugin, 'workshops');
-        $this->add_cmid($mform, $plugin, 'page,url', 'workshopscmid');
+        $this->add_cmid($mform, $plugin, 'resource,file,page,url', 'workshopscmid');
         $this->add_time_startfinish($mform, $plugin, 'reception');
-        $this->add_cmid($mform, $plugin, 'page,url', 'receptioncmid');
+        $this->add_cmid($mform, $plugin, 'resource,file,page,url', 'receptioncmid');
 
         //-----------------------------------------------------------------------------
         $this->add_header($mform, $plugin, 'collectsubmissions');
@@ -107,7 +107,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
         //-----------------------------------------------------------------------------
 
         $this->add_time_startfinish($mform, $plugin, 'publish');
-        $this->add_cmid($mform, $plugin, 'data,page,url', 'publishcmid');
+        $this->add_cmid($mform, $plugin, 'data,resource,file,page,url', 'publishcmid');
 
         //-----------------------------------------------------------------------------
         $this->add_header($mform, $plugin, 'registerparticipation');
