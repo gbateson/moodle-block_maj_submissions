@@ -65,6 +65,16 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $this->add_field($mform, $plugin, $name, 'text', PARAM_TEXT, array('size' => 50));
 
         //-----------------------------------------------------------------------------
+        $this->add_header($mform, $plugin, 'conferenceevents');
+        //-----------------------------------------------------------------------------
+
+        $this->add_time_startfinish($mform, $plugin, 'conference');
+        $this->add_time_startfinish($mform, $plugin, 'workshops');
+        $this->add_cmid($mform, $plugin, 'page,url', 'workshopscmid');
+        $this->add_time_startfinish($mform, $plugin, 'reception');
+        $this->add_cmid($mform, $plugin, 'page,url', 'receptioncmid');
+
+        //-----------------------------------------------------------------------------
         $this->add_header($mform, $plugin, 'collectsubmissions');
         //-----------------------------------------------------------------------------
 
@@ -223,7 +233,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
      * @return void, but will update $mform
      */
     protected function add_cmid($mform, $plugin, $type, $name) {
-        $options = $this->get_options_cmids($mform, $plugin, 'data');
+        $options = $this->get_options_cmids($mform, $plugin, $type);
         $this->add_field($mform, $plugin, $name, 'select', PARAM_INT, $options);
     }
 
@@ -447,16 +457,22 @@ class block_maj_submissions_edit_form extends block_edit_form {
      */
     protected function get_options_cmids($mform, $plugin, $modname='', $sectionnum=0) {
         $options = array();
+
+        $modnames = explode(',', $modname);
+        $modnames = array_filter($modnames);
+
         $modinfo = $this->get_course_modinfo();
         $sections = $modinfo->get_section_info_all();
         foreach ($sections as $section) {
+
             if ($sectionnum==0 || $sectionnum==$section->section) {
-                $cmids = explode(',', $section->sequence);
+                $cmids = $section->sequence;
+                $cmids = explode(',', $cmids);
                 $cmids = array_filter($cmids);
                 foreach ($cmids as $cmid) {
                     if (array_key_exists($cmid, $modinfo->cms)) {
                         $cm = $modinfo->get_cm($cmid);
-                        if ($modname=='' || $modname==$cm->modname) {
+                        if ($modname=='' || in_array($cm->modname, $modnames)) {
                             $name = $cm->name;
                             $name = block_maj_submissions::filter_text($name);
                             $name = block_maj_submissions::trim_text($name);

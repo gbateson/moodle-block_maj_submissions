@@ -130,7 +130,19 @@ class block_maj_submissions extends block_base {
             'customdatefmt'      => '',
             'fixmonth'           => 1, // 0=no, 1=remove leading "0" from months
             'fixday'             => 1, // 0=no, 1=remove leading "0" from days
-            'fixhour'            => 1  // 0=no, 1=remove leading "0" from hours
+            'fixhour'            => 1, // 0=no, 1=remove leading "0" from hours
+
+            // conference events
+            'conferencetimestart'    => 0,
+            'conferencetimefinish'   => 0,
+
+            'workshopscmid'          => 0,
+            'workshopstimestart'     => 0,
+            'workshopstimefinish'    => 0,
+
+            'receptioncmid'          => 0,
+            'receptiontimestart'     => 0,
+            'receptiontimefinish'    => 0
         );
 
         if (empty($this->config)) {
@@ -201,26 +213,34 @@ class block_maj_submissions extends block_base {
         $dates = array();
         $options = array();
 
+        $modinfo = get_fast_modinfo($this->page->course);
+
         $types = array(
-            'collect'  => array('', 'workshop', 'sponsored'),
-            'review'   => array(''),
-            'revise'   => array(''),
-            'publish'  => array(''),
-            'register' => array('', 'presenter')
+            'conference' => array(''),
+            'workshops'  => array(''),
+            'reception'  => array(''),
+            'collect'    => array('', 'workshop', 'sponsored'),
+            'review'     => array(''),
+            'revise'     => array(''),
+            'publish'    => array(''),
+            'register'   => array('', 'presenter')
         );
         foreach ($types as $type => $times) {
 
             // set up $url
             $url = '';
             switch ($type) {
+                case 'workshops':
+                case 'reception':
                 case 'collect':
                 case 'publish':
                 case 'register':
                     $cmid = $type.'cmid';
                     if (isset($this->config->$cmid)) {
                         $cmid = $this->config->$cmid;
-                        if (is_numeric($cmid) && $cmid > 0) {
-                            $url = new moodle_url('/mod/data/view.php', array('id' => $cmid));
+                        if (is_numeric($cmid) && $cmid > 0 && isset($modinfo->cms[$cmid])) {
+                            $modname = $modinfo->get_cm($cmid)->modname;
+                            $url = new moodle_url("/mod/$modname/view.php", array('id' => $cmid));
                         }
                     }
                     break;
@@ -243,14 +263,24 @@ class block_maj_submissions extends block_base {
                 $timestart = $type.$time.'timestart';
                 $timefinish = $type.$time.'timefinish';
 
-                $removestart  = (isset($this->config->$timestart) && strftime('%H:%M', $this->config->$timestart)=='00:00');
-                $removefinish = (isset($this->config->$timefinish) && strftime('%H:%M', $this->config->$timefinish)=='23:55');
+                $removestart  = ($this->config->$timestart && (strftime('%H:%M', $this->config->$timestart)=='00:00'));
+                $removefinish = ($this->config->$timefinish && (strftime('%H:%M', $this->config->$timefinish)=='23:55'));
                 $removetime   = ($removestart && $removefinish);
+                $removedate   = false;
 
                 if ($this->config->$timestart && $this->config->$timefinish) {
+                    if (date('d', $this->config->$timestart)==date('d', $this->config->$timefinish) &&
+                        date('m', $this->config->$timestart)==date('m', $this->config->$timefinish) &&
+                        date('Y', $this->config->$timestart)==date('Y', $this->config->$timefinish)) {
+                        // the dates are on the same day,
+                        // so don't remove times,
+                        $removetime = false;
+                        // but remove the finish date ;-)
+                        $removedate = true;
+                    }
                     $date = $this->userdate($this->config->$timestart, $dateformat, $removetime).
                             ' - '.
-                            $this->userdate($this->config->$timefinish, $dateformat, $removetime);
+                            $this->userdate($this->config->$timefinish, $dateformat, $removetime, $removedate);
                 } else if ($this->config->$timestart) {
                     $date = $this->userdate($this->config->$timestart, $dateformat, $removestart);
                     if ($this->config->$timestart < $time) {
@@ -322,8 +352,7 @@ class block_maj_submissions extends block_base {
 
         $desc = get_string('tool'.$type.'_desc', $plugin);
 
-        $params = array('id' => $this->page->course->id,
-                        'bui' => $this->instance->id);
+        $params = array('id' => $this->instance->id);
         $link = new moodle_url("/blocks/maj_submissions/tools/$type.php", $params);
 
         $link = html_writer::tag('a', $text, array('href' => $link)).
@@ -366,73 +395,31 @@ class block_maj_submissions extends block_base {
     }
 
     /**
-     * get_state_types
-     *
-     * @return array
-     */
-    static public function get_state_types() {
-        return array(1 => 'collect',
-                     2 => 'review',
-                     3 => 'revise',
-                     4 => 'publish',
-                     5 => 'register');
-    }
-
-    /**
-     * get_state_name
-     *
-     * @param string  $plugin name of plugin
-     * @param integer $type
-     * @return string name of $type in current locale
-     */
-    static public function get_state_name($plugin, $type) {
-        if ($type=='register') {
-            return get_string($type.'participation', $plugin);
-        } else {
-            return get_string($type.'submissions', $plugin);
-        }
-    }
-
-    /**
-     * get_state_names
-     *
-     * @param string $plugin name of plugin
-     * @param array  $prepend (optional, default=null)
-     * @param array  $append  (optional, default=null)
-     * @return array
-     */
-    static public function get_state_names($plugin, $prepend=null, $append=null) {
-        $types = self::get_state_types();
-        foreach ($types as $state => $type) {
-            $names[$state] = self::get_state_name($plugin, $type);
-        }
-        if ($prepend) {
-            $names = ($prepend + $names);
-        }
-        if ($append) {
-            $names = ($names + $append);
-        }
-        return $names;
-    }
-
-    /**
      * userdate
      *
      * @param integer $date
-     * @param string  $format (optional, default='')
-     * @param integer $timezone (optional, default = 99)
+     * @param string  $format
+     * @param boolean $removetime
+     * @param boolean $removedate (optional, default = false)
      * @return string representation of $date
      */
-    protected function userdate($date, $format, $removetime) {
+    protected function userdate($date, $format, $removetime, $removedate=false) {
 
         $current_language = substr(current_language(), 0, 2);
 
         if ($removetime) {
             // http://php.net/manual/en/function.strftime.php
-            $search = '/[ :\.,-]*[\[\{\(]*?%[HkIlMpPrRSTX][\)\}\]]?/';
+            $search = '/[ :,\-\.\/]*[\[\{\(]*?%[HkIlMpPrRSTX][\)\}\]]?/';
             $format = preg_replace($search, '', $format);
         }
 
+        if ($removedate) {
+            // http://php.net/manual/en/function.strftime.php
+            $search = '/[ :,\-\.\/]*[\[\{\(]*?%[AadejuwbBhmCgGyY][\)\}\]]?/';
+            $format = preg_replace($search, '', $format);
+        }
+
+        // add year, month and day characters for CJK languages
         if ($current_language=='ja' || $current_language=='zh') {
             $replace = array();
             if (strpos($format, '年')===false) {
