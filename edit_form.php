@@ -195,6 +195,8 @@ class block_maj_submissions_edit_form extends block_edit_form {
      * @return void, but will update $mform
      */
     protected function add_field_description($mform, $plugin, $name) {
+        global $OUTPUT;
+
         $label = get_string($name);
         $text = get_string('block'.$name, $plugin);
 
@@ -203,12 +205,14 @@ class block_maj_submissions_edit_form extends block_edit_form {
 
         $text .= html_writer::empty_tag('br');
         $text .= html_writer::tag('a', get_string('exportsettings', $plugin), $params);
+        $text .= ' '.$OUTPUT->help_icon('exportsettings', $plugin);
 
         $params = array('id' => $this->block->instance->id);
         $params = array('href' => new moodle_url('/blocks/maj_submissions/import.php', $params));
 
         $text .= html_writer::empty_tag('br');
         $text .= html_writer::tag('a', get_string('importsettings', $plugin), $params);
+        $text .= ' '.$OUTPUT->help_icon('importsettings', $plugin);
 
         $mform->addElement('static', $name, $label, $text);
     }

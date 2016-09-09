@@ -27,19 +27,23 @@
 require_once('../../config.php');
 require_once($CFG->dirroot.'/lib/filelib.php'); // send_file()
 
-$id = required_param('id', PARAM_INT); // block_instance id
+// cache the plugin name  - because it is quite long ;-)
+$plugin = 'block_maj_submissions';
+
+// get the incoming block_instance id
+$id = required_param('id', PARAM_INT);
 
 if (! $block_instance = $DB->get_record('block_instances', array('id' => $id))) {
-    print_error('invalidinstanceid', 'block_maj_submissions');
+    print_error('invalidinstanceid', $plugin, '', $id);
 }
 if (! $block = $DB->get_record('block', array('name' => $block_instance->blockname))) {
-    print_error('invalidblockid', 'block_maj_submissions', $block_instance->blockid);
+    print_error('invalidblockname', $plugin, '', $block_instance);
 }
 if (! $context = $DB->get_record('context', array('id' => $block_instance->parentcontextid))) {
-    print_error('invalidcontextid', 'block_maj_submissions', $block_instance->parentcontextid);
+    print_error('invalidcontextid', $plugin, '', $block_instance);
 }
 if (! $course = $DB->get_record('course', array('id' => $context->instanceid))) {
-    print_error('invalidcourseid', 'block_maj_submissions', $context->instanceid);
+    print_error('invalidcourseid', $plugin, '', $context);
 }
 
 require_login($course->id);
@@ -59,7 +63,11 @@ if (! isset($block->version)) {
 $content = '<?xml version="1.0" encoding="UTF-8"?>'."\n";
 if ($config = unserialize(base64_decode($block_instance->configdata))) {
 
-    $content .= '<MAJSUBMISSIONSBLOCK>'."\n";
+    // set main XML tag name for this block's config settings
+    $BLOCK = strtoupper($block_instance->blockname);
+    $BLOCK = strtr($BLOCK, array('_' => '')).'BLOCK';
+
+    $content .= "<$BLOCK>\n";
     $content .= '  <VERSION>'.$block->version.'</VERSION>'."\n";
     $content .= '  <POSITION>'.$block_instance->defaultregion.'</POSITION>'."\n";
     $content .= '  <WEIGHT>'.$block_instance->defaultweight.'</WEIGHT>'."\n";
@@ -104,7 +112,7 @@ if ($config = unserialize(base64_decode($block_instance->configdata))) {
     }
     $content .= '  </COURSEMODULES>'."\n";
 
-    $content .= '</MAJSUBMISSIONSBLOCK>'."\n";
+    $content .= "</$BLOCK>\n";
 }
 
 if (empty($config['title'])) {

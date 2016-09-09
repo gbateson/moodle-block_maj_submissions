@@ -16,11 +16,11 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/admin/users/import_form.php
+ * block/maj_submissions/import_form.php
  *
- * @package    mod
- * @subpackage reader
- * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @package    block
+ * @subpackage maj_submissions
+ * @copyright  2016 Gordon Bateson (gordon.bateson@gmail.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since      Moodle 2.0
  */
@@ -32,10 +32,10 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot.'/lib/formslib.php');
 
 /**
- * tool_fixlinks_form
+ * block_maj_submissions_import_form
  *
  * @package    tool
- * @subpackage fixlinks
+ * @subpackage maj_submissions
  * @copyright  2014 Gordon Bateson (gordon.bateson@gmail.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since      Moodle 2.0
@@ -69,17 +69,21 @@ class block_maj_submissions_import_form extends moodleform {
      * @param object $course
      * @return boolean true if import was successful, false otherwise
      */
-    static public function import($xml, $block_instance, $course) {
+    public function import($xml, $block_instance, $course) {
         global $DB;
 
         if (! $xml = xmlize($xml, 0)) {
             return false;
         }
 
-        if (! isset($xml['MAJSUBMISSIONSBLOCK']['#']['CONFIGFIELDS'][0]['#']['CONFIGFIELD'])) {
+        // set main XML tag name for this block's config settings
+        $BLOCK = strtoupper($block_instance->blockname);
+        $BLOCK = strtr($BLOCK, array('_' => '')).'BLOCK';
+
+        if (! isset($xml[$BLOCK]['#']['CONFIGFIELDS'][0]['#']['CONFIGFIELD'])) {
             return false;
         }
-        $configfield = &$xml['MAJSUBMISSIONSBLOCK']['#']['CONFIGFIELDS'][0]['#']['CONFIGFIELD'];
+        $configfield = &$xml[$BLOCK]['#']['CONFIGFIELDS'][0]['#']['CONFIGFIELD'];
 
         // $modinfo will be fetched later if needed
         $modinfo = null;
@@ -87,8 +91,8 @@ class block_maj_submissions_import_form extends moodleform {
         // array to map old cmid onto new cmid
         $coursemodules = array();
 
-        if (isset($xml['MAJSUBMISSIONSBLOCK']['#']['COURSEMODULES'][0]['#']['COURSEMODULE'])) {
-            $coursemodule = &$xml['MAJSUBMISSIONSBLOCK']['#']['COURSEMODULES'][0]['#']['COURSEMODULE'];
+        if (isset($xml[$BLOCK]['#']['COURSEMODULES'][0]['#']['COURSEMODULE'])) {
+            $coursemodule = &$xml[$BLOCK]['#']['COURSEMODULES'][0]['#']['COURSEMODULE'];
 
             $i = 0;
             while (isset($coursemodule[$i]['#'])) {
@@ -101,11 +105,18 @@ class block_maj_submissions_import_form extends moodleform {
                     $modinfo = get_fast_modinfo($course);
                 }
                 foreach ($modinfo->cms as $cm) {
-                    if ($cm->sectionnum==$sectionnum && $cm->modname==$modname && $cm->name==$name) {
-                        // same course section number, activity type and activity name
-                        $newcmid = $cm->id;
-                        break;
+                    if ($cm->sectionnum != $sectionnum) {
+                        continue; // wrong section number
                     }
+                    if ($cm->modname != $modname) {
+                        continue; // wrong activity type
+                    }
+                    if ($cm->name != $name) {
+                        continue; // wrong activty name
+                    }
+                    // same course section number, activity type and activity name
+                    $newcmid = $cm->id;
+                    break;
                 }
                 $coursemodules[$cmid] = $newcmid;
                 $i++;
