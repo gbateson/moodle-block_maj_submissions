@@ -25,7 +25,14 @@
  */
 
 $plugin->component = 'block_maj_submissions';
+$plugin->dependencies = array(
+    'datafield_action'   => ANY_VERSION,
+    'datafield_admin'    => ANY_VERSION,
+    'datafield_constant' => ANY_VERSION,
+    'datafield_report'   => ANY_VERSION,
+    'datafield_template' => ANY_VERSION
+);
 $plugin->maturity  = MATURITY_STABLE;
 $plugin->requires  = 2012062500; // Moodle 2.3
-$plugin->version   = 2016090715;
-$plugin->release   = '2016-09-07 (15)';
+$plugin->version   = 2016090819;
+$plugin->release   = '2016-09-08 (19)';

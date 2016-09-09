@@ -56,13 +56,8 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $this->add_header($mform, $plugin, 'title');
         //-----------------------------------------------------------------------------
 
-        $name = 'description';
-        $label = get_string($name);
-        $text = get_string('blockdescription', $plugin);
-        $element = $mform->addElement('static', $name, $label, $text);
-
-        $name = 'title';
-        $this->add_field($mform, $plugin, $name, 'text', PARAM_TEXT, array('size' => 50));
+        $this->add_field_description($mform, $plugin, 'description');
+        $this->add_field($mform, $plugin, 'title', 'text', PARAM_TEXT, array('size' => 50));
 
         //-----------------------------------------------------------------------------
         $this->add_header($mform, $plugin, 'conferenceevents');
@@ -189,6 +184,33 @@ class block_maj_submissions_edit_form extends block_edit_form {
         if (method_exists($mform, 'setExpanded')) {
             $mform->setExpanded($name, $expanded);
         }
+    }
+
+    /**
+     * add_field_description
+     *
+     * @param object  $mform
+     * @param string  $plugin
+     * @param string  $name of field
+     * @return void, but will update $mform
+     */
+    protected function add_field_description($mform, $plugin, $name) {
+        $label = get_string($name);
+        $text = get_string('block'.$name, $plugin);
+
+        $params = array('id' => $this->block->instance->id);
+        $params = array('href' => new moodle_url('/blocks/maj_submissions/export.php', $params));
+
+        $text .= html_writer::empty_tag('br');
+        $text .= html_writer::tag('a', get_string('exportsettings', $plugin), $params);
+
+        $params = array('id' => $this->block->instance->id);
+        $params = array('href' => new moodle_url('/blocks/maj_submissions/import.php', $params));
+
+        $text .= html_writer::empty_tag('br');
+        $text .= html_writer::tag('a', get_string('importsettings', $plugin), $params);
+
+        $mform->addElement('static', $name, $label, $text);
     }
 
     /**

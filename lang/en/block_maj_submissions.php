@@ -62,11 +62,22 @@ $string['currentstate'] = 'Current state';
 $string['customdatefmt_help'] = 'If you specify a date format here, it will be used in preference to any of the standard Moodle date formats.';
 $string['customdatefmt'] = 'Custom date format string';
 $string['dateformats'] = 'Date formats';
+$string['exportsettings_help'] = 'This link allows you export the configuration settings for this block to a file that you can import into a similar block in another course.';
+$string['exportsettings'] = 'Export settings';
 $string['filterfields_help'] = 'This field is used to filter the collected submissions into one or more workshop activities for peer review.';
 $string['filterfields'] = 'Filter field ({no})';
 $string['fixdates_help'] = 'These settings control whether or not the leading zero on months, days and hours less than 10 are removed.';
 $string['fixdates'] = 'Remove leading zeros';
 $string['importantdates'] = 'Important dates';
+$string['importsettings_help'] = 'This link takes you to a screen where you can import configuration settings from a MAJ submissions block configuration settings file.
+
+A settings file is created using the export link on a MAJ submissions block configuration settings page.';
+$string['importsettings'] = 'Import settings';
+$string['invalidblockname'] = 'Invalid block name in block instance record: id={$a->id}, blockname={$a->blockname}';
+$string['invalidcontextid'] = 'Invalid parentcontextid in block instance record: id = {$a->id}, parentcontextid = {$a->parentcontextid}';
+$string['invalidcourseid'] = 'Invalid instanceid in course context record: id={$a->id}, instanceid={$a->instanceid}';
+$string['invalidimportfile'] = 'Import file was missing, empty or invalid';
+$string['invalidinstanceid'] = 'Invalid block instance id: id = {$a}';
 $string['moodledatefmt_help'] = 'Start and finish dates will be formatted in a similar way to the date selected here.
 
 If you click on the &quot;+&quot; sign next to one of the dates, the name of the date format string for that date will be displayed, along with its format codes. This is useful if you want to create your own date format string in the &quot;Custom date format string&quot; setting below.
@@ -113,11 +124,12 @@ $string['timestart'] = 'Start';
 $string['title_help'] = 'This is the string that will be displayed as the title of this block. If this field is blank, no title will be displayed for this block.';
 $string['title'] = 'Title';
 $string['toolassign2data_desc'] = 'Convert Assignments -> Database';
-$string['toolassign2data'] = 'Prepare submissions for publication';
+$string['toolassign2data'] = 'Add submissions to schedule';
 $string['tooldata2workshop_desc'] = 'Convert Database -> Workshops';
 $string['tooldata2workshop'] = 'Allocate submissions for review';
 $string['toolworkshop2assign_desc'] = 'Convert Workshops -> Assignments';
 $string['toolworkshop2assign'] = 'Allow submissions to be revised';
+$string['validimportfile'] = 'Configuration settings were successfully imported';
 $string['workshopscmid_help'] = 'The page resource that displays information about the conference workshops.';
 $string['workshopscmid'] = 'Workshop information';
 $string['workshopstime_help'] = 'The start and finish dates of the conference workshops.';

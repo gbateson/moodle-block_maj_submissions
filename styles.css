@@ -29,6 +29,9 @@
  * styles for block settings edit form
  */
 
+#block_maj_submissions_edit_form.mform #fitem_id_description div.felement {
+    max-width: 480px;
+}
 #block_maj_submissions_edit_form.mform #fgroup_id_config_collecttime_elements div.fitemtitle,
 #block_maj_submissions_edit_form.mform #fgroup_id_config_collectworkshoptime_elements div.fitemtitle,
 #block_maj_submissions_edit_form.mform #fgroup_id_config_collectsponsoredtime_elements div.fitemtitle,

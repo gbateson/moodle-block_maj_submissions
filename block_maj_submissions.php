@@ -90,10 +90,10 @@ class block_maj_submissions extends block_base {
             'collectcmid'       => 0,
             'collecttimestart'  => 0,
             'collecttimefinish' => 0,
-            'collecttimeworkshopstart'   => 0,
-            'collecttimeworkshopfinish'  => 0,
-            'collecttimesponsoredstart'  => 0,
-            'collecttimesponsoredfinish' => 0,
+            'collectworkshoptimestart'   => 0,
+            'collectworkshoptimefinish'  => 0,
+            'collectsponsoredtimestart'  => 0,
+            'collectsponsoredtimefinish' => 0,
 
             // fields used to filter data into workshops
             // e.g. submissiontype AND submissionlanguage
@@ -124,6 +124,8 @@ class block_maj_submissions extends block_base {
             'registercmid'       => 0,
             'registertimestart'  => 0,
             'registertimefinish' => 0,
+            'registerpresentertimestart'  => 0,
+            'registerpresentertimefinish' => 0,
 
             // date settings
             'moodledatefmt'      => 'strftimerecent', // 11 Nov, 10:12
