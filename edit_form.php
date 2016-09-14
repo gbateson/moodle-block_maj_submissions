@@ -514,11 +514,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
                 }
             }
         }
-        if (empty($options)) {
-            return $this->format_select_options($plugin, $options, 'activity');
-        } else {
-            return $this->format_selectgroups_options($plugin, $options, 'activity');
-        }
+        return $this->format_selectgroups_options($plugin, $options, 'activity');
     }
 
     /**
