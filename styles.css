@@ -71,10 +71,10 @@ div.block_maj_submissions h4.toollinks {
     color:    #cc3333;
     margin:  0px auto;
 }
-div.block_maj_submissions h4.importantdates a.editicon {
+div.block_maj_submissions h4.importantdates a.icon {
     float:      right;
 }
-div.block_maj_submissions h4.importantdates a.editicon img {
+div.block_maj_submissions h4.importantdates a.icon img {
     margin-right: 4px;
     margin-top:  -4px;
 }
@@ -88,5 +88,51 @@ div.block_maj_submissions p.toollink {
     margin:   4px 0px;
 }
 div.block_maj_submissions ul.importantdates li.date span {
-    font-size:  0.9em;
+}
+div.block_maj_submissions ul.importantdates li.date.early span {
+}
+div.block_maj_submissions ul.importantdates li.date.open span {
+}
+div.block_maj_submissions ul.importantdates li.date.late span {
+    color: #999999;
+}
+div.block_maj_submissions ul.importantdates li.date.timeremaining1 span::before {
+    color:    #cc0000;
+    content:   ">>> ";
+    font-weight: bold;
+}
+div.block_maj_submissions ul.importantdates li.date.timeremaining1 span::after {
+    color:    #cc0000;
+    content:   " <<<";
+    font-weight: bold;
+}
+div.block_maj_submissions ul.importantdates li.date.timeremaining2 span::before {
+    color:    #cc0000;
+    content:    ">> ";
+    font-weight: bold;
+}
+div.block_maj_submissions ul.importantdates li.date.timeremaining2 span::after {
+    color:    #cc0000;
+    content:    " <<";
+    font-weight: bold;
+}
+div.block_maj_submissions ul.importantdates li.date.timeremaining3 span::before {
+    color:    #cc0000;
+    content:    "> ";
+    font-weight: bold;
+}
+div.block_maj_submissions ul.importantdates li.date.timeremaining3 span::after {
+    color:    #cc0000;
+    content:    " <";
+    font-weight: bold;
+}
+div.block_maj_submissions ul.importantdates li.date.timeremaining7 span::before {
+    color:    #cc0000;
+    content:    "* ";
+    font-weight: bold;
+}
+div.block_maj_submissions ul.importantdates li.date.timeremaining7 span::after {
+    color:    #cc0000;
+    content:    " *";
+    font-weight: bold;
 }

@@ -129,7 +129,7 @@ class block_maj_submissions extends block_base {
 
             // date settings
             'moodledatefmt'      => 'strftimerecent', // 11 Nov, 10:12
-            'customdatefmt'      => '',
+            'customdatefmt'      => '%b %d (%a) %H:%M', // Nov 11th (Wed) 10:12
             'fixmonth'           => 1, // 0=no, 1=remove leading "0" from months
             'fixday'             => 1, // 0=no, 1=remove leading "0" from days
             'fixhour'            => 1, // 0=no, 1=remove leading "0" from hours
@@ -206,7 +206,7 @@ class block_maj_submissions extends block_base {
             }
             $dateformat = get_string($dateformat);
         }
-        $time = time();
+        $timenow = time();
 
         $dates = array();
         $options = array();
@@ -282,14 +282,14 @@ class block_maj_submissions extends block_base {
                             $this->userdate($this->config->$timefinish, $dateformat, $removetime, $removedate);
                 } else if ($this->config->$timestart) {
                     $date = $this->userdate($this->config->$timestart, $dateformat, $removestart);
-                    if ($this->config->$timestart < $time) {
+                    if ($this->config->$timestart < $timenow) {
                         $date = get_string('openedon', $plugin, $date);
                     } else {
                         $date = get_string('openson', $plugin, $date);
                     }
                 } else if ($this->config->$timefinish) {
                     $date = $this->userdate($this->config->$timefinish, $dateformat, $removefinish);
-                    if ($this->config->$timefinish < $time) {
+                    if ($this->config->$timefinish < $timenow) {
                         $date = get_string('closedon', $plugin, $date);
                     } else {
                         $date = get_string('closeson', $plugin, $date);
@@ -303,17 +303,21 @@ class block_maj_submissions extends block_base {
                     if ($url) {
                         $text = html_writer::tag('a', $text, array('href' => $url));
                     }
-                    $date = $text.html_writer::empty_tag('br').$date;
-
+                    $date = $text.html_writer::empty_tag('br').html_writer::tag('span', $date);
                     $class = 'date';
-                    if (($time >= $this->config->$timestart) && ($time <= $this->config->$timefinish)) {
-                        $class .= ' open';
+                    switch (true) {
+                        case ($timenow < $this->config->$timestart):  $class .= ' early'; break;
+                        case ($timenow < $this->config->$timefinish): $class .= ' open';  break;
+                        case ($this->config->$timefinish):            $class .= ' late';  break;
                     }
-                    if ($this->config->$timestart && ($this->config->$timestart > $time)) {
-                        $class .= ' early';
-                    }
-                    if ($this->config->$timefinish && ($this->config->$timefinish < $time)) {
-                        $class .= ' late';
+                    if ($timenow < $this->config->$timefinish) {
+                        $timeremaining = ($this->config->$timefinish - $timenow);
+                        switch (true) {
+                            case ($timeremaining <= (1 * DAYSECS)): $class .= ' timeremaining1'; break;
+                            case ($timeremaining <= (2 * DAYSECS)): $class .= ' timeremaining2'; break;
+                            case ($timeremaining <= (3 * DAYSECS)): $class .= ' timeremaining3'; break;
+                            case ($timeremaining <= (7 * DAYSECS)): $class .= ' timeremaining7'; break;
+                        }
                     }
                     $dates[] = html_writer::tag('li', $date, array('class' => $class));
                 }
@@ -322,8 +326,12 @@ class block_maj_submissions extends block_base {
 
         if ($dates = implode('', $dates)) {
             $heading = get_string('importantdates', $plugin);
-            if ($this->user_can_edit() && $USER->editing==0) {
-                $heading .= ' '.$this->get_edit_icon();
+            if ($this->user_can_edit()) {
+                $heading .= ' '.$this->get_exportimport_icon($plugin, 'export');
+                $heading .= ' '.$this->get_exportimport_icon($plugin, 'import');
+                if ($USER->editing==0) {
+                    $heading .= ' '.$this->get_edit_icon($plugin);
+                }
             }
             $this->content->text .= html_writer::tag('h4', $heading, array('class' => 'importantdates'));
             $this->content->text .= html_writer::tag('ul', $dates,   array('class' => 'importantdates'));
@@ -363,12 +371,23 @@ class block_maj_submissions extends block_base {
     }
 
     /**
+     * get_icon
+     *
+     * @return array
+     */
+    protected function get_icon($src, $title, $href, $class) {
+        global $OUTPUT;
+        $params = array('src' => $OUTPUT->pix_url($src), 'title' => $title);
+        $icon = html_writer::empty_tag('img', $params);
+        return html_writer::tag('a', $icon, array('href' => $href, 'class' => "icon $class"));
+    }
+
+    /**
      * get_edit_icon
      *
      * @return array
      */
-    protected function get_edit_icon() {
-        global $OUTPUT;
+    protected function get_edit_icon($plugin) {
 
         // the "return" url which leads to the block edit page
         $params = array('id' => $this->page->course->id,
@@ -383,15 +402,24 @@ class block_maj_submissions extends block_base {
                         'return' => $href->out_as_local_url(false));
         $href = new moodle_url('/course/view.php', $params);
 
-        // the edit icon image
-        $params = array('src' => $OUTPUT->pix_url('t/edit'),
-                        'title' => get_string('editsettings'));
-        $icon = html_writer::empty_tag('img', $params);
-
         // return edit icon image
         // linking to edit enable page
         // with redirect to block settings page
-        return html_writer::tag('a', $icon, array('href' => $href, 'class' => 'editicon'));
+        return $this->get_icon('t/edit', get_string('editsettings'), $href, 'editicon');
+    }
+
+    /**
+     * get_exportimport_icon
+     *
+     * @param string $type "import" or "export"
+     * @return array
+     */
+    protected function get_exportimport_icon($plugin, $type) {
+        $title = get_string($type.'settings', $plugin);
+        $params = array('id' => $this->instance->id,
+                        'sesskey' => sesskey());
+        $href = new moodle_url("/blocks/maj_submissions/$type.php", $params);
+        return $this->get_icon("i/$type", $title, $href, $type.'icon');
     }
 
     /**
@@ -525,11 +553,13 @@ class block_maj_submissions extends block_base {
      * @return  string
      */
     static function trim_text($text, $textlength=42, $headlength=16, $taillength=16) {
-        $strlen = self::textlib('strlen', $text);
-        if ($strlen > $textlength) {
-            $head = self::textlib('substr', $text, 0, $headlength);
-            $tail = self::textlib('substr', $text, $strlen - $taillength, $taillength);
-            $text = $head.' ... '.$tail;
+        if ($textlength) {
+            $strlen = self::textlib('strlen', $text);
+            if ($strlen > $textlength) {
+                $head = self::textlib('substr', $text, 0, $headlength);
+                $tail = self::textlib('substr', $text, $strlen - $taillength, $taillength);
+                $text = $head.' ... '.$tail;
+            }
         }
         return $text;
     }

@@ -261,7 +261,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
      */
     protected function add_cmid($mform, $plugin, $type, $name) {
         $options = $this->get_options_cmids($mform, $plugin, $type);
-        $this->add_field($mform, $plugin, $name, 'select', PARAM_INT, $options);
+        $this->add_field($mform, $plugin, $name, 'selectgroups', PARAM_INT, $options);
     }
 
     /**
@@ -310,7 +310,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $course = $this->get_course();
         $sections = get_fast_modinfo($course)->get_section_info_all();
         foreach ($sections as $sectionnum => $section) {
-            if ($name = $this->get_sectionname($course, $section)) {
+            if ($name = $this->get_sectionname($section)) {
                 $options[$sectionnum] = $name;
             } else {
                 $options[$sectionnum] = $this->get_sectionname_default($course, $sectionnum);
@@ -326,14 +326,13 @@ class block_maj_submissions_edit_form extends block_edit_form {
      * where the number of characters in HEAD is $headlength
      * and the number of characters in TIAL is $taillength
      *
-     * @param object   $course
      * @param object   $section
      * @param integer  $namelength of section name (optional, default=28)
      * @param integer  $headlength of head of section name (optional, default=10)
      * @param integer  $taillength of tail of section name (optional, default=10)
      * @return string  name of $section
      */
-    protected function get_sectionname($course, $section, $namelength=28, $headlength=10, $taillength=10) {
+    protected function get_sectionname($section, $namelength=28, $headlength=10, $taillength=10) {
 
         // extract section title from section name
         if ($name = block_maj_submissions::filter_text($section->name)) {
@@ -364,7 +363,8 @@ class block_maj_submissions_edit_form extends block_edit_form {
                 }
             }
             $name = trim(strip_tags($name));
-            return block_maj_submissions::trim_text($name, $namelength, $headlength, $taillength);
+            $name = block_maj_submissions::trim_text($name, $namelength, $headlength, $taillength);
+            return $name;
         }
 
         return ''; // section name and summary are empty
@@ -492,6 +492,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $sections = $modinfo->get_section_info_all();
         foreach ($sections as $section) {
 
+            $sectionname = '';
             if ($sectionnum==0 || $sectionnum==$section->section) {
                 $cmids = $section->sequence;
                 $cmids = explode(',', $cmids);
@@ -500,16 +501,24 @@ class block_maj_submissions_edit_form extends block_edit_form {
                     if (array_key_exists($cmid, $modinfo->cms)) {
                         $cm = $modinfo->get_cm($cmid);
                         if ($modname=='' || in_array($cm->modname, $modnames)) {
+                            if ($sectionname=='') {
+                                $sectionname = $this->get_sectionname($section, 0);
+                                $options[$sectionname] = array();
+                            }
                             $name = $cm->name;
                             $name = block_maj_submissions::filter_text($name);
                             $name = block_maj_submissions::trim_text($name);
-                            $options[$cmid] = $name;
+                            $options[$sectionname][$cmid] = $name;
                         }
                     }
                 }
             }
         }
-        return $this->format_select_options($plugin, $options, 'activity');
+        if (empty($options)) {
+            return $this->format_select_options($plugin, $options, 'activity');
+        } else {
+            return $this->format_selectgroups_options($plugin, $options, 'activity');
+        }
     }
 
     /**
@@ -517,15 +526,28 @@ class block_maj_submissions_edit_form extends block_edit_form {
      *
      * @param string  $plugin
      * @param array   $options
-     * @param string  $type ("", "" or "")
+     * @param string  $type ("field", "activity" or "section")
      * @return array  $option for a select element in $mform
      */
     protected function format_select_options($plugin, $options, $type) {
-        $createnew = get_string('createnew'.$type, $plugin);
         if (! array_key_exists(0, $options)) {
-            $options = array(0 => '') + $options;
+            $none = get_string('none');
+            $options = array(0 => "($none)") + $options;
         }
+        $createnew = get_string('createnew'.$type, $plugin);
         return $options + array(-1 => "($createnew)");
+    }
+
+    /**
+     * format_selectgroups_options
+     *
+     * @param string  $plugin
+     * @param array   $options
+     * @param string  $type ("field", "activity" or "section")
+     * @return array  $option for a select element in $mform
+     */
+    protected function format_selectgroups_options($plugin, $options, $type) {
+        return $options + array('-----' => $this->format_select_options($plugin, array(), $type));
     }
 
     /**

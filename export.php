@@ -120,6 +120,7 @@ if (empty($config['title'])) {
 } else {
     $filename = clean_filename(strip_tags(format_string($config['title'], true)).'.xml');
 }
+$filename = preg_replace('/[ \.]/', '.', $filename);
 send_file($content, $filename, 0, 0, true, true);
 
 /**
