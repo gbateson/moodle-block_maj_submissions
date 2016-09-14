@@ -128,6 +128,7 @@ class block_maj_submissions extends block_base {
             'registerpresentertimefinish' => 0,
 
             // date settings
+            'manageevents'       => 0,
             'moodledatefmt'      => 'strftimerecent', // 11 Nov, 10:12
             'customdatefmt'      => '%b %d (%a) %H:%M', // Nov 11th (Wed) 10:12
             'fixmonth'           => 1, // 0=no, 1=remove leading "0" from months
@@ -177,6 +178,61 @@ class block_maj_submissions extends block_base {
             return true;
         }
 
+        $plugin = 'block_maj_submissions';
+
+        // update calendar events, if required
+        if ($config->manageevents) {
+            $events = array();
+
+            $modinfo = get_fast_modinfo($this->page->course);
+            foreach ($this->get_timetypes() as $type => $times) {
+
+                // set up $modname, $instance and $visible
+                $modname     = '';
+                $instance    =  0;
+                $visible     =  1;
+                $description = '';
+                switch ($type) {
+                    case 'conference':
+                    case 'workshops':
+                    case 'reception':
+                    case 'collect':
+                    case 'publish':
+                    case 'register':
+                        $cmid = $type.'cmid';
+                        if (isset($config->$cmid)) {
+                            $cmid = $config->$cmid;
+                            if (is_numeric($cmid) && $cmid > 0 && isset($modinfo->cms[$cmid])) {
+                                $modname  = $modinfo->get_cm($cmid)->modname;
+                                $instance = $modinfo->get_cm($cmid)->instance;
+                                $visible  = $modinfo->get_cm($cmid)->visible;
+                                $description = $modinfo->get_cm($cmid)->name;
+                            }
+                        }
+                        break;
+                }
+
+                foreach ($times as $time) {
+                    $timestart = $type.$time.'timestart';
+                    $timefinish = $type.$time.'timefinish';
+                    if ($config->$timestart) {
+                        $name = get_string('timestart', $plugin);
+                        $name = get_string($type.$time.'time', $plugin)." ($name)";
+                        $events[] = $this->create_event($name, $description, 'open', $config->$timestart, $modname, $instance);
+                    }
+                    if ($config->$timefinish) {
+                        $name = get_string('timefinish', $plugin);
+                        $name = get_string($type.$time.'time', $plugin)." ($name)";
+                        $events[] = $this->create_event($name, $description, 'close', $config->$timefinish, $modname, $instance);
+                    }
+                }
+            }
+
+            if (count($events)) {
+                $this->add_events($events, $this->page->course, $plugin);
+            }
+        }
+
         //  save config settings as usual
         return parent::instance_config_save($config, $pinned);
     }
@@ -212,18 +268,7 @@ class block_maj_submissions extends block_base {
         $options = array();
 
         $modinfo = get_fast_modinfo($this->page->course);
-
-        $types = array(
-            'conference' => array(''),
-            'workshops'  => array(''),
-            'reception'  => array(''),
-            'collect'    => array('', 'workshop', 'sponsored'),
-            'review'     => array(''),
-            'revise'     => array(''),
-            'publish'    => array(''),
-            'register'   => array('', 'presenter')
-        );
-        foreach ($types as $type => $times) {
+        foreach ($this->get_timetypes() as $type => $times) {
 
             // set up $url
             $url = '';
@@ -345,6 +390,94 @@ class block_maj_submissions extends block_base {
             $this->content->text .= $this->get_tool_link($plugin, 'assign2data');
         }
         return $this->content;
+    }
+
+    /**
+     * get_timetypes
+     *
+     * @return array
+     */
+    protected function get_timetypes() {
+        return array(
+            'conference' => array(''),
+            'workshops'  => array(''),
+            'reception'  => array(''),
+            'collect'    => array('', 'workshop', 'sponsored'),
+            'review'     => array(''),
+            'revise'     => array(''),
+            'publish'    => array(''),
+            'register'   => array('', 'presenter')
+        );
+    }
+
+    /**
+     * create_event
+     *
+     * @param string  $description
+     * @param string  $type
+     * @param integer $time
+     * @param string  $modname
+     * @param integer $instance
+     * @return xxx
+     */
+    protected function create_event($name, $description, $type, $time, $modname, $instance) {
+        return (object)array('name'         => $name,
+                             'description'  => $this->config->title.': '.($description ? $description : $name),
+                             'eventtype'    => $type,
+                             'timestart'    => $time,
+                             'timeduration' => 0,
+                             'modulename'   => $modname,
+                             'instance'     => $instance);
+    }
+
+    /**
+     * add_events
+     *
+     * @param array  $events
+     * @param object $course
+     * @param string $plugin
+     * @return xxx
+     */
+    protected function add_events($events, $course, $plugin) {
+        global $CFG, $DB;
+        require_once($CFG->dirroot.'/calendar/lib.php');
+
+        // check we are allowed to update calendar events,
+        if (! has_capability('moodle/calendar:manageentries', $this->page->context)) {
+            return false;
+        }
+
+        $select = 'courseid = :courseid AND '.$DB->sql_like('description', ':title');
+        $params = array('courseid' => $course->id, 'title' => $this->config->title.': %');
+        if ($eventids = $DB->get_records_select('event', $select, $params, 'id', 'id,courseid,name')) {
+            $eventids = array_keys($eventids);
+        } else {
+            $eventids = array();
+        }
+
+        // don't check calendar capabiltiies when adding/updating events
+        $checkcapabilties = false;
+
+        foreach ($events as $event) {
+            $event->groupid  = 0;
+            $event->userid   = 0;
+            $event->courseid = $course->id;
+            if (count($eventids)) {
+                $event->id = array_shift($eventids);
+                $calendarevent = calendar_event::load($event->id);
+                $calendarevent->update($event, $checkcapabilties);
+            } else {
+                calendar_event::create($event, $checkcapabilties);
+            }
+        }
+
+        // delete surplus events, if required
+        // (no need to check capabilities here)
+        while (count($eventids)) {
+            $id = array_shift($eventids);
+            $event = calendar_event::load($id);
+            $event->delete();
+        }
     }
 
     /**
