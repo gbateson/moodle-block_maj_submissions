@@ -79,13 +79,6 @@ class block_maj_submissions extends block_base {
         $defaults = array(
             'title'             => get_string('blockname', $plugin),
 
-            'currentstate'      => 0, // 0 = unset
-                                      // 1 = collect
-                                      // 2 = review
-                                      // 3 = revise
-                                      // 4 = publish
-                                      // 5 = register
-
             // data is collected in a database activity
             'collectcmid'       => 0,
             'collecttimestart'  => 0,
@@ -128,7 +121,7 @@ class block_maj_submissions extends block_base {
             'registerpresentertimefinish' => 0,
 
             // date settings
-            'manageevents'       => 0,
+            'manageevents'       => 0, // 0=no, 1=yes
             'moodledatefmt'      => 'strftimerecent', // 11 Nov, 10:12
             'customdatefmt'      => '%b %d (%a) %H:%M', // Nov 11th (Wed) 10:12
             'fixmonth'           => 1, // 0=no, 1=remove leading "0" from months
@@ -185,44 +178,47 @@ class block_maj_submissions extends block_base {
             $events = array();
 
             $modinfo = get_fast_modinfo($this->page->course);
-            foreach ($this->get_timetypes() as $type => $times) {
+            foreach ($this->get_timetypes() as $types) {
+                foreach ($types as $type) {
 
-                // set up $modname, $instance and $visible
-                $modname     = '';
-                $instance    =  0;
-                $visible     =  1;
-                $description = '';
-                switch ($type) {
-                    case 'conference':
-                    case 'workshops':
-                    case 'reception':
-                    case 'collect':
-                    case 'publish':
-                    case 'register':
-                        $cmid = $type.'cmid';
-                        if (isset($config->$cmid)) {
-                            $cmid = $config->$cmid;
-                            if (is_numeric($cmid) && $cmid > 0 && isset($modinfo->cms[$cmid])) {
-                                $modname  = $modinfo->get_cm($cmid)->modname;
-                                $instance = $modinfo->get_cm($cmid)->instance;
-                                $visible  = $modinfo->get_cm($cmid)->visible;
-                                $description = $modinfo->get_cm($cmid)->name;
+                    // set up $modname, $instance and $visible
+                    $modname     = '';
+                    $instance    =  0;
+                    $visible     =  1;
+                    $description = '';
+                    switch ($type) {
+                        case 'conference':
+                        case 'workshops':
+                        case 'reception':
+                        case 'collect':
+                        case 'collectworkshop':
+                        case 'collectsponsored':
+                        case 'publish':
+                        case 'register':
+                            $cmid = $type.'cmid';
+                            if (isset($config->$cmid)) {
+                                $cmid = $config->$cmid;
+                                if (is_numeric($cmid) && $cmid > 0 && isset($modinfo->cms[$cmid])) {
+                                    $modname  = $modinfo->get_cm($cmid)->modname;
+                                    $instance = $modinfo->get_cm($cmid)->instance;
+                                    $visible  = $modinfo->get_cm($cmid)->visible;
+                                    $description = $modinfo->get_cm($cmid)->name;
+                                }
                             }
-                        }
-                        break;
-                }
+                            break;
+                    }
 
-                foreach ($times as $time) {
-                    $timestart = $type.$time.'timestart';
-                    $timefinish = $type.$time.'timefinish';
+                    $timestart = $type.'timestart';
+                    $timefinish = $type.'timefinish';
+
                     if ($config->$timestart) {
                         $name = get_string('timestart', $plugin);
-                        $name = get_string($type.$time.'time', $plugin)." ($name)";
+                        $name = get_string($type.'time', $plugin)." ($name)";
                         $events[] = $this->create_event($name, $description, 'open', $config->$timestart, $modname, $instance);
                     }
                     if ($config->$timefinish) {
                         $name = get_string('timefinish', $plugin);
-                        $name = get_string($type.$time.'time', $plugin)." ($name)";
+                        $name = get_string($type.'time', $plugin)." ($name)";
                         $events[] = $this->create_event($name, $description, 'close', $config->$timefinish, $modname, $instance);
                     }
                 }
@@ -268,44 +264,47 @@ class block_maj_submissions extends block_base {
         $options = array();
 
         $modinfo = get_fast_modinfo($this->page->course);
-        foreach ($this->get_timetypes() as $type => $times) {
+        foreach ($this->get_timetypes() as $types) {
 
-            // set up $url
-            $url = '';
-            switch ($type) {
-                case 'conference':
-                case 'workshops':
-                case 'reception':
-                case 'collect':
-                case 'publish':
-                case 'register':
-                    $cmid = $type.'cmid';
-                    if (isset($this->config->$cmid)) {
-                        $cmid = $this->config->$cmid;
-                        if (is_numeric($cmid) && $cmid > 0 && isset($modinfo->cms[$cmid])) {
-                            $modname = $modinfo->get_cm($cmid)->modname;
-                            $url = new moodle_url("/mod/$modname/view.php", array('id' => $cmid));
+            $divider = empty($dates);
+            foreach ($types as $type) {
+
+                // set up $url
+                $url = '';
+                switch ($type) {
+                    case 'conference':
+                    case 'workshops':
+                    case 'reception':
+                    case 'collect':
+                    case 'collectworkshop':
+                    case 'collectsponsored':
+                    case 'publish':
+                    case 'register':
+                        $cmid = $type.'cmid';
+                        if (isset($this->config->$cmid)) {
+                            $cmid = $this->config->$cmid;
+                            if (is_numeric($cmid) && $cmid > 0 && isset($modinfo->cms[$cmid])) {
+                                $modname = $modinfo->get_cm($cmid)->modname;
+                                $url = new moodle_url("/mod/$modname/view.php", array('id' => $cmid));
+                            }
                         }
-                    }
-                    break;
+                        break;
 
-                case 'review':
-                case 'revise':
-                    $sectionnum = $type.'sectionnum';
-                    if (isset($this->config->$sectionnum)) {
-                        $sectionnum = $this->config->$sectionnum;
-                        if (is_numeric($sectionnum) && $sectionnum >= 0) { // 0 is allowed ;-)
-                            $params = array('id' => $this->page->course->id, 'section' => $sectionnum);
-                            $url = new moodle_url('/course/view.php', $params);
+                    case 'review':
+                    case 'revise':
+                        $sectionnum = $type.'sectionnum';
+                        if (isset($this->config->$sectionnum)) {
+                            $sectionnum = $this->config->$sectionnum;
+                            if (is_numeric($sectionnum) && $sectionnum >= 0) { // 0 is allowed ;-)
+                                $params = array('id' => $this->page->course->id, 'section' => $sectionnum);
+                                $url = new moodle_url('/course/view.php', $params);
+                            }
                         }
-                    }
-                    break;
-            }
+                        break;
+                }
 
-            foreach ($times as $time) {
-
-                $timestart = $type.$time.'timestart';
-                $timefinish = $type.$time.'timefinish';
+                $timestart = $type.'timestart';
+                $timefinish = $type.'timefinish';
 
                 $removestart  = ($this->config->$timestart && (strftime('%H:%M', $this->config->$timestart)=='00:00'));
                 $removefinish = ($this->config->$timefinish && (strftime('%H:%M', $this->config->$timefinish)=='23:55'));
@@ -344,7 +343,7 @@ class block_maj_submissions extends block_base {
                 }
 
                 if ($date) {
-                    $text = html_writer::tag('b', get_string($type.$time.'time', $plugin));
+                    $text = html_writer::tag('b', get_string($type.'time', $plugin));
                     if ($url) {
                         $text = html_writer::tag('a', $text, array('href' => $url));
                     }
@@ -363,6 +362,10 @@ class block_maj_submissions extends block_base {
                             case ($timeremaining <= (3 * DAYSECS)): $class .= ' timeremaining3'; break;
                             case ($timeremaining <= (7 * DAYSECS)): $class .= ' timeremaining7'; break;
                         }
+                    }
+                    if ($divider==false) {
+                        $divider = true;
+                        $dates[] = html_writer::tag('li', '', array('class' => 'divider'));
                     }
                     $dates[] = html_writer::tag('li', $date, array('class' => $class));
                 }
@@ -398,6 +401,12 @@ class block_maj_submissions extends block_base {
      * @return array
      */
     protected function get_timetypes() {
+        return array(
+            array('conference', 'workshops',       'reception'),
+            array('collect',    'collectworkshop', 'collectsponsored'),
+            array('review',     'revise',          'publish'),
+            array('register',   'registerpresenter'),
+        );
         return array(
             'conference' => array(''),
             'workshops'  => array(''),
