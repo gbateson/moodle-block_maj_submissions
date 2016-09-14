@@ -77,12 +77,25 @@ class block_maj_submissions extends block_base {
     function specialization() {
         $plugin = 'block_maj_submissions';
         $defaults = array(
-            'title'             => get_string('blockname', $plugin),
+            'title' => get_string('blockname', $plugin),
 
-            // data is collected in a database activity
-            'collectcmid'       => 0,
-            'collecttimestart'  => 0,
-            'collecttimefinish' => 0,
+            // conference events
+            'conferencecmid'       => 0,
+            'conferencetimestart'  => 0,
+            'conferencetimefinish' => 0,
+
+            'workshopscmid'        => 0,
+            'workshopstimestart'   => 0,
+            'workshopstimefinish'  => 0,
+
+            'receptioncmid'        => 0,
+            'receptiontimestart'   => 0,
+            'receptiontimefinish'  => 0,
+
+            // data is collected in a DATABASE activity
+            'collectcmid'          => 0,
+            'collecttimestart'     => 0,
+            'collecttimefinish'    => 0,
             'collectworkshoptimestart'   => 0,
             'collectworkshoptimefinish'  => 0,
             'collectsponsoredtimestart'  => 0,
@@ -90,23 +103,21 @@ class block_maj_submissions extends block_base {
 
             // fields used to filter data into workshops
             // e.g. submissiontype AND submissionlanguage
-            'filterfields'      => array(),
+            'filterfields'         => array(),
 
             // data is reviewed,
-            // during the start and finish times,
             // in one or more WORKSHOP activities
             'reviewsectionnum'  => 0,
-            'reviewcmids'       => array(),
             'reviewtimestart'   => 0,
             'reviewtimefinish'  => 0,
+            'reviewcmids'       => array(),
 
             // data is revised,
-            // during the start and finish times,
             // in one or more ASSIGNMENT activities
             'revisesectionnum'  => 0,
-            'revisecmids'       => array(),
             'revisetimestart'   => 0,
             'revisetimefinish'  => 0,
+            'revisecmids'       => array(),
 
             // data is published in a DATABASE activity
             'publishcmid'       => 0,
@@ -121,25 +132,12 @@ class block_maj_submissions extends block_base {
             'registerpresentertimefinish' => 0,
 
             // date settings
-            'manageevents'       => 0, // 0=no, 1=yes
             'moodledatefmt'      => 'strftimerecent', // 11 Nov, 10:12
             'customdatefmt'      => '%b %d (%a) %H:%M', // Nov 11th (Wed) 10:12
             'fixmonth'           => 1, // 0=no, 1=remove leading "0" from months
             'fixday'             => 1, // 0=no, 1=remove leading "0" from days
             'fixhour'            => 1, // 0=no, 1=remove leading "0" from hours
-
-            // conference events
-            'conferencecmid'         => 0,
-            'conferencetimestart'    => 0,
-            'conferencetimefinish'   => 0,
-
-            'workshopscmid'          => 0,
-            'workshopstimestart'     => 0,
-            'workshopstimefinish'    => 0,
-
-            'receptioncmid'          => 0,
-            'receptiontimestart'     => 0,
-            'receptiontimefinish'    => 0
+            'manageevents'       => 0  // 0=no, 1=yes
         );
 
         if (empty($this->config)) {
@@ -191,8 +189,6 @@ class block_maj_submissions extends block_base {
                         case 'workshops':
                         case 'reception':
                         case 'collect':
-                        case 'collectworkshop':
-                        case 'collectsponsored':
                         case 'publish':
                         case 'register':
                             $cmid = $type.'cmid';
@@ -266,7 +262,9 @@ class block_maj_submissions extends block_base {
         $modinfo = get_fast_modinfo($this->page->course);
         foreach ($this->get_timetypes() as $types) {
 
-            $divider = empty($dates);
+            // skip the divider, if $dates is still empty
+            $skipdivider = empty($dates);
+
             foreach ($types as $type) {
 
                 // set up $url
@@ -276,8 +274,6 @@ class block_maj_submissions extends block_base {
                     case 'workshops':
                     case 'reception':
                     case 'collect':
-                    case 'collectworkshop':
-                    case 'collectsponsored':
                     case 'publish':
                     case 'register':
                         $cmid = $type.'cmid';
@@ -363,8 +359,8 @@ class block_maj_submissions extends block_base {
                             case ($timeremaining <= (7 * DAYSECS)): $class .= ' timeremaining7'; break;
                         }
                     }
-                    if ($divider==false) {
-                        $divider = true;
+                    if ($skipdivider==false) {
+                        $skipdivider = true;
                         $dates[] = html_writer::tag('li', '', array('class' => 'divider'));
                     }
                     $dates[] = html_writer::tag('li', $date, array('class' => $class));

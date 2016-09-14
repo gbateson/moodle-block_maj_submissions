@@ -78,8 +78,8 @@ $string['invalidcontextid'] = 'Invalid parentcontextid in block instance record:
 $string['invalidcourseid'] = 'Invalid instanceid in course context record: id={$a->id}, instanceid={$a->instanceid}';
 $string['invalidimportfile'] = 'Import file was missing, empty or invalid';
 $string['invalidinstanceid'] = 'Invalid block instance id: id = {$a}';
-$string['manageevents_help'] = 'If this option is enabled, then calendar events for start and finish times will automatically be added, edited or removed when this block\'s settings are saved.';
-$string['manageevents'] = 'Manage calndar events';
+$string['manageevents_help'] = 'If this option is enabled, then calendar events for start and finish times will automatically be added, updated or removed when this block\'s settings are saved.';
+$string['manageevents'] = 'Manage calendar events';
 $string['moodledatefmt_help'] = 'Start and finish dates will be formatted in a similar way to the date selected here.
 
 If you click on the &quot;+&quot; sign next to one of the dates, the name of the date format string for that date will be displayed, along with its format codes. This is useful if you want to create your own date format string in the &quot;Custom date format string&quot; setting below.
