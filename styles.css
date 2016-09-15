@@ -90,6 +90,7 @@ div.block_maj_submissions ul.importantdates li.divider {
     background: -moz-linear-gradient(right, #b94a48, #f5f5f5);  /* For Firefox 3.6 to 15 */
     background: linear-gradient(to right, #b94a48, #f5f5f5);      /* Standard syntax */
     height:       2px;
+    max-width:  210px;
     width:        80%;
 }
 div.block_maj_submissions ul.importantdates li.date,
