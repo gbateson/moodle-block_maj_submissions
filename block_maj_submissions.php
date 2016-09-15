@@ -384,6 +384,8 @@ class block_maj_submissions extends block_base {
         if ($this->user_can_edit()) {
             $heading = get_string('conversiontools', $plugin);
             $this->content->text .= html_writer::tag('h4', $heading, array('class' => 'toollinks'));
+            $this->content->text .= $this->get_tool_link($plugin, 'setupregistration');
+            $this->content->text .= $this->get_tool_link($plugin, 'setupsubmissions');
             $this->content->text .= $this->get_tool_link($plugin, 'data2workshop');
             $this->content->text .= $this->get_tool_link($plugin, 'workshop2assign');
             $this->content->text .= $this->get_tool_link($plugin, 'assign2data');
