@@ -96,7 +96,7 @@ if (data_submitted()) {
     }
 }
 
-echo 'content goes here :-)';
+echo html_writer::tag('p', get_string('toolsetupsubmissions_desc', $plugin));
 
 echo $OUTPUT->box_end();
 echo $OUTPUT->footer($course);

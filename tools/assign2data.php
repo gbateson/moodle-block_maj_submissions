@@ -96,7 +96,7 @@ if (data_submitted()) {
     }
 }
 
-echo 'content goes here :-)';
+echo html_writer::tag('p', get_string('toolassign2data_desc', $plugin));
 
 echo $OUTPUT->box_end();
 echo $OUTPUT->footer($course);
