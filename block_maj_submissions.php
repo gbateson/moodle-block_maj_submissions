@@ -368,21 +368,31 @@ class block_maj_submissions extends block_base {
             }
         }
 
-        if ($dates = implode('', $dates)) {
-            $heading = get_string('importantdates', $plugin);
-            if ($this->user_can_edit()) {
-                $heading .= ' '.$this->get_exportimport_icon($plugin, 'export');
-                $heading .= ' '.$this->get_exportimport_icon($plugin, 'import');
-                if ($USER->editing==0) {
-                    $heading .= ' '.$this->get_edit_icon($plugin);
-                }
+        // If necessary, format the export, import and edit icons.
+        // These icons will be printed next to the "Important Dates" heading
+        // if there any important dates.
+        // Otherwise, they will appear next to the "Conference tools" heading
+        $icons = '';
+        if ($this->user_can_edit()) {
+            if (count($dates)) {
+                $icons .= ' '.$this->get_exportimport_icon($plugin, 'export', 'content',  'f/html');
+                $icons .= ' '.$this->get_exportimport_icon($plugin, 'export', 'settings', 'i/export');
             }
+            $icons .= ' '.$this->get_exportimport_icon($plugin, 'import', 'settings', 'i/import');
+            if ($USER->editing==0) {
+                $icons .= ' '.$this->get_edit_icon($plugin);
+            }
+        }
+
+        if ($dates = implode('', $dates)) {
+            $heading = get_string('importantdates', $plugin).$icons;
             $this->content->text .= html_writer::tag('h4', $heading, array('class' => 'importantdates'));
             $this->content->text .= html_writer::tag('ul', $dates,   array('class' => 'importantdates'));
+            $icons = ''; // to ensure we only print the icons once
         }
 
         if ($this->user_can_edit()) {
-            $heading = get_string('conferencetools', $plugin);
+            $heading = get_string('conferencetools', $plugin).$icons;
             $this->content->text .= html_writer::tag('h4', $heading, array('class' => 'toollinks'));
             $this->content->text .= $this->get_tool_link($plugin, 'setupregistration');
             $this->content->text .= $this->get_tool_link($plugin, 'setupsubmissions');
@@ -551,15 +561,17 @@ class block_maj_submissions extends block_base {
     /**
      * get_exportimport_icon
      *
-     * @param string $type "import" or "export"
+     * @param string $plugin
+     * @param string $action "import" or "export"
+     * @param string $action "content" or "settings"
+     * @param string $dir within "pix" dir where icon file is located
      * @return array
      */
-    protected function get_exportimport_icon($plugin, $type) {
-        $title = get_string($type.'settings', $plugin);
-        $params = array('id' => $this->instance->id,
-                        'sesskey' => sesskey());
-        $href = new moodle_url("/blocks/maj_submissions/$type.php", $params);
-        return $this->get_icon("i/$type", $title, $href, $type.'icon');
+    protected function get_exportimport_icon($plugin, $action, $type, $path) {
+        $title = get_string($action.$type, $plugin);
+        $params = array('id' => $this->instance->id, 'sesskey' => sesskey());
+        $href = new moodle_url("/blocks/maj_submissions/$action.$type.php", $params);
+        return $this->get_icon($path, $title, $href, $action.$type.'icon');
     }
 
     /**

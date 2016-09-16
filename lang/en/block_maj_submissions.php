@@ -62,6 +62,7 @@ $string['currentstate'] = 'Current state';
 $string['customdatefmt_help'] = 'If you specify a date format here, it will be used in preference to any of the standard Moodle date formats.';
 $string['customdatefmt'] = 'Custom date format string';
 $string['dateformats'] = 'Date formats';
+$string['exportcontent'] = 'Export content';
 $string['exportsettings_help'] = 'This link allows you export the configuration settings for this block to a file that you can import into a similar block in another course.';
 $string['exportsettings'] = 'Export settings';
 $string['filterfields_help'] = 'This field is used to filter the collected submissions into one or more workshop activities for peer review.';
@@ -69,6 +70,7 @@ $string['filterfields'] = 'Filter field ({no})';
 $string['fixdates_help'] = 'These settings control whether or not the leading zero on months, days and hours less than 10 are removed.';
 $string['fixdates'] = 'Remove leading zeros';
 $string['importantdates'] = 'Important dates';
+$string['importcontent'] = 'Import content';
 $string['importsettings_help'] = 'This link takes you to a screen where you can import configuration settings from a MAJ submissions block configuration settings file.
 
 A settings file is created using the "Export settings" link on a MAJ submissions block configuration settings page.';

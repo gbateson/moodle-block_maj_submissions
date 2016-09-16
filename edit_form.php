@@ -202,14 +202,14 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $text = get_string('block'.$name, $plugin);
 
         $params = array('id' => $this->block->instance->id);
-        $params = array('href' => new moodle_url('/blocks/maj_submissions/export.php', $params));
+        $params = array('href' => new moodle_url('/blocks/maj_submissions/export.settings.php', $params));
 
         $text .= html_writer::empty_tag('br');
         $text .= html_writer::tag('a', get_string('exportsettings', $plugin), $params);
         $text .= ' '.$OUTPUT->help_icon('exportsettings', $plugin);
 
         $params = array('id' => $this->block->instance->id);
-        $params = array('href' => new moodle_url('/blocks/maj_submissions/import.php', $params));
+        $params = array('href' => new moodle_url('/blocks/maj_submissions/import.settings.php', $params));
 
         $text .= html_writer::empty_tag('br');
         $text .= html_writer::tag('a', get_string('importsettings', $plugin), $params);

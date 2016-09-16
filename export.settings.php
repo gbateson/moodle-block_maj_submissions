@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * blocks/maj_submissions/export.php
+ * blocks/maj_submissions/export.settings.php
  *
  * @package    blocks
  * @subpackage maj_submissions

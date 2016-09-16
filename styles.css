@@ -71,10 +71,12 @@ div.block_maj_submissions h4.toollinks {
     color:    #cc3333;
     margin:  0px auto;
 }
-div.block_maj_submissions h4.importantdates a.icon {
+div.block_maj_submissions h4.importantdates a.icon,
+div.block_maj_submissions h4.toollinks a.icon {
     float:      right;
 }
-div.block_maj_submissions h4.importantdates a.icon img {
+div.block_maj_submissions h4.importantdates a.icon img,
+div.block_maj_submissions h4.toollinks a.icon img {
     margin-right: 4px;
     margin-top:  -4px;
 }
