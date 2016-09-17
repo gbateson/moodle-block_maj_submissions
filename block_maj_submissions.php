@@ -607,8 +607,9 @@ class block_maj_submissions extends block_base {
                 $replace['%y'] = '%y年';
             }
             if (strpos($format, '月')===false) {
+                $replace['%b'] = '%b月';
+                $replace['%h'] = '%h月';
                 $replace['%m'] = '%m月';
-                // %h and %b already append 月
             }
             if (strpos($format, '日')===false) {
                 $replace['%d'] = '%d日';
@@ -623,8 +624,9 @@ class block_maj_submissions extends block_base {
                 $replace['%y'] = '%y년';
             }
             if (strpos($format, '월')===false) {
+                $replace['%b'] = '%b월';
+                $replace['%h'] = '%h월';
                 $replace['%m'] = '%m월';
-                // %h and %b already append 월
             }
             if (strpos($format, '일')===false) {
                 $replace['%d'] = '%d일';
