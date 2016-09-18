@@ -36,6 +36,10 @@ defined('MOODLE_INTERNAL') || die();
  */
 class block_maj_submissions extends block_base {
 
+    protected $fixyearchar  = false;
+    protected $fixmonthchar = false;
+    protected $fixdaychar   = false;
+
     /**
      * init
      */
@@ -149,6 +153,8 @@ class block_maj_submissions extends block_base {
                 $this->config->$name = $items;
             }
         }
+
+        $this->check_date_fixes();
 
         // load user-defined title (may be empty)
         $this->title = $this->config->title;
@@ -599,41 +605,24 @@ class block_maj_submissions extends block_base {
             $format = preg_replace($search, '', $format);
         }
 
+        // set the $year, $month and $day characters for CJK languages
+        list($year, $month, $day) = $this->get_date_chars();
+
         // add year, month and day characters for CJK languages
-        if ($current_language=='ja' || $current_language=='zh') {
+        if ($this->fixyearchar || $this->fixmonthchar || $this->fixdaychar) {
             $replace = array();
-            if (strpos($format, '年')===false) {
-                $replace['%Y'] = '%Y年';
-                $replace['%y'] = '%y年';
+            if ($this->fixyearchar) {
+                $replace['%y'] = '%y'.$year;
+                $replace['%Y'] = '%Y'.$year;
             }
-            if (strpos($format, '月')===false) {
-                $replace['%b'] = '%b月';
-                $replace['%h'] = '%h月';
-                $replace['%m'] = '%m月';
+            if ($this->fixmonthchar) {
+                $replace['%b'] = '%b'.$month;
+                $replace['%h'] = '%h'.$month;
             }
-            if (strpos($format, '日')===false) {
-                $replace['%d'] = '%d日';
+            if ($this->fixdaychar) {
+                $replace['%d'] = '%d'.$day;
             }
-            if (count($replace)) {
-                $format = strtr($format, $replace);
-            }
-        } else if ($current_language=='ko') {
-            $replace = array();
-            if (strpos($format, '년')===false) {
-                $replace['%Y'] = '%Y년';
-                $replace['%y'] = '%y년';
-            }
-            if (strpos($format, '월')===false) {
-                $replace['%b'] = '%b월';
-                $replace['%h'] = '%h월';
-                $replace['%m'] = '%m월';
-            }
-            if (strpos($format, '일')===false) {
-                $replace['%d'] = '%d일';
-            }
-            if (count($replace)) {
-                $format = strtr($format, $replace);
-            }
+            $format = strtr($format, $replace);
         }
 
         if ($fixmonth = ($this->config->fixmonth && is_numeric(strpos($format, '%m')))) {
@@ -674,6 +663,48 @@ class block_maj_submissions extends block_base {
         }
 
         return $userdate;
+    }
+
+    /**
+     * check_date_fixes
+     */
+    protected function check_date_fixes() {
+
+        if (! $dateformat = $this->config->customdatefmt) {
+            if (! $dateformat = $this->config->moodledatefmt) {
+                $dateformat = 'strftimerecent'; // default: 11 Nov, 10:12
+            }
+            $dateformat = get_string($dateformat);
+        }
+
+        $date = strftime($dateformat, time());
+
+        // set the $year, $month and $day characters for CJK languages
+        list($year, $month, $day) = $this->get_date_chars();
+
+        if ($day && ! preg_match("/[0-9]+$year/", $date)) {
+            $this->fixyearchar = true;
+        }
+        if ($day && ! preg_match("/[0-9]+$month/", $date)) {
+            $this->fixmonthchar = true;
+        }
+        if ($day && ! preg_match("/[0-9]+$day/", $date)) {
+            $this->fixdaychar = true;
+        }
+    }
+
+    /**
+     * get_date_chars
+     *
+     * @return array($year, $month, $day)
+     */
+    protected function get_date_chars() {
+        switch (substr(current_language(), 0, 2)) {
+            case 'ja': return array('年', '月', '日'); // Japanese
+            case 'ko': return array('년', '월', '일'); // Korean
+            case 'zh': return array('年', '月', '日'); // Chinese
+            default  : return array('',  '',   '');
+        }
     }
 
     /**

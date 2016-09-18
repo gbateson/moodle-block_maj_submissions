@@ -79,7 +79,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $this->add_time_startfinish($mform, $plugin, 'collectsponsored');
 
         $this->add_cmid($mform, $plugin, 'data', 'collectcmid');
-        $this->add_repeat_elements($mform, $plugin, 'filterfields');
+        $this->add_repeat_elements($mform, $plugin, 'filterfields', 'select');
 
         //-----------------------------------------------------------------------------
         $this->add_header($mform, $plugin, 'reviewsubmissions');
@@ -87,7 +87,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
 
         $this->add_time_startfinish($mform, $plugin, 'review');
         $this->add_sectionnum($mform, $plugin, 'reviewsectionnum');
-        $this->add_repeat_elements($mform, $plugin, 'reviewcmids');
+        $this->add_repeat_elements($mform, $plugin, 'reviewcmids', 'selectgroups');
 
         //-----------------------------------------------------------------------------
         $this->add_header($mform, $plugin, 'revisesubmissions');
@@ -95,7 +95,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
 
         $this->add_time_startfinish($mform, $plugin, 'revise');
         $this->add_sectionnum($mform, $plugin, 'revisesectionnum');
-        $this->add_repeat_elements($mform, $plugin, 'revisecmids');
+        $this->add_repeat_elements($mform, $plugin, 'revisecmids', 'selectgroups');
 
         //-----------------------------------------------------------------------------
         $this->add_header($mform, $plugin, 'publishsubmissions');
@@ -286,13 +286,13 @@ class block_maj_submissions_edit_form extends block_edit_form {
      * @param string  $name
      * @return void, but will update $mform
      */
-    protected function add_repeat_elements($mform, $plugin, $name) {
+    protected function add_repeat_elements($mform, $plugin, $name, $elementtype) {
         global $OUTPUT;
         $config_name = 'config_'.$name;
         $label = get_string($name, $plugin);
-        $get_options = 'get_options_'.$name;
-        $options = $this->$get_options($mform, $plugin);
-        $elements = array($mform->createElement('select', $config_name, $label, $options));
+        $method = 'get_options_'.$name;
+        $options = $this->$method($mform, $plugin);
+        $elements = array($mform->createElement($elementtype, $config_name, $label, $options));
         $repeats = count($this->block->config->$name);
         $options = array($config_name => array('type' => PARAM_INT, 'helpbutton' => array($name, $plugin)));
         $buttontext = get_string('add'.$name, $plugin, 1);
