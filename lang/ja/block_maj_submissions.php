@@ -37,8 +37,8 @@ $string['maj_submissions:addinstance'] = 'Add a new MAJ申請 block';
 $string['addfilterfields'] = 'Add a filter field';
 $string['addreviewcmids'] = 'Add a review activity';
 $string['addrevisecmids'] = 'Add a revision activity';
-$string['closedon'] = '{$a}に終了した';
-$string['closeson'] = '{$a}に終了する';
+$string['closedon'] = '{$a} に終了した';
+$string['closeson'] = '{$a} に終了する';
 $string['collectcmid_help'] = 'The database activity that is used to collect submissions.';
 $string['collectcmid'] = 'Submission database activity';
 $string['collectsponsoredtime_help'] = 'The dates and times at which the online collection of sponsored submissions starts and finshes.';
@@ -86,8 +86,8 @@ If you click on the &quot;+&quot; sign next to one of the dates, the name of the
 
 Note that if the &quot;Show date last modified&quot; is set to &quot;No&quot; then no date will be displayed. Also, if a format is specified in the &quot;Custom date format string&quot; setting, then that will override the string selected here.';
 $string['moodledatefmt'] = 'Moodle date format string';
-$string['openedon'] = '{$a}に開始した';
-$string['openson'] = '{$a}に開始する';
+$string['openedon'] = '{$a} に開始した';
+$string['openson'] = '{$a} に開始する';
 $string['publishcmid_help'] = 'The resource or database activity where submissions are published online.';
 $string['publishcmid'] = 'Publication database activity';
 $string['publishsubmissions'] = 'Publish schedule';

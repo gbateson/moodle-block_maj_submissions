@@ -64,6 +64,7 @@ if (! isset($block->version)) {
 }
 
 if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
+    $content = $instance->set_multilang(true);
     $content = $instance->get_content()->text;
 
     // remove the links and icons for edit, import and export
@@ -90,6 +91,36 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
                                      '<b>'    => "\n        <b>",
                                      '<b '    => "\n        <b ",
                                      '<span>' => "\n        <span>"));
+
+    // convert divider DIV to one line
+    $content = preg_replace('/(<li class="divider">)\s+(<\/li>)/s', '$1$2', $content);
+
+    // add divider styles as inline CSS
+    $filename = $CFG->dirroot.'/blocks/maj_submissions/styles.css';
+    if (file_exists($filename)) {
+        $css = file_get_contents($filename);
+
+        $search = '/\/\*.*?\*\//s'; // comments
+        $css = preg_replace($search, '', $css);
+
+        $search = '/div.block_maj_submissions ([^\{]* li.divider\s*)\{([^\}]*)\}/s';
+        // $1 : selectors
+        // $2 : definitions
+        if (preg_match_all($search, $css, $matches)) {
+
+            $definitions = array();
+            foreach ($matches[2] as $definition) {
+                $definition = preg_replace('/\s+/s', ' ', $definition);
+                $definition = preg_replace('/\s*([:;])\s*/s', '$1 ', $definition);
+                $definitions[] = trim($definition);
+            }
+
+            if ($definitions = implode(' ', $definitions)) {
+                $content = str_replace('class="divider"', 'style="'.s($definitions).'"', $content);
+            }
+        }
+    }
+
 }
 
 if (empty($instance->config->title)) {

@@ -39,6 +39,7 @@ class block_maj_submissions extends block_base {
     protected $fixyearchar  = false;
     protected $fixmonthchar = false;
     protected $fixdaychar   = false;
+    protected $multilang    = false;
 
     /**
      * init
@@ -214,13 +215,13 @@ class block_maj_submissions extends block_base {
                     $timefinish = $type.'timefinish';
 
                     if ($config->$timestart) {
-                        $name = get_string('timestart', $plugin);
-                        $name = get_string($type.'time', $plugin)." ($name)";
+                        $name = $this->get_string('timestart', $plugin);
+                        $name = $this->get_string($type.'time', $plugin)." ($name)";
                         $events[] = $this->create_event($name, $description, 'open', $config->$timestart, $modname, $instance);
                     }
                     if ($config->$timefinish) {
-                        $name = get_string('timefinish', $plugin);
-                        $name = get_string($type.'time', $plugin)." ($name)";
+                        $name = $this->get_string('timefinish', $plugin);
+                        $name = $this->get_string($type.'time', $plugin)." ($name)";
                         $events[] = $this->create_event($name, $description, 'close', $config->$timefinish, $modname, $instance);
                     }
                 }
@@ -329,23 +330,23 @@ class block_maj_submissions extends block_base {
                 } else if ($this->config->$timestart) {
                     $date = $this->userdate($this->config->$timestart, $dateformat, $removestart);
                     if ($this->config->$timestart < $timenow) {
-                        $date = get_string('openedon', $plugin, $date);
+                        $date = $this->get_string('openedon', $plugin, $date);
                     } else {
-                        $date = get_string('openson', $plugin, $date);
+                        $date = $this->get_string('openson', $plugin, $date);
                     }
                 } else if ($this->config->$timefinish) {
                     $date = $this->userdate($this->config->$timefinish, $dateformat, $removefinish);
                     if ($this->config->$timefinish < $timenow) {
-                        $date = get_string('closedon', $plugin, $date);
+                        $date = $this->get_string('closedon', $plugin, $date);
                     } else {
-                        $date = get_string('closeson', $plugin, $date);
+                        $date = $this->get_string('closeson', $plugin, $date);
                     }
                 } else {
                     $date = '';
                 }
 
                 if ($date) {
-                    $text = html_writer::tag('b', get_string($type.'time', $plugin));
+                    $text = html_writer::tag('b', $this->get_string($type.'time', $plugin));
                     if ($url) {
                         $text = html_writer::tag('a', $text, array('href' => $url));
                     }
@@ -391,14 +392,14 @@ class block_maj_submissions extends block_base {
         }
 
         if ($dates = implode('', $dates)) {
-            $heading = get_string('importantdates', $plugin).$icons;
+            $heading = $this->get_string('importantdates', $plugin).$icons;
             $this->content->text .= html_writer::tag('h4', $heading, array('class' => 'importantdates'));
             $this->content->text .= html_writer::tag('ul', $dates,   array('class' => 'importantdates'));
             $icons = ''; // to ensure we only print the icons once
         }
 
         if ($this->user_can_edit()) {
-            $heading = get_string('conferencetools', $plugin).$icons;
+            $heading = $this->get_string('conferencetools', $plugin).$icons;
             $this->content->text .= html_writer::tag('h4', $heading, array('class' => 'toollinks'));
             $this->content->text .= $this->get_tool_link($plugin, 'setupregistration');
             $this->content->text .= $this->get_tool_link($plugin, 'setupsubmissions');
@@ -511,10 +512,10 @@ class block_maj_submissions extends block_base {
      */
     protected function get_tool_link($plugin, $type) {
 
-        $text = get_string('tool'.$type, $plugin);
+        $text = $this->get_string('tool'.$type, $plugin);
         $text = html_writer::tag('b', $text);
 
-        $desc = get_string('tool'.$type.'_desc', $plugin);
+        $desc = $this->get_string('tool'.$type.'_desc', $plugin);
 
         $params = array('id' => $this->instance->id);
         $link = new moodle_url("/blocks/maj_submissions/tools/$type.php", $params);
@@ -705,6 +706,42 @@ class block_maj_submissions extends block_base {
             case 'zh': return array('年', '月', '日'); // Chinese
             default  : return array('',  '',   '');
         }
+    }
+
+    /**
+     * set_multilang
+     *
+     * @return void, but wil update "multilang" property
+     */
+    public function set_multilang($multilang) {
+        $this->multilang = $multilang;
+    }
+
+    /**
+     * get_string
+     *
+     * @return void, but wil update "multilang" property
+     */
+    public function get_string($identifier, $component='', $a=null, $lazyload=false) {
+        if ($this->multilang==false) {
+            return get_string($identifier, $component, $a, $lazyload);
+        }
+
+        $strman = get_string_manager();
+        $langs = $strman->get_list_of_translations();
+        $langs = array_keys($langs);
+
+        $spans = array();
+        foreach ($langs as $lang) {
+            $strings = $strman->load_component_strings($component, $lang);
+            if ($strings[$identifier]) {
+                $string = $strman->get_string($identifier, $component, $a, $lang);
+                $params = array('lang' => $lang, 'class' => 'multilang');
+                $spans[] = html_writer::tag('span', $string, $params);
+            }
+        }
+
+        return implode('', $spans);
     }
 
     /**
