@@ -83,6 +83,7 @@ class block_maj_submissions extends block_base {
         $plugin = 'block_maj_submissions';
         $defaults = array(
             'title' => get_string('blockname', $plugin),
+            'displaydates'          => 1,  // 0=no, 1=yes
 
             // conference events
             'conferencecmid'       => 0,
@@ -186,43 +187,64 @@ class block_maj_submissions extends block_base {
             foreach ($this->get_timetypes() as $types) {
                 foreach ($types as $type) {
 
-                    // set up $modname, $instance and $visible
+                    // set up $cmid, $modname, $instance and $visible
+                    $cmid        = '';
                     $modname     = '';
                     $instance    =  0;
                     $visible     =  1;
                     $description = '';
                     switch ($type) {
+                        case 'collect':
+                        case 'collectworkshop':
+                        case 'collectsponsored':
+                            $cmid = 'collectid';
+                            break;
                         case 'conference':
                         case 'workshops':
                         case 'reception':
-                        case 'collect':
                         case 'publish':
-                        case 'register':
                             $cmid = $type.'cmid';
-                            if (isset($config->$cmid)) {
-                                $cmid = $config->$cmid;
-                                if (is_numeric($cmid) && $cmid > 0 && isset($modinfo->cms[$cmid])) {
-                                    $modname  = $modinfo->get_cm($cmid)->modname;
-                                    $instance = $modinfo->get_cm($cmid)->instance;
-                                    $visible  = $modinfo->get_cm($cmid)->visible;
-                                    $description = $modinfo->get_cm($cmid)->name;
-                                }
-                            }
+                            break;
+                        case 'register':
+                        case 'registerpresenter':
+                            $cmid = 'registercmid';
                             break;
                     }
+                    if ($cmid && isset($config->$cmid)) {
+                        $cmid = $config->$cmid;
+                        if (is_numeric($cmid) && $cmid > 0 && isset($modinfo->cms[$cmid])) {
+                            $modname  = $modinfo->get_cm($cmid)->modname;
+                            $instance = $modinfo->get_cm($cmid)->instance;
+                            $visible  = $modinfo->get_cm($cmid)->visible;
+                            $description = $modinfo->get_cm($cmid)->name;
+                        }
+                    }
 
+                    // set start and finish time
                     $timestart = $type.'timestart';
                     $timefinish = $type.'timefinish';
 
-                    if ($config->$timestart) {
-                        $name = $this->get_string('timestart', $plugin);
-                        $name = $this->get_string($type.'time', $plugin)." ($name)";
-                        $events[] = $this->create_event($name, $description, 'open', $config->$timestart, $modname, $instance);
+                    // set duration
+                    if ($config->$timefinish && $config->$start) {
+                        $duration = ($config->$timefinish - $config->$start);
+                    } else {
+                        $duration = 0;
                     }
-                    if ($config->$timefinish) {
-                        $name = $this->get_string('timefinish', $plugin);
-                        $name = $this->get_string($type.'time', $plugin)." ($name)";
-                        $events[] = $this->create_event($name, $description, 'close', $config->$timefinish, $modname, $instance);
+
+                    // add event(s)
+                    if ($duration > 0 && $duration < DAYSECS) {
+                            $events[] = $this->create_event($name, $description, 'open', $config->$timestart, $duration, $modname, $instance);
+                    } else {
+                        if ($config->$timestart) {
+                            $name = $this->get_string('timestart', $plugin);
+                            $name = $this->get_string($type.'time', $plugin)." ($name)";
+                            $events[] = $this->create_event($name, $description, 'open', $config->$timestart, 0, $modname, $instance);
+                        }
+                        if ($config->$timefinish) {
+                            $name = $this->get_string('timefinish', $plugin);
+                            $name = $this->get_string($type.'time', $plugin)." ($name)";
+                            $events[] = $this->create_event($name, $description, 'close', $config->$timefinish, 0, $modname, $instance);
+                        }
                     }
                 }
             }
@@ -255,6 +277,11 @@ class block_maj_submissions extends block_base {
 
         $plugin = 'block_maj_submissions';
 
+        $dates = array();
+        $countdates = 0;
+        $formatdates = ($this->config->displaydates || $this->multilang);
+
+        // get $dateformat
         if (! $dateformat = $this->config->customdatefmt) {
             if (! $dateformat = $this->config->moodledatefmt) {
                 $dateformat = 'strftimerecent'; // default: 11 Nov, 10:12
@@ -263,8 +290,16 @@ class block_maj_submissions extends block_base {
         }
         $timenow = time();
 
-        $dates = array();
-        $options = array();
+        // cache $coursedisplay (single/multi page)
+        if (isset($this->page->course->coursedisplay)) {
+            $coursedisplay = $this->page->course->coursedisplay;
+        } else if (function_exists('course_get_format')) {
+            $coursedisplay = course_get_format($this->page->course);
+            $coursedisplay = $coursedisplay->get_format_options();
+            $coursedisplay = $coursedisplay['coursedisplay'];
+        } else {
+            $coursedisplay = COURSE_DISPLAY_SINGLEPAGE; // =0
+        }
 
         $modinfo = get_fast_modinfo($this->page->course);
         foreach ($this->get_timetypes() as $types) {
@@ -274,75 +309,98 @@ class block_maj_submissions extends block_base {
 
             foreach ($types as $type) {
 
-                // set up $url
-                $url = '';
-                switch ($type) {
-                    case 'conference':
-                    case 'workshops':
-                    case 'reception':
-                    case 'collect':
-                    case 'publish':
-                    case 'register':
-                        $cmid = $type.'cmid';
-                        if (isset($this->config->$cmid)) {
-                            $cmid = $this->config->$cmid;
-                            if (is_numeric($cmid) && $cmid > 0 && isset($modinfo->cms[$cmid])) {
-                                $modname = $modinfo->get_cm($cmid)->modname;
-                                $url = new moodle_url("/mod/$modname/view.php", array('id' => $cmid));
-                            }
-                        }
-                        break;
-
-                    case 'review':
-                    case 'revise':
-                        $sectionnum = $type.'sectionnum';
-                        if (isset($this->config->$sectionnum)) {
-                            $sectionnum = $this->config->$sectionnum;
-                            if (is_numeric($sectionnum) && $sectionnum >= 0) { // 0 is allowed ;-)
-                                $params = array('id' => $this->page->course->id, 'section' => $sectionnum);
-                                $url = new moodle_url('/course/view.php', $params);
-                            }
-                        }
-                        break;
-                }
-
                 $timestart = $type.'timestart';
                 $timefinish = $type.'timefinish';
 
-                $removestart  = ($this->config->$timestart && (strftime('%H:%M', $this->config->$timestart)=='00:00'));
-                $removefinish = ($this->config->$timefinish && (strftime('%H:%M', $this->config->$timefinish)=='23:55'));
-                $removetime   = ($removestart && $removefinish);
-                $removedate   = false;
+                if ($this->config->$timestart || $this->config->$timefinish) {
+                    $countdates++;
+                }
 
-                if ($this->config->$timestart && $this->config->$timefinish) {
-                    if (date('d', $this->config->$timestart)==date('d', $this->config->$timefinish) &&
-                        date('m', $this->config->$timestart)==date('m', $this->config->$timefinish) &&
-                        date('Y', $this->config->$timestart)==date('Y', $this->config->$timefinish)) {
-                        // the dates are on the same day,
-                        // so don't remove times ...
-                        $removetime = false;
-                        // ... but remove the finish date ;-)
-                        $removedate = true;
+                $date = '';
+                if ($formatdates) {
+
+                    // set up $url from $cmid or $sectionnum
+                    $url = '';
+                    $cmid = '';
+                    $sectionnum = '';
+
+                    switch ($type) {
+                        case 'collect':
+                        case 'collectworkshop':
+                        case 'collectsponsored':
+                            $cmid = 'collectcmid';
+                            break;
+
+                        case 'conference':
+                        case 'workshops':
+                        case 'reception':
+                        case 'publish':
+                            $cmid = $type.'cmid';
+                            break;
+
+                        case 'review':
+                        case 'revise':
+                            $sectionnum = $type.'sectionnum';
+                            break;
+
+                        case 'register':
+                        case 'registerpresenter':
+                            $cmid = 'registercmid';
+                            break;
                     }
-                    $date = $this->userdate($this->config->$timestart, $dateformat, $removetime).
-                            ' - '.
-                            $this->userdate($this->config->$timefinish, $dateformat, $removetime, $removedate);
-                } else if ($this->config->$timestart) {
-                    $date = $this->userdate($this->config->$timestart, $dateformat, $removestart);
-                    if ($this->config->$timestart < $timenow) {
-                        $date = $this->get_string('openedon', $plugin, $date);
-                    } else {
-                        $date = $this->get_string('openson', $plugin, $date);
+
+                    if ($cmid && isset($this->config->$cmid)) {
+                        $cmid = $this->config->$cmid;
+                        if (is_numeric($cmid) && $cmid > 0 && isset($modinfo->cms[$cmid])) {
+                            $modname = $modinfo->get_cm($cmid)->modname;
+                            $url = new moodle_url("/mod/$modname/view.php", array('id' => $cmid));
+                        }
                     }
-                } else if ($this->config->$timefinish) {
-                    $date = $this->userdate($this->config->$timefinish, $dateformat, $removefinish);
-                    if ($this->config->$timefinish < $timenow) {
-                        $date = $this->get_string('closedon', $plugin, $date);
-                    } else {
-                        $date = $this->get_string('closeson', $plugin, $date);
+
+                    if ($sectionnum && isset($this->config->$sectionnum)) {
+                        $sectionnum = $this->config->$sectionnum;
+                        if (is_numeric($sectionnum) && $sectionnum >= 0) { // 0 is allowed ;-)
+                            $params = array('id' => $this->page->course->id);
+                            if ($coursedisplay==COURSE_DISPLAY_MULTIPAGE) {
+                                $params['section'] = $sectionnum;
+                                $anchor = null;
+                            } else {
+                                $anchor = "section-$sectionnum";
+                            }
+                            $url = new moodle_url('/course/view.php', $params, $anchor);
+                        }
                     }
-                } else {
-                    $date = '';
+
+                    $removestart  = ($this->config->$timestart && (strftime('%H:%M', $this->config->$timestart)=='00:00'));
+                    $removefinish = ($this->config->$timefinish && (strftime('%H:%M', $this->config->$timefinish)=='23:55'));
+                    $removetime   = ($removestart && $removefinish);
+                    $removedate   = false;
+
+                    if ($this->config->$timestart && $this->config->$timefinish) {
+                        if (($this->config->$timefinish - $this->config->$timestart) < DAYSECS) {
+                            // the dates are less than 24 hours apart, so don't remove times ...
+                            $removetime = false;
+                            // ... but remove the finish date ;-)
+                            $removedate = true;
+                        }
+                        $date = $this->userdate($this->config->$timestart, $dateformat, $removetime).
+                                ' - '.
+                                $this->userdate($this->config->$timefinish, $dateformat, $removetime, $removedate);
+                    } else if ($this->config->$timestart) {
+                        $date = $this->userdate($this->config->$timestart, $dateformat, $removestart);
+                        if ($this->config->$timestart < $timenow) {
+                            $date = $this->get_string('openedon', $plugin, $date);
+                        } else {
+                            $date = $this->get_string('openson', $plugin, $date);
+                        }
+                    } else if ($this->config->$timefinish) {
+                        $date = $this->userdate($this->config->$timefinish, $dateformat, $removefinish);
+                        if ($this->config->$timefinish < $timenow) {
+                            $date = $this->get_string('closedon', $plugin, $date);
+                        } else {
+                            $date = $this->get_string('closeson', $plugin, $date);
+                        }
+                    }
                 }
 
                 if ($date) {
@@ -381,7 +439,7 @@ class block_maj_submissions extends block_base {
         // Otherwise, they will appear next to the "Conference tools" heading
         $icons = '';
         if ($this->user_can_edit()) {
-            if (count($dates)) {
+            if ($countdates) {
                 $icons .= ' '.$this->get_exportimport_icon($plugin, 'export', 'content',  'f/html');
                 $icons .= ' '.$this->get_exportimport_icon($plugin, 'export', 'settings', 'i/export');
             }
@@ -391,6 +449,7 @@ class block_maj_submissions extends block_base {
             }
         }
 
+        // add important dates, if necessary
         if ($dates = implode('', $dates)) {
             $heading = $this->get_string('importantdates', $plugin).$icons;
             $this->content->text .= html_writer::tag('h4', $heading, array('class' => 'importantdates'));
@@ -398,6 +457,7 @@ class block_maj_submissions extends block_base {
             $icons = ''; // to ensure we only print the icons once
         }
 
+        // add conference tools, if necessary
         if ($this->user_can_edit()) {
             $heading = $this->get_string('conferencetools', $plugin).$icons;
             $this->content->text .= html_writer::tag('h4', $heading, array('class' => 'toollinks'));
@@ -407,6 +467,7 @@ class block_maj_submissions extends block_base {
             $this->content->text .= $this->get_tool_link($plugin, 'workshop2assign');
             $this->content->text .= $this->get_tool_link($plugin, 'assign2data');
         }
+
         return $this->content;
     }
 
@@ -440,16 +501,17 @@ class block_maj_submissions extends block_base {
      * @param string  $description
      * @param string  $type
      * @param integer $time
+     * @param integer $duration
      * @param string  $modname
      * @param integer $instance
      * @return xxx
      */
-    protected function create_event($name, $description, $type, $time, $modname, $instance) {
+    protected function create_event($name, $description, $type, $time, $duration, $modname, $instance) {
         return (object)array('name'         => $name,
                              'description'  => $this->config->title.': '.($description ? $description : $name),
                              'eventtype'    => $type,
                              'timestart'    => $time,
-                             'timeduration' => 0,
+                             'timeduration' => $duration,
                              'modulename'   => $modname,
                              'instance'     => $instance);
     }
@@ -711,7 +773,7 @@ class block_maj_submissions extends block_base {
     /**
      * set_multilang
      *
-     * @return void, but wil update "multilang" property
+     * @return void, but will update "multilang" property
      */
     public function set_multilang($multilang) {
         $this->multilang = $multilang;
@@ -720,7 +782,8 @@ class block_maj_submissions extends block_base {
     /**
      * get_string
      *
-     * @return void, but wil update "multilang" property
+     * @return string, if $this->multilang is set, return the "multilang" verison of the required string;
+     *                 otherwise, return Moodle's standard get_string() output
      */
     public function get_string($identifier, $component='', $a=null, $lazyload=false) {
         if ($this->multilang==false) {

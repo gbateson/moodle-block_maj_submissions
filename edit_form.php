@@ -53,11 +53,12 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $plugin = 'block_maj_submissions';
 
         //-----------------------------------------------------------------------------
-        $this->add_header($mform, $plugin, 'title');
+        $this->add_header($mform, 'form', 'display');
         //-----------------------------------------------------------------------------
 
         $this->add_field_description($mform, $plugin, 'description');
         $this->add_field($mform, $plugin, 'title', 'text', PARAM_TEXT, array('size' => 50));
+        $this->add_field($mform, $plugin, 'displaydates', 'selectyesno', PARAM_INT);
 
         //-----------------------------------------------------------------------------
         $this->add_header($mform, $plugin, 'conferenceevents');

@@ -62,6 +62,10 @@ $string['currentstate'] = 'Current state';
 $string['customdatefmt_help'] = 'If you specify a date format here, it will be used in preference to any of the standard Moodle date formats.';
 $string['customdatefmt'] = 'Custom date format string';
 $string['dateformats'] = 'Date formats';
+$string['displaydates_help'] = 'If this setting is enabled, any dates that are enabled on this settings page will be formatted and displayed in this MAJ Submissions block on the course page.
+
+Otherwise, the dates will not be displayed on the course page. Ordinary users will not see this block at all, while course managers will see only the list of conference tools.';
+$string['displaydates'] = 'Display dates';
 $string['exportcontent'] = 'Export content';
 $string['exportsettings_help'] = 'This link allows you export the configuration settings for this block to a file that you can import into a similar block in another course.';
 $string['exportsettings'] = 'Export settings';
