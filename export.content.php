@@ -75,22 +75,18 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
     $content = preg_replace('/\s*<(h4|p) [^>]*class="toollinks?"[^>]*>.*?<\/\1>/s', '', $content);
 
     // format block and style tags
+    $s = '    ';
     $content = strtr($content, array('<h4>'   => "\n<h4>",
                                      '<h4 '   => "\n<h4 ",
-                                     '<p>'    => "\n<p>",
-                                     '<p '    => "\n<p ",
-                                     '</p>'   => "\n</p>",
                                      '<ul>'   => "\n<ul>",
                                      '<ul '   => "\n<ul ",
                                      '</ul>'  => "\n</ul>",
-                                     '<li>'   => "\n    <li>",
-                                     '<li '   => "\n    <li ",
-                                     '</li>'  => "\n    </li>",
-                                     '<a>'    => "\n        <a>",
-                                     '<a '    => "\n        <a ",
-                                     '<b>'    => "\n        <b>",
-                                     '<b '    => "\n        <b ",
-                                     '<span>' => "\n        <span>"));
+                                     '<li>'   => "\n$s<li>",
+                                     '<li '   => "\n$s<li ",
+                                     '</li>'  => "\n$s</li>",
+                                     '<b>'    => "\n$s$s<b>",
+                                     '<b '    => "\n$s$s<b ",
+                                     '<span>' => "\n$s$s<span>"));
 
     // convert divider DIV to one line
     $content = preg_replace('/(<li class="divider">)\s+(<\/li>)/s', '$1$2', $content);
@@ -121,6 +117,24 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
         }
     }
 
+    // create $table version of the html $content
+    $table = $content;
+
+    // remove link tags, i.e. <a...> and </a>
+    $table = preg_replace('/<\/?a[^<]*>\s*/', '', $table);
+
+    // convert UL+LI version to TABLE/TBODY+TR/TH/TD version
+    $table = preg_replace('/<(ul)([^>]*)>(.*?)<\/\1>/s', '<table><tbody>$3</tbody></table>', $table);
+    $table = preg_replace('/<(li)([^>]*)>(.*?)<\/\1>/s', '<tr$2>$3</tr>', $table);
+    $table = preg_replace('/<b>(.*)<\/b><br[^>]*>/', '<th>$1</th>', $table);
+    $table = preg_replace('/<span>(.*)<\/span>/', '<td>$1</td>', $table);
+
+    // convert divider to <hr>
+    $replace = '<tr>'."\n$s$s".'<td colspan="2"><hr$1 /></td>'."\n$s".'</tr>';
+    $table = preg_replace('/<tr([^<]*)>\s*<\/tr>/', $replace, $table);
+
+    // append $table to html $content
+    $content .= "\n".$table;
 }
 
 if (empty($instance->config->title)) {

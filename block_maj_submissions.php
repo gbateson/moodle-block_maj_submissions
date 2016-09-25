@@ -404,11 +404,12 @@ class block_maj_submissions extends block_base {
                 }
 
                 if ($date) {
-                    $text = html_writer::tag('b', $this->get_string($type.'time', $plugin));
+                    $text = $this->get_string($type.'time', $plugin);
                     if ($url) {
                         $text = html_writer::tag('a', $text, array('href' => $url));
                     }
-                    $date = $text.html_writer::empty_tag('br').html_writer::tag('span', $date);
+                    $text = html_writer::tag('b', $text).html_writer::empty_tag('br');
+                    $date = $text.html_writer::tag('span', $date);
                     $class = 'date';
                     switch (true) {
                         case ($timenow < $this->config->$timestart):  $class .= ' early'; break;
