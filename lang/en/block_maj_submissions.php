@@ -37,8 +37,6 @@ $string['maj_submissions:addinstance'] = 'Add a new MAJ Submissions block';
 $string['addfilterfields'] = 'Add a filter field';
 $string['addreviewcmids'] = 'Add a review activity';
 $string['addrevisecmids'] = 'Add a revision activity';
-$string['closedon'] = 'closed on {$a}';
-$string['closeson'] = 'closes on {$a}';
 $string['collectcmid_help'] = 'The database activity that is used to collect submissions.';
 $string['collectcmid'] = 'Submission database activity';
 $string['collectsponsoredtime_help'] = 'The dates and times at which the online collection of sponsored submissions starts and finshes.';
@@ -61,7 +59,12 @@ $string['currentstate_help'] = 'The current state of the submission process.';
 $string['currentstate'] = 'Current state';
 $string['customdatefmt_help'] = 'If you specify a date format here, it will be used in preference to any of the standard Moodle date formats.';
 $string['customdatefmt'] = 'Custom date format string';
+$string['dateclosedon'] = 'closed on {$a}';
+$string['datecloseson'] = 'closes on {$a}';
 $string['dateformats'] = 'Date formats';
+$string['dateopenclose'] = '{$a->open} - {$a->close}';
+$string['dateopenedon'] = 'opened on {$a}';
+$string['dateopenson'] = 'opens on {$a}';
 $string['displaydates_help'] = 'If this setting is enabled, any dates that are enabled on this settings page will be formatted and displayed in this MAJ Submissions block on the course page.
 
 Otherwise, the dates will not be displayed on the course page. Ordinary users will not see this block at all, while course managers will see only the list of conference tools.';
@@ -92,8 +95,6 @@ If you click on the &quot;+&quot; sign next to one of the dates, the name of the
 
 Note that if the &quot;Show date last modified&quot; is set to &quot;No&quot; then no date will be displayed. Also, if a format is specified in the &quot;Custom date format string&quot; setting, then that will override the string selected here.';
 $string['moodledatefmt'] = 'Moodle date format string';
-$string['openedon'] = 'opened on {$a}';
-$string['openson'] = 'opens on {$a}';
 $string['publishcmid_help'] = 'The resource or database activity where submissions are published online.';
 $string['publishcmid'] = 'Publication database activity';
 $string['publishsubmissions'] = 'Publish schedule';

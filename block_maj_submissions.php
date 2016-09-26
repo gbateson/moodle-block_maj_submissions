@@ -316,7 +316,6 @@ class block_maj_submissions extends block_base {
                     $countdates++;
                 }
 
-                $date = '';
                 if ($formatdates) {
 
                     // set up $url from $cmid or $sectionnum
@@ -371,36 +370,9 @@ class block_maj_submissions extends block_base {
                         }
                     }
 
-                    $removestart  = ($this->config->$timestart && (strftime('%H:%M', $this->config->$timestart)=='00:00'));
-                    $removefinish = ($this->config->$timefinish && (strftime('%H:%M', $this->config->$timefinish)=='23:55'));
-                    $removetime   = ($removestart && $removefinish);
-                    $removedate   = false;
-
-                    if ($this->config->$timestart && $this->config->$timefinish) {
-                        if (($this->config->$timefinish - $this->config->$timestart) < DAYSECS) {
-                            // the dates are less than 24 hours apart, so don't remove times ...
-                            $removetime = false;
-                            // ... but remove the finish date ;-)
-                            $removedate = true;
-                        }
-                        $date = $this->userdate($this->config->$timestart, $dateformat, $removetime).
-                                ' - '.
-                                $this->userdate($this->config->$timefinish, $dateformat, $removetime, $removedate);
-                    } else if ($this->config->$timestart) {
-                        $date = $this->userdate($this->config->$timestart, $dateformat, $removestart);
-                        if ($this->config->$timestart < $timenow) {
-                            $date = $this->get_string('openedon', $plugin, $date);
-                        } else {
-                            $date = $this->get_string('openson', $plugin, $date);
-                        }
-                    } else if ($this->config->$timefinish) {
-                        $date = $this->userdate($this->config->$timefinish, $dateformat, $removefinish);
-                        if ($this->config->$timefinish < $timenow) {
-                            $date = $this->get_string('closedon', $plugin, $date);
-                        } else {
-                            $date = $this->get_string('closeson', $plugin, $date);
-                        }
-                    }
+                    $date = $this->format_date_range($plugin, $dateformat, $timenow, $timestart, $timefinish);
+                } else {
+                    $date = '';
                 }
 
                 if ($date) {
@@ -473,6 +445,53 @@ class block_maj_submissions extends block_base {
     }
 
     /**
+     * format_date_range
+     *
+     * @params string  $dateformat
+     * @params integer $timenow
+     * @params string  $timestart
+     * @params string  $timefinish
+     * @return array
+     */
+    protected function format_date_range($plugin, $dateformat, $timenow, $timestart, $timefinish) {
+
+        $removestart  = ($this->config->$timestart && (strftime('%H:%M', $this->config->$timestart)=='00:00'));
+        $removefinish = ($this->config->$timefinish && (strftime('%H:%M', $this->config->$timefinish)=='23:55'));
+        $removetime   = ($removestart && $removefinish);
+        $removedate   = false;
+
+        $date = '';
+        if ($this->config->$timestart && $this->config->$timefinish) {
+            if (($this->config->$timefinish - $this->config->$timestart) < DAYSECS) {
+                // the dates are less than 24 hours apart, so don't remove times ...
+                $removetime = false;
+                // ... but remove the finish date ;-)
+                $removedate = true;
+            }
+            $date = (object)array(
+                'open'  => $this->userdate($this->config->$timestart, $dateformat, $removetime),
+                'close' => $this->userdate($this->config->$timefinish, $dateformat, $removetime, $removedate)
+            );
+            $date = $this->get_string('dateopenclose', $plugin, $date);
+        } else if ($this->config->$timestart) {
+            $date = $this->userdate($this->config->$timestart, $dateformat, $removestart);
+            if ($this->config->$timestart < $timenow) {
+                $date = $this->get_string('dateopenedon', $plugin, $date);
+            } else {
+                $date = $this->get_string('dateopenson', $plugin, $date);
+            }
+        } else if ($this->config->$timefinish) {
+            $date = $this->userdate($this->config->$timefinish, $dateformat, $removefinish);
+            if ($this->config->$timefinish < $timenow) {
+                $date = $this->get_string('dateclosedon', $plugin, $date);
+            } else {
+                $date = $this->get_string('datecloseson', $plugin, $date);
+            }
+        }
+        return $date;
+    }
+
+    /**
      * get_timetypes
      *
      * @return array
@@ -483,16 +502,6 @@ class block_maj_submissions extends block_base {
             array('collect',    'collectworkshop', 'collectsponsored'),
             array('review',     'revise',          'publish'),
             array('register',   'registerpresenter'),
-        );
-        return array(
-            'conference' => array(''),
-            'workshops'  => array(''),
-            'reception'  => array(''),
-            'collect'    => array('', 'workshop', 'sponsored'),
-            'review'     => array(''),
-            'revise'     => array(''),
-            'publish'    => array(''),
-            'register'   => array('', 'presenter')
         );
     }
 
