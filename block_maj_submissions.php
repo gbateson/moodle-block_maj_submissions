@@ -84,6 +84,7 @@ class block_maj_submissions extends block_base {
         $defaults = array(
             'title' => get_string('blockname', $plugin),
             'displaydates'          => 1,  // 0=no, 1=yes
+            'displaystats'          => 1,  // 0=no, 1=yes
 
             // conference events
             'conferencecmid'       => 0,
@@ -371,10 +372,8 @@ class block_maj_submissions extends block_base {
                     }
 
                     $date = $this->format_date_range($plugin, $dateformat, $timenow, $timestart, $timefinish);
-                    $stats = $this->format_stats($plugin, $modinfo, $type, $cmid, $sectionnum);
                 } else {
                     $date = '';
-                    $stats = '';
                 }
 
                 if ($date) {
@@ -382,10 +381,13 @@ class block_maj_submissions extends block_base {
                     if ($url) {
                         $text = html_writer::tag('a', $text, array('href' => $url));
                     }
-                    $text = html_writer::tag('b', $text).html_writer::empty_tag('br');
-                    $date = $text.html_writer::tag('span', $date);
-                    if ($stats) {
-                        // format $stats in <i>...</i>
+                    $date = html_writer::tag('b', $text).
+                            html_writer::empty_tag('br').
+                            html_writer::tag('span', $date);
+                    if ($this->user_can_edit()) {
+                        if ($stats = $this->format_stats($plugin, $modinfo, $type, $cmid, $sectionnum)) {
+                            $date .= html_writer::tag('i', $stats);
+                        }
                     }
                     $class = 'date';
                     switch (true) {
@@ -522,12 +524,16 @@ class block_maj_submissions extends block_base {
         switch ($type) {
 
             case 'collect':
-            case 'register':
                 if ($dataid) {
-                    $table = 'data_records';
-                    $field = 'COUNT(id)';
-                    $select = 'dataid = ?';
-                    $params = array($dataid);
+                    $params = array('dataid' => $dataid, 'name' => 'presentation_type');
+                    if ($fieldid = $DB->get_field('data_fields', 'id', $params)) {
+                        $table = 'data_content';
+                        $field = 'COUNT(recordid)';
+                        $select  = 'fieldid = ?'.
+                                    ' AND '.$DB->sql_like('content', '?', false, false, true). // NOT LIKE
+                                    ' AND '.$DB->sql_like('content', '?', false, false, true); // NOT LIKE
+                        $params  = array($fieldid, '%orkshop%', '%ponsored%');
+                    }
                 }
                 break;
 
@@ -539,7 +545,7 @@ class block_maj_submissions extends block_base {
                         $table = 'data_content';
                         $field = 'COUNT(recordid)';
                         $select  = 'fieldid = ? AND '.$DB->sql_like('content', '?');
-                        $params  = array($fieldid, '%'.substr($type, 7).'%');
+                        $params  = array($fieldid, '%'.substr($type, 8).'%');
                     }
                 }
                 break;
@@ -549,6 +555,15 @@ class block_maj_submissions extends block_base {
 
             case 'review':
             case 'revise':
+                break;
+
+            case 'register':
+                if ($dataid) {
+                    $table = 'data_records';
+                    $field = 'COUNT(id)';
+                    $select = 'dataid = ?';
+                    $params = array($dataid);
+                }
                 break;
 
             case 'registerpresenter':

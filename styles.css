@@ -95,9 +95,14 @@ div.block_maj_submissions ul.importantdates li.divider {
     max-width:  210px;
     width:        80%;
 }
-div.block_maj_submissions ul.importantdates li.date,
-div.block_maj_submissions p.toollink {
-    margin:   4px 0px;
+div.block_maj_submissions ul.importantdates li.date {
+    margin:    4px 0px;
+    position: relative;
+}
+div.block_maj_submissions ul.importantdates li.date i {
+    position: absolute;
+    top:           0px;
+    right:         0px;
 }
 div.block_maj_submissions ul.importantdates li.date span {
 }
@@ -147,4 +152,7 @@ div.block_maj_submissions ul.importantdates li.date.timeremaining7 span::after {
     color:    #cc0000;
     content:    " *";
     font-weight: bold;
+}
+div.block_maj_submissions p.toollink {
+    margin:   4px 0px;
 }
