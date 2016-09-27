@@ -371,8 +371,10 @@ class block_maj_submissions extends block_base {
                     }
 
                     $date = $this->format_date_range($plugin, $dateformat, $timenow, $timestart, $timefinish);
+                    $stats = $this->format_stats($plugin, $modinfo, $type, $cmid, $sectionnum);
                 } else {
                     $date = '';
+                    $stats = '';
                 }
 
                 if ($date) {
@@ -382,6 +384,9 @@ class block_maj_submissions extends block_base {
                     }
                     $text = html_writer::tag('b', $text).html_writer::empty_tag('br');
                     $date = $text.html_writer::tag('span', $date);
+                    if ($stats) {
+                        // format $stats in <i>...</i>
+                    }
                     $class = 'date';
                     switch (true) {
                         case ($timenow < $this->config->$timestart):  $class .= ' early'; break;
@@ -489,6 +494,81 @@ class block_maj_submissions extends block_base {
             }
         }
         return $date;
+    }
+
+    /**
+     * format_stats
+     *
+     * @params string  $plugin
+     * @params string  $type
+     * @params integer $cmid
+     * @params integer $sectionnum
+     * @return array
+     */
+    protected function format_stats($plugin, $modinfo, $type, $cmid, $sectionnum) {
+        global $DB;
+
+        if ($cmid && isset($modinfo->cms[$cmid])) {
+            $dataid = $modinfo->get_cm($cmid)->instance;
+        } else {
+            $dataid = 0;
+        }
+
+        $table = '';
+        $field = '';
+        $select = '';
+        $params = array();
+
+        switch ($type) {
+
+            case 'collect':
+            case 'register':
+                if ($dataid) {
+                    $table = 'data_records';
+                    $field = 'COUNT(id)';
+                    $select = 'dataid = ?';
+                    $params = array($dataid);
+                }
+                break;
+
+            case 'collectworkshop':
+            case 'collectsponsored':
+                if ($dataid) {
+                    $params = array('dataid' => $dataid, 'name' => 'presentation_type');
+                    if ($fieldid = $DB->get_field('data_fields', 'id', $params)) {
+                        $table = 'data_content';
+                        $field = 'COUNT(recordid)';
+                        $select  = 'fieldid = ? AND '.$DB->sql_like('content', '?');
+                        $params  = array($fieldid, '%'.substr($type, 7).'%');
+                    }
+                }
+                break;
+
+            case 'publish':
+                break;
+
+            case 'review':
+            case 'revise':
+                break;
+
+            case 'registerpresenter':
+                if ($dataid) {
+                    $params = array('dataid' => $dataid, 'name' => 'is_presenter');
+                    if ($fieldid = $DB->get_field('data_fields', 'id', $params)) {
+                        $table = 'data_content';
+                        $field = 'COUNT(recordid)';
+                        $select  = 'fieldid = ? AND content = ?';
+                        $params  = array($fieldid, '1');
+                    }
+                }
+                break;
+        }
+
+        if ($select) {
+            $count = $DB->get_field_select($table, $field, $select, $params);
+            return get_string('countrecords', $plugin, ($count ? $count : '0'));
+        }
+        return '';
     }
 
     /**

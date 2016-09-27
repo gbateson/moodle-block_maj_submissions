@@ -52,6 +52,7 @@ $string['conferenceevents'] = 'Conference events';
 $string['conferencetime_help'] = 'The start and finish dates of the main conference.';
 $string['conferencetime'] = 'Main conference';
 $string['conferencetools'] = 'Conference tools';
+$string['countrecords'] = 'Count: {$a}';
 $string['createnewactivity'] = 'Create new activity';
 $string['createnewfield'] = 'Create new field';
 $string['createnewsection'] = 'Create new section';
@@ -69,6 +70,8 @@ $string['displaydates_help'] = 'If this setting is enabled, any dates that are e
 
 Otherwise, the dates will not be displayed on the course page. Ordinary users will not see this block at all, while course managers will see only the list of conference tools.';
 $string['displaydates'] = 'Display dates';
+$string['displaystats_help'] = 'If this setting is enabled, the number of submissions and registrations received so far will be displayed in this MAJ Submissions block on the course page.';
+$string['displaystats'] = 'Display statistics';
 $string['exportcontent'] = 'Export content';
 $string['exportsettings_help'] = 'This link allows you export the configuration settings for this block to a file that you can import into a similar block in another course.';
 $string['exportsettings'] = 'Export settings';
