@@ -218,6 +218,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $text .= html_writer::tag('a', get_string('importsettings', $plugin), $params);
         $text .= ' '.$OUTPUT->help_icon('importsettings', $plugin);
 
+        $text = html_writer::tag('div', $text, array('id' => 'id_description_text'));
         $mform->addElement('static', $name, $label, $text);
     }
 
