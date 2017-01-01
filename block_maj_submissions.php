@@ -36,6 +36,11 @@ defined('MOODLE_INTERNAL') || die();
  */
 class block_maj_submissions extends block_base {
 
+    const REMOVE_NONE  = 0;
+    const REMOVE_DAY   = 1;
+    const REMOVE_MONTH = 2;
+    const REMOVE_YEAR  = 4;
+
     protected $fixyearchar  = false;
     protected $fixmonthchar = false;
     protected $fixdaychar   = false;
@@ -464,17 +469,32 @@ class block_maj_submissions extends block_base {
 
         $removestart  = ($this->config->$timestart && (strftime('%H:%M', $this->config->$timestart)=='00:00'));
         $removefinish = ($this->config->$timefinish && (strftime('%H:%M', $this->config->$timefinish)=='23:55'));
-        $removetime   = ($removestart && $removefinish);
-        $removedate   = false;
+
+        $removedate = self::REMOVE_NONE;
+        if ($this->config->$timestart && $this->config->$timefinish) {
+            if (strftime('%Y', $this->config->$timestart)==strftime('%Y', $this->config->$timefinish)) {
+                $removedate |= self::REMOVE_YEAR;
+                if (strftime('%m', $this->config->$timestart)==strftime('%m', $this->config->$timefinish)) {
+                    $removedate |= self::REMOVE_MONTH;
+                    if (strftime('%d', $this->config->$timestart)==strftime('%d', $this->config->$timefinish)) {
+                        $removedate |= self::REMOVE_DAY;
+                    }
+                }
+            }
+        }
+
+        if ($removedate & self::REMOVE_DAY) {
+            $removestart  = false;
+            $removefinish = false;
+            $removetime   = false;
+        } else {
+            $removestart  = ($this->config->$timestart && (strftime('%H:%M', $this->config->$timestart)=='00:00'));
+            $removefinish = ($this->config->$timefinish && (strftime('%H:%M', $this->config->$timefinish)=='23:55'));
+            $removetime   = ($removestart && $removefinish);
+        }
 
         $date = '';
         if ($this->config->$timestart && $this->config->$timefinish) {
-            if (($this->config->$timefinish - $this->config->$timestart) < DAYSECS) {
-                // the dates are less than 24 hours apart, so don't remove times ...
-                $removetime = false;
-                // ... but remove the finish date ;-)
-                $removedate = true;
-            }
             $date = (object)array(
                 'open'  => $this->userdate($this->config->$timestart, $dateformat, $removetime),
                 'close' => $this->userdate($this->config->$timefinish, $dateformat, $removetime, $removedate)
@@ -757,7 +777,7 @@ class block_maj_submissions extends block_base {
      * @param boolean $removedate (optional, default = false)
      * @return string representation of $date
      */
-    protected function userdate($date, $format, $removetime, $removedate=false) {
+    protected function userdate($date, $format, $removetime, $removedate=self::REMOVE_NONE) {
 
         $current_language = substr(current_language(), 0, 2);
 
@@ -767,9 +787,19 @@ class block_maj_submissions extends block_base {
             $format = preg_replace($search, '', $format);
         }
 
-        if ($removedate) {
+        $search = '';
+        if ($removedate & self::REMOVE_YEAR) {
+            $search .= 'CgGyY';
+        }
+        if ($removedate & self::REMOVE_MONTH) {
+            $search .= 'bBhm';
+        }
+        if ($removedate & self::REMOVE_DAY) {
+            $search .= 'aAdejuw';
+        }
+        if ($search) {
             // http://php.net/manual/en/function.strftime.php
-            $search = '/[ :,\-\.\/]*[\[\{\(]*?%[AadejuwbBhmCgGyY][\)\}\]]?/';
+            $search = '/[ :,\-\.\/]*[\[\{\(]*?%['.$search.'][\)\}\]]?/';
             $format = preg_replace($search, '', $format);
         }
 
