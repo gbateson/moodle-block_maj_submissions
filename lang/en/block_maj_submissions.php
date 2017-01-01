@@ -26,7 +26,7 @@
 
 // essential strings
 $string['pluginname'] = 'MAJ Submissions';
-$string['blockdescription'] = 'This block facilitates administration of conference submissions system based on a set of Database, Workshop and Assignment activities.';
+$string['blockdescription'] = 'This block facilitates administration of a conference submissions system based on a set of Database, Workshop and Assignment activities.';
 $string['blockname'] = 'MAJ Submissions';
 $string['blocknameplural'] = 'MAJ Submissions';
 
@@ -52,7 +52,7 @@ $string['conferenceevents'] = 'Conference events';
 $string['conferencetime_help'] = 'The start and finish dates of the main conference.';
 $string['conferencetime'] = 'Main conference';
 $string['conferencetools'] = 'Conference tools';
-$string['countrecords'] = 'Count: {$a}';
+$string['countrecords'] = '({$a} so far)';
 $string['createnewactivity'] = 'Create new activity';
 $string['createnewfield'] = 'Create new field';
 $string['createnewsection'] = 'Create new section';

@@ -25,23 +25,35 @@
  * @since      Moodle 2.0
  */
 
-/*
+/**
  * styles for block settings edit form
  */
 
-#block_maj_submissions_edit_form.mform #fitem_id_description div.felement {
+#block_maj_submissions_edit_form #id_description_text {
     max-width: 480px;
 }
-#block_maj_submissions_edit_form.mform #fgroup_id_config_collecttime_elements div.fitemtitle,
-#block_maj_submissions_edit_form.mform #fgroup_id_config_collectworkshoptime_elements div.fitemtitle,
-#block_maj_submissions_edit_form.mform #fgroup_id_config_collectsponsoredtime_elements div.fitemtitle,
-#block_maj_submissions_edit_form.mform #fgroup_id_config_reviewtime_elements div.fitemtitle,
-#block_maj_submissions_edit_form.mform #fgroup_id_config_revisetime_elements div.fitemtitle,
-#block_maj_submissions_edit_form.mform #fgroup_id_config_publishtime_elements div.fitemtitle,
-#block_maj_submissions_edit_form.mform #fgroup_id_config_registertime_elements div.fitemtitle,
-#block_maj_submissions_edit_form.mform #fgroup_id_config_registerpresenterstime_elements div.fitemtitle {
-    padding-top: 10px;
+
+/** vertically align start/finish times with their respective titles */
+#block_maj_submissions_edit_form.mform #fgroup_id_elements_conferencetime fieldset.fgroup,
+#block_maj_submissions_edit_form.mform #fgroup_id_elements_workshopstime fieldset.fgroup,
+#block_maj_submissions_edit_form.mform #fgroup_id_elements_receptiontime fieldset.fgroup,
+#block_maj_submissions_edit_form.mform #fgroup_id_elements_collecttime fieldset.fgroup,
+#block_maj_submissions_edit_form.mform #fgroup_id_elements_collectworkshoptime fieldset.fgroup,
+#block_maj_submissions_edit_form.mform #fgroup_id_elements_collectsponsoredtime fieldset.fgroup,
+#block_maj_submissions_edit_form.mform #fgroup_id_elements_reviewtime fieldset.fgroup,
+#block_maj_submissions_edit_form.mform #fgroup_id_elements_revisetime fieldset.fgroup,
+#block_maj_submissions_edit_form.mform #fgroup_id_elements_publishtime fieldset.fgroup,
+#block_maj_submissions_edit_form.mform #fgroup_id_elements_registertime fieldset.fgroup,
+#block_maj_submissions_edit_form.mform #fgroup_id_elements_registerpresenterstime fieldset.fgroup {
+    margin-top: -6px;
 }
+
+/** vertically align calendar img's */
+#block_maj_submissions_edit_form.mform .fdate_time_selector img.smallicon {
+    margin-top: -6px;
+}
+
+/** format the start/finish subheading */
 #block_maj_submissions_edit_form b {
     display:  inline-block;
     min-width:        48px;
@@ -57,7 +69,7 @@
     margin-left: 24px;
 }
 
-/*
+/**
  * styles for the maj_submissions block
  */
 
@@ -95,9 +107,14 @@ div.block_maj_submissions ul.importantdates li.divider {
     max-width:  210px;
     width:        80%;
 }
-div.block_maj_submissions ul.importantdates li.date,
-div.block_maj_submissions p.toollink {
-    margin:   4px 0px;
+div.block_maj_submissions ul.importantdates li.date {
+    margin:    4px 0px;
+    position: relative;
+}
+div.block_maj_submissions ul.importantdates li.date i {
+    position: absolute;
+    top:           0px;
+    right:         0px;
 }
 div.block_maj_submissions ul.importantdates li.date span {
 }
@@ -147,4 +164,7 @@ div.block_maj_submissions ul.importantdates li.date.timeremaining7 span::after {
     color:    #cc0000;
     content:    " *";
     font-weight: bold;
+}
+div.block_maj_submissions p.toollink {
+    margin:   4px 0px;
 }

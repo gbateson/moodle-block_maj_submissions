@@ -36,6 +36,11 @@ defined('MOODLE_INTERNAL') || die();
  */
 class block_maj_submissions extends block_base {
 
+    const REMOVE_NONE  = 0;
+    const REMOVE_DAY   = 1;
+    const REMOVE_MONTH = 2;
+    const REMOVE_YEAR  = 4;
+
     protected $fixyearchar  = false;
     protected $fixmonthchar = false;
     protected $fixdaychar   = false;
@@ -84,6 +89,7 @@ class block_maj_submissions extends block_base {
         $defaults = array(
             'title' => get_string('blockname', $plugin),
             'displaydates'          => 1,  // 0=no, 1=yes
+            'displaystats'          => 1,  // 0=no, 1=yes
 
             // conference events
             'conferencecmid'       => 0,
@@ -371,10 +377,8 @@ class block_maj_submissions extends block_base {
                     }
 
                     $date = $this->format_date_range($plugin, $dateformat, $timenow, $timestart, $timefinish);
-                    $stats = $this->format_stats($plugin, $modinfo, $type, $cmid, $sectionnum);
                 } else {
                     $date = '';
-                    $stats = '';
                 }
 
                 if ($date) {
@@ -382,10 +386,13 @@ class block_maj_submissions extends block_base {
                     if ($url) {
                         $text = html_writer::tag('a', $text, array('href' => $url));
                     }
-                    $text = html_writer::tag('b', $text).html_writer::empty_tag('br');
-                    $date = $text.html_writer::tag('span', $date);
-                    if ($stats) {
-                        // format $stats in <i>...</i>
+                    $date = html_writer::tag('b', $text).
+                            html_writer::empty_tag('br').
+                            html_writer::tag('span', $date);
+                    if ($this->user_can_edit()) {
+                        if ($stats = $this->format_stats($plugin, $modinfo, $type, $cmid, $sectionnum)) {
+                            $date .= html_writer::tag('i', $stats);
+                        }
                     }
                     $class = 'date';
                     switch (true) {
@@ -462,17 +469,32 @@ class block_maj_submissions extends block_base {
 
         $removestart  = ($this->config->$timestart && (strftime('%H:%M', $this->config->$timestart)=='00:00'));
         $removefinish = ($this->config->$timefinish && (strftime('%H:%M', $this->config->$timefinish)=='23:55'));
-        $removetime   = ($removestart && $removefinish);
-        $removedate   = false;
+
+        $removedate = self::REMOVE_NONE;
+        if ($this->config->$timestart && $this->config->$timefinish) {
+            if (strftime('%Y', $this->config->$timestart)==strftime('%Y', $this->config->$timefinish)) {
+                $removedate |= self::REMOVE_YEAR;
+                if (strftime('%m', $this->config->$timestart)==strftime('%m', $this->config->$timefinish)) {
+                    $removedate |= self::REMOVE_MONTH;
+                    if (strftime('%d', $this->config->$timestart)==strftime('%d', $this->config->$timefinish)) {
+                        $removedate |= self::REMOVE_DAY;
+                    }
+                }
+            }
+        }
+
+        if ($removedate & self::REMOVE_DAY) {
+            $removestart  = false;
+            $removefinish = false;
+            $removetime   = false;
+        } else {
+            $removestart  = ($this->config->$timestart && (strftime('%H:%M', $this->config->$timestart)=='00:00'));
+            $removefinish = ($this->config->$timefinish && (strftime('%H:%M', $this->config->$timefinish)=='23:55'));
+            $removetime   = ($removestart && $removefinish);
+        }
 
         $date = '';
         if ($this->config->$timestart && $this->config->$timefinish) {
-            if (($this->config->$timefinish - $this->config->$timestart) < DAYSECS) {
-                // the dates are less than 24 hours apart, so don't remove times ...
-                $removetime = false;
-                // ... but remove the finish date ;-)
-                $removedate = true;
-            }
             $date = (object)array(
                 'open'  => $this->userdate($this->config->$timestart, $dateformat, $removetime),
                 'close' => $this->userdate($this->config->$timefinish, $dateformat, $removetime, $removedate)
@@ -522,12 +544,16 @@ class block_maj_submissions extends block_base {
         switch ($type) {
 
             case 'collect':
-            case 'register':
                 if ($dataid) {
-                    $table = 'data_records';
-                    $field = 'COUNT(id)';
-                    $select = 'dataid = ?';
-                    $params = array($dataid);
+                    $params = array('dataid' => $dataid, 'name' => 'presentation_type');
+                    if ($fieldid = $DB->get_field('data_fields', 'id', $params)) {
+                        $table = 'data_content';
+                        $field = 'COUNT(recordid)';
+                        $select  = 'fieldid = ?'.
+                                    ' AND '.$DB->sql_like('content', '?', false, false, true). // NOT LIKE
+                                    ' AND '.$DB->sql_like('content', '?', false, false, true); // NOT LIKE
+                        $params  = array($fieldid, '%orkshop%', '%ponsored%');
+                    }
                 }
                 break;
 
@@ -539,7 +565,7 @@ class block_maj_submissions extends block_base {
                         $table = 'data_content';
                         $field = 'COUNT(recordid)';
                         $select  = 'fieldid = ? AND '.$DB->sql_like('content', '?');
-                        $params  = array($fieldid, '%'.substr($type, 7).'%');
+                        $params  = array($fieldid, '%'.substr($type, 8).'%');
                     }
                 }
                 break;
@@ -549,6 +575,15 @@ class block_maj_submissions extends block_base {
 
             case 'review':
             case 'revise':
+                break;
+
+            case 'register':
+                if ($dataid) {
+                    $table = 'data_records';
+                    $field = 'COUNT(id)';
+                    $select = 'dataid = ?';
+                    $params = array($dataid);
+                }
                 break;
 
             case 'registerpresenter':
@@ -742,7 +777,7 @@ class block_maj_submissions extends block_base {
      * @param boolean $removedate (optional, default = false)
      * @return string representation of $date
      */
-    protected function userdate($date, $format, $removetime, $removedate=false) {
+    protected function userdate($date, $format, $removetime, $removedate=self::REMOVE_NONE) {
 
         $current_language = substr(current_language(), 0, 2);
 
@@ -752,9 +787,19 @@ class block_maj_submissions extends block_base {
             $format = preg_replace($search, '', $format);
         }
 
-        if ($removedate) {
+        $search = '';
+        if ($removedate & self::REMOVE_YEAR) {
+            $search .= 'CgGyY';
+        }
+        if ($removedate & self::REMOVE_MONTH) {
+            $search .= 'bBhm';
+        }
+        if ($removedate & self::REMOVE_DAY) {
+            $search .= 'aAdejuw';
+        }
+        if ($search) {
             // http://php.net/manual/en/function.strftime.php
-            $search = '/[ :,\-\.\/]*[\[\{\(]*?%[AadejuwbBhmCgGyY][\)\}\]]?/';
+            $search = '/[ :,\-\.\/]*[\[\{\(]*?%['.$search.'][\)\}\]]?/';
             $format = preg_replace($search, '', $format);
         }
 
