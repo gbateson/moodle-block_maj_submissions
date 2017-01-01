@@ -429,7 +429,7 @@ class block_maj_submissions extends block_base {
                 $icons .= ' '.$this->get_exportimport_icon($plugin, 'export', 'settings', 'i/export');
             }
             $icons .= ' '.$this->get_exportimport_icon($plugin, 'import', 'settings', 'i/import');
-            if ($USER->editing==0) {
+            if (empty($USER->editing)) {
                 $icons .= ' '.$this->get_edit_icon($plugin);
             }
         }
