@@ -579,10 +579,18 @@ class block_maj_submissions extends block_base {
 
             case 'register':
                 if ($dataid) {
-                    $table = 'data_records';
-                    $field = 'COUNT(id)';
-                    $select = 'dataid = ?';
-                    $params = array($dataid);
+                    $params = array('dataid' => $dataid, 'name' => 'presenter');
+                    if ($fieldid = $DB->get_field('data_fields', 'id', $params)) {
+                        $table = 'data_content';
+                        $field = 'COUNT(DISTINCT recordid)';
+                        $select  = 'fieldid = ? AND (content IS NULL OR content = ?)';
+                        $params  = array($fieldid, '');
+                    } else {
+                        $table = 'data_records';
+                        $field = 'COUNT(id)';
+                        $select = 'dataid = ?';
+                        $params = array($dataid);
+                    }
                 }
                 break;
 
@@ -591,7 +599,7 @@ class block_maj_submissions extends block_base {
                     $params = array('dataid' => $dataid, 'name' => 'presenter');
                     if ($fieldid = $DB->get_field('data_fields', 'id', $params)) {
                         $table = 'data_content';
-                        $field = 'COUNT(recordid)';
+                        $field = 'COUNT(DISTINCT recordid)';
                         $select  = 'fieldid = ? AND content IS NOT NULL AND content <> ?';
                         $params  = array($fieldid, '');
                     }
