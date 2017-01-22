@@ -588,12 +588,12 @@ class block_maj_submissions extends block_base {
 
             case 'registerpresenter':
                 if ($dataid) {
-                    $params = array('dataid' => $dataid, 'name' => 'is_presenter');
+                    $params = array('dataid' => $dataid, 'name' => 'presenter');
                     if ($fieldid = $DB->get_field('data_fields', 'id', $params)) {
                         $table = 'data_content';
                         $field = 'COUNT(recordid)';
-                        $select  = 'fieldid = ? AND content = ?';
-                        $params  = array($fieldid, '1');
+                        $select  = 'fieldid = ? AND content IS NOT NULL AND content <> ?';
+                        $params  = array($fieldid, '');
                     }
                 }
                 break;
