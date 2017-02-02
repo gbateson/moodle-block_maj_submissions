@@ -68,11 +68,11 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
     $content = $instance->get_content()->text;
 
     // remove the links and icons for edit, import and export
-    $content = preg_replace('/\s*<img[^>]*>(<\/img)?/', '', $content);
+    $content = preg_replace('/\s*<img\b[^>]*>(<\/img)?/', '', $content);
     $content = preg_replace('/\s*<a\b[^>]*><\/a>/', '', $content);
 
     // remove statistics about registrations/submissions so far
-    $content = preg_replace('/\s*<i\b[^>]*><\/i>/', '', $content);
+    $content = preg_replace('/\s*<i\b[^>]*>.*?<\/i>/', '', $content);
 
     // remove "toollinks" tags
     $content = preg_replace('/\s*<(h4|p)\b[^>]*class="toollinks?"[^>]*>.*?<\/\1>/s', '', $content);
