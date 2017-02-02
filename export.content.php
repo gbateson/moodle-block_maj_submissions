@@ -69,10 +69,13 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
 
     // remove the links and icons for edit, import and export
     $content = preg_replace('/\s*<img[^>]*>(<\/img)?/', '', $content);
-    $content = preg_replace('/\s*<a[^>]*><\/a>/', '', $content);
+    $content = preg_replace('/\s*<a\b[^>]*><\/a>/', '', $content);
+
+    // remove statistics about registrations/submissions so far
+    $content = preg_replace('/\s*<i\b[^>]*><\/i>/', '', $content);
 
     // remove "toollinks" tags
-    $content = preg_replace('/\s*<(h4|p) [^>]*class="toollinks?"[^>]*>.*?<\/\1>/s', '', $content);
+    $content = preg_replace('/\s*<(h4|p)\b[^>]*class="toollinks?"[^>]*>.*?<\/\1>/s', '', $content);
 
     // format block and style tags
     $s = '    ';
@@ -124,7 +127,7 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
     $table = preg_replace('/<\/?a[^<]*>\s*/', '', $table);
 
     // convert UL+LI version to TABLE/TBODY+TR/TH/TD version
-    $table = preg_replace('/<(ul)([^>]*)>(.*?)<\/\1>/s', '<table><tbody>$3</tbody></table>', $table);
+    $table = preg_replace('/<(ul)([^>]*)>(.*?)<\/\1>/s', '<table$2"><tbody>$3</tbody></table>', $table);
     $table = preg_replace('/<(li)([^>]*)>(.*?)<\/\1>/s', '<tr$2>$3</tr>', $table);
     $table = preg_replace('/<b>(.*)<\/b><br[^>]*>/', '<th>$1</th>', $table);
     $table = preg_replace('/<span>(.*)<\/span>/', '<td>$1</td>', $table);

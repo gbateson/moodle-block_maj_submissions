@@ -929,6 +929,7 @@ class block_maj_submissions extends block_base {
      *                 otherwise, return Moodle's standard get_string() output
      */
     public function get_string($identifier, $component='', $a=null, $lazyload=false) {
+
         if ($this->multilang==false) {
             return get_string($identifier, $component, $a, $lazyload);
         }
@@ -937,17 +938,71 @@ class block_maj_submissions extends block_base {
         $langs = $strman->get_list_of_translations();
         $langs = array_keys($langs);
 
+        // sort $langs, so that "en" is first
+        // and parent langs appear before child langs
+        usort($langs, array($this, 'usort_langs'));
+
+        // extract unique strings
         $spans = array();
         foreach ($langs as $lang) {
             $strings = $strman->load_component_strings($component, $lang);
             if ($strings[$identifier]) {
                 $string = $strman->get_string($identifier, $component, $a, $lang);
-                $params = array('lang' => $lang, 'class' => 'multilang');
-                $spans[] = html_writer::tag('span', $string, $params);
+                if (array_search($string, $spans)===false) {
+                    $spans[$lang] = $string;
+                }
             }
         }
 
+        // format strings as multilang $spans
+        foreach ($spans as $lang => $span) {
+            $params = array('lang' => $lang, 'class' => 'multilang');
+            $spans[$lang] = html_writer::tag('span', $span, $params);
+        }
+
         return implode('', $spans);
+    }
+
+    /**
+     * usort_langs
+     *
+     * sort $langs, so that "en" is first
+     * and parent langs (length = 2)
+     * appear before child langs (length > 2)
+     */
+    public function usort_langs($a, $b) {
+        if ($a=='en') {
+            return -1;
+        }
+        if ($b=='en') {
+            return 1;
+        }
+        // compare parent langs
+        $a_parent = substr($a, 0, 2);
+        $b_parent = substr($b, 0, 2);
+        if ($a_parent < $b_parent) {
+            return -1;
+        }
+        if ($b_parent < $a_parent) {
+            return 1;
+        }
+        // same parent lang, compare lengths
+        $a_len = strlen($a);
+        $b_len = strlen($b);
+        if ($a_len < $b_len) {
+            return -1;
+        }
+        if ($b_len < $a_len) {
+            return 1;
+        }
+        // sibling langs, compare values
+        if ($a < $b) {
+            return -1;
+        }
+        if ($b < $a) {
+            return 1;
+        }
+        return 0; // shouldn't happen !!
     }
 
     /**
