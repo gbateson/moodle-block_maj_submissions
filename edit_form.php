@@ -80,8 +80,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
         }
 
         $fieldnames = block_maj_submissions::get_constant_fieldnames(false);
-        foreach ($fieldnames as $fieldname) {
-            $name = str_replace('_', '', $fieldname);
+        foreach ($fieldnames as $fieldname => $name) {
             $elements = array();
             foreach ($langs as $lang) {
                 $config_name = 'config_'.$name.$lang;
@@ -103,8 +102,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
         }
 
         $fieldnames = block_maj_submissions::get_constant_fieldnames(true);
-        foreach ($fieldnames as $fieldname) {
-            $name = str_replace('_', '', $fieldname);
+        foreach ($fieldnames as $fieldname => $name) {
             $default = $this->get_constant_value($dataid, $fieldname);
             $this->add_field($mform, $plugin, $name, 'text', PARAM_INT, array('size' => 10), $default);
         }

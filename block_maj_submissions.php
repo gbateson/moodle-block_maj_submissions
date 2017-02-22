@@ -221,14 +221,13 @@ class block_maj_submissions extends block_base {
             $params = array('id' => $config->workshopscmid, 'course' => $courseid, 'module' => $moduleid);
             $dataids[] = $DB->get_field('course_modules', 'instance', $params);
         }
- 
+
         $dataids = array_filter($dataids);
         $dataids = array_unique($dataids);
         if (count($dataids)) {
 
-            $fieldnames = block_maj_submissions::get_constant_fieldnames(false);
-            foreach ($fieldnames as $fieldname) {
-                $name = str_replace('_', '', $fieldname);
+            $fieldnames = self::get_constant_fieldnames(false);
+            foreach ($fieldnames as $fieldname => $name) {
                 foreach (self::get_languages() as $lang) {
                     $namelang = $name.$lang;
                     $fieldnamelang = $fieldname."_$lang";
@@ -241,9 +240,8 @@ class block_maj_submissions extends block_base {
                 }
             }
 
-            $fieldnames = block_maj_submissions::get_constant_fieldnames(true);
-            foreach ($fieldnames as $fieldname) {
-                $name = str_replace('_', '', $fieldname);
+            $fieldnames = self::get_constant_fieldnames(true);
+            foreach ($fieldnames as $fieldname => $name) {
                 if (isset($config->$name)) {
                     list($select, $params) = $DB->get_in_or_equal($dataids);
                     $select = "dataid $select AND name = ?";
@@ -1085,14 +1083,21 @@ class block_maj_submissions extends block_base {
     static public function get_constant_fieldnames($autoincrement) {
         if ($autoincrement) {
             return array(
-                'badge_number', 'fee_receipt_number',
-                'dinner_receipt_number', 'certificate_number',
+                'badge_number'          => 'badgenumber',
+                'fee_receipt_number'    => 'feereceiptnumber',
+                'dinner_receipt_number' => 'dinnerreceiptnumber',
+                'certificate_number'    => 'certificatenumber',
             );
         } else {
             return array(
-                'conference_name', 'conference_venue', 'conference_dates',
-                'dinner_name', 'dinner_venue', 'dinner_date', 'dinner_time',
-                'certificate_date'
+                'conference_name'  => 'conferencename',
+                'conference_venue' => 'conferencevenue',
+                'conference_dates' => 'conferencedates',
+                'dinner_name'      => 'dinnername',
+                'dinner_venue'     => 'dinnervenue',
+                'dinner_date'      => 'dinnerdate',
+                'dinner_time'      => 'dinnertime',
+                'certificate_date' => 'certificatedate'
             );
         }
     }
