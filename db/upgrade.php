@@ -75,6 +75,7 @@ function xmldb_block_maj_submissions_upgrade($oldversion=0) {
                            'rsstemplate',  'rsstitletemplate',   'asearchtemplate');
 
         foreach ($names as $old => $new) {
+
             $params = array('old' => $old,
                             'new' => $new);
 
@@ -82,9 +83,17 @@ function xmldb_block_maj_submissions_upgrade($oldversion=0) {
                          'SET name = REPLACE(name, :old, :new) '.
                          'WHERE name IS NOT NULL', $params);
 
+            $params = array('old' => $old,
+                            'new' => $new,
+                            'type' => 'template');
+
             $DB->execute('UPDATE {data_fields} '.
                          'SET param1 = REPLACE(param1, :old, :new) '.
-                         'WHERE param1 IS NOT NULL', $params);
+                         'WHERE param1 IS NOT NULL '.
+                         'AND type = ?', $params);
+
+            $params = array('old' => $old,
+                            'new' => $new);
 
             foreach ($templates as $template) {
                 $DB->execute('UPDATE {data} '.
