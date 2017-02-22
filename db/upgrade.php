@@ -32,7 +32,7 @@ function xmldb_block_maj_submissions_upgrade($oldversion=0) {
 
     $result = true;
 
-    $newversion = 2017022246;
+    $newversion = 2017022349;
     if ($oldversion < $newversion) {
 
         /////////////////////////////////////////////////
@@ -40,31 +40,18 @@ function xmldb_block_maj_submissions_upgrade($oldversion=0) {
         // to use two-letter language as suffix
         /////////////////////////////////////////////////
 
-        $names = array('conference_name_english',  'conference_name_japanese',
-                       'conference_venue_english', 'conference_venue_japanese',
-                       'conference_dates_english', 'conference_dates_japanese',
-                       'dinner_date_english',      'dinner_date_japanese',
-                       'dinner_name_english',      'dinner_name_japanese',
-                       'name_japanese_given',      'name_japanese_surname',
-                       'name_english_given',       'name_english_surname',
-                       'name_english_given_2',     'name_english_surname_2',
-                       'name_english_given_3',     'name_english_surname_3',
-                       'name_english_given_4',     'name_english_surname_4',
-                       'name_english_given_5',     'name_english_surname_5',
-                       'name_english_given_6',     'name_english_surname_6',
-                       'name_english_given_7',     'name_english_surname_7',
-                       'affiliation_english',      'affiliation_japanese',
-                       'affiliation_english_2',    'affiliation_japanese_2',
-                       'affiliation_english_3',    'affiliation_japanese_3',
-                       'affiliation_english_4',    'affiliation_japanese_4',
-                       'affiliation_english_5',    'affiliation_japanese_5',
-                       'fee_description_english',  'fee_description_japanese',
-                       'fee_type_english',         'fee_type_japanese');
+        $select = $DB->sql_like('name', ':en').' OR '.$DB->sql_like('name', ':ja');
+        $params = array('en' => '%english%', 'ja' => '%japanese%');
+        if ($names = $DB->get_records_select_menu('data_fields', $select, $params, 'name', 'id,name')) {
+            $names = array_unique($names);
+            $names = array_flip($names);
+        } else {
+            $names = array();
+        }
 
         $search = '/(.*)_(en|ja)(glish|panese)(.*)/';
         $replace = '$1$4_$2';
 
-        $names = array_flip($names);
         foreach ($names as $old => $new) {
             $names[$old] = preg_replace($search, $replace, $old);
         }
