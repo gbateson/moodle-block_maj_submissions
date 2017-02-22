@@ -26,8 +26,7 @@
 
 /** Include required files */
 require_once('../../../config.php');
-require_once($CFG->dirroot.'/blocks/moodleblock.class.php');
-require_once($CFG->dirroot.'/blocks/maj_submissions/block_maj_submissions.php');
+require_once($CFG->dirroot.'/blocks/maj_submissions/tools/lib.php');
 
 $id = required_param('id', PARAM_INT); // block_instance id
 $plugin = 'block_maj_submissions';

@@ -88,8 +88,24 @@ class block_maj_submissions extends block_base {
         $plugin = 'block_maj_submissions';
         $defaults = array(
             'title' => get_string('blockname', $plugin),
-            'displaydates'          => 1,  // 0=no, 1=yes
-            'displaystats'          => 1,  // 0=no, 1=yes
+            'displaydates' => 1,  // 0=no, 1=yes
+            'displaystats' => 1,  // 0=no, 1=yes
+
+            // database CONSTANT fields
+            'conference_name'  => '',
+            'conference_venue' => '',
+            'conference_dates' => '',
+            'dinner_name'      => '',
+            'dinner_venue'     => '',
+            'dinner_date'      => '',
+            'dinner_time'      => '',
+            'certificate_date' => '',
+
+            // database CONSTANT (auto-increment) fields
+            'badge_number'          => 0,
+            'fee_receipt_number'    => 0,
+            'dinner_receipt_number' => 0,
+            'certificate_number'    => 0,
 
             // conference events
             'conferencecmid'       => 0,
@@ -185,12 +201,67 @@ class block_maj_submissions extends block_base {
 
         $plugin = 'block_maj_submissions';
 
+        /////////////////////////////////////////////////
+        // update CONSTANT fields, if required
+        /////////////////////////////////////////////////
+
+        $courseid = $this->page->course->id;
+        $moduleid = $DB->get_field('modules', 'id', array('name' => 'data'));
+
+        $dataids = array();
+        if ($config->registercmid) {
+            $params = array('id' => $config->registercmid, 'course' => $courseid, 'module' => $moduleid);
+            $dataids[] = $DB->get_field('course_modules', 'instance', $params);
+        }
+        if ($config->collectcmid) {
+            $params = array('id' => $config->collectcmid, 'course' => $courseid, 'module' => $moduleid);
+            $dataids[] = $DB->get_field('course_modules', 'instance', $params);
+        }
+        if ($config->workshopscmid) {
+            $params = array('id' => $config->workshopscmid, 'course' => $courseid, 'module' => $moduleid);
+            $dataids[] = $DB->get_field('course_modules', 'instance', $params);
+        }
+ 
+        $dataids = array_filter($dataids);
+        $dataids = array_unique($dataids);
+        if (count($dataids)) {
+
+            $fieldnames = block_maj_submissions::get_constant_fieldnames(false);
+            foreach ($fieldnames as $fieldname) {
+                $name = str_replace('_', '', $fieldname);
+                foreach (self::get_languages() as $lang) {
+                    $namelang = $name.$lang;
+                    $fieldnamelang = $fieldname."_$lang";
+                    if (isset($config->$namelang)) {
+                        list($select, $params) = $DB->get_in_or_equal($dataids);
+                        $select = "dataid $select AND name = ?";
+                        $params[] = $fieldnamelang;
+                        $DB->set_field_select('data_fields', 'param1', $config->$namelang, $select, $params);
+                    }
+                }
+            }
+
+            $fieldnames = block_maj_submissions::get_constant_fieldnames(true);
+            foreach ($fieldnames as $fieldname) {
+                $name = str_replace('_', '', $fieldname);
+                if (isset($config->$name)) {
+                    list($select, $params) = $DB->get_in_or_equal($dataids);
+                    $select = "dataid $select AND name = ?";
+                    $params[] = $fieldname;
+                    $DB->set_field_select('data_fields', 'param1', $config->$name, $select, $params);
+                }
+            }
+        }
+
+        /////////////////////////////////////////////////
         // update calendar events, if required
+        /////////////////////////////////////////////////
+
         if ($config->manageevents) {
             $events = array();
 
             $modinfo = get_fast_modinfo($this->page->course);
-            foreach ($this->get_timetypes() as $types) {
+            foreach (self::get_timetypes() as $types) {
                 foreach ($types as $type) {
 
                     // set up $cmid, $modname, $instance and $visible
@@ -260,7 +331,10 @@ class block_maj_submissions extends block_base {
             }
         }
 
+        /////////////////////////////////////////////////
         //  save config settings as usual
+        /////////////////////////////////////////////////
+
         return parent::instance_config_save($config, $pinned);
     }
 
@@ -308,7 +382,7 @@ class block_maj_submissions extends block_base {
         }
 
         $modinfo = get_fast_modinfo($this->page->course);
-        foreach ($this->get_timetypes() as $types) {
+        foreach (self::get_timetypes() as $types) {
 
             // skip the divider, if $dates is still empty
             $skipdivider = empty($dates);
@@ -446,11 +520,11 @@ class block_maj_submissions extends block_base {
         if ($this->user_can_edit()) {
             $heading = $this->get_string('conferencetools', $plugin).$icons;
             $this->content->text .= html_writer::tag('h4', $heading, array('class' => 'toollinks'));
-            $this->content->text .= $this->get_tool_link($plugin, 'setupregistration');
-            $this->content->text .= $this->get_tool_link($plugin, 'setupsubmissions');
+            $this->content->text .= $this->get_tool_link($plugin, 'setupregistrations');
+            $this->content->text .= $this->get_tool_link($plugin, 'setuppresentations');
+            $this->content->text .= $this->get_tool_link($plugin, 'setupworkshops');
             $this->content->text .= $this->get_tool_link($plugin, 'data2workshop');
-            $this->content->text .= $this->get_tool_link($plugin, 'workshop2assign');
-            $this->content->text .= $this->get_tool_link($plugin, 'assign2data');
+            $this->content->text .= $this->get_tool_link($plugin, 'workshop2data');
         }
 
         return $this->content;
@@ -612,20 +686,6 @@ class block_maj_submissions extends block_base {
             return get_string('countrecords', $plugin, ($count ? $count : '0'));
         }
         return '';
-    }
-
-    /**
-     * get_timetypes
-     *
-     * @return array
-     */
-    protected function get_timetypes() {
-        return array(
-            array('conference', 'workshops',       'reception'),
-            array('collect',    'collectworkshop', 'collectsponsored'),
-            array('review',     'revise',          'publish'),
-            array('register',   'registerpresenter'),
-        );
     }
 
     /**
@@ -1003,6 +1063,52 @@ class block_maj_submissions extends block_base {
             return 1;
         }
         return 0; // shouldn't happen !!
+    }
+
+    /**
+     * get_languages
+     *
+     * @return array
+     */
+    static public function get_languages() {
+        $langs = get_string_manager()->get_list_of_translations();
+        $langs = array_keys($langs);
+        sort($langs);
+        return $langs;
+    }
+
+    /**
+     * get_constant_fieldnames
+     *
+     * @return array
+     */
+    static public function get_constant_fieldnames($autoincrement) {
+        if ($autoincrement) {
+            return array(
+                'badge_number', 'fee_receipt_number',
+                'dinner_receipt_number', 'certificate_number',
+            );
+        } else {
+            return array(
+                'conference_name', 'conference_venue', 'conference_dates',
+                'dinner_name', 'dinner_venue', 'dinner_date', 'dinner_time',
+                'certificate_date'
+            );
+        }
+    }
+
+    /**
+     * get_timetypes
+     *
+     * @return array
+     */
+    static public function get_timetypes() {
+        return array(
+            array('conference', 'workshops',       'reception'),
+            array('collect',    'collectworkshop', 'collectsponsored'),
+            array('review',     'revise',          'publish'),
+            array('register',   'registerpresenter'),
+        );
     }
 
     /**
