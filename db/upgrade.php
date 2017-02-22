@@ -90,7 +90,7 @@ function xmldb_block_maj_submissions_upgrade($oldversion=0) {
             $DB->execute('UPDATE {data_fields} '.
                          'SET param1 = REPLACE(param1, :old, :new) '.
                          'WHERE param1 IS NOT NULL '.
-                         'AND type = ?', $params);
+                         'AND type = :type', $params);
 
             $params = array('old' => $old,
                             'new' => $new);
