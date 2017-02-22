@@ -45,13 +45,12 @@ class block_maj_submissions_edit_form extends block_edit_form {
      * @return void, but will update $mform
      */
     protected function specific_definition($mform) {
-        global $DB;
-
-        $this->set_form_id($mform, get_class($this));
 
         // cache the plugin name, because
         // it is quite long and we use it a lot
         $plugin = 'block_maj_submissions';
+
+        $this->set_form_id($mform, get_class($this));
 
         //-----------------------------------------------------------------------------
         $this->add_header($mform, 'form', 'display');
@@ -61,51 +60,14 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $this->add_field($mform, $plugin, 'title', 'text', PARAM_TEXT, array('size' => 50));
         $this->add_field($mform, $plugin, 'displaydates', 'selectyesno', PARAM_INT);
         $this->add_field($mform, $plugin, 'displaystats', 'selectyesno', PARAM_INT);
+        $this->add_field($mform, $plugin, 'displaylangs', 'text', PARAM_TEXT);
         $mform->disabledIf('config_displaystats', 'config_displaydates', 'eq', '0');
 
         //-----------------------------------------------------------------------------
         $this->add_header($mform, $plugin, 'conferencestrings', true, true);
         //-----------------------------------------------------------------------------
 
-        $strman = get_string_manager();
-        $langs = block_maj_submissions::get_languages();
-
-        $string = array();
-        foreach ($langs as $lang) {
-            $string[$lang] = $strman->load_component_strings('langconfig', $lang);
-        }
-
-        if ($dataid = $this->get_original_value('registercmid', 0)) {
-            $dataid = $DB->get_field('course_modules', 'instance', array('id' => $dataid));
-        }
-
-        $fieldnames = block_maj_submissions::get_constant_fieldnames(false);
-        foreach ($fieldnames as $fieldname => $name) {
-            $elements = array();
-            foreach ($langs as $lang) {
-                $config_name = 'config_'.$name.$lang;
-                $label = $string[$lang]['thislanguage']." ($lang) ";
-                $elements[] = $mform->createElement('static', '', '', $label);
-                $elements[] = $mform->createElement('text', $config_name, '', array('size' => 30));
-                $elements[] = $mform->createElement('static', '', '', html_writer::empty_tag('br'));
-            }
-            $elements_name = 'elements_'.$name;
-            $label = get_string($name, $plugin);
-            $mform->addGroup($elements, $elements_name, $label, '', false);
-            $mform->addHelpButton($elements_name, $name, $plugin);
-            foreach ($langs as $lang) {
-                $config_name = 'config_'.$name.$lang;
-                $default = $this->get_constant_value($dataid, $fieldname, $lang);
-                $mform->setDefault($config_name, $default);
-                $mform->setType($config_name, PARAM_TEXT);
-            }
-        }
-
-        $fieldnames = block_maj_submissions::get_constant_fieldnames(true);
-        foreach ($fieldnames as $fieldname => $name) {
-            $default = $this->get_constant_value($dataid, $fieldname);
-            $this->add_field($mform, $plugin, $name, 'text', PARAM_INT, array('size' => 10), $default);
-        }
+        $this->add_multilang_strings($mform, $plugin);
 
         //-----------------------------------------------------------------------------
         $this->add_header($mform, $plugin, 'conferenceevents');
@@ -232,25 +194,27 @@ class block_maj_submissions_edit_form extends block_edit_form {
             return $this->get_original_value($name, $default);
         }
 
-        if (($default===null || $default===false) && $lang) {
-            $params = array('dataid' => $dataid,
-                            'type'   => 'constant',
-                            'name'   => $name."_$lang");
-            $default = $DB->get_record('data_fields', $params);
+        if ($dataid) {
+            if (($default===null || $default===false) && $lang) {
+                $params = array('dataid' => $dataid,
+                                'type'   => 'constant',
+                                'name'   => $name."_$lang");
+                $default = $DB->get_record('data_fields', $params);
+            }
+
+            if (($default===null || $default===false) && ($lang=='' || $lang=='en')) {
+                $params = array('dataid' => $dataid,
+                                'type'   => 'constant',
+                                'name'   => $name);
+                $default = $DB->get_record('data_fields', $params);
+            }
+
+            if ($default) {
+                return $default->param1;
+            }
         }
 
-        if (($default===null || $default===false) && ($lang=='' || $lang=='en')) {
-            $params = array('dataid' => $dataid,
-                            'type'   => 'constant',
-                            'name'   => $name);
-            $default = $DB->get_record('data_fields', $params);
-        }
-
-        if ($default) {
-            return $default->param1;
-        } else {
-            return $this->get_original_value($name);
-        }
+        return $this->get_original_value($name);
     }
 
     /**
@@ -303,6 +267,60 @@ class block_maj_submissions_edit_form extends block_edit_form {
 
         $text = html_writer::tag('div', $text, array('id' => 'id_description_text'));
         $mform->addElement('static', $name, $label, $text);
+    }
+
+    /**
+     * add_multilang_strings
+     *
+     * @param object  $mform
+     * @param string  $plugin
+     * @return void, but will update $mform
+     */
+    protected function add_multilang_strings($mform, $plugin) {
+        global $DB;
+
+        $strman = get_string_manager();
+        $langs = $this->get_original_value('displaylangs', '');
+        $langs = block_maj_submissions::get_languages($langs);
+
+        $string = array();
+        foreach ($langs as $lang) {
+            $string[$lang] = $strman->load_component_strings('langconfig', $lang);
+        }
+
+        if ($dataid = $this->get_original_value('registercmid', 0)) {
+            $params = array('id' => $dataid,
+                            'module' => $DB->get_field('modules', 'id', array('name' => 'data')));
+            $dataid = $DB->get_field('course_modules', 'instance', $params);
+        }
+
+        $fieldnames = block_maj_submissions::get_constant_fieldnames(false);
+        foreach ($fieldnames as $fieldname => $name) {
+            $elements = array();
+            foreach ($langs as $lang) {
+                $config_name = 'config_'.$name.$lang;
+                $label = $string[$lang]['thislanguage']." ($lang) ";
+                $elements[] = $mform->createElement('static', '', '', $label);
+                $elements[] = $mform->createElement('text', $config_name, '', array('size' => 30));
+                $elements[] = $mform->createElement('static', '', '', html_writer::empty_tag('br'));
+            }
+            $elements_name = 'elements_'.$name;
+            $label = get_string($name, $plugin);
+            $mform->addGroup($elements, $elements_name, $label, '', false);
+            $mform->addHelpButton($elements_name, $name, $plugin);
+            foreach ($langs as $lang) {
+                $config_name = 'config_'.$name.$lang;
+                $default = $this->get_constant_value($dataid, $fieldname, $lang);
+                $mform->setDefault($config_name, $default);
+                $mform->setType($config_name, PARAM_TEXT);
+            }
+        }
+
+        $fieldnames = block_maj_submissions::get_constant_fieldnames(true);
+        foreach ($fieldnames as $fieldname => $name) {
+            $default = $this->get_constant_value($dataid, $fieldname);
+            $this->add_field($mform, $plugin, $name, 'text', PARAM_INT, array('size' => 10), $default);
+        }
     }
 
     /**

@@ -26,7 +26,7 @@
 
 // essential strings
 $string['pluginname'] = 'MAJ Submissions';
-$string['blockdescription'] = 'This block facilitates administration of a conference submissions system based on a set of Database, Workshop and Assignment activities.';
+$string['blockdescription'] = 'This block facilitates administration of a conference submissions system based on a set of Database and Workshop　activities.';
 $string['blockname'] = 'MAJ Submissions';
 $string['blocknameplural'] = 'MAJ Submissions';
 
@@ -94,6 +94,8 @@ $string['displaydates_help'] = 'If this setting is enabled, any dates that are e
 
 Otherwise, the dates will not be displayed on the course page. Ordinary users will not see this block at all, while course managers will see only the list of conference tools.';
 $string['displaydates'] = 'Display dates';
+$string['displaylangs_help'] = 'Enter the language codes, separated by commas, for languages you wish to use on this conference system.';
+$string['displaylangs'] = 'Display languages';
 $string['displaystats_help'] = 'If this setting is enabled, the number of submissions and registrations received so far will be displayed in this MAJ Submissions block on the course page.';
 $string['displaystats'] = 'Display statistics';
 $string['exportcontent'] = 'Export content';

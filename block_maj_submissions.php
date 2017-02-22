@@ -88,8 +88,9 @@ class block_maj_submissions extends block_base {
         $plugin = 'block_maj_submissions';
         $defaults = array(
             'title' => get_string('blockname', $plugin),
-            'displaydates' => 1,  // 0=no, 1=yes
-            'displaystats' => 1,  // 0=no, 1=yes
+            'displaydates' =>  1,  // 0=no, 1=yes
+            'displaystats' =>  1,  // 0=no, 1=yes
+            'displaylangs' => '',  // comma-separated list of of 2-letter lang codes
 
             // database CONSTANT fields
             'conference_name'  => '',
@@ -228,7 +229,12 @@ class block_maj_submissions extends block_base {
 
             $fieldnames = self::get_constant_fieldnames(false);
             foreach ($fieldnames as $fieldname => $name) {
-                foreach (self::get_languages() as $lang) {
+                if (empty($config->displaylangs)) {
+                    $langs = self::get_languages();
+                } else {
+                    $langs = self::get_languages($config->displaylangs);
+                }
+                foreach ($langs as $lang) {
                     $namelang = $name.$lang;
                     $fieldnamelang = $fieldname."_$lang";
                     if (isset($config->$namelang)) {
@@ -1068,11 +1074,18 @@ class block_maj_submissions extends block_base {
      *
      * @return array
      */
-    static public function get_languages() {
-        $langs = get_string_manager()->get_list_of_translations();
-        $langs = array_keys($langs);
-        sort($langs);
-        return $langs;
+    static public function get_languages($langs='') {
+        if ($langs) {
+            $langs = explode(',', $langs);
+            $langs = array_filter($langs);
+            $langs = array_unique($langs);
+            return $langs;
+        } else {
+            $langs = get_string_manager()->get_list_of_translations();
+            $langs = array_keys($langs);
+            sort($langs);
+            return $langs;
+        }
     }
 
     /**
