@@ -32,7 +32,7 @@ function xmldb_block_maj_submissions_upgrade($oldversion=0) {
 
     $result = true;
 
-    $newversion = 2017022349;
+    $newversion = 2017022350;
     if ($oldversion < $newversion) {
 
         /////////////////////////////////////////////////
@@ -40,16 +40,17 @@ function xmldb_block_maj_submissions_upgrade($oldversion=0) {
         // to use two-letter language as suffix
         /////////////////////////////////////////////////
 
-        $select = $DB->sql_like('name', ':en').' OR '.$DB->sql_like('name', ':ja');
-        $params = array('en' => '%english%', 'ja' => '%japanese%');
-        if ($names = $DB->get_records_select_menu('data_fields', $select, $params, 'name', 'id,name')) {
+        $select = $DB->sql_like('name', '?').' OR '.$DB->sql_like('name', '?');
+        $params = array('%english%',  '%japanese%');
+        if ($names = $DB->get_records_select_menu('data_fields', $select, $params, 'name DESC', 'id,name')) {
             $names = array_unique($names);
             $names = array_flip($names);
+            krsort($names);
         } else {
             $names = array();
         }
 
-        $search = '/(.*)_(en|ja)(glish|panese)(.*)/';
+        $search = '/^(.*)_(en|ja)(glish|panese)(.*)$/';
         $replace = '$1$4_$2';
 
         foreach ($names as $old => $new) {
