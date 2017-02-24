@@ -93,6 +93,102 @@ function xmldb_block_maj_submissions_upgrade($oldversion=0) {
         upgrade_block_savepoint($result, "$newversion", 'maj_submissions');
     }
 
+    $newversion = 2017022352;
+    if ($oldversion < $newversion) {
+
+        /////////////////////////////////////////////////
+        // standardize names of events and phrases
+        /////////////////////////////////////////////////
+
+        $fieldnames = array(
+            // events
+            'conference' => 'conference',
+            'workshops'  => 'workshops',
+            'reception'  => 'reception',
+            // phases
+            'collect'           => 'collectpresentations',
+            'collectworkshop'   => 'collectworkshops',
+            'collectsponsored'  => 'collectsponsoreds',
+            'review'            => 'review',
+            'revise'            => 'revise',
+            'publish'           => 'publish',
+            'register'          => 'registerdelegates',
+            'registerpresenter' => 'registerpresenters',
+        );
+
+        $block = new block_maj_submissions;
+        $block->specialization(); // setup $block->config
+
+        if ($instances = $DB->get_records('block_instances', array('blockname' => 'maj_submissions'))) { 
+            foreach ($instances as $instance) {
+
+                if (empty($instance->configdata)) {
+                    continue;
+                }
+
+                $instance->config = unserialize(base64_decode($instance->configdata));
+
+                if (empty($instance->config)) {
+                    continue;
+                }
+
+                if (isset($instance->config->displaylangs)) {
+                    $langs = $instance->config->displaylangs;
+                    $langs = explode(',', $langs);
+                    $langs = array_map('trim', $langs);
+                    $langs = array_filter($langs);
+                } else {
+                    $langs = get_string_manager()->get_list_of_translations();
+                    $langs = array_keys($langs);
+                }
+
+                $oldnames = get_object_vars($instance->config);
+                foreach ($oldnames as $oldname => $value) {
+                    $suffix = '';
+                    $basename = $oldname;
+                    foreach ($langs as $lang) {
+                        $len = strlen($lang);
+                        if (substr($basename, -$len)==$lang) {
+                            $suffix = $lang;
+                            $basename = substr($basename, 0, -$len);
+                            break; // stop foreach loop
+                        }
+                    }
+                    if (substr($basename, -4)=='cmid') {
+                        $suffix = 'cmid'.$suffix;
+                        $basename = substr($basename, 0, -4);
+                    } else if (substr($basename, -5)=='cmids') {
+                        $suffix = 'cmids'.$suffix;
+                        $basename = substr($basename, 0, -5);
+                    } else if (substr($basename, -9)=='timestart') {
+                        $suffix = 'timestart'.$suffix;
+                        $basename = substr($basename, 0, -9);
+                    } else if (substr($basename, -10)=='timefinish') {
+                        $suffix = 'timefinish'.$suffix;
+                        $basename = substr($basename, 0, -10);
+                    }
+                    if (array_key_exists($basename, $fieldnames)) {
+                        $newname = $fieldnames[$basename].$suffix;
+                        if ($newname==$oldname) {
+                            // do nothing
+                        } else {
+                            $instance->config->$newname = $value;
+                            unset($instance->config->$oldname);
+                        }
+                    } else if (property_exists($block->config, $basename)) {
+                        // do nothing
+                    } else {
+                        unset($instance->config->$oldname);
+                    }
+                }
+
+                $instance->configdata = base64_encode(serialize($instance->config));
+                $DB->set_field('block_instances', 'configdata', $instance->configdata, array('id' => $instance->id));
+            }
+        }
+    
+        upgrade_block_savepoint($result, "$newversion", 'maj_submissions');
+    }
 
     return $result;
 }

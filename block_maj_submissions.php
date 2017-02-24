@@ -87,86 +87,93 @@ class block_maj_submissions extends block_base {
     function specialization() {
         $plugin = 'block_maj_submissions';
         $defaults = array(
+
             'title' => get_string('blockname', $plugin),
-            'displaydates' =>  1,  // 0=no, 1=yes
-            'displaystats' =>  1,  // 0=no, 1=yes
-            'displaylangs' => '',  // comma-separated list of of 2-letter lang codes
+            'displaydates' => 1, // 0=no, 1=yes
+            'displaystats' => 1, // 0=no, 1=yes
+            'displaylangs' => implode(',', self::get_languages()),
 
             // database CONSTANT fields
-            'conference_name'  => '',
-            'conference_venue' => '',
-            'conference_dates' => '',
-            'dinner_name'      => '',
-            'dinner_venue'     => '',
-            'dinner_date'      => '',
-            'dinner_time'      => '',
-            'certificate_date' => '',
+            'conferencename'  => '',
+            'conferencevenue' => '',
+            'conferencedates' => '',
+            'dinnername'      => '',
+            'dinnervenue'     => '',
+            'dinnerdate'      => '',
+            'dinnertime'      => '',
+            'certificatedate' => '',
 
             // database CONSTANT (auto-increment) fields
-            'badge_number'          => 0,
-            'fee_receipt_number'    => 0,
-            'dinner_receipt_number' => 0,
-            'certificate_number'    => 0,
+            'badgenumber'               => 0,
+            'badgenumberformat'         => '%04d',
+            'feereceiptnumber'          => 0,
+            'feereceiptnumberformat'    => '%04d',
+            'dinnerreceiptnumber'       => 0,
+            'dinnerreceiptnumberformat' => '%04d',
+            'dinnerticketnumber'        => 0,
+            'dinnerticketnumberformat'  => '%04d',
+            'certificatenumber'         => 0,
+            'certificatenumberformat'   => '%04d',
 
             // conference events
-            'conferencecmid'       => 0,
             'conferencetimestart'  => 0,
             'conferencetimefinish' => 0,
+            'conferencecmid'       => 0,
 
-            'workshopscmid'        => 0,
-            'workshopstimestart'   => 0,
-            'workshopstimefinish'  => 0,
+            'workshopstimestart'  => 0,
+            'workshopstimefinish' => 0,
+            'workshopscmid'       => 0,
 
-            'receptioncmid'        => 0,
-            'receptiontimestart'   => 0,
-            'receptiontimefinish'  => 0,
+            'receptiontimestart'  => 0,
+            'receptiontimefinish' => 0,
+            'receptioncmid'       => 0,
 
-            // data is collected in a DATABASE activity
-            'collectcmid'          => 0,
-            'collecttimestart'     => 0,
-            'collecttimefinish'    => 0,
-            'collectworkshoptimestart'   => 0,
-            'collectworkshoptimefinish'  => 0,
-            'collectsponsoredtimestart'  => 0,
-            'collectsponsoredtimefinish' => 0,
+            // conference phases
+
+            'collectpresentationstimestart'  => 0,
+            'collectpresentationstimefinish' => 0,
+            'collectpresentationscmid'       => 0,
+
+            'collectworkshopstimestart'  => 0,
+            'collectworkshopstimefinish' => 0,
+            'collectworkshopscmid'       => 0,
+
+            'collectsponsoredstimestart'  => 0,
+            'collectsponsoredstimefinish' => 0,
+            'collectsponsoredscmid'       => 0,
 
             // fields used to filter data into workshops
-            // e.g. submissiontype AND submissionlanguage
-            'filterfields'         => array(),
+            // e.g. presentation_type AND presentation_language
+            'filterfields' => array(),
 
-            // data is reviewed,
-            // in one or more WORKSHOP activities
-            'reviewsectionnum'  => 0,
-            'reviewtimestart'   => 0,
-            'reviewtimefinish'  => 0,
-            'reviewcmids'       => array(),
+            'reviewtimestart'  => 0,
+            'reviewtimefinish' => 0,
+            'reviewsectionnum' => 0,
+            'reviewcmids' => array(),
 
-            // data is revised,
-            // in one or more ASSIGNMENT activities
-            'revisesectionnum'  => 0,
-            'revisetimestart'   => 0,
-            'revisetimefinish'  => 0,
-            'revisecmids'       => array(),
+            'revisetimestart'  => 0,
+            'revisetimefinish' => 0,
+            'revisecmid'       => 0,
 
-            // data is published in a DATABASE activity
-            'publishcmid'       => 0,
             'publishtimestart'  => 0,
             'publishtimefinish' => 0,
+            'publishcmid'       => 0,
 
-            // delegates are registered in a DATABASE activity
-            'registercmid'       => 0,
-            'registertimestart'  => 0,
-            'registertimefinish' => 0,
-            'registerpresentertimestart'  => 0,
-            'registerpresentertimefinish' => 0,
+            'registerdelegatestimestart'  => 0,
+            'registerdelegatestimefinish' => 0,
+            'registerdelegatescmid'       => 0,
+
+            'registerpresenterstimestart'  => 0,
+            'registerpresenterstimefinish' => 0,
+            'registerpresenterscmid'       => 0,
 
             // date settings
-            'moodledatefmt'      => 'strftimerecent', // 11 Nov, 10:12
-            'customdatefmt'      => '%b %d (%a) %H:%M', // Nov 11th (Wed) 10:12
-            'fixmonth'           => 1, // 0=no, 1=remove leading "0" from months
-            'fixday'             => 1, // 0=no, 1=remove leading "0" from days
-            'fixhour'            => 1, // 0=no, 1=remove leading "0" from hours
-            'manageevents'       => 0  // 0=no, 1=yes
+            'moodledatefmt' => 'strftimerecent', // 11 Nov, 10:12
+            'customdatefmt' => '%b %d (%a) %H:%M', // Nov 11th (Wed) 10:12
+            'fixmonth'      => 1, // 0=no, 1=remove leading "0" from months
+            'fixday'        => 1, // 0=no, 1=remove leading "0" from days
+            'fixhour'       => 1, // 0=no, 1=remove leading "0" from hours
+            'manageevents'  => 0  // 0=no, 1=yes
         );
 
         if (empty($this->config)) {
@@ -210,21 +217,21 @@ class block_maj_submissions extends block_base {
         $moduleid = $DB->get_field('modules', 'id', array('name' => 'data'));
 
         $dataids = array();
-        if ($config->registercmid) {
-            $params = array('id' => $config->registercmid, 'course' => $courseid, 'module' => $moduleid);
-            $dataids[] = $DB->get_field('course_modules', 'instance', $params);
-        }
-        if ($config->collectcmid) {
-            $params = array('id' => $config->collectcmid, 'course' => $courseid, 'module' => $moduleid);
-            $dataids[] = $DB->get_field('course_modules', 'instance', $params);
-        }
-        if ($config->workshopscmid) {
-            $params = array('id' => $config->workshopscmid, 'course' => $courseid, 'module' => $moduleid);
-            $dataids[] = $DB->get_field('course_modules', 'instance', $params);
+        $names = array('collectpresentationscmid',
+                       'collectworkshopscmid',
+                       'collectsponsoredscmid',
+                       'registerdelegatescmid',
+                       'registerpresenterscmid');
+        foreach ($names as $name) {
+            if (isset($config->$name)) {
+                $params = array('id' => $config->$name, 'course' => $courseid, 'module' => $moduleid);
+                $dataids[] = $DB->get_field('course_modules', 'instance', $params);
+            }
         }
 
         $dataids = array_filter($dataids);
         $dataids = array_unique($dataids);
+
         if (count($dataids)) {
 
             $fieldnames = self::get_constant_fieldnames(false);
@@ -283,12 +290,13 @@ class block_maj_submissions extends block_base {
                         case 'conference':
                         case 'workshops':
                         case 'reception':
+                        case 'revise':
                         case 'publish':
                             $cmid = $type.'cmid';
                             break;
                         case 'register':
                         case 'registerpresenter':
-                            $cmid = 'registercmid';
+                            $cmid = 'registerdelegatescmid';
                             break;
                     }
                     if ($cmid && isset($config->$cmid)) {
@@ -406,29 +414,22 @@ class block_maj_submissions extends block_base {
                     $url = '';
                     $cmid = '';
                     $sectionnum = '';
-
                     switch ($type) {
-                        case 'collect':
-                        case 'collectworkshop':
-                        case 'collectsponsored':
-                            $cmid = 'collectcmid';
-                            break;
-
                         case 'conference':
                         case 'workshops':
                         case 'reception':
+                        case 'collectpresentations':
+                        case 'collectworkshops':
+                        case 'collectsponsoreds':
+                        case 'revise':
                         case 'publish':
+                        case 'registerdelegates':
+                        case 'registerpresenters':
                             $cmid = $type.'cmid';
                             break;
 
                         case 'review':
-                        case 'revise':
                             $sectionnum = $type.'sectionnum';
-                            break;
-
-                        case 'register':
-                        case 'registerpresenter':
-                            $cmid = 'registercmid';
                             break;
                     }
 
@@ -529,6 +530,7 @@ class block_maj_submissions extends block_base {
             $this->content->text .= $this->get_tool_link($plugin, 'setupworkshops');
             $this->content->text .= $this->get_tool_link($plugin, 'data2workshop');
             $this->content->text .= $this->get_tool_link($plugin, 'workshop2data');
+            $this->content->text .= $this->get_tool_link($plugin, 'setupschedule');
         }
 
         return $this->content;
@@ -621,7 +623,7 @@ class block_maj_submissions extends block_base {
 
         switch ($type) {
 
-            case 'collect':
+            case 'collectpresentations':
                 if ($dataid) {
                     $params = array('dataid' => $dataid, 'name' => 'presentation_type');
                     if ($fieldid = $DB->get_field('data_fields', 'id', $params)) {
@@ -635,8 +637,8 @@ class block_maj_submissions extends block_base {
                 }
                 break;
 
-            case 'collectworkshop':
-            case 'collectsponsored':
+            case 'collectworkshops':
+            case 'collectsponsoreds':
                 if ($dataid) {
                     $params = array('dataid' => $dataid, 'name' => 'presentation_type');
                     if ($fieldid = $DB->get_field('data_fields', 'id', $params)) {
@@ -648,14 +650,12 @@ class block_maj_submissions extends block_base {
                 }
                 break;
 
+            case 'review':
+            case 'revise':
             case 'publish':
                 break;
 
-            case 'review':
-            case 'revise':
-                break;
-
-            case 'register':
+            case 'registerdelegates':
                 if ($dataid) {
                     $params = array('dataid' => $dataid, 'name' => 'presenter');
                     if ($fieldid = $DB->get_field('data_fields', 'id', $params)) {
@@ -672,7 +672,7 @@ class block_maj_submissions extends block_base {
                 }
                 break;
 
-            case 'registerpresenter':
+            case 'registerpresenters':
                 if ($dataid) {
                     $params = array('dataid' => $dataid, 'name' => 'presenter');
                     if ($fieldid = $DB->get_field('data_fields', 'id', $params)) {
@@ -1077,6 +1077,7 @@ class block_maj_submissions extends block_base {
     static public function get_languages($langs='') {
         if ($langs) {
             $langs = explode(',', $langs);
+            $langs = array_map('trim', $langs);
             $langs = array_filter($langs);
             $langs = array_unique($langs);
             return $langs;
@@ -1091,7 +1092,7 @@ class block_maj_submissions extends block_base {
     /**
      * get_constant_fieldnames
      *
-     * @return array
+     * @return array(database_field_name => configfieldname)
      */
     static public function get_constant_fieldnames($autoincrement) {
         if ($autoincrement) {
@@ -1099,6 +1100,7 @@ class block_maj_submissions extends block_base {
                 'badge_number'          => 'badgenumber',
                 'fee_receipt_number'    => 'feereceiptnumber',
                 'dinner_receipt_number' => 'dinnerreceiptnumber',
+                'dinner_ticket_number'  => 'dinnerticketnumber',
                 'certificate_number'    => 'certificatenumber',
             );
         } else {
@@ -1122,10 +1124,17 @@ class block_maj_submissions extends block_base {
      */
     static public function get_timetypes() {
         return array(
-            array('conference', 'workshops',       'reception'),
-            array('collect',    'collectworkshop', 'collectsponsored'),
-            array('review',     'revise',          'publish'),
-            array('register',   'registerpresenter'),
+            array('conference',
+                  'workshops',
+                  'reception'),
+            array('collectpresentations',
+                  'collectworkshops',
+                  'collectsponsoreds'),
+            array('review',
+                  'revise',
+                  'publish'),
+            array('registerdelegates',
+                  'registerpresenters')
         );
     }
 

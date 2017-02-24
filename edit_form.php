@@ -67,7 +67,13 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $this->add_header($mform, $plugin, 'conferencestrings', true, true);
         //-----------------------------------------------------------------------------
 
-        $this->add_multilang_strings($mform, $plugin);
+        $this->add_multilang_strings($mform, $plugin, false);
+
+        //-----------------------------------------------------------------------------
+        $this->add_header($mform, $plugin, 'autoincrementsettings', true, true);
+        //-----------------------------------------------------------------------------
+
+        $this->add_multilang_strings($mform, $plugin, true);
 
         //-----------------------------------------------------------------------------
         $this->add_header($mform, $plugin, 'conferenceevents');
@@ -84,11 +90,15 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $this->add_header($mform, $plugin, 'collectsubmissions');
         //-----------------------------------------------------------------------------
 
-        $this->add_time_startfinish($mform, $plugin, 'collect');
-        $this->add_time_startfinish($mform, $plugin, 'collectworkshop');
-        $this->add_time_startfinish($mform, $plugin, 'collectsponsored');
+        $this->add_time_startfinish($mform, $plugin, 'collectpresentations');
+        $this->add_cmid($mform, $plugin, 'data,page,resource', 'collectpresentationscmid');
 
-        $this->add_cmid($mform, $plugin, 'data', 'collectcmid');
+        $this->add_time_startfinish($mform, $plugin, 'collectworkshops');
+        $this->add_cmid($mform, $plugin, 'data,page,resource', 'collectworkshopscmid');
+
+        $this->add_time_startfinish($mform, $plugin, 'collectsponsoreds');
+        $this->add_cmid($mform, $plugin, 'data,page,resource', 'collectsponsoredscmid');
+
         $this->add_repeat_elements($mform, $plugin, 'filterfields', 'select', true);
 
         //-----------------------------------------------------------------------------
@@ -104,8 +114,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
         //-----------------------------------------------------------------------------
 
         $this->add_time_startfinish($mform, $plugin, 'revise');
-        $this->add_sectionnum($mform, $plugin, 'revisesectionnum');
-        $this->add_repeat_elements($mform, $plugin, 'revisecmids', 'selectgroups', true);
+        $this->add_cmid($mform, $plugin, 'data,page,resource', 'revisecmid');
 
         //-----------------------------------------------------------------------------
         $this->add_header($mform, $plugin, 'publishsubmissions');
@@ -118,9 +127,11 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $this->add_header($mform, $plugin, 'registerparticipation');
         //-----------------------------------------------------------------------------
 
-        $this->add_time_startfinish($mform, $plugin, 'register');
-        $this->add_time_startfinish($mform, $plugin, 'registerpresenter');
-        $this->add_cmid($mform, $plugin, 'data', 'registercmid');
+        $this->add_time_startfinish($mform, $plugin, 'registerdelegates');
+        $this->add_cmid($mform, $plugin, 'data,page,resource', 'registerdelegatescmid');
+
+        $this->add_time_startfinish($mform, $plugin, 'registerpresenters');
+        $this->add_cmid($mform, $plugin, 'data,page,resource', 'registerpresenterscmid');
 
         //-----------------------------------------------------------------------------
         $this->add_header($mform, $plugin, 'dateformats');
@@ -146,7 +157,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
     }
 
     /**
-     * get the value of a block config setting
+     * get the value of a block setting
      * either the NEW value from the incoming form data
      * or the OLD value from the block->config object
      *
@@ -166,6 +177,43 @@ class block_maj_submissions_edit_form extends block_edit_form {
     }
 
     /**
+     * get value of a constant field
+     *
+     * @param  integer $dataid an "id" from the "data" table
+     * @param  string  $name of setting
+     * @param  mixed   $paramname to return (e.g. "param1")
+     * @param  string  $lang code (optional, default = "")
+     * @return mixed value of constant field
+     */
+    protected function get_constant_value($dataid, $name, $paramname, $lang='') {
+        global $DB;
+
+        if ($dataid) {
+            $record = false;
+
+            if ($lang) {
+                $params = array('dataid' => $dataid,
+                                'type'   => 'constant',
+                                'name'   => $name."_$lang");
+                $record = $DB->get_record('data_fields', $params);
+            }
+
+            if ($record===false && ($lang=='' || $lang=='en')) {
+                $params = array('dataid' => $dataid,
+                                'type'   => 'constant',
+                                'name'   => $name);
+                $record = $DB->get_record('data_fields', $params);
+            }
+
+            if ($record) {
+                return $record->$paramname;
+            }
+        }
+
+        return $this->get_original_value($name);
+    }
+
+    /**
      * get original value for a config setting in this block
      *
      * @param  string $name of setting
@@ -181,40 +229,16 @@ class block_maj_submissions_edit_form extends block_edit_form {
     }
 
     /**
-     * get original value for a config setting in this block
+     * set the value of a config setting in this block
      *
      * @param  string $name of setting
-     * @param  mixed  $default (optional, default=NULL)
-     * @return mixed default value of setting
+     * @param  mixed  $value
+     * @return void, but may update $this->block->config
      */
-    protected function get_constant_value($dataid, $name, $lang='', $default=null) {
-        global $DB;
-
-        if ($default) {
-            return $this->get_original_value($name, $default);
+    protected function set_original_value($name, $value) {
+        if (isset($this->block->config) && $value) {
+            $this->block->config->$name = $value;
         }
-
-        if ($dataid) {
-            if (($default===null || $default===false) && $lang) {
-                $params = array('dataid' => $dataid,
-                                'type'   => 'constant',
-                                'name'   => $name."_$lang");
-                $default = $DB->get_record('data_fields', $params);
-            }
-
-            if (($default===null || $default===false) && ($lang=='' || $lang=='en')) {
-                $params = array('dataid' => $dataid,
-                                'type'   => 'constant',
-                                'name'   => $name);
-                $default = $DB->get_record('data_fields', $params);
-            }
-
-            if ($default) {
-                return $default->param1;
-            }
-        }
-
-        return $this->get_original_value($name);
     }
 
     /**
@@ -274,52 +298,100 @@ class block_maj_submissions_edit_form extends block_edit_form {
      *
      * @param object  $mform
      * @param string  $plugin
+     * @param boolean $autoincrement
      * @return void, but will update $mform
      */
-    protected function add_multilang_strings($mform, $plugin) {
+    protected function add_multilang_strings($mform, $plugin, $autoincrement) {
         global $DB;
 
-        $strman = get_string_manager();
-        $langs = $this->get_original_value('displaylangs', '');
-        $langs = block_maj_submissions::get_languages($langs);
-
-        $string = array();
-        foreach ($langs as $lang) {
-            $string[$lang] = $strman->load_component_strings('langconfig', $lang);
-        }
-
-        if ($dataid = $this->get_original_value('registercmid', 0)) {
-            $params = array('id' => $dataid,
-                            'module' => $DB->get_field('modules', 'id', array('name' => 'data')));
+        if ($cmid = $this->get_original_value('registerdelegatescmid', 0)) {
+            $params = array('name' => 'data');
+            $moduleid = $DB->get_field('modules', 'id', $params);
+            $params = array('id' => $cmid, 'module' => $moduleid);
             $dataid = $DB->get_field('course_modules', 'instance', $params);
+        } else {
+            $cmid = 0;
+            $dataid = 0;
+            $moduleid = 0;
         }
 
-        $fieldnames = block_maj_submissions::get_constant_fieldnames(false);
-        foreach ($fieldnames as $fieldname => $name) {
-            $elements = array();
-            foreach ($langs as $lang) {
-                $config_name = 'config_'.$name.$lang;
-                $label = $string[$lang]['thislanguage']." ($lang) ";
-                $elements[] = $mform->createElement('static', '', '', $label);
-                $elements[] = $mform->createElement('text', $config_name, '', array('size' => 30));
-                $elements[] = $mform->createElement('static', '', '', html_writer::empty_tag('br'));
-            }
-            $elements_name = 'elements_'.$name;
-            $label = get_string($name, $plugin);
-            $mform->addGroup($elements, $elements_name, $label, '', false);
-            $mform->addHelpButton($elements_name, $name, $plugin);
-            foreach ($langs as $lang) {
-                $config_name = 'config_'.$name.$lang;
-                $default = $this->get_constant_value($dataid, $fieldname, $lang);
-                $mform->setDefault($config_name, $default);
-                $mform->setType($config_name, PARAM_TEXT);
-            }
-        }
+        $fieldnames = block_maj_submissions::get_constant_fieldnames($autoincrement);
 
-        $fieldnames = block_maj_submissions::get_constant_fieldnames(true);
-        foreach ($fieldnames as $fieldname => $name) {
-            $default = $this->get_constant_value($dataid, $fieldname);
-            $this->add_field($mform, $plugin, $name, 'text', PARAM_INT, array('size' => 10), $default);
+        if ($autoincrement) {
+            $textoptions = array('size' => 10);
+            foreach ($fieldnames as $fieldname => $name) {
+
+                $label = get_string($name, $plugin);
+                $config_name = 'config_'.$name;
+                $group_name = 'group_'.$name;
+
+                $defaultvalue = $this->get_constant_value($dataid, $fieldname, 'param1');
+                $this->set_original_value($name, $defaultvalue);
+
+                $defaultformat = $this->get_constant_value($dataid, $fieldname, 'param3');
+                $this->set_original_value($name.'format', $defaultformat);
+
+                $elements = array();
+                $elements[] = $mform->createElement('static', '', '', get_string('typevalue', 'grades'));
+                $elements[] = $mform->createElement('text', $config_name, '', $textoptions);
+                $elements[] = $mform->createElement('static', '', '', get_string('format'));
+                $elements[] = $mform->createElement('text', $config_name.'format', '', $textoptions);
+
+                $mform->addGroup($elements, $group_name, $label, ' ', false);
+                $mform->addHelpButton($group_name, $name, $plugin);
+
+                $mform->setType($config_name, PARAM_INT);
+                $mform->setType($config_name.'format', PARAM_TEXT);
+
+                $mform->setDefault($config_name, $this->get_original_value($name, $defaultvalue));
+                $mform->setDefault($config_name.'format', $this->get_original_value($name, $defaultformat));
+            }
+        } else {
+            $strman = get_string_manager();
+            $langs = $this->get_original_value('displaylangs', '');
+            $langs = block_maj_submissions::get_languages($langs);
+
+            $multilang = (count($langs) > 1);
+
+            $string = array();
+            foreach ($langs as $lang) {
+                $string[$lang] = $strman->load_component_strings('langconfig', $lang);
+            }
+
+            $textoptions = array('size' => 30);
+            foreach ($fieldnames as $fieldname => $name) {
+                if ($multilang) {
+                    // multiple languages
+                    $elements = array();
+                    foreach ($langs as $lang) {
+                        $config_name = 'config_'.$name.$lang;
+                        $label = $string[$lang]['thislanguage']." ($lang) ";
+                        $elements[] = $mform->createElement('static', '', '', $label);
+                        $elements[] = $mform->createElement('text', $config_name, '', $textoptions);
+                        $elements[] = $mform->createElement('static', '', '', html_writer::empty_tag('br'));
+                    }
+                    $group_name = 'group_'.$name;
+                    $label = get_string($name, $plugin);
+                    $mform->addGroup($elements, $group_name, $label, '', false);
+                    $mform->addHelpButton($group_name, $name, $plugin);
+                    foreach ($langs as $lang) {
+                        $config_name = 'config_'.$name.$lang;
+                        $default = $this->get_constant_value($dataid, $fieldname, 'param1', $lang);
+                        $mform->setDefault($config_name, $default);
+                        $mform->setType($config_name, PARAM_TEXT);
+                    }
+                } else {
+                    // single language
+                    $lang = reset($langs);
+                    $label = get_string($name, $plugin);
+                    $config_name = 'config_'.$name.$lang;
+                    $defaultvalue = $this->get_constant_value($dataid, $fieldname, 'param1', $lang);
+                    $mform->addElement('text', $config_name, $label, $textoptions);
+                    $mform->setType($config_name, PARAM_TEXT);
+                    $mform->setDefault($config_name, $defaultvalue);
+                    $mform->addHelpButton($config_name, $name, $plugin);
+                }
+            }
         }
     }
 
@@ -335,12 +407,12 @@ class block_maj_submissions_edit_form extends block_edit_form {
     protected function add_time_startfinish($mform, $plugin, $type) {
         $name = $type.'time';
         $config_name = 'config_'.$name;
-        $elements_name = 'elements_'.$name;
+        $group_name = 'group_'.$name;
         $label = get_string($name, $plugin);
 
         $dateoptions = array('optional' => true);
-        $timestart = html_writer::tag('b', get_string('timestart', $plugin).' :');
-        $timefinish = html_writer::tag('b', get_string('timefinish', $plugin).' :');
+        $timestart = html_writer::tag('b', get_string('timestart', $plugin).' ');
+        $timefinish = html_writer::tag('b', get_string('timefinish', $plugin).' ');
 
         $elements = array(
             $mform->createElement('static', '', '', $timestart),
@@ -350,10 +422,10 @@ class block_maj_submissions_edit_form extends block_edit_form {
             $mform->createElement('date_time_selector', $config_name.'finish', '', $dateoptions)
         );
 
-        $mform->addGroup($elements, $elements_name, $label, '', false);
+        $mform->addGroup($elements, $group_name, $label, '', false);
         $mform->setDefault($config_name.'start', $this->get_original_value($name.'start'));
         $mform->setDefault($config_name.'finish', $this->get_original_value($name.'finish'));
-        $mform->addHelpButton($elements_name, $name, $plugin);
+        $mform->addHelpButton($group_name, $name, $plugin);
     }
 
     /**
@@ -538,11 +610,11 @@ class block_maj_submissions_edit_form extends block_edit_form {
      *
      * @param object $mform
      * @param string $plugin
-     * @return array($fieldid => $fieldname) of fields from the collectcmid for this block
+     * @return array($fieldid => $fieldname) of fields from the collectpresentationscmid for this block
      */
     protected function get_options_filterfields($mform, $plugin) {
         global $DB;
-        if ($cmid = $this->get_value($mform, 'collectcmid')) {
+        if ($cmid = $this->get_value($mform, 'collectpresentationscmid')) {
             $dataid = $this->get_course_modinfo()->get_cm($cmid)->instance;
             $options = $DB->get_records_menu('data_fields', array('dataid' => $dataid), null, 'id,name');
         } else {
@@ -568,20 +640,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
     }
 
     /**
-     * get_options_revisecmids
-     *
-     * @param object $mform
-     * @param string $plugin
-     * @return array($cmid => $cmname) of fields from the revisesectionnum for this block
-     *                                 or from the whole course (if revisesectionnum==0)
-     */
-    protected function get_options_revisecmids($mform, $plugin) {
-        $sectionnum = $this->get_value($mform, 'revisesectionnum');
-        return $this->get_options_cmids($mform, $plugin, 'assign', $sectionnum);
-    }
-
-    /**
-     * get_options_revisecmids
+     * get_options_cmids
      *
      * @param object  $mform
      * @param string  $plugin
@@ -666,7 +725,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
 
         $name = 'moodledatefmt';
         $config_name = 'config_'.$name;
-        $elements_name = 'elements_'.$name;
+        $group_name = 'group_'.$name;
 
         $time = time();
         $switch_plus = $PAGE->theme->pix_url('t/switch_plus', 'core')->out();
@@ -713,8 +772,8 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $elements[] = $mform->createElement('static', '', '', $js);
 
         $label = get_string($name, $plugin);
-        $mform->addGroup($elements, $elements_name, $label, '<br />', false);
-        $mform->addHelpButton($elements_name, $name, $plugin);
+        $mform->addGroup($elements, $group_name, $label, '<br />', false);
+        $mform->addHelpButton($group_name, $name, $plugin);
         $mform->setType($config_name, PARAM_ALPHANUM);
         $mform->setDefault($config_name, $this->get_original_value($name));
     }
@@ -746,7 +805,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
     protected function add_field_customdatefmt($mform, $plugin) {
         $name = 'customdatefmt';
         $config_name = 'config_'.$name;
-        $elements_name = 'elements_'.$name;
+        $group_name = 'group_'.$name;
         $label = get_string($name, $plugin);
 
         $help = 'http://php.net/manual/'.substr(current_language(), 0, 2).'/function.strftime.php';
@@ -758,8 +817,8 @@ class block_maj_submissions_edit_form extends block_edit_form {
             $mform->createElement('static', '', '', $help)
         );
 
-        $mform->addGroup($elements, $elements_name, $label, ' ', false);
-        $mform->addHelpButton($elements_name, $name, $plugin);
+        $mform->addGroup($elements, $group_name, $label, ' ', false);
+        $mform->addHelpButton($group_name, $name, $plugin);
         $mform->setType($config_name, PARAM_TEXT);
         $mform->setDefault($config_name, $this->get_original_value($name));
     }
@@ -789,10 +848,10 @@ class block_maj_submissions_edit_form extends block_edit_form {
 
         $name = 'fixdates';
         $label = get_string($name, $plugin);
-        $elements_name = 'elements_'.$name;
+        $group_name = 'group_'.$name;
 
-        $mform->addGroup($elements, $elements_name, $label, ' ', false);
-        $mform->addHelpButton($elements_name, $name, $plugin);
+        $mform->addGroup($elements, $group_name, $label, ' ', false);
+        $mform->addHelpButton($group_name, $name, $plugin);
         $mform->setType($config_name, PARAM_TEXT);
         $mform->setDefault($config_name, $this->get_original_value($name));
 

@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * blocks/maj_submissions/tools/setupsubmissions.php
+ * blocks/maj_submissions/tools/setuppresentations.php
  *
  * @package    blocks
  * @subpackage maj_submissions
@@ -26,8 +26,7 @@
 
 /** Include required files */
 require_once('../../../config.php');
-require_once($CFG->dirroot.'/blocks/moodleblock.class.php');
-require_once($CFG->dirroot.'/blocks/maj_submissions/block_maj_submissions.php');
+require_once($CFG->dirroot.'/blocks/maj_submissions/tools/lib.php');
 
 $id = required_param('id', PARAM_INT); // block_instance id
 $plugin = 'block_maj_submissions';
@@ -68,7 +67,7 @@ if ($action=='cancel') {
 }
 
 $blockname = get_string('blockname', $plugin);
-$pagetitle = get_string('toolsetupsubmissions', $plugin);
+$pagetitle = get_string('toolsetuppresentations', $plugin);
 
 // $SCRIPT is set by initialise_fullme() in 'lib/setuplib.php'
 // It is the path below $CFG->wwwroot of this script
@@ -96,7 +95,7 @@ if (data_submitted()) {
     }
 }
 
-echo html_writer::tag('p', get_string('toolsetupsubmissions_desc', $plugin));
+echo html_writer::tag('p', get_string('toolsetuppresentations_desc', $plugin));
 
 echo $OUTPUT->box_end();
 echo $OUTPUT->footer($course);
