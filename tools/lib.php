@@ -294,27 +294,61 @@ class block_maj_submissions_tool extends moodleform {
      */
     static public function get_available_presets($context, $cmid) {
         global $CFG, $DB, $OUTPUT;
+
+        $strman = get_string_manager();
+        $plugin = 'block_maj_subimssions';
         $strdelete = get_string('deleted', 'data');
 
         require_once($CFG->dirroot.'/mod/data/lib.php');
-
         $presets = data_get_available_presets($context);
+
+        $dir = $CFG->dirroot.'/blocks/maj_subimssions/presets';
+        if (is_dir($dir) && ($dh = opendir($dir))) {
+            while (($item = readdir($dh)) !== false) {
+                if (substr($item, 0, 1)=='.') {
+                    continue; // a hidden item
+                }
+                $diritem = "$dir/$item";
+                if (is_dir($diritem) && is_directory_a_preset($diritem)) {
+                    if ($strman->string_exists('presetfullname'.$item, $plugin)) {
+                        $name = get_string('presetfullname'.$item, $plugin);
+                    } else {
+                        $name = $item;
+                    }
+                    if ($strman->string_exists('presetshortname'.$item, $plugin)) {
+                        $shortname = get_string('presetshortname'.$item, $plugin);
+                    } else {
+                        $shortname = $item;
+                    }
+                    if (file_exists("$diritem/screenshot.jpg")) {
+                        $screenshot = "$diritem/screenshot.jpg";
+                    } else if (file_exists("$diritem/screenshot.png")) {
+                        $screenshot = "$diritem/screenshot.png";
+                    } else if (file_exists("$diritem/screenshot.gif")) {
+                        $screenshot = "$diritem/screenshot.gif";
+                    } else {
+                        $screenshot = ''; // shouldn't happen !!
+                    }
+                    $presets[] = (object)array(
+                        'path' => $diritem,
+                        'name' => $fullname,
+                        'shortname' => $item,
+                        'screenshot' => $screenshot,
+                        'userid' => 0
+                    );
+                }
+            }
+        }
+
         foreach ($presets as &$preset) {
+
+            $user_can_delete_preset = data_user_can_delete_preset($context, $preset);
 
             if (empty($preset->userid)) {
                 $preset->userid = 0;
                 $preset->description = $preset->name;
-                if (data_user_can_delete_preset($context, $preset) && $preset->name != 'Image gallery') {
-                    $params = array('id'       => $cmid,
-                                    'action'   => 'confirmdelete',
-                                    'fullname' => "$preset->userid/$preset->shortname",
-                                    'sesskey'  => sesskey());
-                    $url = new moodle_url('/mod/data/preset.php', $params);
-                    $params = array('src'   => $OUTPUT->pix_url('t/delete'),
-                                    'class' => 'iconsmall',
-                                    'alt'   => "$strdelete $preset->description");
-                    $icon = html_writer::empty_tag('img', $params);
-                    $preset->description .= html_writer::link($url, $icon);
+                if ($preset->name=='Image gallery') {
+                    $user_can_delete_preset = false;
                 }
             } else {
                 $fields = get_all_user_name_fields(true);
@@ -323,7 +357,7 @@ class block_maj_submissions_tool extends moodleform {
                 $preset->description = $preset->name.' ('.fullname($user, true).')';
             }
 
-            if ($preset->userid > 0 && data_user_can_delete_preset($context, $preset)) {
+            if ($user_can_delete_preset) {
                 $params = array('id'       => $cmid,
                                 'action'   => 'confirmdelete',
                                 'fullname' => "$preset->userid/$preset->shortname",
