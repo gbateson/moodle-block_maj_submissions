@@ -54,14 +54,39 @@ class block_maj_submissions_tool extends moodleform {
      * definition
      */
     public function definition() {
-        $config_name = 'config_'.$name;
-        $label = get_string($name, $plugin);
-        $mform->addElement($elementtype, $name, $label, $options);
-        $mform->setType($name, $paramtype);
-        $mform->setDefault($name, $this->get_original_value($name));
-        $mform->addHelpButton($name, $name, $plugin);
+        $mform = $this->_form;
 
-        $this->add_action_buttons(true, get_string('import'));
+        $cmid = $this->_customdata['cmid'];
+        $plugin = $this->_customdata['plugin'];
+        $context = $this->_customdata['context'];
+
+        // select registrationpresenterscmid
+
+        // select section AND new database name
+
+        // --------------------------------------------------------
+        $label = get_string('fromfile', 'data');
+        $mform->addElement('header', 'uploadpreset', $label);
+        // --------------------------------------------------------
+
+        $label = get_string('chooseorupload', 'data');
+        $mform->addElement('filepicker', 'uploadfile', $label);
+
+        $presets = self::get_available_presets($context, $cmid);
+        if (count($presets)) {
+
+            // --------------------------------------------------------
+            $label = get_string('usestandard', 'data');
+            $mform->addElement('header', 'presets', $label);
+            // --------------------------------------------------------
+
+            foreach ($presets as $preset) {
+                $label = ' '.$preset->description;
+                $mform->addElement('radio', 'presetname', null, $label, "$preset->userid/$preset->shortname");
+            }
+        }
+
+        $this->add_action_buttons();
     }
 
     /**
@@ -260,6 +285,61 @@ class block_maj_submissions_tool extends moodleform {
     }
 
     /**
+     * get_available_presets
+     *
+     * @uses $DB
+     * @uses $OUTPUT
+     * @param object $context
+     * @return integer $cmid
+     */
+    static public function get_available_presets($context, $cmid) {
+        global $CFG, $DB, $OUTPUT;
+        $strdelete = get_string('deleted', 'data');
+
+        require_once($CFG->dirroot.'/mod/data/lib.php');
+
+        $presets = data_get_available_presets($context);
+        foreach ($presets as &$preset) {
+
+            if (empty($preset->userid)) {
+                $preset->userid = 0;
+                $preset->description = $preset->name;
+                if (data_user_can_delete_preset($context, $preset) && $preset->name != 'Image gallery') {
+                    $params = array('id'       => $cmid,
+                                    'action'   => 'confirmdelete',
+                                    'fullname' => "$preset->userid/$preset->shortname",
+                                    'sesskey'  => sesskey());
+                    $url = new moodle_url('/mod/data/preset.php', $params);
+                    $params = array('src'   => $OUTPUT->pix_url('t/delete'),
+                                    'class' => 'iconsmall',
+                                    'alt'   => "$strdelete $preset->description");
+                    $icon = html_writer::empty_tag('img', $params);
+                    $preset->description .= html_writer::link($url, $icon);
+                }
+            } else {
+                $fields = get_all_user_name_fields(true);
+                $params = array('id' => $preset->userid);
+                $user = $DB->get_record('user', $params, "id, $fields", MUST_EXIST);
+                $preset->description = $preset->name.' ('.fullname($user, true).')';
+            }
+
+            if ($preset->userid > 0 && data_user_can_delete_preset($context, $preset)) {
+                $params = array('id'       => $cmid,
+                                'action'   => 'confirmdelete',
+                                'fullname' => "$preset->userid/$preset->shortname",
+                                'sesskey'  => sesskey());
+                $url = new moodle_url('/mod/data/preset.php', $params);
+                $params = array('src'   => $OUTPUT->pix_url('t/delete'),
+                                'class' => 'iconsmall',
+                                'alt'   => "$strdelete $preset->description");
+                $icon = html_writer::empty_tag('img', $params);
+                $preset->description .= html_writer::link($url, $icon);
+            }
+        }
+        return $presets;
+    }
+
+    /**
      * get_numsections
      *
      * a wrapper method to offer consistent API for $course->numsections
@@ -321,4 +401,11 @@ class block_maj_submissions_tool extends moodleform {
             return $DB->set_field('course_format_options', 'value', $numsections, $params);
         }
     }
+}
+
+class block_maj_submissions_tool_setupregistrations extends block_maj_submissions_tool {
+}
+class block_maj_submissions_tool_setuppresentations extends block_maj_submissions_tool {
+}
+class block_maj_submissions_tool_setupworkshops extends block_maj_submissions_tool {
 }

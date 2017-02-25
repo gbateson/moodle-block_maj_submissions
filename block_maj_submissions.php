@@ -1139,6 +1139,35 @@ class block_maj_submissions extends block_base {
     }
 
     /**
+     * get_timetypes
+     *
+     * @return array
+     */
+    static public function get_php_lang() {
+        // http://php.net/manual/en/index.php
+        $langs = array(
+            // Moodle lang code => PHP lang code
+            'en' => 'en', // English
+            'de' => 'de', // German
+            'es' => 'es', // Spanish
+            'fr' => 'fr', // French
+            'ja' => 'ja', // Japanese
+            'kr' => 'k0', // Korean
+         'pt_br' => 'pt_br', // Brazilian Portuguese
+            'ro' => 'ro', // Romanian
+            'ru' => 'ru', // Russian
+            'tr' => 'tr', // Turkish
+            'zh' => 'zh', // Chinese (Simplified)
+        );
+        $lang = current_language();
+        if (array_key_exists($lang, $langs)) {
+            return $langs[$lang];
+        } else {
+            return 'en'; // default PHP language
+        }
+    }
+
+    /**
      * filter_text
      *
      * @param string $text

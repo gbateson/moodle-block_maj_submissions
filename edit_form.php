@@ -64,13 +64,13 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $mform->disabledIf('config_displaystats', 'config_displaydates', 'eq', '0');
 
         //-----------------------------------------------------------------------------
-        $this->add_header($mform, $plugin, 'conferencestrings', true, true);
+        $this->add_header($mform, $plugin, 'conferencestrings', false, true);
         //-----------------------------------------------------------------------------
 
         $this->add_multilang_strings($mform, $plugin, false);
 
         //-----------------------------------------------------------------------------
-        $this->add_header($mform, $plugin, 'autoincrementsettings', true, true);
+        $this->add_header($mform, $plugin, 'autoincrementsettings', false, true);
         //-----------------------------------------------------------------------------
 
         $this->add_multilang_strings($mform, $plugin, true);
@@ -318,6 +318,12 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $fieldnames = block_maj_submissions::get_constant_fieldnames($autoincrement);
 
         if ($autoincrement) {
+
+            // link to help on formatting string for the PHP's sprintf function
+            $help = 'http://php.net/manual/'.block_maj_submissions::get_php_lang().'/function.sprintf.php';
+            $help = html_writer::tag('a', get_string('help'), array('href' => $help, 'target' => '_blank'));
+            $help = html_writer::tag('small', $help);
+
             $textoptions = array('size' => 10);
             foreach ($fieldnames as $fieldname => $name) {
 
@@ -336,6 +342,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
                 $elements[] = $mform->createElement('text', $config_name, '', $textoptions);
                 $elements[] = $mform->createElement('static', '', '', get_string('format'));
                 $elements[] = $mform->createElement('text', $config_name.'format', '', $textoptions);
+                $elements[] = $mform->createElement('static', '', '', $help);
 
                 $mform->addGroup($elements, $group_name, $label, ' ', false);
                 $mform->addHelpButton($group_name, $name, $plugin);
@@ -808,7 +815,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $group_name = 'group_'.$name;
         $label = get_string($name, $plugin);
 
-        $help = 'http://php.net/manual/'.substr(current_language(), 0, 2).'/function.strftime.php';
+        $help = 'http://php.net/manual/'.block_maj_submissions::get_php_lang().'/function.strftime.php';
         $help = html_writer::tag('a', get_string('help'), array('href' => $help, 'target' => '_blank'));
         $help = html_writer::tag('small', $help);
 

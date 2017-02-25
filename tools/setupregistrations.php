@@ -28,8 +28,10 @@
 require_once('../../../config.php');
 require_once($CFG->dirroot.'/blocks/maj_submissions/tools/lib.php');
 
+$blockname = 'maj_submissions';
+$plugin = "block_$blockname";
+
 $id = required_param('id', PARAM_INT); // block_instance id
-$plugin = 'block_maj_submissions';
 
 if (! $block_instance = $DB->get_record('block_instances', array('id' => $id))) {
     print_error('invalidinstanceid', $plugin);
@@ -66,36 +68,64 @@ if ($action=='cancel') {
     redirect(new moodle_url('/course/view.php', $params));
 }
 
-$blockname = get_string('blockname', $plugin);
-$pagetitle = get_string('toolsetupregistrations', $plugin);
+$strblockname = get_string('blockname', $plugin);
+$strpagetitle = get_string('toolsetupregistrations', $plugin);
 
 // $SCRIPT is set by initialise_fullme() in 'lib/setuplib.php'
 // It is the path below $CFG->wwwroot of this script
 $url = new moodle_url($SCRIPT, array('id' => $id));
 
 $PAGE->set_url($url);
-$PAGE->set_title($pagetitle);
+$PAGE->set_title($strpagetitle);
 $PAGE->set_heading($course->fullname);
 $PAGE->set_pagelayout('incourse');
-$PAGE->navbar->add($blockname);
-$PAGE->navbar->add($pagetitle, $url);
+$PAGE->navbar->add($strblockname);
+$PAGE->navbar->add($strpagetitle, $url);
 
 // require_head_js($plugin);
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading($pagetitle);
+echo $OUTPUT->heading($strpagetitle);
 echo $OUTPUT->box_start('generalbox');
 
-if (data_submitted()) {
-    // check Moodle session is valid ...
+echo html_writer::tag('p', get_string('toolsetupregistrations_desc', $plugin));
+
+// get incoming data, if any
+if ($cancel = optional_param('cancel', '', PARAM_ALPHA)) {
+    $data = null;
+    $action = '';
+} else {
+    $data = data_submitted();
+    $action = optional_param('action', '', PARAM_ALPHA);
+}
+
+// process incoming data, if required
+if ($data) {
     if (function_exists('require_sesskey')) {
         require_sesskey();
     } else if (function_exists('confirm_sesskey')) {
         confirm_sesskey();
     }
+    // process incoming data (before creating the form)
 }
 
-echo html_writer::tag('p', get_string('toolsetupregistrations_desc', $plugin));
+// get context for registration database, if possible
+$block_maj_submissions = block_instance($blockname, $block_instance);
+if ($cmid = $block_maj_submissions->config->registerpresenterscmid) {
+    $context = block_maj_submissions::context(CONTEXT_MODULE, $cmid);
+}
+
+// initialize the form
+$customdata = array('cmid'    => $cmid,
+                    'context' => $context,
+                    'course'  => $course,
+                    'plugin'  => $plugin);
+$mform = new block_maj_submissions_tool_setupregistrations($url->out(false), $customdata);
+
+// display form
+$defaults = array();
+$mform->set_data($defaults);
+$mform->display();
 
 echo $OUTPUT->box_end();
 echo $OUTPUT->footer($course);
