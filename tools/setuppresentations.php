@@ -111,12 +111,13 @@ if ($data) {
 
 // get context for presentation database, if possible
 $block_maj_submissions = block_instance($blockname, $block_instance);
-if ($cmid = $block_maj_submissions->config->registerpresenterscmid) {
+if ($cmid = $block_maj_submissions->config->collectpresentationscmid) {
     $context = block_maj_submissions::context(CONTEXT_MODULE, $cmid);
 }
 
 // initialize the form
-$customdata = array('cmid'    => $cmid,
+$customdata = array('type'    => 'collectpresentations',
+                    'cmid'    => $cmid,
                     'context' => $context,
                     'course'  => $course,
                     'plugin'  => $plugin);

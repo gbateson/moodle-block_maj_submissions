@@ -76,12 +76,15 @@ $string['conferencevenue_help'] = 'The conference venue name that appears on the
 $string['conferencevenue'] = 'Conference venue';
 $string['countrecords'] = '({$a} so far)';
 $string['createnewactivity'] = 'Create new activity';
+$string['createnewdatabase'] = 'Create new database';
 $string['createnewfield'] = 'Create new field';
 $string['createnewsection'] = 'Create new section';
 $string['currentstate_help'] = 'The current state of the submission process.';
 $string['currentstate'] = 'Current state';
 $string['customdatefmt_help'] = 'If you specify a date format here, it will be used in preference to any of the standard Moodle date formats.';
 $string['customdatefmt'] = 'Custom date format string';
+$string['databaseactivity_help'] = 'Either a specific database activity that you wish to setup, or specify a course section in which you wish to create a new database activity.';
+$string['databaseactivity'] = 'Database activity';
 $string['dateclosedon'] = 'closed on {$a}';
 $string['datecloseson'] = 'closes on {$a}';
 $string['dateformats'] = 'Date formats';
@@ -136,6 +139,12 @@ If you click on the &quot;+&quot; sign next to one of the dates, the name of the
 
 Note that if the &quot;Show date last modified&quot; is set to &quot;No&quot; then no date will be displayed. Also, if a format is specified in the &quot;Custom date format string&quot; setting, then that will override the string selected here.';
 $string['moodledatefmt'] = 'Moodle date format string';
+$string['presetfullnamepresentations'] = 'MAJ presentations database';
+$string['presetfullnameregistrations'] = 'MAJ registrations database';
+$string['presetfullnameworkshops'] = 'MAJ workshops database';
+$string['presetshortnamepresentations'] = 'Presentations';
+$string['presetshortnameregistrations'] = 'Registration';
+$string['presetshortnameworkshops'] = 'Workshops';
 $string['publishcmid_help'] = 'The resource or database activity where accepted submissions are published online.';
 $string['publishcmid'] = 'Schedule activity';
 $string['publishsubmissions'] = 'Publish schedule';
@@ -145,8 +154,17 @@ $string['receptioncmid_help'] = 'The page resource that displays information abo
 $string['receptioncmid'] = 'Reception information';
 $string['receptiontime_help'] = 'The start and finish times of the conference reception.';
 $string['receptiontime'] = 'Conference reception';
+
 $string['registerdelegatescmid_help'] = 'The database activity where delegates register their intention to attend and participate in the conference.';
-$string['registerdelegatescmid'] = 'Delegates registration';
+$string['registerdelegatescmid'] = 'Registration database';
+$string['registerdelegatessectionnum_help'] = 'The course section in which to create the new registration database.';
+$string['registerdelegatessectionnum'] = 'Registration section';
+
+$string['registerpresenterscmid_help'] = 'The database activity where presenters register their intention to attend and participate in the conference.';
+$string['registerpresenterscmid'] = 'Registration database';
+$string['registerpresenterssectionnum_help'] = 'The course section in which to create the new registration database.';
+$string['registerpresenterssectionnum'] = 'Registration section';
+
 $string['registerdelegatestime_help'] = 'The dates and times at which the online registration for delegates starts and finshes.';
 $string['registerdelegatestime'] = 'Registration for delegates';
 $string['registerparticipation'] = 'Register participation';
@@ -175,6 +193,14 @@ $string['title_help'] = 'This is the string that will be displayed as the title 
 $string['title'] = 'Title';
 $string['tooldata2workshop_desc'] = 'Convert Database -> Workshops';
 $string['tooldata2workshop'] = 'Allocate presentations for review';
+$string['toolsetup_help'] = 'On this page you can set up a database for a conference.
+
+You can overwrite a currently existing database or create a new one.
+
+To use an existing database in this course, select it from the drop down menu below.
+
+To create a new database, give a name for the new database and specify the section in which it should be created. This can be an existing section, or a new section. If you specify a new section you will need to give a name for the new section.';
+$string['toolsetup'] = 'Setup a database for a conference.';
 $string['toolsetuppresentations_desc'] = 'Setup a database for presentations';
 $string['toolsetuppresentations'] = 'Collect presentation proposals';
 $string['toolsetupregistrations_desc'] = 'Setup a database for registrations';

@@ -39,6 +39,11 @@ require_once($CFG->dirroot.'/lib/formslib.php');
  */
 class block_maj_submissions_tool extends moodleform {
 
+    const CREATE_NEW = -1;
+
+    protected $type = '';
+
+
     /**
      * constructor
      */
@@ -55,12 +60,43 @@ class block_maj_submissions_tool extends moodleform {
      */
     public function definition() {
         $mform = $this->_form;
+        $type  = $this->type;
 
-        $cmid = $this->_customdata['cmid'];
-        $plugin = $this->_customdata['plugin'];
+        // extract the custom data passed from the main script
         $context = $this->_customdata['context'];
+        $course  = $this->_customdata['course']; // course context
+        $plugin  = $this->_customdata['plugin'];
+        $instance = $this->_customdata['instance'];
 
-        // select registrationpresenterscmid
+        // extract the module context and course section, if possible
+        $instance = block_instance($instance->blockname, $instance);
+        $cmid = $type.'cmid';
+        if ($cmid = $instance->config->$cmid) {
+            $context = block_maj_submissions::context(CONTEXT_MODULE, $cmid);
+            $sectionnum = get_fast_modinfo($course)->get_cm($cmid)->sectionnum;
+        } else {
+            $sectionnum = 0;
+        }
+
+        // --------------------------------------------------------
+        $name = 'databaseactivity';
+        $mform->addElement('header', $name, get_string($name, $plugin));
+        $mform->addHelpButton($name, $name, $plugin);
+        // --------------------------------------------------------
+
+        $name = $type.'cmid';
+        $label = get_string($name, $plugin);
+        $options = self::get_cmids($mform, $course, $plugin, 'data');
+        $mform->addElement('selectgroups', $name, $label, $options);
+        $mform->setType($name, PARAM_INT);
+        $mform->setDefault($name, $cmid);
+
+        $name = $type.'sectionnum';
+        $label = get_string($name, $plugin);
+        $options = self::get_sectionnums($mform, $course, $plugin);
+        $mform->addElement('select', $name, $label, $options);
+        $mform->setType($name, PARAM_INT);
+        $mform->setDefault($name, $sectionnum);
 
         // select section AND new database name
 
@@ -296,13 +332,13 @@ class block_maj_submissions_tool extends moodleform {
         global $CFG, $DB, $OUTPUT;
 
         $strman = get_string_manager();
-        $plugin = 'block_maj_subimssions';
+        $plugin = 'block_maj_submissions';
         $strdelete = get_string('deleted', 'data');
 
         require_once($CFG->dirroot.'/mod/data/lib.php');
         $presets = data_get_available_presets($context);
 
-        $dir = $CFG->dirroot.'/blocks/maj_subimssions/presets';
+        $dir = $CFG->dirroot.'/blocks/maj_submissions/presets';
         if (is_dir($dir) && ($dh = opendir($dir))) {
             while (($item = readdir($dh)) !== false) {
                 if (substr($item, 0, 1)=='.') {
@@ -311,9 +347,9 @@ class block_maj_submissions_tool extends moodleform {
                 $diritem = "$dir/$item";
                 if (is_dir($diritem) && is_directory_a_preset($diritem)) {
                     if ($strman->string_exists('presetfullname'.$item, $plugin)) {
-                        $name = get_string('presetfullname'.$item, $plugin);
+                        $fullname = get_string('presetfullname'.$item, $plugin);
                     } else {
-                        $name = $item;
+                        $fullname = $item;
                     }
                     if ($strman->string_exists('presetshortname'.$item, $plugin)) {
                         $shortname = get_string('presetshortname'.$item, $plugin);
@@ -330,14 +366,15 @@ class block_maj_submissions_tool extends moodleform {
                         $screenshot = ''; // shouldn't happen !!
                     }
                     $presets[] = (object)array(
+                        'userid' => 0,
                         'path' => $diritem,
                         'name' => $fullname,
-                        'shortname' => $item,
-                        'screenshot' => $screenshot,
-                        'userid' => 0
+                        'shortname' => $shortname,
+                        'screenshot' => $screenshot
                     );
                 }
             }
+            closedir($dh);
         }
 
         foreach ($presets as &$preset) {
@@ -371,6 +408,210 @@ class block_maj_submissions_tool extends moodleform {
             }
         }
         return $presets;
+    }
+
+    /**
+     * get_options_sectionnum
+     *
+     * @param object $mform
+     * @param object $course
+     * @param string $plugin
+     * @return array($sectionnum => $sectionname) of sections in this course
+     */
+    static public function get_sectionnums($mform, $course, $plugin) {
+        $options = array();
+        $modinfo = get_fast_modinfo($course);
+        $sections = $modinfo->get_section_info_all();
+        foreach ($sections as $sectionnum => $section) {
+            if ($name = self::get_sectionname($section)) {
+                $options[$sectionnum] = $name;
+            } else {
+                $options[$sectionnum] = self::get_sectionname_default($course, $sectionnum);
+            }
+        }
+        return self::format_select_options($plugin, $options, 'section');
+    }
+
+    /**
+     * get_sectionname_default
+     *
+     * @param object   $course
+     * @param object   $section
+     * @param string   $dateformat (optional, default='%b %d')
+     * @return string  name of $section
+     */
+    static public function get_sectionname_default($course, $sectionnum, $dateformat='%b %d') {
+
+        // set course section type
+        if ($course->format=='weeks') {
+            $sectiontype = 'week';
+        } else if ($course->format=='topics') {
+            $sectiontype = 'topic';
+        } else {
+            $sectiontype = 'section';
+        }
+
+        // "weeks" format
+        if ($sectiontype=='week' && $sectionnum > 0) {
+            if ($dateformat=='') {
+                $dateformat = get_string('strftimedateshort');
+            }
+            // 604800 : number of seconds in 7 days i.e. WEEKSECS
+            // 518400 : number of seconds in 6 days i.e. WEEKSECS - DAYSECS
+            $date = $course->startdate + 7200 + (($sectionnum - 1) * 604800);
+            return userdate($date, $dateformat).' - '.userdate($date + 518400, $dateformat);
+        }
+
+        // get string manager object
+        $strman = get_string_manager();
+
+        // specify course format plugin name
+        $courseformat = 'format_'.$course->format;
+
+        if ($strman->string_exists('section'.$sectionnum.'name', $courseformat)) {
+            return get_string('section'.$sectionnum.'name', $courseformat);
+        }
+
+        if ($strman->string_exists('sectionname', $courseformat)) {
+            return get_string('sectionname', $courseformat).' '.$sectionnum;
+        }
+
+        if ($strman->string_exists($sectiontype, 'moodle')) {
+            return get_string($sectiontype).' '.$sectionnum;
+        }
+
+        if ($strman->string_exists('sectionname', 'moodle')) {
+            return get_string('sectionname').' '.$sectionnum;
+        }
+
+        return $sectiontype.' '.$sectionnum;
+    }
+
+    /**
+     * get_options_cmids
+     *
+     * @param object  $mform
+     * @param string  $course
+     * @param string  $plugin
+     * @param string  $modnames (optional, default="")
+     * @param integer $sectionnum (optional, default=0)
+     * @return array($cmid => $name) of activities from the specified $sectionnum
+     *                               or from the whole course (if $sectionnum==0)
+     */
+    static public function get_cmids($mform, $course, $plugin, $modnames='', $sectionnum=0) {
+        $options = array();
+
+        $modnames = explode(',', $modnames);
+        $modnames = array_filter($modnames);
+        $count = count($modnames);
+
+        $modinfo = get_fast_modinfo($course);
+        $sections = $modinfo->get_section_info_all();
+        foreach ($sections as $section) {
+
+            $sectionname = '';
+            if ($sectionnum==0 || $sectionnum==$section->section) {
+                $cmids = $section->sequence;
+                $cmids = explode(',', $cmids);
+                $cmids = array_filter($cmids);
+                foreach ($cmids as $cmid) {
+                    if (array_key_exists($cmid, $modinfo->cms)) {
+                        $cm = $modinfo->get_cm($cmid);
+                        if ($count==0 || in_array($cm->modname, $modnames)) {
+                            if ($sectionname=='') {
+                                $sectionname = self::get_sectionname($section, 0);
+                                $options[$sectionname] = array();
+                            }
+                            $name = $cm->name;
+                            $name = block_maj_submissions::filter_text($name);
+                            $name = block_maj_submissions::trim_text($name);
+                            $options[$sectionname][$cmid] = $name;
+                        }
+                    }
+                }
+            }
+        }
+        return self::format_selectgroups_options($plugin, $options, 'activity');
+    }
+
+    /**
+     * format_selectgroups_options
+     *
+     * @param string  $plugin
+     * @param array   $options
+     * @param string  $type ("field", "activity" or "section")
+     * @return array  $option for a select element in $mform
+     */
+    static public function format_selectgroups_options($plugin, $options, $type) {
+        return $options + array('-----' => self::format_select_options($plugin, array(), $type));
+    }
+
+    /**
+     * format_select_options
+     *
+     * @param string  $plugin
+     * @param array   $options
+     * @param string  $type ("field", "activity" or "section")
+     * @return array  $option for a select element in $mform
+     */
+    static public function format_select_options($plugin, $options, $type) {
+        if (! array_key_exists(0, $options)) {
+            $none = get_string('none');
+            $options = array(0 => "($none)") + $options;
+        }
+        $createnew = get_string('createnew'.$type, $plugin);
+        return $options + array(self::CREATE_NEW => "($createnew)");
+    }
+
+    /**
+     * get_sectionname
+     *
+     * names longer than $namelength will be trancated to to HEAD ... TAIL
+     * where the number of characters in HEAD is $headlength
+     * and the number of characters in TIAL is $taillength
+     *
+     * @param object   $section
+     * @param integer  $namelength of section name (optional, default=28)
+     * @param integer  $headlength of head of section name (optional, default=10)
+     * @param integer  $taillength of tail of section name (optional, default=10)
+     * @return string  name of $section
+     */
+    static public function get_sectionname($section, $namelength=28, $headlength=10, $taillength=10) {
+
+        // extract section title from section name
+        if ($name = block_maj_submissions::filter_text($section->name)) {
+            return block_maj_submissions::trim_text($name, $namelength, $headlength, $taillength);
+        }
+
+        // extract section title from section summary
+        if ($name = block_maj_submissions::filter_text($section->summary)) {
+
+            // remove script and style blocks
+            $select = '/\s*<(script|style)[^>]*>.*?<\/\1>\s*/is';
+            $name = preg_replace($select, '', $name);
+
+            // look for HTML H1-5 tags or the first line of text
+            $tags = 'h1|h2|h3|h4|h5|h6';
+            if (preg_match('/<('.$tags.')\b[^>]*>(.*?)<\/\1>/is', $name, $matches)) {
+                $name = $matches[2];
+            } else {
+                // otherwise, get first line of text
+                $name = preg_split('/<br[^>]*>/', $name);
+                $name = array_map('strip_tags', $name);
+                $name = array_map('trim', $name);
+                $name = array_filter($name);
+                if (empty($name)) {
+                    $name = '';
+                } else {
+                    $name = reset($name);
+                }
+            }
+            $name = trim(strip_tags($name));
+            $name = block_maj_submissions::trim_text($name, $namelength, $headlength, $taillength);
+            return $name;
+        }
+
+        return ''; // section name and summary are empty
     }
 
     /**
@@ -438,8 +679,11 @@ class block_maj_submissions_tool extends moodleform {
 }
 
 class block_maj_submissions_tool_setupregistrations extends block_maj_submissions_tool {
+    protected $type = 'registerdelegates';
 }
 class block_maj_submissions_tool_setuppresentations extends block_maj_submissions_tool {
+    protected $type = 'collectpresentations';
 }
 class block_maj_submissions_tool_setupworkshops extends block_maj_submissions_tool {
+    protected $type = 'collectworkshops';
 }

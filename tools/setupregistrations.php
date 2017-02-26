@@ -88,7 +88,8 @@ echo $OUTPUT->header();
 echo $OUTPUT->heading($strpagetitle);
 echo $OUTPUT->box_start('generalbox');
 
-echo html_writer::tag('p', get_string('toolsetupregistrations_desc', $plugin));
+echo html_writer::tag('p', get_string('toolsetupregistrations_desc', $plugin).
+                           $OUTPUT->help_icon('toolsetup', $plugin));
 
 // get incoming data, if any
 if ($cancel = optional_param('cancel', '', PARAM_ALPHA)) {
@@ -109,17 +110,11 @@ if ($data) {
     // process incoming data (before creating the form)
 }
 
-// get context for registration database, if possible
-$block_maj_submissions = block_instance($blockname, $block_instance);
-if ($cmid = $block_maj_submissions->config->registerpresenterscmid) {
-    $context = block_maj_submissions::context(CONTEXT_MODULE, $cmid);
-}
-
 // initialize the form
-$customdata = array('cmid'    => $cmid,
-                    'context' => $context,
-                    'course'  => $course,
-                    'plugin'  => $plugin);
+$customdata = array('context'  => $context,
+                    'course'   => $course,
+                    'plugin'   => $plugin,
+                    'instance' => $block_instance);
 $mform = new block_maj_submissions_tool_setupregistrations($url->out(false), $customdata);
 
 // display form

@@ -651,16 +651,17 @@ class block_maj_submissions_edit_form extends block_edit_form {
      *
      * @param object  $mform
      * @param string  $plugin
-     * @param string  $modname (optional, default="")
+     * @param string  $modnames (optional, default="")
      * @param integer $sectionnum (optional, default=0)
      * @return array($cmid => $name) of activities from the specified $sectionnum
      *                               or from the whole course (if $sectionnum==0)
      */
-    protected function get_options_cmids($mform, $plugin, $modname='', $sectionnum=0) {
+    protected function get_options_cmids($mform, $plugin, $modnames='', $sectionnum=0) {
         $options = array();
 
-        $modnames = explode(',', $modname);
+        $modnames = explode(',', $modnames);
         $modnames = array_filter($modnames);
+        $count = count($modnames);
 
         $modinfo = $this->get_course_modinfo();
         $sections = $modinfo->get_section_info_all();
@@ -674,7 +675,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
                 foreach ($cmids as $cmid) {
                     if (array_key_exists($cmid, $modinfo->cms)) {
                         $cm = $modinfo->get_cm($cmid);
-                        if ($modname=='' || in_array($cm->modname, $modnames)) {
+                        if ($count==0 || in_array($cm->modname, $modnames)) {
                             if ($sectionname=='') {
                                 $sectionname = $this->get_sectionname($section, 0);
                                 $options[$sectionname] = array();
