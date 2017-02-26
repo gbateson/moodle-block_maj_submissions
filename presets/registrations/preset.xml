@@ -1,0 +1,1493 @@
+<preset>
+
+<settings>
+<intro>&lt;div class=&quot;howto howtoswitchrole&quot; style=&quot;display: none; max-width: 624px; text-align: justify; background-color: #ffe; border: 1px solid orange; border-radius: 4px; margin-bottom: 12px; padding: 6px 12px 0px 12px;&quot;&gt;
+    &lt;p&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;
+        &lt;b style=&quot;color: red;&quot;&gt;Note:&lt;/b&gt;
+        The role you are currently using is &lt;i&gt;a different role from your usual role&lt;/i&gt;.
+        The messages below are those that would appear if you were actually logged
+        in as a user with that role. The messages are displayed for testing purposes,
+        even though they may not strictly be relevant to your actual login status.
+    &lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;
+        &lt;b style=&quot;color: red;&quot;&gt;注意：&lt;/b&gt;
+        只今使用されているロールは&lt;i&gt;通常と違うロール&lt;/i&gt;です。
+        下記に表示されているメッセージは実際にそのロールのユーさとしてログインされたら、表示されるものです。
+        只今のログイン状態に無関係の場合でも、サイトの通常動きを確認するため、メッセージが表示されます。ご了承ください。
+    &lt;/span&gt;&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;div class=&quot;howto howtologin howtoenrol&quot; style=&quot;display: none; max-width: 648px; text-align: justify;&quot;&gt;
+    &lt;p&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;
+        In order to add, edit or remove your conference registration details,
+        you need log in to this website and enrol in this Moodle course.
+    &lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;
+        大会参加者情報を追加・編集・削除するためには、
+        本ウェッブサイトのログインやムードルコース登録が必要です。
+    &lt;/span&gt;&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;div class=&quot;howto howtologin&quot; style=&quot;display: none; max-width: 648px; text-align: justify;&quot;&gt;
+    &lt;p&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;
+        If you already have a username on this website,
+        &lt;a href=&quot;http://localhost/maj/login/index.php&quot;&gt;please click here&lt;/a&gt;
+        to login and then continue your conference registration.
+    &lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;
+        既に本ウェッブサイトのユーザ名をお持ちの方は
+        &lt;a href=&quot;http://localhost/maj/login/index.php&quot;&gt;ここをクリックし、&lt;/a&gt;
+        ログインしてから大会参加手続きをお進めください。
+    &lt;/span&gt;&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;div class=&quot;howto howtoenrol&quot; style=&quot;display: none; max-width: 648px; text-align: justify;&quot;&gt;
+    &lt;p&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;
+        If you have a username but are not enrolled in this Moodle course,
+        &lt;a href=&quot;http://localhost/maj/enrol/index.php?id=66&quot;&gt;please click here&lt;/a&gt;
+        to enrol and then revisit this page to continue your conference registration.
+    &lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;
+        ユーザ名はお持ちですが、まだムードルコースに登録されていない方は
+        &lt;a href=&quot;http://localhost/maj/enrol/index.php?id=66&quot;&gt;ここをクリックし、&lt;/a&gt;
+        ムードルコースに登録してから、このページに戻り、大会参加手続きをお進めください。
+    &lt;/span&gt;&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;div class=&quot;howto howtologin&quot; style=&quot;display: none; max-width: 648px; text-align: justify;&quot;&gt;
+    &lt;p&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;
+        If you do NOT already have a username for this Moodle website,
+        please use the links below to complete the Moodle course enrolment formalities,
+        and then return to this page to continue your conference registration.
+    &lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;
+        まだ本ウェッブサイトのユーザ名をお持ちではない方は
+        下記のリンクを使ってムードルコースに登録手順をこなしてから、
+        このページに戻り、大会参加手続きをお進めください。
+    &lt;/span&gt;&lt;/p&gt;
+    &lt;ol&gt;
+        &lt;li&gt;&lt;a href=&quot;http://localhost/maj/login/signup.php&quot; target=&quot;_blank&quot;&gt;
+            &lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Create an account on this Moodle site&lt;/span&gt;
+            &lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;このムードルサイトのアカウントを作成&lt;/span&gt;
+        &lt;/a&gt;&lt;/li&gt;
+        &lt;li&gt;&lt;a href=&quot;http://localhost/maj/login/index.php&quot; target=&quot;_blank&quot;&gt;
+            &lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Login to this Moodle site&lt;/span&gt;
+            &lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;このムードルサイトにログイン&lt;/span&gt;
+        &lt;/a&gt;&lt;/li&gt;
+        &lt;li&gt;&lt;a href=&quot;http://localhost/maj/enrol/index.php?id=66&quot;&gt;
+            &lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Enrol in this Moodle course&lt;/span&gt;
+            &lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;このコースに登録する&lt;/span&gt;
+        &lt;/a&gt;&lt;/li&gt;
+    &lt;/ol&gt;
+&lt;/div&gt;
+
+&lt;div class=&quot;howto howtoadd&quot; style=&quot;display: none; max-width: 648px; text-align: justify;&quot;&gt;
+    &lt;p&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;
+        To add your registration details for this conference, please click the &quot;Add entry&quot; link below,
+        and fill out the form on the next page.
+    &lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;
+        新しい大会参加情報を登録するため、下記の「エントリを追加する」リンクをクリックし、次のページの書式を入力してください。
+    &lt;/span&gt;&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;div class=&quot;howto howtoedit&quot; style=&quot;display: none; max-width: 648px; text-align: justify;&quot;&gt;
+    &lt;p&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;
+        To edit your registration details for this conference, please click the &quot;View single&quot; link below,
+        and then click the edit icon on that page.
+    &lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;
+        以前入力された大会参加情報を編集するため、下記の「個別表示」リンクをクリックし,次のページにある編集アイコンをクリックしてください。
+    &lt;/span&gt;&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;div class=&quot;howto howtodelete&quot; style=&quot;display: none; max-width: 648px; text-align: justify;&quot;&gt;
+    &lt;p&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;
+        To delete your registration details for this conference, please click the &quot;View single&quot; link below,
+        and then click the delete icon on that page.
+    &lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;
+        以前入力された大会参加情報を削除するため、下記の「個別表示」リンクをクリックし,次のページにある削除アイコンをクリックしてください。
+    &lt;/span&gt;&lt;/p&gt;
+&lt;/div&gt;</intro>
+<comments>0</comments>
+<requiredentries>10</requiredentries>
+<requiredentriestoview>10</requiredentriestoview>
+<maxentries>1</maxentries>
+<rssarticles>0</rssarticles>
+<approval>1</approval>
+<manageapproved>0</manageapproved>
+<defaultsortdir>0</defaultsortdir>
+<defaultsort>0</defaultsort>
+</settings>
+
+<field>
+<type>constant</type>
+<name>conference_name_en</name>
+<description>大会名 Conference name (en)</description>
+<required>0</required>
+<param1>MoodleMoot Japan 2017</param1>
+</field>
+
+<field>
+<type>constant</type>
+<name>conference_name_ja</name>
+<description>大会名 Conference name (ja)</description>
+<required>0</required>
+<param1>日本ムードルムート２０１７</param1>
+</field>
+
+<field>
+<type>constant</type>
+<name>conference_venue_en</name>
+<description>大会開催地 Conference venue (en)</description>
+<required>0</required>
+<param1>Jichi Medical University, Tochigi, JAPAN</param1>
+</field>
+
+<field>
+<type>constant</type>
+<name>conference_venue_ja</name>
+<description>大会開催地 Conference venue (ja)</description>
+<required>0</required>
+<param1>自治医科大学（栃木県）</param1>
+</field>
+
+<field>
+<type>constant</type>
+<name>conference_dates_en</name>
+<description>大会開催期間 Conference dates (en)</description>
+<required>0</required>
+<param1>Feb 17th - 19th, 2017</param1>
+</field>
+
+<field>
+<type>constant</type>
+<name>conference_dates_ja</name>
+<description>大会開催期間 Conference dates (ja)</description>
+<required>0</required>
+<param1>2017年 2月 17日~19日</param1>
+</field>
+
+<field>
+<type>constant</type>
+<name>certificate_date</name>
+<description>参加証明書日付 Certificate date</description>
+<required>0</required>
+<param1>２月１８日</param1>
+</field>
+
+<field>
+<type>constant</type>
+<name>dinner_name_en</name>
+<description>懇親会名 Dinner name (en)</description>
+<required>0</required>
+<param1>The Networking Reception</param1>
+</field>
+
+<field>
+<type>constant</type>
+<name>dinner_name_ja</name>
+<description>懇親会名 Dinner name (ja)</description>
+<required>0</required>
+<param1>懇親会</param1>
+</field>
+
+<field>
+<type>constant</type>
+<name>dinner_venue</name>
+<description>懇親会開催地 Dinner venue</description>
+<required>0</required>
+<param1>学生食堂 Student Cafeteria</param1>
+</field>
+
+<field>
+<type>constant</type>
+<name>dinner_date_en</name>
+<description>懇親会日付 Dinner date (en)</description>
+<required>0</required>
+<param1>Feb 18th (Sat)</param1>
+</field>
+
+<field>
+<type>constant</type>
+<name>dinner_date_ja</name>
+<description>懇親会日付 Dinner date (ja)</description>
+<required>0</required>
+<param1>2月 18日 (土)</param1>
+</field>
+
+<field>
+<type>constant</type>
+<name>dinner_time</name>
+<description>懇親会時間 Dinner time</description>
+<required>0</required>
+<param1>18:00 - 20:00</param1>
+</field>
+
+<field>
+<type>constant</type>
+<name>badge_number</name>
+<description>名札番号 Badge number</description>
+<required>0</required>
+<param1>7200</param1>
+<param2>1</param2>
+<param3>%04d</param3>
+</field>
+
+<field>
+<type>constant</type>
+<name>fee_receipt_number</name>
+<description>会費領収書番号 Fee receipt number</description>
+<required>0</required>
+<param1>7400</param1>
+<param2>1</param2>
+<param3>%04d</param3>
+</field>
+
+<field>
+<type>constant</type>
+<name>dinner_receipt_number</name>
+<description>懇親会領収書番号 Dinner receipt number</description>
+<required>0</required>
+<param1>7600</param1>
+<param2>1</param2>
+<param3>%04d</param3>
+</field>
+
+<field>
+<type>constant</type>
+<name>certificate_number</name>
+<description>参加証明書番号 Certificate number</description>
+<required>0</required>
+<param1>7800</param1>
+<param2>1</param2>
+<param3>%04d</param3>
+</field>
+
+<field>
+<type>menu</type>
+<name>name_title</name>
+<description>肩書 Title</description>
+<required>0</required>
+<param1>Dr.
+Mr.
+Ms.
+Prof.
+other その他 ...</param1>
+</field>
+
+<field>
+<type>text</type>
+<name>name_title_other</name>
+<description>肩書（その他）Title (other)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>name_given_en</name>
+<description>下の名前（ローマ字）Given name (en)</description>
+<required>1</required>
+</field>
+
+<field>
+<type>text</type>
+<name>name_surname_en</name>
+<description>上の名前（ローマ字） Surname (en)</description>
+<required>1</required>
+</field>
+
+<field>
+<type>text</type>
+<name>name_given_ja</name>
+<description>下の名前（漢字）Given name (ja)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>name_surname_ja</name>
+<description>上の名前（漢字）Surname (ja)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>affiliation_en</name>
+<description>所属機関（英語）Affiliation (en)</description>
+<required>1</required>
+</field>
+
+<field>
+<type>text</type>
+<name>affiliation_ja</name>
+<description>所属機関（日本語）Affiliation (ja)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>affiliation_state</name>
+<description>都道府県 State or Prefecture</description>
+<required>1</required>
+</field>
+
+<field>
+<type>text</type>
+<name>affiliation_country</name>
+<description>国 Country</description>
+<required>1</required>
+</field>
+
+<field>
+<type>text</type>
+<name>email</name>
+<description>Ｅメールアドレス Email address</description>
+<required>1</required>
+</field>
+
+<field>
+<type>radiobutton</type>
+<name>membership_fees</name>
+<description>年会費 Membership fees</description>
+<required>1</required>
+<param1>個人年会費 Individual membership (¥10,000 yen)
+個人年会費：団体に所属 Individual from MAJ Institution (¥0 yen)
+個人年会費：スポンサーに所属 Individual from MAJ Sponsor (¥0 yen)
+団体年会費 MAJ Institution membership (¥50,000 yen)
+非会員 Non-member (¥0 yen)
+</param1>
+</field>
+
+<field>
+<type>radiobutton</type>
+<name>conference_fees</name>
+<description>大会参加費 Conference fees</description>
+<required>1</required>
+<param1>会員大会参加費 MAJ member conference fee (¥0 yen)
+非会員大会参加費 Non-member conference fee (¥10,000 yen)
+非会員大会参加費：学生 Non-member conference fee: student (¥3,000 yen)
+非会員大会参加費：割引該当者 Non-member conference fee: concession (¥3,000 yen)
+非会員大会参加費：学校教員（幼小中高） Non-member conference fee: school teacher (¥5,000 yen)
+非会員大会参加費：スポンサー招待者 Non-member conference fee: Sponsor guest (¥0 yen)
+非会員大会参加費：ＭＡＪ招待者 Non-member conference fee: MAJ guest (¥0 yen)
+大会に不参加 Do NOT attend the Conference (¥0 yen)</param1>
+</field>
+
+<field>
+<type>menu</type>
+<name>dinner_attend</name>
+<description>懇親会の出欠 Attend dinner?</description>
+<required>1</required>
+<param1>懇親会に出席 Attend the Moot dinner (¥4,500 yen)
+懇親会に出席：ＭＡＪ招待者 Attend the Moot dinner: MAJ guest (¥0 yen)
+懇親会に出席：スポンサー招待者 Attend the Moot dinner: Sponsor guest (¥0 yen)
+懇親会に欠席 Do NOT attend the Moot dinner (¥0 yen)</param1>
+</field>
+
+<field>
+<type>menu</type>
+<name>dinner_food</name>
+<description>懇親会の食事 Dinner food</description>
+<required>0</required>
+<param1>食事の特別要望なし Any food is OK
+</param1>
+</field>
+
+<field>
+<type>menu</type>
+<name>dinner_drink</name>
+<description>懇親会の飲物 Dinner drink</description>
+<required>0</required>
+<param1>飲物の特別要望なし Any drink is OK
+ノンアルコール飲物 Non-alcoholic drink</param1>
+</field>
+
+<field>
+<type>text</type>
+<name>amount_due</name>
+<description>支払金額 Amount due</description>
+<required>0</required>
+</field>
+
+<field>
+<type>radiobutton</type>
+<name>payment_method</name>
+<description>支払方法 Payment method</description>
+<required>1</required>
+<param1>ペイパルで払う pay via PayPal
+銀行振込で払う pay via Bank transfer</param1>
+</field>
+
+<field>
+<type>text</type>
+<name>fees_receipt_name</name>
+<description>会費の領収書名 Fees receipt name</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>dinner_receipt_name</name>
+<description>懇親会の領収書名 Dinner receipt name</description>
+<required>0</required>
+</field>
+
+<field>
+<type>textarea</type>
+<name>comments_questions</name>
+<description>コメント・質問 Comments or questions</description>
+<required>0</required>
+<param2>40</param2>
+<param3>3</param3>
+<param4>1</param4>
+<param5>0</param5>
+</field>
+
+<field>
+<type>menu</type>
+<name>name_title_2</name>
+<description>肩書 Title</description>
+<required>0</required>
+<param1>Dr.
+Mr.
+Ms.
+Prof.
+other その他 ...</param1>
+</field>
+
+<field>
+<type>text</type>
+<name>name_title_other_2</name>
+<description>肩書（その他）Title (other)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>name_given_2_en</name>
+<description>下の名前（ローマ字）Given name (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>name_surname_2_en</name>
+<description>上の名前（ローマ字）Surname (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>menu</type>
+<name>dinner_attend_2</name>
+<description>懇親会の出欠 Attend dinner?</description>
+<required>0</required>
+<param1>懇親会に出席 Attend the Moot dinner (¥4,500 yen)
+懇親会に出席：ＭＡＪ招待 Attend the Moot dinner: MAJ guest (¥0 yen)
+懇親会に出席：スポンサー招待 Attend the Moot dinner: Sponsor guest (¥0 yen)
+懇親会に欠席 Do NOT attend the Moot dinner (¥0 yen)</param1>
+</field>
+
+<field>
+<type>menu</type>
+<name>dinner_food_2</name>
+<description>懇親会の食事 Dinner food</description>
+<required>0</required>
+<param1>食事の特別要望なし Any food is OK</param1>
+</field>
+
+<field>
+<type>menu</type>
+<name>dinner_drink_2</name>
+<description>懇親会の飲物 Dinner drink</description>
+<required>0</required>
+<param1>飲物の特別要望なし Any drink is OK
+ノンアルコール飲物 Non-alcoholic drink</param1>
+</field>
+
+<field>
+<type>menu</type>
+<name>name_title_3</name>
+<description>肩書 Title</description>
+<required>0</required>
+<param1>Dr.
+Mr.
+Ms.
+Prof.
+other その他 ...</param1>
+</field>
+
+<field>
+<type>text</type>
+<name>name_title_other_3</name>
+<description>肩書（その他）Title (other)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>name_given_3_en</name>
+<description>下の名前（ローマ字）Given name (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>name_surname_3_en</name>
+<description>上の名前（ローマ字）Surname (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>menu</type>
+<name>dinner_attend_3</name>
+<description>懇親会の出欠 Attend dinner?</description>
+<required>0</required>
+<param1>懇親会に出席 Attend the Moot dinner (¥4,500 yen)
+懇親会に出席：ＭＡＪ招待 Attend the Moot dinner: MAJ guest (¥0 yen)
+懇親会に出席：スポンサー招待 Attend the Moot dinner: Sponsor guest (¥0 yen)
+懇親会に欠席 Do NOT attend the Moot dinner (¥0 yen)</param1>
+</field>
+
+<field>
+<type>menu</type>
+<name>dinner_food_3</name>
+<description>懇親会の食事 Dinner food</description>
+<required>0</required>
+<param1>食事の特別要望なし Any food is OK</param1>
+</field>
+
+<field>
+<type>menu</type>
+<name>dinner_drink_3</name>
+<description>懇親会の飲物 Dinner drink</description>
+<required>0</required>
+<param1>飲物の特別要望なし Any drink is OK
+ノンアルコール飲物 Non-alcoholic drink</param1>
+</field>
+
+<field>
+<type>menu</type>
+<name>name_title_4</name>
+<description>肩書 Title</description>
+<required>0</required>
+<param1>Dr.
+Mr.
+Ms.
+Prof.
+other その他 ...</param1>
+</field>
+
+<field>
+<type>text</type>
+<name>name_title_other_4</name>
+<description>肩書（その他）Title (other)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>name_given_4_en</name>
+<description>下の名前（ローマ字）Given name (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>name_surname_4_en</name>
+<description>上の名前（ローマ字）Surname (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>menu</type>
+<name>dinner_attend_4</name>
+<description>懇親会の出欠 Attend dinner?</description>
+<required>0</required>
+<param1>懇親会に出席 Attend the Moot dinner (¥4,500 yen)
+懇親会に出席：ＭＡＪ招待 Attend the Moot dinner: MAJ guest (¥0 yen)
+懇親会に出席：スポンサー招待 Attend the Moot dinner: Sponsor guest (¥0 yen)
+懇親会に欠席 Do NOT attend the Moot dinner (¥0 yen)</param1>
+</field>
+
+<field>
+<type>menu</type>
+<name>dinner_food_4</name>
+<description>懇親会の食事 Dinner food</description>
+<required>0</required>
+<param1>食事の特別要望なし Any food is OK</param1>
+</field>
+
+<field>
+<type>menu</type>
+<name>dinner_drink_4</name>
+<description>懇親会の飲物 Dinner drink</description>
+<required>0</required>
+<param1>飲物の特別要望なし Any drink is OK
+ノンアルコール飲物 Non-alcoholic drink</param1>
+</field>
+
+<field>
+<type>menu</type>
+<name>name_title_5</name>
+<description>肩書 Title</description>
+<required>0</required>
+<param1>Dr.
+Mr.
+Ms.
+Prof.
+other その他 ...</param1>
+</field>
+
+<field>
+<type>text</type>
+<name>name_title_other_5</name>
+<description>肩書（その他）Title (other)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>name_given_5_en</name>
+<description>下の名前（ローマ字）Given name (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>name_surname_5_en</name>
+<description>上の名前（ローマ字）Surname (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>menu</type>
+<name>dinner_attend_5</name>
+<description>懇親会の出欠 Attend dinner?</description>
+<required>0</required>
+<param1>懇親会に出席 Attend the Moot dinner (¥4,500 yen)
+懇親会に出席：ＭＡＪ招待 Attend the Moot dinner: MAJ guest (¥0 yen)
+懇親会に出席：スポンサー招待 Attend the Moot dinner: Sponsor guest (¥0 yen)
+懇親会に欠席 Do NOT attend the Moot dinner (¥0 yen)</param1>
+</field>
+
+<field>
+<type>menu</type>
+<name>dinner_food_5</name>
+<description>懇親会の食事 Dinner food</description>
+<required>0</required>
+<param1>食事の特別要望なし Any food is OK</param1>
+</field>
+
+<field>
+<type>menu</type>
+<name>dinner_drink_5</name>
+<description>懇親会の飲物 Dinner drink</description>
+<required>0</required>
+<param1>飲物の特別要望なし Any drink is OK
+ノンアルコール飲物 Non-alcoholic drink</param1>
+</field>
+
+<field>
+<type>menu</type>
+<name>name_title_6</name>
+<description>肩書 Title</description>
+<required>0</required>
+<param1>Dr.
+Mr.
+Ms.
+Prof.
+other その他 ...</param1>
+</field>
+
+<field>
+<type>text</type>
+<name>name_title_other_6</name>
+<description>肩書（その他）Title (other)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>name_given_6_en</name>
+<description>下の名前（ローマ字）Given name (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>name_surname_6_en</name>
+<description>上の名前（ローマ字）Surname (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>menu</type>
+<name>dinner_attend_6</name>
+<description>懇親会の出欠 Attend dinner?</description>
+<required>0</required>
+<param1>懇親会に出席 Attend the Moot dinner (¥4,500 yen)
+懇親会に出席：ＭＡＪ招待 Attend the Moot dinner: MAJ guest (¥0 yen)
+懇親会に出席：スポンサー招待 Attend the Moot dinner: Sponsor guest (¥0 yen)
+懇親会に欠席 Do NOT attend the Moot dinner (¥0 yen)</param1>
+</field>
+
+<field>
+<type>menu</type>
+<name>dinner_food_6</name>
+<description>懇親会の食事 Dinner food</description>
+<required>0</required>
+<param1>食事の特別要望なし Any food is OK</param1>
+</field>
+
+<field>
+<type>menu</type>
+<name>dinner_drink_6</name>
+<description>懇親会の飲物 Dinner drink</description>
+<required>0</required>
+<param1>飲物の特別要望なし Any drink is OK
+ノンアルコール飲物 Non-alcoholic drink</param1>
+</field>
+
+<field>
+<type>menu</type>
+<name>name_title_7</name>
+<description>肩書 Title</description>
+<required>0</required>
+<param1>Dr.
+Mr.
+Ms.
+Prof.
+other その他 ...</param1>
+</field>
+
+<field>
+<type>text</type>
+<name>name_title_other_7</name>
+<description>肩書（その他）Title (other)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>name_given_7_en</name>
+<description>下の名前（ローマ字）Given name (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>name_surname_7_en</name>
+<description>上の名前（ローマ字）Surname (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>menu</type>
+<name>dinner_attend_7</name>
+<description>懇親会の出欠 Attend dinner?</description>
+<required>0</required>
+<param1>懇親会に出席 Attend the Moot dinner (¥4,500 yen)
+懇親会に出席：ＭＡＪ招待 Attend the Moot dinner: MAJ guest (¥0 yen)
+懇親会に出席：スポンサー招待 Attend the Moot dinner: Sponsor guest (¥0 yen)
+懇親会に欠席 Do NOT attend the Moot dinner (¥0 yen)</param1>
+</field>
+
+<field>
+<type>menu</type>
+<name>dinner_food_7</name>
+<description>懇親会の食事 Dinner food</description>
+<required>0</required>
+<param1>食事の特別要望なし Any food is OK</param1>
+</field>
+
+<field>
+<type>menu</type>
+<name>dinner_drink_7</name>
+<description>懇親会の飲物 Dinner drink</description>
+<required>0</required>
+<param1>飲物の特別要望なし Any drink is OK
+ノンアルコール飲物 Non-alcoholic drink</param1>
+</field>
+
+<field>
+<type>admin</type>
+<name>fixdisabledfields</name>
+<description>不足値修正 Fix disabled fields</description>
+<required>0</required>
+<param9>0</param9>
+<param10>number</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>setdefaultvalues</name>
+<description>規定値設定 Set default values</description>
+<required>0</required>
+<param9>0</param9>
+<param10>number</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>unapprove</name>
+<description>承認の取消 Unapprove</description>
+<required>0</required>
+<param9>0</param9>
+<param10>number</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>presenter</name>
+<description>発表者？ Presenter?</description>
+<required>0</required>
+<param1>発表者 Presenter</param1>
+<param9>6</param9>
+<param10>checkbox</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>paid_amount</name>
+<description>払済金額 Amount paid</description>
+<required>0</required>
+<param9>6</param9>
+<param10>text</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>paid_date</name>
+<description>払済日付 Date paid</description>
+<required>0</required>
+<param9>2</param9>
+<param10>date</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>paid_method</name>
+<description>払済方法 Method paid</description>
+<required>0</required>
+<param1>ペイパルで払済 paid via PayPal
+銀行振込で払済 paid via Bank transfer
+スクウェアで払済 paid via Square</param1>
+<param9>6</param9>
+<param10>radiobutton</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>paid_notes</name>
+<description>払済備考 Paid notes</description>
+<required>0</required>
+<param9>6</param9>
+<param10>text</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>print_badges</name>
+<description>名札印刷 Print badges</description>
+<required>0</required>
+<param1>名札印刷 Print badges</param1>
+<param9>0</param9>
+<param10>checkbox</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>print_fee_receipt</name>
+<description>会費領収書印刷 Print fee receipt</description>
+<required>0</required>
+<param1>会費領収書印刷 Print fee receipt</param1>
+<param9>0</param9>
+<param10>checkbox</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>print_ticket</name>
+<description>入場券印刷 Print ticket</description>
+<required>0</required>
+<param1>入場券印刷 Print ticket</param1>
+<param9>0</param9>
+<param10>checkbox</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>print_dinner_receipt</name>
+<description>懇親会領収書印刷 Print dinner receipt</description>
+<required>0</required>
+<param1>懇親会領収書印刷 Print dinner receipt</param1>
+<param9>0</param9>
+<param10>checkbox</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>print_certificate</name>
+<description>参加証明書印刷 Print certificate</description>
+<required>0</required>
+<param1>参加書印刷 Print certificate</param1>
+<param9>0</param9>
+<param10>checkbox</param10>
+</field>
+
+<field>
+<type>action</type>
+<name>confirm_add_record</name>
+<description>新規登録確認 Confirm ADD record</description>
+<required>0</required>
+<param1>confirm</param1>
+<param2>0</param2>
+<param3>Submission added</param3>
+<param4>&lt;img src=&quot;http://localhost/maj/pluginfile.php/5955/mod_data/intro/2017_MAJ_tochigi_banner.0640.jpg&quot; alt=&quot;MoodleMoot Japan 2017 banner&quot; width=&quot;640&quot; height=&quot;83&quot; style=&quot;vertical-align:text-bottom; margin: 0 .5em;&quot; class=&quot;img-responsive&quot;&gt;
+
+Dear [[firstname]] [[lastname]],
+this email confirms that you have added registration details for [[conference_name_english]].
+
+The submission details appear below.
+
+You can review and update this information online on the following URL:
+[[recordurl]] 
+
+best regards
+[[conference_name_english]] committee
+
+======================================
+Registration details:
+======================================
+
+[[registration_details]]</param4>
+</field>
+
+<field>
+<type>action</type>
+<name>confirm_update_record</name>
+<description>登録更新確認 Confirm UPDATE record</description>
+<required>0</required>
+<param1>confirm</param1>
+<param2>1</param2>
+<param3>Registration data modified</param3>
+<param4>&lt;img src=&quot;http://localhost/maj/pluginfile.php/5955/mod_data/intro/2017_MAJ_tochigi_banner.0640.jpg&quot; alt=&quot;MoodleMoot Japan 2017 banner&quot; width=&quot;640&quot; height=&quot;83&quot; style=&quot;vertical-align:text-bottom; margin: 0 .5em;&quot; class=&quot;img-responsive&quot;&gt;
+
+Dear [[firstname]] [[lastname]],
+this email confirms that you have updated your registration details for [[conference_name_english]].
+
+The revised registration details appear below.
+
+You can review and update this information online on the following URL:
+[[recordurl]] 
+
+best regards
+[[conference_name_english]] committee
+
+======================================
+Registration details:
+======================================
+
+[[registration_details]]</param4>
+</field>
+
+<field>
+<type>template</type>
+<name>institution_members</name>
+<description>団体会員 Institution members</description>
+<required>0</required>
+<param1>[[IF name_surname_2_en NOT_EMPTY]]
+&lt;tr id=&quot;id_name_2&quot; class=&quot;institution_member name&quot;&gt;
+    &lt;th class=&quot;template-field cell c0&quot; style=&quot;&quot; rowspan=&quot;2&quot;&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Institution Member (2)&lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;団体会員（２）&lt;/span&gt; :&lt;/th&gt;
+    &lt;th class=&quot;template-token cell c1&quot;&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Name&lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;名前&lt;/span&gt; :&lt;/th&gt;
+    &lt;td class=&quot;template-token cell c2&quot; style=&quot;&quot;&gt;[[name_title_2]] [[name_title_other_2]] [[name_given_2_en]] [[name_surname_2_en]]&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr id=&quot;id_dinner_2&quot; class=&quot;institution_member dinner&quot;&gt;
+    &lt;th class=&quot;template-token cell c1&quot;&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Moot Dinner&lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;懇親会&lt;/span&gt; :&lt;/th&gt;
+    &lt;td class=&quot;template-token cell c2 lastcol&quot; style=&quot;&quot;&gt;[[dinner_attend_2]] [[dinner_food_2]] [[dinner_drink_2]]&lt;/td&gt;
+&lt;/tr&gt;
+[[ENDIF]]
+[[IF name_surname_3_en NOT_EMPTY]]
+&lt;tr id=&quot;id_name_3&quot; class=&quot;institution_member name&quot;&gt;
+    &lt;th class=&quot;template-field cell c0&quot; style=&quot;&quot; rowspan=&quot;2&quot;&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Institution Member (3)&lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;団体会員（３）&lt;/span&gt; :&lt;/th&gt;
+    &lt;th class=&quot;template-token cell c1&quot;&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Name&lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;名前&lt;/span&gt; :&lt;/th&gt;
+    &lt;td class=&quot;template-token cell c2&quot; style=&quot;&quot;&gt;[[name_title_3]] [[name_title_other_3]] [[name_given_3_en]] [[name_surname_3_en]]&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr id=&quot;id_dinner_3&quot; class=&quot;institution_member dinner&quot;&gt;
+    &lt;th class=&quot;template-token cell c1&quot;&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Moot Dinner&lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;懇親会&lt;/span&gt; :&lt;/th&gt;
+    &lt;td class=&quot;template-token cell c2 lastcol&quot; style=&quot;&quot;&gt;[[dinner_attend_3]] [[dinner_food_3]] [[dinner_drink_3]]&lt;/td&gt;
+&lt;/tr&gt;
+[[ENDIF]]
+[[IF name_surname_4_en NOT_EMPTY]]
+&lt;tr id=&quot;id_name_4&quot; class=&quot;institution_member name&quot;&gt;
+    &lt;th class=&quot;template-field cell c0&quot; style=&quot;&quot; rowspan=&quot;2&quot;&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Institution Member (4)&lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;団体会員（４）&lt;/span&gt; :&lt;/th&gt;
+    &lt;th class=&quot;template-token cell c1&quot;&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Name&lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;名前&lt;/span&gt; :&lt;/th&gt;
+    &lt;td class=&quot;template-token cell c2&quot; style=&quot;&quot;&gt;[[name_title_4]] [[name_title_other_4]] [[name_given_4_en]] [[name_surname_4_en]]&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr id=&quot;id_dinner_4&quot; class=&quot;institution_member dinner&quot;&gt;
+    &lt;th class=&quot;template-token cell c1&quot;&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Moot Dinner&lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;懇親会&lt;/span&gt; :&lt;/th&gt;
+    &lt;td class=&quot;template-token cell c2 lastcol&quot; style=&quot;&quot;&gt;[[dinner_attend_4]] [[dinner_food_4]] [[dinner_drink_4]]&lt;/td&gt;
+&lt;/tr&gt;
+[[ENDIF]]
+[[IF name_surname_5_en NOT_EMPTY]]
+&lt;tr id=&quot;id_name_5&quot; class=&quot;institution_member name&quot;&gt;
+    &lt;th class=&quot;template-field cell c0&quot; style=&quot;&quot; rowspan=&quot;2&quot;&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Institution Member (5)&lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;団体会員（５）&lt;/span&gt; :&lt;/th&gt;
+    &lt;th class=&quot;template-token cell c1&quot;&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Name&lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;名前&lt;/span&gt; :&lt;/th&gt;
+    &lt;td class=&quot;template-token cell c2&quot; style=&quot;&quot;&gt;[[name_title_5]] [[name_title_other_5]] [[name_given_5_en]] [[name_surname_5_en]]&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr id=&quot;id_dinner_5&quot; class=&quot;institution_member dinner&quot;&gt;
+    &lt;th class=&quot;template-token cell c1&quot;&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Moot Dinner&lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;懇親会&lt;/span&gt; :&lt;/th&gt;
+    &lt;td class=&quot;template-token cell c2 lastcol&quot; style=&quot;&quot;&gt;[[dinner_attend_5]] [[dinner_food_5]] [[dinner_drink_5]]&lt;/td&gt;
+&lt;/tr&gt;
+[[ENDIF]]
+[[IF name_surname_6_en NOT_EMPTY]]
+&lt;tr id=&quot;id_name_6&quot; class=&quot;institution_member name&quot;&gt;
+    &lt;th class=&quot;template-field cell c0&quot; style=&quot;&quot; rowspan=&quot;2&quot;&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Institution Member (6)&lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;団体会員（６）&lt;/span&gt; :&lt;/th&gt;
+    &lt;th class=&quot;template-token cell c1&quot;&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Name&lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;名前&lt;/span&gt; :&lt;/th&gt;
+    &lt;td class=&quot;template-token cell c2&quot; style=&quot;&quot;&gt;[[name_title_6]] [[name_title_other_6]] [[name_given_6_en]] [[name_surname_6_en]]&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr id=&quot;id_dinner_6&quot; class=&quot;institution_member dinner&quot;&gt;
+    &lt;th class=&quot;template-token cell c1&quot;&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Moot Dinner&lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;懇親会&lt;/span&gt; :&lt;/th&gt;
+    &lt;td class=&quot;template-token cell c2 lastcol&quot; style=&quot;&quot;&gt;[[dinner_attend_6]] [[dinner_food_6]] [[dinner_drink_6]]&lt;/td&gt;
+&lt;/tr&gt;
+[[ENDIF]]
+[[IF name_surname_7_en NOT_EMPTY]]
+&lt;tr id=&quot;id_name_7&quot; class=&quot;institution_member name&quot;&gt;
+    &lt;th class=&quot;template-field cell c0&quot; style=&quot;&quot; rowspan=&quot;2&quot;&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Institution Member (7)&lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;団体会員（７）&lt;/span&gt; :&lt;/th&gt;
+    &lt;th class=&quot;template-token cell c1&quot;&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Name&lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;名前&lt;/span&gt; :&lt;/th&gt;
+    &lt;td class=&quot;template-token cell c2&quot; style=&quot;&quot;&gt;[[name_title_7]] [[name_title_other_7]] [[name_given_7_en]] [[name_surname_7_en]]&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr id=&quot;id_dinner_7&quot; class=&quot;institution_member dinner&quot;&gt;
+    &lt;th class=&quot;template-token cell c1&quot;&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Moot Dinner&lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;懇親会&lt;/span&gt; :&lt;/th&gt;
+    &lt;td class=&quot;template-token cell c2 lastcol&quot; style=&quot;&quot;&gt;[[dinner_attend_7]] [[dinner_food_7]] [[dinner_drink_7]]&lt;/td&gt;
+&lt;/tr&gt;
+[[ENDIF]]</param1>
+<param2>1</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>registration_details</name>
+<description>参加登録情報 Registration details</description>
+<required>0</required>
+<param1>REGISTRATION DETAILS
+
+Name: [[IF name_title EMPTY]][[ELIF name_title START_WITH Mr]][[ELSE]][[name_title]][[ENDIF]]
+ [[name_given_en]] [[name_surname_en]] [[name_surname_ja]] [[name_given_ja]] 
+Affiliation: [[affiliation_en]] [[affiliation_ja]] [[affiliation_state]] [[affiliation_country]] 
+Email: [[email]] 
+
+Membership fees: [[membership_fees]] 
+Conference fees: [[conference_fees]] 
+Conference dinner: [[dinner_attend]] 
+ [[dinner_food]] 
+ [[dinner_drink]] 
+
+[[IF name_surname_2_en]] 
+CO-REGISTRANTS:
+
+(2) [[IF name_title_2 EMPTY]][[ELIF name_title_2 START_WITH Mr]][[ELSE]][[name_title_2]][[ENDIF]]
+ [[name_given_2_en]] [[name_surname_2_en]] [[affiliation_2_en]] 
+[[ENDIF]]
+[[IF name_surname_3_en]]
+(3) [[IF name_title_3 EMPTY]][[ELIF name_title_3 START_WITH Mr]][[ELSE]][[name_title_3]][[ENDIF]]
+ [[name_given_3_en]] [[name_surname_3_en]] [[affiliation_3_en]] 
+[[ENDIF]]
+[[IF name_surname_4_en]]
+(4) [[IF name_title_4 EMPTY]][[ELIF name_title_4 START_WITH Mr]][[ELSE]][[name_title_4]][[ENDIF]]
+ [[name_given_4_en]] [[name_surname_4_en]] [[affiliation_4_en]] 
+[[ENDIF]]
+[[IF name_surname_5_en]]
+(5) [[IF name_title_5 EMPTY]][[ELIF name_title_5 START_WITH Mr]][[ELSE]][[name_title_5]][[ENDIF]]
+ [[name_given_5_en]] [[name_surname_5_en]] [[affiliation_5_en]] 
+[[ENDIF]]
+
+Amount due: [[amount_due]] 
+[[IF payment_method]]
+Payment method: [[payment_method]] 
+[[ENDIF]]
+[[IF fees_receipt_name]]
+Receipt name (fees): [[fees_receipt_name]] 
+[[ENDIF]]
+[[IF dinner_receipt_name]]
+Receipt name (dinner): [[dinner_receipt_name]] 
+[[ENDIF]]
+[[IF comments_questions]]
+Comments or questions: [[comments_questions]] 
+[[ENDIF]]</param1>
+<param2>0</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>paid_details</name>
+<description>支払詳細 Paid details</description>
+<required>0</required>
+<param1>[[IF paid_amount]]
+&lt;tr id=&quot;id_paid&quot; class=&quot;paid&quot;&gt;
+    &lt;th class=&quot;template-field cell c0&quot; style=&quot;&quot;&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Date paid&lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;払済日付&lt;/span&gt; :&lt;/th&gt;
+    &lt;td class=&quot;template-token cell c1&quot; style=&quot;&quot; colspan=&quot;2&quot;&gt;[[paid_date]] ([[paid_amount]]) [[paid_method]] [[paid_notes]]&lt;/td&gt;
+&lt;/tr&gt;
+[[ENDIF]]</param1>
+<param2>1</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>badges</name>
+<description>名札 Badges</description>
+<required>0</required>
+<param1>[[IF print_badges]]
+&lt;table cellspacing=&quot;0&quot; cellpadding=&quot;0&quot; class=&quot;badges&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;
+    &lt;table border=&quot;0&quot; cellpadding=&quot;1&quot; cellspacing=&quot;0&quot; class=&quot;box_small&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;
+        &lt;table border=&quot;0&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; class=&quot;badge&quot;&gt;
+            &lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;conference_logo_small&quot; colspan=&quot;2&quot;&gt;&lt;img src=&quot;http://localhost/maj/pluginfile.php/5955/mod_data/intro/MAJ_2017_logo.green.260.jpg&quot;&gt;&lt;/td&gt;&lt;/tr&gt;
+            &lt;tr&gt;&lt;td class=&quot;badge_name&quot; colspan=&quot;2&quot;&gt;[[badge_name]]&lt;/td&gt;&lt;/tr&gt;
+            &lt;tr&gt;&lt;td class=&quot;affiliation&quot; colspan=&quot;2&quot;&gt;[[affiliation_en]]&lt;/td&gt;&lt;/tr&gt;
+            &lt;tr&gt;
+                &lt;td class=&quot;presenter&quot;&gt;[[badge_presenter]]&lt;/td&gt;
+                &lt;td class=&quot;number&quot;&gt;[[badge_number]]&lt;/td&gt;
+            &lt;/tr&gt;
+        &lt;/tbody&gt;&lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/td&gt;&lt;td&gt;
+    &lt;table border=&quot;0&quot; cellpadding=&quot;1&quot; cellspacing=&quot;0&quot; class=&quot;box_small&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;
+        &lt;table border=&quot;0&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; class=&quot;badge&quot;&gt;
+            &lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;conference_logo_small&quot; colspan=&quot;2&quot;&gt;&lt;img src=&quot;http://localhost/maj/pluginfile.php/5955/mod_data/intro/MAJ_2017_logo.green.260.jpg&quot;&gt;&lt;/td&gt;&lt;/tr&gt;
+            &lt;tr&gt;&lt;td class=&quot;badge_name&quot; colspan=&quot;2&quot;&gt;[[badge_name]]&lt;/td&gt;&lt;/tr&gt;
+            &lt;tr&gt;&lt;td class=&quot;affiliation&quot; colspan=&quot;2&quot;&gt;[[affiliation_en]]&lt;/td&gt;&lt;/tr&gt;
+            &lt;tr&gt;
+                &lt;td class=&quot;presenter&quot;&gt;[[badge_presenter]]&lt;/td&gt;
+                &lt;td class=&quot;number&quot;&gt;[[badge_number]]&lt;/td&gt;
+            &lt;/tr&gt;
+        &lt;/tbody&gt;&lt;/table&gt;
+    &lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+[[ENDIF]]</param1>
+<param2>1</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>badge_name</name>
+<description>名札名 Badge name</description>
+<required>0</required>
+<param1>[[IF name_title EMPTY]]
+[[ELIF name_title CONTAIN Mr]]
+[[ELIF name_title CONTAIN Ms]]
+[[ELIF name_title CONTAIN other]]
+    [[name_title_other]]
+[[ELSE]]
+    [[name_title]]
+[[ENDIF]]
+[[IF name_given_en NOT_EMPTY]]
+    [[name_given_en]]&lt;br /&gt;
+[[ENDIF]]
+[[IF name_surname_en NOT_EMPTY]]
+    [[name_surname_en]]
+[[ENDIF]]</param1>
+<param2>1</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>badge_presenter</name>
+<description>名札発表者 Badge presenter</description>
+<required>0</required>
+<param1>[[IF presenter NOT_EMPTY]][[presenter]][[ENDIF]]</param1>
+<param2>1</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>fee_receipt</name>
+<description>会費領収書 Fee receipt</description>
+<required>0</required>
+<param1>[[IF print_fee_receipt]]
+&lt;table border=&quot;0&quot; cellpadding=&quot;1&quot; cellspacing=&quot;0&quot; class=&quot;box_big&quot;&gt;&lt;tr&gt;&lt;td&gt;
+    &lt;table border=&quot;0&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; class=&quot;receipt&quot;&gt;
+        &lt;tr&gt;
+            &lt;td class=&quot;organization_logo&quot; colspan=&quot;3&quot;&gt;&lt;img src=&quot;http://localhost/maj/pluginfile.php/5200/mod_data/intro/organization.logo.jpg&quot; /&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td class=&quot;biggest&quot; height=&quot;120&quot; width=&quot;255&quot; rowspan=&quot;2&quot;&gt;[[fee_type_en]]&lt;/td&gt;
+            &lt;td class=&quot;big&quot; width=&quot;155&quot; rowspan=&quot;2&quot;&gt;[[fee_type_ja]]&lt;/td&gt;
+            &lt;td class=&quot;date&quot; width=&quot;130&quot;&gt;発行日付 Date&lt;br /&gt;[[paid_date]]&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td class=&quot;date&quot; width=&quot;130&quot;&gt;発行番号 No.&lt;br /&gt;[[fee_receipt_number]]&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;th height=&quot;40&quot; class=&quot;receipt_amount&quot;&gt;Amount 金額&lt;/th&gt;
+            &lt;td colspan=&quot;2&quot; height=&quot;40&quot; class=&quot;receipt_amount&quot;&gt;&lt;u&gt;[[fee_amount]]&lt;/u&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td colspan=&quot;3&quot; class=&quot;receipt_description&quot;&gt;
+                We gratefully acknowledge receiving the above amount&lt;br /&gt;
+                from &lt;b&gt;&lt;u&gt; [[fees_receipt_name]] &lt;/u&gt;&lt;/b&gt;&lt;br /&gt;
+                [[fee_description_en]]
+            &lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td colspan=&quot;3&quot; class=&quot;receipt_description&quot;&gt;
+                上記金額を&lt;b&gt;&lt;u&gt; [[fees_receipt_name]] &lt;/u&gt;&lt;/b&gt;様から&lt;br /&gt;
+                [[fee_description_ja]]として領収いたしました。
+            &lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td colspan=&quot;3&quot; class=&quot;footer&quot;&gt;&lt;img src=&quot;http://localhost/maj/pluginfile.php/5200/mod_data/intro/organization.seal.gif&quot; /&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+    &lt;/table&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+[[ENDIF]]</param1>
+<param2>1</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>fee_amount</name>
+<description>会費金額 Fee amount</description>
+<required>0</required>
+<param1>[[IF membership_fees CONTAINS &quot;Non-member&quot;]]
+    [[IF conference_fees CONTAINS &quot;Do NOT attend the Conference&quot;]]
+    [[ELIF conference_fees CONTAINS &quot;Non-member conference fee (&quot;]]
+        ¥10,000 yen
+    [[ELIF conference_fees CONTAINS &quot;Non-member conference fee: student (&quot;]]
+        ¥3,000 yen
+    [[ELIF conference_fees CONTAINS &quot;Non-member conference fee: concession (&quot;]]
+        ¥3,000 yen
+    [[ELIF conference_fees CONTAINS &quot;Non-member conference fee: school teacher (&quot;]]
+        ¥5,000 yen
+    [[ENDIF]]
+[[ELIF membership_fees CONTAINS &quot;Individual membership&quot;]]
+    ¥10,000 yen
+[[ELIF membership_fees CONTAINS &quot;MAJ Institution membership&quot;]]
+    ¥50,000 yen
+[[ELIF membership_fees CONTAINS &quot;MAJ Associate membership&quot;]]
+    ¥50,000 yen
+[[ENDIF]]</param1>
+<param2>1</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>fee_type_en</name>
+<description>会費分類 Fee type (en)</description>
+<required>0</required>
+<param1>[[IF membership_fees CONTAIN &quot;Non-member&quot;]]
+    Conference&lt;br /&gt;Fees Receipt
+[[ELSE]]
+    Membership&lt;br /&gt;Fees Receipt
+[[ENDIF]]</param1>
+<param2>1</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>fee_type_ja</name>
+<description>会費分類 Fee type (ja)</description>
+<required>0</required>
+<param1>[[IF membership_fees CONTAIN &quot;Non-member&quot;]]
+    大会参加費&lt;br /&gt;領収書
+[[ELSE]]
+    年会費&lt;br /&gt;領収書
+[[ENDIF]]</param1>
+<param2>1</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>fee_description_en</name>
+<description>会費詳細 Fee description (en)</description>
+<required>0</required>
+<param1>[[IF membership_fees CONTAINS &quot;Non-member&quot;]]
+                for attending [[conference_name_en]],&lt;br /&gt;
+                held [[conference_dates_en]], &lt;br /&gt;
+                at [[conference_venue_en]].
+[[ELSE]]
+                for annual membership of the Moodle Association of Japan
+[[ENDIF]]</param1>
+<param2>1</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>fee_description_ja</name>
+<description>会費詳細 Fee description (ja)</description>
+<required>0</required>
+<param1>[[IF membership_fees CONTAINS &quot;Non-member&quot;]]
+                [[conference_dates_ja]]に
+                [[conference_venue_ja]]で開催された&lt;br /&gt;
+                [[conference_name_ja]]大会の参加費
+[[ELSE]]
+                日本ムードル協会の年会費
+[[ENDIF]]</param1>
+<param2>1</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>dinner_receipt</name>
+<description>懇親会領収書 Dinner receipt</description>
+<required>0</required>
+<param1>[[IF print_dinner_receipt]]
+&lt;!-- dinner receipt --&gt;
+&lt;table border=&quot;0&quot; cellpadding=&quot;1&quot; cellspacing=&quot;0&quot; class=&quot;box_big&quot;&gt;&lt;tr&gt;&lt;td&gt;
+    &lt;table border=&quot;0&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; class=&quot;receipt&quot;&gt;
+        &lt;tr&gt;
+            &lt;td class=&quot;organization_logo&quot; colspan=&quot;3&quot;&gt;&lt;img src=&quot;http://localhost/maj/pluginfile.php/5200/mod_data/intro/organization.logo.jpg&quot; /&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td class=&quot;biggest&quot; height=&quot;120&quot; width=&quot;255&quot; rowspan=&quot;2&quot;&gt;Dinner Fee&lt;br /&gt;Receipt&lt;/td&gt;
+            &lt;td class=&quot;big&quot; width=&quot;155&quot; rowspan=&quot;2&quot;&gt;懇親会費&lt;br /&gt;領収書&lt;/td&gt;
+            &lt;td class=&quot;date&quot; width=&quot;130&quot;&gt;発行日付 Date&lt;br /&gt;[[paid_date]]&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td class=&quot;date&quot; width=&quot;130&quot;&gt;発行番号 No.&lt;br /&gt;[[dinner_receipt_number]]&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;th height=&quot;40&quot; class=&quot;receipt_amount&quot;&gt;Amount 金額&lt;/th&gt;
+            &lt;td colspan=&quot;2&quot; height=&quot;40&quot; class=&quot;receipt_amount&quot;&gt;&lt;u&gt;[[dinner_amount]]&lt;/u&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td colspan=&quot;3&quot; class=&quot;receipt_description&quot;&gt;
+                We gratefully acknowledge receiving the above amount&lt;br /&gt;
+                from &lt;b&gt;&lt;u&gt; [[dinner_receipt_name]] &lt;/u&gt;&lt;/b&gt;&lt;br /&gt;
+                for attending [[dinner_name_en]].
+            &lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td colspan=&quot;3&quot; class=&quot;receipt_description&quot;&gt;
+                上記金額&lt;b&gt;&lt;u&gt; [[dinner_receipt_name]] &lt;/u&gt;&lt;/b&gt;様から&lt;br /&gt;
+                [[dinner_name_ja]]費として領収いたしました。
+            &lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td colspan=&quot;3&quot; class=&quot;footer&quot;&gt;&lt;img src=&quot;http://localhost/maj/pluginfile.php/5200/mod_data/intro/organization.seal.gif&quot; /&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+    &lt;/table&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+[[ENDIF]]</param1>
+<param2>1</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>dinner_amount</name>
+<description>懇親会金額 Dinner amount</description>
+<required>0</required>
+<param1>[[IF dinner_attend NOT_CONTAIN &quot;Do NOT attend&quot;]]¥4,500 yen[[ENDIF]]</param1>
+<param2>1</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>ticket</name>
+<description>入場券 Ticket</description>
+<required>0</required>
+<param1>[[IF print_ticket]]
+&lt;div class=&quot;page_break&quot;&gt;
+    &lt;div class=&quot;dont_print_me&quot;&gt;
+    --------------------------
+    page break goes here when printing
+    --------------------------
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;table border=&quot;0&quot; cellpadding=&quot;1&quot; cellspacing=&quot;0&quot; class=&quot;box_big&quot;&gt;&lt;tr&gt;&lt;td&gt;
+    &lt;table border=&quot;0&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; class=&quot;dinner_ticket&quot;&gt;
+        &lt;tr&gt;
+            &lt;td class=&quot;conference_logo_small&quot; width=&quot;260&quot; rowspan=&quot;3&quot;&gt;&lt;img src=&quot;http://localhost/maj/pluginfile.php/5955/mod_data/intro/MAJ_2017_logo.green.260.jpg&quot; /&gt;&lt;/td&gt;
+            &lt;td class=&quot;small&quot; colspan=&quot;2&quot; width=&quot;282&quot;&gt;&lt;span class=&quot;big_j&quot;&gt;[[dinner_name_ja]]入場券&lt;/span&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td class=&quot;date&quot; width=&quot;140&quot;&gt;[[dinner_date_ja]]&lt;/td&gt;
+            &lt;td class=&quot;date&quot; width=&quot;140&quot; rowspan=&quot;2&quot;&gt;[[dinner_time]]&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td class=&quot;date&quot; width=&quot;140&quot;&gt;[[dinner_date_en]]&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td class=&quot;dinner_name&quot; width=&quot;544&quot; colspan=&quot;3&quot;&gt;[[dinner_name_en]]&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td class=&quot;venue&quot; width=&quot;544&quot; colspan=&quot;3&quot;&gt;[[dinner_venue]]&lt;br /&gt;&lt;span class=&quot;small_e&quot;&gt;[[dinner_times]]&lt;/span&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td class=&quot;big&quot; colspan=&quot;3&quot; style=&quot;position: relative;&quot;&gt;[[ticket_name]]&lt;div class=&quot;date&quot; style=&quot;position: absolute; width: 110px; text-align: right; padding-right: 6px; right: 0px; top: 16px;&quot;&gt;[[dinner_receipt_number]]&lt;/div&gt;
+            &lt;/td&gt;
+        &lt;/tr&gt;
+    &lt;/table&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+[[ENDIF]]</param1>
+<param2>0</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>ticket_name</name>
+<description>入場券名 Ticket name</description>
+<required>0</required>
+<param1>[[IF name_title EMPTY]]
+[[ELIF name_title CONTAIN Mr]]
+[[ELIF name_title CONTAIN Ms]]
+[[ELIF name_title CONTAIN other]]
+    [[name_title_other]]
+[[ELSE]]
+    [[name_title]]
+[[ENDIF]]
+[[IF name_given_en NOT_EMPTY]]
+    [[name_given_en]]
+[[ENDIF]]
+[[IF name_surname_en NOT_EMPTY]]
+    [[name_surname_en]]
+[[ENDIF]]</param1>
+<param2>0</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>certificate</name>
+<description>参加証明書 Certificate</description>
+<required>0</required>
+<param1>[[IF print_certificate]]
+
+&lt;div class=&quot;page_break&quot;&gt;
+    &lt;div class=&quot;dont_print_me&quot;&gt;
+    --------------------------
+    page break goes here when printing
+    --------------------------
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;table border=&quot;0&quot; cellpadding=&quot;1&quot; cellspacing=&quot;0&quot; class=&quot;box_big&quot;&gt;&lt;tr&gt;&lt;td&gt;
+    &lt;table border=&quot;0&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; class=&quot;participation_certificate&quot;&gt;
+        &lt;tr&gt;
+            &lt;td class=&quot;conference_logo_large&quot; colspan=&quot;3&quot;&gt;&lt;img src=&quot;http://localhost/maj/pluginfile.php/5955/mod_data/intro/MAJ_2017_logo.green.544.jpg&quot; /&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td class=&quot;biggest&quot; width=&quot;255&quot; rowspan=&quot;2&quot;&gt;Partipation&lt;br /&gt;Certificate&lt;/td&gt;
+            &lt;td class=&quot;big&quot; width=&quot;155&quot; rowspan=&quot;2&quot;&gt;学会参加&lt;br /&gt;証明書&lt;/td&gt;
+            &lt;td class=&quot;date&quot; width=&quot;130&quot;&gt;発行日付 Date&lt;br /&gt;[[certificate_date]]&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td class=&quot;date&quot; width=&quot;130&quot;&gt;発行番号 No.&lt;br /&gt;[[certificate_number]]&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td colspan=&quot;3&quot; style=&quot;padding:10px 20px; text-align:left; white-space:normal;&quot;&gt;
+                We hereby confirm that &lt;b&gt;&lt;u&gt; [[ticket_name]] &lt;/u&gt;&lt;/b&gt;&lt;br /&gt;
+                attended [[conference_name_en]],&lt;br /&gt;
+                held [[conference_dates_en]], &lt;br /&gt;
+                at [[conference_venue_en]].
+            &lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td colspan=&quot;3&quot; style=&quot;padding:10px 20px; text-align:left; white-space:normal;&quot;&gt;
+                [[conference_dates_ja]]に&lt;br /&gt;
+                [[conference_venue_ja]]で開催された&lt;br /&gt;
+                [[conference_name_ja]]大会に&lt;br /&gt;
+                &lt;b&gt;&lt;u&gt; [[ticket_name]] &lt;/u&gt;&lt;/b&gt;様が参加されたことを証明いたします。
+            &lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td colspan=&quot;3&quot; class=&quot;footer&quot;&gt;&lt;img src=&quot;http://localhost/maj/pluginfile.php/5200/mod_data/intro/organization.seal.gif&quot; /&gt;&lt;/td&gt;
+        &lt;/tr&gt;
+    &lt;/table&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+[[ENDIF]]</param1>
+<param2>1</param2>
+</field>
+
+</preset>

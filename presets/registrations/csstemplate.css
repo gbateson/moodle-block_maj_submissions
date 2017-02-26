@@ -1,0 +1,305 @@
+/**********************************
+CSS for the ALL pages
+**********************************/
+
+.path-mod-data div#intro span.hide { display: inline; }
+.path-mod-data div.defaulttemplate { text-align: left; }
+.path-mod-data td p { margin: 0px; }
+
+.path-mod-data legend { margin: 0px; border: 0px; }
+.path-mod-data th { vertical-align: top; }
+.path-mod-data th.c0 { width: 184px; }
+.path-mod-data th.c1 { padding-left: 6px; text-align: right; width: 96px; }
+.path-mod-data td.c1 { padding-left: 6px; text-align: left; }
+.path-mod-data tr.name td div,
+.path-mod-data tr.affiliation td div { display: inline-block; }
+.path-mod-data tr td div.alert { display: block; padding: 4px 8px; margin: 4px 8px;}
+.path-mod-data tr td div label { display: initial; }
+
+.path-mod-data tr#id_amount_due td span.amount_display {
+    color: red;
+    display: block;
+    font-size: large;
+    font-weight: bold;
+    margin: 6px 12px;
+}
+
+/**********************************
+CSS for the Add/Edit pages
+**********************************/
+
+#page-mod-data-edit tr.subheading th {
+    color: #6666CC;
+    font-size: 24px;
+    padding: 12px 6px;
+    text-align: left;
+}
+
+#page-mod-data-edit tr.subheading th span.hide_institution_members,
+#page-mod-data-edit tr.subheading th span.show_institution_members {
+    color: #CC6666;
+    display: inline-block;
+    font-decoration: underline;
+    font-size: 12px;
+    padding-left: 12px;
+}
+
+#page-mod-data-edit tr.name_title td div input.basefieldinput { width: 52px; }
+
+#page-mod-data-edit tr#id_name_given_en td div input.basefieldinput,
+#page-mod-data-edit tr#id_name_surname_en td div input.basefieldinput,
+#page-mod-data-edit tr#id_name_given_ja td div input.basefieldinput,
+#page-mod-data-edit tr#id_name_surname_ja td div input.basefieldinput { width: 102px; }
+
+#page-mod-data-edit tr#id_affiliation_en td div input.basefieldinput,
+#page-mod-data-edit tr#id_affiliation_ja td div input.basefieldinput { width: 232px; }
+
+#page-mod-data-edit tr#id_affiliation_state td div input.basefieldinput,
+#page-mod-data-edit tr#id_affiliation_country td div input.basefieldinput { width: 102px; }
+
+#page-mod-data-edit tr#id_membership_fees th,
+#page-mod-data-edit tr#id_membership_fees td,
+#page-mod-data-edit tr#id_participation th,
+#page-mod-data-edit tr#id_participation td { padding-top: 6px; padding-bottom: 12px; }
+
+#page-mod-data-edit tr.institution_member.name td div input.basefieldinput { width: 144px; }
+
+#page-mod-data-edit tr.name_title td.lastcol div,
+#page-mod-data-edit tr.dinner_food_drink td div { display: inline-block; }
+
+/**********************************
+CSS for the View All/Single/Search pages
+**********************************/
+
+#page-mod-data-view .datapreferences #options {
+    display: none;
+}
+
+#page-mod-data-view .badges {
+    margin-top: 15px;
+}
+#page-mod-data-view .badge,
+#page-mod-data-view .receipt,
+#page-mod-data-view .dinner_ticket,
+#page-mod-data-view .participation_certificate {
+    background-color    : #FFFFFF; /* white */
+    background-position : 0px 0px;
+    background-repeat   : no-repeat;
+    color               : #000000; /* black */
+    display             : table;
+    font-weight         : normal;
+    line-height         : normal;
+    padding             : 0px;
+    text-align          : center;
+    -webkit-border-radius: 0px;
+    -moz-border-radius: 0px;
+    border-radius: 0px;
+}
+#page-mod-data-view .badge {
+    background-image: url("http://localhost/maj/pluginfile.php/5955/mod_data/intro/background-badge.jpg") !important;
+}
+#page-mod-data-view .receipt {
+    background-image: url("http://localhost/maj/pluginfile.php/5955/mod_data/intro/background-receipt.jpg") !important;
+}
+#page-mod-data-view .dinner_ticket {
+    background-image: url("http://localhost/maj/pluginfile.php/5955/mod_data/intro/background-ticket.jpg") !important;
+}
+#page-mod-data-view .participation_certificate {
+    background-image: url("http://localhost/maj/pluginfile.php/5955/mod_data/intro/background-certificate.jpg") !important;
+}
+
+#page-mod-data-view .badge TD,
+#page-mod-data-view .receipt TD,
+#page-mod-data-view .dinner_ticket TD,
+#page-mod-data-view .participation_certificate TD {
+    text-align: center;
+}
+#page-mod-data-view .registration_summary TD,
+#page-mod-data-view .badge TD,
+#page-mod-data-view .dinner_ticket TD {
+    font-family  : Arial, Verdana, Trebuchet, Serif;
+}
+#page-mod-data-view .receipt TD,
+#page-mod-data-view .participation_certificate TD {
+    font-family  : Georgia, "Times New Roman", Sans-serif;
+    text-align   : center;
+}
+#page-mod-data-view .receipt TH.receipt_amount {
+    font-size    : 24px;
+    text-align   : center;
+}
+#page-mod-data-view .receipt TD.receipt_amount {
+    font-size    : 24px;
+    text-align   : left;
+}
+#page-mod-data-view .receipt TD.receipt_description {
+    padding      : 6px 20px;
+    text-align   : left;
+    white-space  : normal;
+    width        : 435px;
+}
+#page-mod-data-view .receipt TD.footer,
+#page-mod-data-view .participation_certificate TD.footer {
+    padding      : 6px 20px;
+    text-align   : center;
+    width        : 435px;
+}
+
+#page-mod-data-view .box_big {
+    background-color : #000000;
+    margin-top   : 15px;
+}
+#page-mod-data-view .box_small {
+    background-color : #000000;
+    margin-right : 15px;
+}
+#page-mod-data-view .big {
+    font-size    : 28px;
+    padding      : 2px;
+}
+#page-mod-data-view .biggest {
+    font-size    : 32px;
+}
+#page-mod-data-view .big_j {
+    color        : #990099;
+    font-family  : "ヒラギノ角ゴ Pro W3",
+                   "Hiragino Kaku Gothic Pro",
+                   Osaka, /* Mac OSX */
+                   "メイリオ",
+                   Meiryo,
+                   "ＭＳ Ｐゴシック",
+                   "MS PGothic",
+                   sans-serif;
+    font-size    : 28px;
+}
+#page-mod-data-view .date {
+    color        : #336699;
+    font-size    : 12px;
+    letter-spacing : 2px;
+}
+#page-mod-data-view .organization_logo,
+#page-mod-data-view .conference_logo_small,
+#page-mod-data-view .conference_logo_large,
+#page-mod-data-view .badge_name,
+#page-mod-data-view .affiliation {
+    color        : #000000;
+}
+#page-mod-data-view .organization_logo,
+#page-mod-data-view .conference_logo_large {
+    width        : 544px;
+}
+#page-mod-data-view .conference_logo_small,
+#page-mod-data-view .badge_name,
+#page-mod-data-view .affiliation {
+    width        : 260px;
+}
+#page-mod-data-view .organization_logo {
+    height       : 115px;
+}
+#page-mod-data-view .conference_logo_large {
+    height       : 186px;
+}
+#page-mod-data-view .conference_logo_small {
+    height       : 89px;
+}
+#page-mod-data-view .badge TD.badge_name {
+    font-size    : 28px;
+    height       : 70px;
+    padding      : 2px;
+}
+#page-mod-data-view .badge TD.affiliation {
+    font-size    : 18px;
+    height       : 40px;
+    padding      : 2px;
+}
+#page-mod-data-view .badge TD.presenter {
+    color        : #990066;
+    font-size    : 14px;
+    font-weight  : bold;
+    height       : 20px;
+    padding-right: 4px;
+    text-align   : right;
+}
+#page-mod-data-view .badge TD.number,
+#page-mod-data-view .dinner_ticket TD.number {
+    font-size    : 12px;
+    height       : 20px;
+    padding-right: 4px;
+    text-align   : right;
+}
+#page-mod-data-view .dont_print_me {
+    text-align   : center;
+}
+#page-mod-data-view .medium {
+    font-size    : 20px;
+}
+#page-mod-data-view .page_break {
+    font-size    : 12px;
+    margin       : 30px 0px;
+    page-break-after: always;
+    white-space  : nowrap;
+    width        : 536px;
+}
+#page-mod-data-view .dinner_name {
+    color        : #000000;
+    font-size    : 32px;
+}
+#page-mod-data-view .registration_summary {
+    margin       : 15px 0px;
+}
+#page-mod-data-view .registration_summary TD {
+    font-size: 12px;
+}
+#page-mod-data-view .small_e {
+    color        : #336699;
+    font-size    : 14px;
+    position     : relative;
+    /* top: -5px; */
+}
+#page-mod-data-view .small_j {
+    color: #336699;
+    font-family  : "ヒラギノ角ゴ Pro W3",
+                   "Hiragino Kaku Gothic Pro",
+                   Osaka, /* Mac OSX */
+                   "メイリオ",
+                   Meiryo,
+                   "ＭＳ Ｐゴシック",
+                   "MS PGothic",
+                   sans-serif;
+    font-size    : 12px;
+}
+#page-mod-data-view .venue {
+    color        : #990066;
+    font-size    : 24px;
+    font-weight  : bold;
+    position     : relative;
+    top          : -8px;
+}
+
+@media print {
+
+    /** hide headers and footers **/
+    header.navbar, header#page-header,
+    h2, div#intro, ul.nav, div.paging,
+    footer, body.has_dock div#dock,
+    aside#block-region-side-pre,
+    aside#block-region-side-post,
+    table.mod-data-default-template,
+    .dont_print_me {
+        display:none;
+    }
+
+    body {
+        /** remove the top padding ***
+        *** usually used by header ***/
+        padding-top: 0px;
+
+        /** this may help Safari to ***
+        *** recognise page breaks ****/
+        overflow: visible;
+
+        /** this may help Chrome to ***
+        *** print background images **/
+        -webkit-print-color-adjust: exact;
+    }
+}
