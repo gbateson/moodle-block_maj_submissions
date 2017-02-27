@@ -40,14 +40,28 @@ require_once($CFG->dirroot.'/lib/formslib.php');
 class block_maj_submissions_tool extends moodleform {
 
     const CREATE_NEW = -1;
+    const TEXT_FIELD_SIZE = 20;
 
     protected $type = '';
-
+    protected $modulename = 'data';
 
     /**
      * constructor
      */
     public function __construct($action=null, $customdata=null, $method='post', $target='', $attributes=null, $editable=true) {
+
+        // extract the custom data passed from the main script
+        $this->course  = $customdata['course'];
+        $this->plugin  = $customdata['plugin'];
+        $this->instance = $customdata['instance'];
+
+        // convert block instance to "block_maj_submissions" object
+        $this->instance = block_instance($this->instance->blockname, $this->instance);
+
+        // set the "course_module" id, if supplied
+        $this->cmid = $this->instance->config->{$this->type.'cmid'};
+
+        // call parent constructor, as normal
         if (method_exists('moodleform', '__construct')) {
             parent::__construct($action, $customdata, $method, $target, $attributes, $editable);
         } else {
@@ -60,45 +74,24 @@ class block_maj_submissions_tool extends moodleform {
      */
     public function definition() {
         $mform = $this->_form;
-        $type  = $this->type;
-
-        // extract the custom data passed from the main script
-        $context = $this->_customdata['context'];
-        $course  = $this->_customdata['course']; // course context
-        $plugin  = $this->_customdata['plugin'];
-        $instance = $this->_customdata['instance'];
 
         // extract the module context and course section, if possible
-        $instance = block_instance($instance->blockname, $instance);
-        $cmid = $type.'cmid';
-        if ($cmid = $instance->config->$cmid) {
-            $context = block_maj_submissions::context(CONTEXT_MODULE, $cmid);
-            $sectionnum = get_fast_modinfo($course)->get_cm($cmid)->sectionnum;
+        if ($this->cmid) {
+            $context = block_maj_submissions::context(CONTEXT_MODULE, $this->cmid);
+            $sectionnum = get_fast_modinfo($this->course)->get_cm($this->cmid)->sectionnum;
         } else {
+            $context = $this->course->context;
             $sectionnum = 0;
         }
 
         // --------------------------------------------------------
         $name = 'databaseactivity';
-        $mform->addElement('header', $name, get_string($name, $plugin));
-        $mform->addHelpButton($name, $name, $plugin);
+        $label = get_string($name, $this->plugin);
+        $mform->addElement('header', $name, $label);
         // --------------------------------------------------------
 
-        $name = $type.'cmid';
-        $label = get_string($name, $plugin);
-        $options = self::get_cmids($mform, $course, $plugin, 'data');
-        $mform->addElement('selectgroups', $name, $label, $options);
-        $mform->setType($name, PARAM_INT);
-        $mform->setDefault($name, $cmid);
-
-        $name = $type.'sectionnum';
-        $label = get_string($name, $plugin);
-        $options = self::get_sectionnums($mform, $course, $plugin);
-        $mform->addElement('select', $name, $label, $options);
-        $mform->setType($name, PARAM_INT);
-        $mform->setDefault($name, $sectionnum);
-
-        // select section AND new database name
+        $this->add_field_cm($mform, $this->course, $this->plugin, 'databaseactivity', $this->cmid);
+        $this->add_field_section($mform, $this->course, $this->plugin, 'coursesection', $sectionnum);
 
         // --------------------------------------------------------
         $label = get_string('fromfile', 'data');
@@ -108,7 +101,7 @@ class block_maj_submissions_tool extends moodleform {
         $label = get_string('chooseorupload', 'data');
         $mform->addElement('filepicker', 'uploadfile', $label);
 
-        $presets = self::get_available_presets($context, $cmid);
+        $presets = self::get_available_presets($context, $this->plugin, $this->cmid);
         if (count($presets)) {
 
             // --------------------------------------------------------
@@ -123,6 +116,121 @@ class block_maj_submissions_tool extends moodleform {
         }
 
         $this->add_action_buttons();
+    }
+
+    /**
+     * add_field_cm
+     *
+     * @param object  $mform
+     * @param object  $course
+     * @param string  $plugin
+     * @param string  $name
+     * @param integer $numdefault (optional, default=0)
+     * @param string  $namedefault (optional, default="")
+     * @param string  $label (optional, default="")
+     * @return void, but will update $mform
+     * @todo Finish documenting this function
+     */
+    protected function add_field_cm($mform, $course, $plugin, $name, $numdefault=0, $namedefault='') {
+        $label = get_string($this->type.'cmid', $this->plugin);
+        $numoptions = self::get_cmids($mform, $course, $plugin, $this->modulename);
+        $disabledif = array($name.'name' => $name.'num');
+        $this->add_field_numname($mform, $plugin, $name, $numoptions, array(), $numdefault, $namedefault, $label, $disabledif);
+    }
+
+    /**
+     * add_field_section
+     *
+     * @param object  $mform
+     * @param object  $course
+     * @param string  $plugin
+     * @param string  $name
+     * @param integer $numdefault (optional, default=0)
+     * @param string  $namedefault (optional, default="")
+     * @return void, but will update $mform
+     * @todo Finish documenting this function
+     */
+    protected function add_field_section($mform, $course, $plugin, $name, $numdefault=0, $namedefault='', $label='') {
+        $numoptions = self::get_sectionnums($mform, $course, $plugin);
+        $disabledif = array($name.'name' => $name.'num', $name.'num' => 'databaseactivitynum');
+        $this->add_field_numname($mform, $plugin, $name, $numoptions, array(), $numdefault, $namedefault, $label, $disabledif);
+    }
+
+    /**
+     * add_field_section
+     *
+     * @param object  $mform
+     * @param string  $plugin
+     * @param string  $name
+     * @param array   $numoptions
+     * @param array   $nameoptions
+     * @param integer $numdefault
+     * @param string  $namedefault
+     * @param string  $label
+     * @param array   $disabledif
+     * @return void, but will update $mform
+     * @todo Finish documenting this function
+     */
+    protected function add_field_numname($mform, $plugin, $name, $numoptions, $nameoptions=array(), $numdefault=0, $namedefault='', $label='', $disabledif=array()) {
+        $group_name = 'group_'.$name;
+        if ($label=='') {
+            $label = get_string($name, $plugin);
+        }
+        if (is_array(current($numoptions))) {
+            $select = 'selectgroups';
+        } else {
+            $select = 'select';
+        }
+        if (empty($nameoptions)) {
+            $nameoptions = array('size' => self::TEXT_FIELD_SIZE);
+        }
+        $elements = array(
+            $mform->createElement($select, $name.'num', '', $numoptions),
+            $mform->createElement('text', $name.'name', '', $nameoptions)
+        );
+        $mform->addGroup($elements, $group_name, $label, ' ', false);
+        $mform->addHelpButton($group_name, $name, $plugin);
+        $mform->setType($name.'num', PARAM_INT);
+        $mform->setType($name.'name', PARAM_TEXT);
+        $mform->setDefault($name.'num', $numdefault);
+        $mform->setDefault($name.'name', $namedefault);
+        foreach ($disabledif as $element1 => $element2) {
+                $mform->disabledIf($element1, $element2, 'neq', self::CREATE_NEW);
+        }
+    }
+
+
+    /**
+     * data_postprocessing
+     *
+     * @uses $DB
+     * @param object $data
+     * @return not sure ...
+     * @todo Finish documenting this function
+     */
+    public function data_postprocessing(&$data) {
+        global $DB;
+
+        $databasenum = $data->databaseactivitynum;
+        $databasename = $data->databaseactivityname;
+        $sectionnum = $data->coursesectionnum;
+        $sectionname = $data->coursesectionname;
+
+        if (empty($databasenum)) {
+            $cm = null;
+            $section = null;
+        } else if ($databasenum==self::CREATE_NEW) {
+            if ($sectionnum==self::CREATE_NEW) {
+                $section = self::get_section($this->course, $sectionname);
+            }
+            $cm = self::get_coursemodule($this->course, $section, 'data', $databasename);
+        } else {
+            $cm = get_fast_modinfo($this->course)->get_cm($databasenum);
+            $section = $DB->get_record('course_sections', array('course' => $course->id, 'section' => $sectionnum));
+        }
+        //print_object($cm);
+        //print_object($section);
+        //print_object($data);
     }
 
     /**
@@ -242,7 +350,7 @@ class block_maj_submissions_tool extends moodleform {
 
         // add default values
         $columns = $DB->get_columns($modulename);
-        foreach ($columns[$table] as $column) {
+        foreach ($columns as $column) {
             if ($column->not_null) {
                 $name = $column->name;
                 if ($name=='id') {
@@ -328,11 +436,10 @@ class block_maj_submissions_tool extends moodleform {
      * @param object $context
      * @return integer $cmid
      */
-    static public function get_available_presets($context, $cmid) {
+    static public function get_available_presets($context, $plugin, $cmid) {
         global $CFG, $DB, $OUTPUT;
 
         $strman = get_string_manager();
-        $plugin = 'block_maj_submissions';
         $strdelete = get_string('deleted', 'data');
 
         require_once($CFG->dirroot.'/mod/data/lib.php');

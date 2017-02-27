@@ -91,35 +91,19 @@ echo $OUTPUT->box_start('generalbox');
 echo html_writer::tag('p', get_string('toolsetupregistrations_desc', $plugin).
                            $OUTPUT->help_icon('toolsetup', $plugin));
 
-// get incoming data, if any
-if ($cancel = optional_param('cancel', '', PARAM_ALPHA)) {
-    $data = null;
-    $action = '';
-} else {
-    $data = data_submitted();
-    $action = optional_param('action', '', PARAM_ALPHA);
-}
-
-// process incoming data, if required
-if ($data) {
-    if (function_exists('require_sesskey')) {
-        require_sesskey();
-    } else if (function_exists('confirm_sesskey')) {
-        confirm_sesskey();
-    }
-    // process incoming data (before creating the form)
-}
-
 // initialize the form
-$customdata = array('context'  => $context,
-                    'course'   => $course,
+$customdata = array('course'   => $course,
                     'plugin'   => $plugin,
                     'instance' => $block_instance);
 $mform = new block_maj_submissions_tool_setupregistrations($url->out(false), $customdata);
 
+if ($mform->is_cancelled()) {
+    redirect(new moodle_url('/course/view.php', array('id' => $course->id)));
+} else if ($data = $mform->get_data()) {
+    $mform->data_postprocessing($data);
+}
+
 // display form
-$defaults = array();
-$mform->set_data($defaults);
 $mform->display();
 
 echo $OUTPUT->box_end();

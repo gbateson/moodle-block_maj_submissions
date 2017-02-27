@@ -83,7 +83,7 @@ $string['currentstate_help'] = 'The current state of the submission process.';
 $string['currentstate'] = 'Current state';
 $string['customdatefmt_help'] = 'If you specify a date format here, it will be used in preference to any of the standard Moodle date formats.';
 $string['customdatefmt'] = 'Custom date format string';
-$string['databaseactivity_help'] = 'Either a specific database activity that you wish to setup, or specify a course section in which you wish to create a new database activity.';
+$string['databaseactivity_help'] = 'Either choose a specific database activity that you wish to setup, or choose "Create new activity", and specify the course section in which the new database should be created.';
 $string['databaseactivity'] = 'Database activity';
 $string['dateclosedon'] = 'closed on {$a}';
 $string['datecloseson'] = 'closes on {$a}';
@@ -154,12 +154,12 @@ $string['receptioncmid_help'] = 'The page resource that displays information abo
 $string['receptioncmid'] = 'Reception information';
 $string['receptiontime_help'] = 'The start and finish times of the conference reception.';
 $string['receptiontime'] = 'Conference reception';
-
 $string['registerdelegatescmid_help'] = 'The database activity where delegates register their intention to attend and participate in the conference.';
 $string['registerdelegatescmid'] = 'Registration database';
-$string['registerdelegatessectionnum_help'] = 'The course section in which to create the new registration database.';
-$string['registerdelegatessectionnum'] = 'Registration section';
+$string['coursesection_help'] = 'The course section in which to create a new activity or activities.
 
+If you select "Create new section" here, you can optionally specify a name for the new section in the text box. If you do not specify a name for a new section, then the default name will be used.';
+$string['coursesection'] = 'Course section';
 $string['registerpresenterscmid_help'] = 'The database activity where presenters register their intention to attend and participate in the conference.';
 $string['registerpresenterscmid'] = 'Registration database';
 $string['registerpresenterssectionnum_help'] = 'The course section in which to create the new registration database.';
@@ -193,13 +193,11 @@ $string['title_help'] = 'This is the string that will be displayed as the title 
 $string['title'] = 'Title';
 $string['tooldata2workshop_desc'] = 'Convert Database -> Workshops';
 $string['tooldata2workshop'] = 'Allocate presentations for review';
-$string['toolsetup_help'] = 'On this page you can set up a database for a conference.
+$string['toolsetup_help'] = 'On this page you can set up a database for a conference. You can overwrite a currently existing database or create a new one.
 
-You can overwrite a currently existing database or create a new one.
+**To use an existing database** in this course, select it from the drop down menu below.
 
-To use an existing database in this course, select it from the drop down menu below.
-
-To create a new database, give a name for the new database and specify the section in which it should be created. This can be an existing section, or a new section. If you specify a new section you will need to give a name for the new section.';
+**To create a new database**, give a name for the new database and specify the section in which it should be created. This can be an existing section, or a new section. If you specify a new section you will need to give a name for the new section.';
 $string['toolsetup'] = 'Setup a database for a conference.';
 $string['toolsetuppresentations_desc'] = 'Setup a database for presentations';
 $string['toolsetuppresentations'] = 'Collect presentation proposals';
