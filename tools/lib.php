@@ -46,6 +46,25 @@ class block_maj_submissions_tool extends moodleform {
     protected $defaultpreset = '';
     protected $modulename = 'data';
 
+    protected $newdatavalues = array(
+        'approval'        => 1,
+        'manageapproved'  => 0,
+        'comments'        => 0,
+        'requiredentries' => 10,
+        'requiredentriestoview' => 10,
+        'maxentries'      => 1,
+        'timeavailablefrom' => 0,
+        'timeavailableto' => 0,
+        'assessed'        => 0
+    );
+
+    protected $newworkshopvalues = array(
+        'submissionstart' => 0,
+        'submissionend'   => 0,
+        'assessmentstart' => 0,
+        'assessmentend'   => 0
+    );
+
     /**
      * constructor
      */
@@ -61,6 +80,20 @@ class block_maj_submissions_tool extends moodleform {
 
         // set the "course_module" id, if supplied
         $this->cmid = $this->instance->config->{$this->type.'cmid'};
+
+        // set start time, if any, in $newdatarecord
+        $time = $this->type.'timestart';
+        $time = $this->instance->config->$time;
+        $this->newdatavalues['timeavailablefrom'] = $time;
+        $this->newworkshopvalues['submissionstart'] = $time;
+        $this->newworkshopvalues['assessmentstart'] = $time;
+
+        // set finish time, if any, in $newdatarecord
+        $time = $this->type.'timefinish';
+        $time = $this->instance->config->$time;
+        $this->newdatavalues['timeavailableto'] = $time;
+        $this->newworkshopvalues['submissionend'] = $time;
+        $this->newworkshopvalues['assessmentend'] = $time;
 
         // call parent constructor, as normal
         if (method_exists('moodleform', '__construct')) {
@@ -290,7 +323,7 @@ class block_maj_submissions_tool extends moodleform {
      * @todo Finish documenting this function
      */
     public function data_postprocessing() {
-        global $DB;
+        global $DB, $OUTPUT, $PAGE;
 
         $cm = false;
         if ($data = $this->get_data()) {
@@ -300,9 +333,6 @@ class block_maj_submissions_tool extends moodleform {
             $sectionnum   = $data->coursesectionnum;
             $sectionname  = $data->coursesectionname;
 
-            $presetfile   = $this->get_new_filename('presetfile');
-            $presetfolder = (empty($data->presetfolder) ? '' : $data->presetfolder);
-
             if ($databasenum) {
                 if ($databasenum==self::CREATE_NEW) {
                     if ($sectionnum==self::CREATE_NEW) {
@@ -311,7 +341,7 @@ class block_maj_submissions_tool extends moodleform {
                         $modinfo = get_fast_modinfo($this->course);
                         $section = $modinfo->get_section_info($sectionnum);
                     }
-                    $cm = self::get_coursemodule($this->course, $section, 'data', $databasename);
+                    $cm = self::get_coursemodule($this->course, $section, 'data', $databasename, $this->newdatavalues);
                 } else {
                     $modinfo = get_fast_modinfo($this->course);
                     $cm = $modinfo->get_cm($databasenum);
@@ -320,6 +350,38 @@ class block_maj_submissions_tool extends moodleform {
         }
 
         if ($cm) {
+
+            $renderer = $PAGE->get_renderer('mod_data');
+
+            if (empty($data->presetfile)) {
+                $presetfile = '';
+            } else {
+                $presetfile = $this->get_new_filename('presetfile');
+            }
+
+            if (empty($data->presetfolder)) {
+                $presetfolder = '';
+            } else {
+                $presetfolder = $data->presetfolder;
+            }
+
+            if ($presetfolder) {
+            //    $importer = new data_preset_existing_importer($course, $cm, $data, $formdata->fullname);
+            //    echo $renderer->import_setting_mappings($data, $importer);
+            //    echo $OUTPUT->footer();
+            //    exit(0);
+            } else if ($presetfile) {
+            //    $file = (object)array(
+            //        // see mod/data/lib.php (form_importzip)
+            //        'name' => $this->get_new_filename('importfile'),
+            //        'path' => $this->save_temp_file('importfile')
+            //    );
+            //    $importer = new data_preset_upload_importer($course, $cm, $data, $file->path);
+            //    echo $renderer->import_setting_mappings($data, $importer);
+            //    echo $OUTPUT->footer();
+            //    exit(0);
+            }
+
             $url = new moodle_url('/mod/data/preset.php', array('id' => $cm->id));
             redirect($url);
         }
@@ -403,7 +465,7 @@ class block_maj_submissions_tool extends moodleform {
      * @return object
      * @todo Finish documenting this function
      */
-    public function get_coursemodule($course, $section, $modulename, $instancename) {
+    public function get_coursemodule($course, $section, $modulename, $instancename, $newrecordvalues) {
         global $CFG, $DB, $USER;
 
         // cache the module id
@@ -437,9 +499,13 @@ class block_maj_submissions_tool extends moodleform {
             'update'        => 0,
             'return'        => 0,
             'cmidnumber'    => '',
-            'groupmode'     => 0,
+            'groupmode'     => 0, // no groups
             'MAX_FILE_SIZE' => 10485760, // 10 GB
         );
+
+        foreach ($newrecordvalues as $column => $value) {
+            $newrecord->$column = $value;
+        }
 
         // add default values
         $columns = $DB->get_columns($modulename);
