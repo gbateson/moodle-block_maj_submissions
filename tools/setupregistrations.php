@@ -55,25 +55,12 @@ $course->context = $context;
 require_login($course->id);
 require_capability('moodle/course:manageactivities', $context);
 
-switch (true) {
-    case optional_param('apply',  '', PARAM_ALPHA): $action = 'apply';  break;
-    case optional_param('cancel', '', PARAM_ALPHA): $action = 'cancel'; break;
-    case optional_param('delete', '', PARAM_ALPHA): $action = 'delete'; break;
-    default: $action = '';
-}
-
-if ($action=='cancel') {
-    // return to course page
-    $params = array('id' => $course->id, 'sesskey' => sesskey());
-    redirect(new moodle_url('/course/view.php', $params));
-}
-
-$strblockname = get_string('blockname', $plugin);
-$strpagetitle = get_string('toolsetupregistrations', $plugin);
-
 // $SCRIPT is set by initialise_fullme() in 'lib/setuplib.php'
 // It is the path below $CFG->wwwroot of this script
 $url = new moodle_url($SCRIPT, array('id' => $id));
+
+$strblockname = get_string('blockname', $plugin);
+$strpagetitle = get_string('toolsetupregistrations', $plugin);
 
 $PAGE->set_url($url);
 $PAGE->set_title($strpagetitle);
@@ -81,6 +68,20 @@ $PAGE->set_heading($course->fullname);
 $PAGE->set_pagelayout('incourse');
 $PAGE->navbar->add($strblockname);
 $PAGE->navbar->add($strpagetitle, $url);
+
+// initialize the form
+$customdata = array('course'   => $course,
+                    'plugin'   => $plugin,
+                    'instance' => $block_instance);
+$mform = new block_maj_submissions_tool_setupregistrations($url->out(false), $customdata);
+
+if ($mform->is_cancelled()) {
+    $url = new moodle_url('/course/view.php', array('id' => $course->id));
+    redirect($url);
+}
+if ($mform->is_submitted()) {
+    $mform->data_postprocessing();
+}
 
 // require_head_js($plugin);
 
@@ -90,18 +91,6 @@ echo $OUTPUT->box_start('generalbox');
 
 echo html_writer::tag('p', get_string('toolsetupregistrations_desc', $plugin).
                            $OUTPUT->help_icon('toolsetup', $plugin));
-
-// initialize the form
-$customdata = array('course'   => $course,
-                    'plugin'   => $plugin,
-                    'instance' => $block_instance);
-$mform = new block_maj_submissions_tool_setupregistrations($url->out(false), $customdata);
-
-if ($mform->is_cancelled()) {
-    redirect(new moodle_url('/course/view.php', array('id' => $course->id)));
-} else if ($data = $mform->get_data()) {
-    $mform->data_postprocessing($data);
-}
 
 // display form
 $mform->display();

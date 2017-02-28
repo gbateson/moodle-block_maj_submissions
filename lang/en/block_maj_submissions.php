@@ -133,18 +133,28 @@ $string['invalidimportfile'] = 'Import file was missing, empty or invalid';
 $string['invalidinstanceid'] = 'Invalid block instance id: id = {$a}';
 $string['manageevents_help'] = 'If this option is enabled, then calendar events for start and finish times will automatically be added, updated or removed when this block\'s settings are saved.';
 $string['manageevents'] = 'Manage calendar events';
+$string['missingdatabaseactivitynum'] = 'Please select a database';
+$string['missingdatabaseactivityname'] = 'Please give a name for the new database';
+$string['missingcoursesectionnum'] = 'Please select a section';
+$string['missingcoursesectionname'] = 'Please give a name for the new course section';
+$string['missingpreset'] = 'Please upload a preset file or select a preset from the list.';
 $string['moodledatefmt_help'] = 'Start and finish dates will be formatted in a similar way to the date selected here.
 
 If you click on the &quot;+&quot; sign next to one of the dates, the name of the date format string for that date will be displayed, along with its format codes. This is useful if you want to create your own date format string in the &quot;Custom date format string&quot; setting below.
 
 Note that if the &quot;Show date last modified&quot; is set to &quot;No&quot; then no date will be displayed. Also, if a format is specified in the &quot;Custom date format string&quot; setting, then that will override the string selected here.';
 $string['moodledatefmt'] = 'Moodle date format string';
+$string['preset_help'] = 'A "preset" is a template for creating a Moodle database activity. It includes specifications of the database fields, and the layout of the webpages to edit and display records. However, it does not include any actual data.
+
+You can either choose one of the presets that is already available on this Moodle site, or you can import a preset from a zip file. Preset zip files are created using the "export" tab within a Moodle database that already exists.';
+$string['preset'] = 'Database preset';
+$string['presetfile_help'] = 'Upload the zip file of a preset that has been exported from a Moodle database activity.';
+$string['presetfile'] = 'Preset zip file';
+$string['presetfolder_help'] = 'Select one of the database presets that is available on this Moodle site.';
+$string['presetfolder'] = 'Preset';
 $string['presetfullnamepresentations'] = 'MAJ presentations database';
 $string['presetfullnameregistrations'] = 'MAJ registrations database';
 $string['presetfullnameworkshops'] = 'MAJ workshops database';
-$string['presetshortnamepresentations'] = 'Presentations';
-$string['presetshortnameregistrations'] = 'Registration';
-$string['presetshortnameworkshops'] = 'Workshops';
 $string['publishcmid_help'] = 'The resource or database activity where accepted submissions are published online.';
 $string['publishcmid'] = 'Schedule activity';
 $string['publishsubmissions'] = 'Publish schedule';
@@ -209,8 +219,10 @@ $string['toolsetupworkshops_desc'] = 'Setup a database for workshops';
 $string['toolsetupworkshops'] = 'Collect workshop proposals';
 $string['toolworkshop2data_desc'] = 'Convert Workshops -> Database';
 $string['toolworkshop2data'] = 'Publish review results';
+$string['uploadpreset'] = 'Upload preset zip file';
 $string['validimportfile'] = 'Configuration settings were successfully imported';
 $string['workshopscmid_help'] = 'The page resource that displays information about the conference workshops.';
 $string['workshopscmid'] = 'Workshop information';
 $string['workshopstime_help'] = 'The start and finish dates of the conference workshops.';
 $string['workshopstime'] = 'Conference workshops';
+
