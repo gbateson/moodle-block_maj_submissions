@@ -69,6 +69,43 @@ $PAGE->set_pagelayout('incourse');
 $PAGE->navbar->add($strblockname);
 $PAGE->navbar->add($strpagetitle, $url);
 
+if ($action = optional_param('action', '', PARAM_ALPHANUM)) {
+
+    $fullname = optional_param('fullname', '', PARAM_PATH);
+    list($userid, $shortname) = explode('/', $fullname, 2);
+
+    if ($action=='confirmdelete') {
+        $yes = new moodle_url($PAGE->url->out_omit_querystring(),
+                              array('fullname' => $fullname,
+                                    'action' => 'delete',
+                                    'id' => $PAGE->url->param('id')));
+        $no = new moodle_url($PAGE->url->out_omit_querystring(),
+                             array('id' => $PAGE->url->param('id')));
+        echo $OUTPUT->header();
+        echo $OUTPUT->heading($strpagetitle);
+        echo $OUTPUT->confirm(get_string('deletewarning', 'data').
+                              html_writer::empty_tag('br').$shortname, $yes, $no);
+        echo $OUTPUT->footer();
+        exit;
+    }
+
+    if ($action=='delete') {
+        require_once($CFG->dirroot.'/mod/data/lib.php');
+        $presets = data_get_available_presets($context);
+        foreach ($presets as $preset) {
+            if ($preset->shortname == $shortname && data_user_can_delete_preset($context, $preset)) {
+                data_delete_site_preset($shortname);
+                echo $OUTPUT->header();
+                echo $OUTPUT->heading($strpagetitle);
+                echo $OUTPUT->notification($shortname.' '.get_string('deleted', 'data'), 'notifysuccess');
+                echo $OUTPUT->continue_button($PAGE->url);
+                echo $OUTPUT->footer();
+                exit;
+            }
+        }
+    }
+}
+
 // initialize the form
 $customdata = array('course'   => $course,
                     'plugin'   => $plugin,
@@ -79,11 +116,10 @@ if ($mform->is_cancelled()) {
     $url = new moodle_url('/course/view.php', array('id' => $course->id));
     redirect($url);
 }
+
 if ($mform->is_submitted()) {
     $mform->data_postprocessing();
 }
-
-// require_head_js($plugin);
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading($strpagetitle);

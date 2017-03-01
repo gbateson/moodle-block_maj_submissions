@@ -156,7 +156,7 @@ class block_maj_submissions_tool extends moodleform {
                 $mform->addGroup($elements, $group_name, $label, html_writer::empty_tag('br'), false);
                 $mform->addHelpButton($group_name, $name, $this->plugin);
                 $mform->setType($name, PARAM_TEXT);
-                $mform->setDefault($name, '0/'.$this->defaultpreset);
+                $mform->setDefault($name, '0/'.get_string('presetshortname'.$this->defaultpreset, $this->plugin));
             }
         }
 
@@ -364,7 +364,7 @@ class block_maj_submissions_tool extends moodleform {
                 $presetfolder = $data->presetfolder;
             }
 
-            // create 
+            // create
             $data = $DB->get_record('data', array('id' => $cm->instance), '*', MUST_EXIST);
             $data->cmidnumber = (empty($cm->idnumber) ? '' : $cm->idnumber);
             $data->instance   = $cm->instance;
@@ -656,7 +656,7 @@ class block_maj_submissions_tool extends moodleform {
      * @return integer $cmid
      */
     static public function get_available_presets($context, $plugin, $cmid, $exclude='') {
-        global $CFG, $DB, $OUTPUT;
+        global $CFG, $DB, $OUTPUT, $PAGE;
         require_once($CFG->dirroot.'/mod/data/lib.php');
 
         $presets = array();
@@ -679,15 +679,10 @@ class block_maj_submissions_tool extends moodleform {
                 if (! is_directory_a_preset($path)) {
                     continue; // not a preset - unusual !!
                 }
-                if ($strman->string_exists('presetfullname'.$item, $plugin)) {
-                    $fullname = get_string('presetfullname'.$item, $plugin);
+                if ($strman->string_exists('presetname'.$item, $plugin)) {
+                    $name = get_string('presetname'.$item, $plugin);
                 } else {
-                    $fullname = $item;
-                }
-                if ($strman->string_exists('presetshortname'.$item, $plugin)) {
-                    $shortname = get_string('presetshortname'.$item, $plugin);
-                } else {
-                    $shortname = $item;
+                    $name = $item;
                 }
                 if (file_exists("$path/screenshot.jpg")) {
                     $screenshot = "$path/screenshot.jpg";
@@ -701,8 +696,8 @@ class block_maj_submissions_tool extends moodleform {
                 $presets[] = (object)array(
                     'userid' => 0,
                     'path' => $path,
-                    'name' => $fullname,
-                    'shortname' => $shortname,
+                    'name' => $name,
+                    'shortname' => $item,
                     'screenshot' => $screenshot
                 );
             }
@@ -733,12 +728,24 @@ class block_maj_submissions_tool extends moodleform {
                 $preset->description = $preset->name.' ('.fullname($user, true).')';
             }
 
-            if (data_user_can_delete_preset($context, $preset)) {
-                $params = array('id'       => $cmid,
-                                'action'   => 'confirmdelete',
+            if (strpos($preset->path, $dirpath)===0) {
+                $can_delete = false;
+            } else {
+                $can_delete = data_user_can_delete_preset($context, $preset);
+            }
+
+            if ($can_delete) {
+                //$params = array('id'       => $cmid,
+                //                'action'   => 'confirmdelete',
+                //                'fullname' => "$preset->userid/$preset->shortname",
+                //                'sesskey'  => sesskey());
+                //$url = new moodle_url('/mod/data/preset.php', $params);
+                $params = array('id'        => $PAGE->url->param('id'),
+                                'action'    => 'confirmdelete',
                                 'fullname' => "$preset->userid/$preset->shortname",
-                                'sesskey'  => sesskey());
-                $url = new moodle_url('/mod/data/preset.php', $params);
+                                'sesskey'   => sesskey());
+                $url = $PAGE->url->out_omit_querystring();
+                $url = new moodle_url($url, $params);
                 $params = array('src'   => $OUTPUT->pix_url('t/delete'),
                                 'class' => 'iconsmall',
                                 'alt'   => "$strdelete $preset->description");
