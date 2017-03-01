@@ -323,7 +323,8 @@ class block_maj_submissions_tool extends moodleform {
      * @todo Finish documenting this function
      */
     public function data_postprocessing() {
-        global $DB, $OUTPUT, $PAGE;
+        global $CFG, $DB, $OUTPUT, $PAGE;
+        require_once($CFG->dirroot.'/lib/xmlize.php');
 
         $cm = false;
         if ($data = $this->get_data()) {
@@ -351,8 +352,6 @@ class block_maj_submissions_tool extends moodleform {
 
         if ($cm) {
 
-            $renderer = $PAGE->get_renderer('mod_data');
-
             if (empty($data->presetfile)) {
                 $presetfile = '';
             } else {
@@ -365,23 +364,84 @@ class block_maj_submissions_tool extends moodleform {
                 $presetfolder = $data->presetfolder;
             }
 
-            if ($presetfolder) {
-            //    $importer = new data_preset_existing_importer($course, $cm, $data, $formdata->fullname);
-            //    echo $renderer->import_setting_mappings($data, $importer);
-            //    echo $OUTPUT->footer();
-            //    exit(0);
-            } else if ($presetfile) {
-            //    $file = (object)array(
-            //        // see mod/data/lib.php (form_importzip)
-            //        'name' => $this->get_new_filename('importfile'),
-            //        'path' => $this->save_temp_file('importfile')
-            //    );
-            //    $importer = new data_preset_upload_importer($course, $cm, $data, $file->path);
-            //    echo $renderer->import_setting_mappings($data, $importer);
-            //    echo $OUTPUT->footer();
-            //    exit(0);
+            // create 
+            $data = $DB->get_record('data', array('id' => $cm->instance), '*', MUST_EXIST);
+            $data->cmidnumber = (empty($cm->idnumber) ? '' : $cm->idnumber);
+            $data->instance   = $cm->instance;
+
+            $importer = null;
+
+            if ($presetfile) {
+                $file = $this->save_temp_file('presetfile');
+                $importer = new data_preset_upload_importer($this->course, $cm, $data, $file);
+                $presetfolder = ''; // ignore any folder that was specified
             }
 
+            if ($presetfolder) {
+
+                // transfer preset to Moodle file storage
+                $fs = get_file_storage();
+                list($userid, $filepath) = explode('/', $presetfolder, 2);
+                $dirpath = "$CFG->dirroot/blocks/maj_submissions/presets/$filepath";
+                if (is_dir($dirpath) && is_directory_a_preset($dirpath)) {
+
+                    $contextid = DATA_PRESET_CONTEXT;   // SYSCONTEXTID
+                    $component = DATA_PRESET_COMPONENT; // mod_data
+                    $filearea  = DATA_PRESET_FILEAREA;  // site_presets
+                    $itemid    = 0;
+                    $sortorder = 0;
+
+                    $filenames = scandir($dirpath);
+                    foreach ($filenames as $filename) {
+                        if (substr($filename, 0, 1)=='.') {
+                            continue; // skip hidden items
+                        }
+                        if (is_dir("$dirpath/$filename")) {
+                            continue; // skip sub directories
+                        }
+                        if ($fs->file_exists($contextid, $component, $filearea, $itemid,  "/$filepath/", $filename)) {
+                            continue; // file already exists - unusual !!
+                        }
+                        if ($sortorder==0) {
+                            $fs->create_directory($contextid, $component, $filearea, $itemid, "/$filepath/");
+                            $sortorder++;
+                        }
+                        $filerecord = array(
+                            'contextid' => $contextid,
+                            'component' => $component,
+                            'filearea'  => $filearea,
+                            'sortorder' => $sortorder++,
+                            'itemid'    => $itemid,
+                            'filepath'  => "/$filepath/",
+                            'filename'  => $filename
+                        );
+                        $file = $fs->create_file_from_pathname($filerecord, "$dirpath/$filename");
+                    }
+                }
+
+                // now, try the import using the standard forms for the database module
+                $importer = new data_preset_existing_importer($this->course, $cm, $data, $presetfolder);
+            }
+
+            if ($importer) {
+                $renderer = $PAGE->get_renderer('mod_data');
+                $importform = $renderer->import_setting_mappings($data, $importer);
+
+                // adjust the URL in the import form
+                $search = '/(<form method="post" action=")(">)/';
+                $replace = new moodle_url('/mod/data/preset.php', array('id' => $cm->id));
+                $importform = preg_replace($search, '$1'.$replace.'$2', $importform);
+
+                // send the import form to the browser
+                echo $OUTPUT->header();
+                echo $OUTPUT->heading(format_string($data->name), 2);
+                echo $importform;
+                echo $OUTPUT->footer();
+                exit(0);
+            }
+
+            // Otherwise, something was amiss so redirect to the standard page
+            // for importing a preset into the database acitivty.
             $url = new moodle_url('/mod/data/preset.php', array('id' => $cm->id));
             redirect($url);
         }
@@ -604,38 +664,48 @@ class block_maj_submissions_tool extends moodleform {
         $strman = get_string_manager();
         $strdelete = get_string('deleted', 'data');
 
-        $dir = $CFG->dirroot.'/blocks/maj_submissions/presets';
-        if (is_dir($dir) && ($dh = opendir($dir))) {
-            while (($item = readdir($dh)) !== false) {
+        $dirpath = $CFG->dirroot.'/blocks/maj_submissions/presets';
+        if (is_dir($dirpath)) {
+
+            $items = scandir($dirpath);
+            foreach ($items as $item) {
                 if (substr($item, 0, 1)=='.') {
-                    continue; // a hidden item
+                    continue; // skip hidden items
                 }
-                $diritem = "$dir/$item";
-                if (is_dir($diritem) && is_directory_a_preset($diritem)) {
-                    if ($strman->string_exists('presetfullname'.$item, $plugin)) {
-                        $fullname = get_string('presetfullname'.$item, $plugin);
-                    } else {
-                        $fullname = $item;
-                    }
-                    if (file_exists("$diritem/screenshot.jpg")) {
-                        $screenshot = "$diritem/screenshot.jpg";
-                    } else if (file_exists("$diritem/screenshot.png")) {
-                        $screenshot = "$diritem/screenshot.png";
-                    } else if (file_exists("$diritem/screenshot.gif")) {
-                        $screenshot = "$diritem/screenshot.gif";
-                    } else {
-                        $screenshot = ''; // shouldn't happen !!
-                    }
-                    $presets[] = (object)array(
-                        'userid' => 0,
-                        'path' => $diritem,
-                        'name' => $fullname,
-                        'shortname' => $item,
-                        'screenshot' => $screenshot
-                    );
+                $path = "$dirpath/$item";
+                if (! is_dir($path)) {
+                    continue; // skip files and links
                 }
+                if (! is_directory_a_preset($path)) {
+                    continue; // not a preset - unusual !!
+                }
+                if ($strman->string_exists('presetfullname'.$item, $plugin)) {
+                    $fullname = get_string('presetfullname'.$item, $plugin);
+                } else {
+                    $fullname = $item;
+                }
+                if ($strman->string_exists('presetshortname'.$item, $plugin)) {
+                    $shortname = get_string('presetshortname'.$item, $plugin);
+                } else {
+                    $shortname = $item;
+                }
+                if (file_exists("$path/screenshot.jpg")) {
+                    $screenshot = "$path/screenshot.jpg";
+                } else if (file_exists("$path/screenshot.png")) {
+                    $screenshot = "$path/screenshot.png";
+                } else if (file_exists("$path/screenshot.gif")) {
+                    $screenshot = "$path/screenshot.gif";
+                } else {
+                    $screenshot = ''; // shouldn't happen !!
+                }
+                $presets[] = (object)array(
+                    'userid' => 0,
+                    'path' => $path,
+                    'name' => $fullname,
+                    'shortname' => $shortname,
+                    'screenshot' => $screenshot
+                );
             }
-            closedir($dh);
         }
 
         $presets = array_merge($presets, data_get_available_presets($context));

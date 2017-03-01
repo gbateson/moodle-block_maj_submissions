@@ -166,9 +166,7 @@ $string['receptiontime_help'] = 'The start and finish times of the conference re
 $string['receptiontime'] = 'Conference reception';
 $string['registerdelegatescmid_help'] = 'The database activity where delegates register their intention to attend and participate in the conference.';
 $string['registerdelegatescmid'] = 'Registration database';
-$string['coursesection_help'] = 'The course section in which to create a new activity or activities.
-
-If you select "Create new section" here, you can optionally specify a name for the new section in the text box. If you do not specify a name for a new section, then the default name will be used.';
+$string['coursesection_help'] = 'The course section in which to create a new activity or activities. If you select "Create new section" here, remember to give a name for the new section in the text box.';
 $string['coursesection'] = 'Course section';
 $string['registerpresenterscmid_help'] = 'The database activity where presenters register their intention to attend and participate in the conference.';
 $string['registerpresenterscmid'] = 'Registration database';
