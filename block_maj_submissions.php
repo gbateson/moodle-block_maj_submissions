@@ -46,6 +46,8 @@ class block_maj_submissions extends block_base {
     protected $fixdaychar   = false;
     protected $multilang    = false;
 
+    protected $requiredfields = array();
+
     /**
      * init
      */
@@ -222,6 +224,7 @@ class block_maj_submissions extends block_base {
                        'collectsponsoredscmid',
                        'registerdelegatescmid',
                        'registerpresenterscmid');
+
         foreach ($names as $name) {
             if (isset($config->$name)) {
                 $params = array('id' => $config->$name, 'course' => $courseid, 'module' => $moduleid);
@@ -234,7 +237,8 @@ class block_maj_submissions extends block_base {
 
         if (count($dataids)) {
 
-            $fieldnames = self::get_constant_fieldnames(false);
+            $autoincrement = false;
+            $fieldnames = self::get_constant_fieldnames($autoincrement);
             foreach ($fieldnames as $fieldname => $name) {
                 if (empty($config->displaylangs)) {
                     $langs = self::get_languages();
@@ -242,25 +246,14 @@ class block_maj_submissions extends block_base {
                     $langs = self::get_languages($config->displaylangs);
                 }
                 foreach ($langs as $lang) {
-                    $namelang = $name.$lang;
-                    $fieldnamelang = $fieldname."_$lang";
-                    if (isset($config->$namelang)) {
-                        list($select, $params) = $DB->get_in_or_equal($dataids);
-                        $select = "dataid $select AND name = ?";
-                        $params[] = $fieldnamelang;
-                        $DB->set_field_select('data_fields', 'param1', $config->$namelang, $select, $params);
-                    }
+                    $this->update_constant_field($plugin, $dataids, $config, $name, $name.$lang, $fieldname."_$lang", $autoincrement);
                 }
             }
 
-            $fieldnames = self::get_constant_fieldnames(true);
+            $autoincrement = true;
+            $fieldnames = self::get_constant_fieldnames($autoincrement);
             foreach ($fieldnames as $fieldname => $name) {
-                if (isset($config->$name)) {
-                    list($select, $params) = $DB->get_in_or_equal($dataids);
-                    $select = "dataid $select AND name = ?";
-                    $params[] = $fieldname;
-                    $DB->set_field_select('data_fields', 'param1', $config->$name, $select, $params);
-                }
+                $this->update_constant_field($plugin, $dataids, $config, $name, $name, $fieldname, $autoincrement);
             }
         }
 
@@ -282,21 +275,17 @@ class block_maj_submissions extends block_base {
                     $visible     =  1;
                     $description = '';
                     switch ($type) {
-                        case 'collect':
-                        case 'collectworkshop':
-                        case 'collectsponsored':
-                            $cmid = 'collectid';
-                            break;
+                        case 'collectregistrations':
+                        case 'collectworkshops':
+                        case 'collectsponsoreds':
                         case 'conference':
                         case 'workshops':
                         case 'reception':
                         case 'revise':
                         case 'publish':
+                        case 'registerdelegates':
+                        case 'registerpresenters':
                             $cmid = $type.'cmid';
-                            break;
-                        case 'register':
-                        case 'registerpresenter':
-                            $cmid = 'registerdelegatescmid';
                             break;
                     }
                     if ($cmid && isset($config->$cmid)) {
@@ -348,6 +337,44 @@ class block_maj_submissions extends block_base {
         /////////////////////////////////////////////////
 
         return parent::instance_config_save($config, $pinned);
+    }
+
+    /**
+     * update_constant_field
+     *
+     * @return xxx
+     */
+    protected function update_constant_field($plugin, $dataids, $config, $name, $configname, $fieldname, $autoincrement) {
+        global $DB;
+        if (isset($config->$name)) {
+            $param1 = $config->$name;
+            if ($autoincrement) {
+                $param2 = 1;
+                $param3 = $config->{$name.'format'};
+            } else {
+                $param2 = 0;
+                $param3 = '';
+            }
+            foreach ($dataids as $dataid) {
+                $params = array('dataid' => $dataid, 'name' => $fieldname);
+                if ($field = $DB->get_record('data_fields', $params)) {
+                    $field->param1 = $param1;
+                    $field->param2 = $param2;
+                    $field->param3 = $param3;
+                    $DB->update_record('data_fields', $field);
+                } else if ($param1 && self::is_required_constant($config, $dataid, $name)) {
+                    $field = (object)array('dataid' => $dataid,
+                                           'type'   => 'constant',
+                                           'name'   => $fieldname,
+                                           'description' => get_string($name, $plugin),
+                                           'required' => 0,
+                                           'param1' => $param1,
+                                           'param2' => $param2,
+                                           'param3' => $param3);
+                    $field->id = $DB->insert_record('data_fields', $field);
+                }
+            }
+        }
     }
 
     /**
@@ -1087,6 +1114,57 @@ class block_maj_submissions extends block_base {
             sort($langs);
             return $langs;
         }
+    }
+
+    /**
+     * is_required_constant
+     *
+     * @return array(database_field_name => configfieldname)
+     */
+    static public function is_required_constant($config, $dataid, $name) {
+        global $DB;
+        static $required = array();
+
+        if (empty($required[$dataid])) {
+            $required[$dataid] = array(
+                'conferencename',
+                'conferencevenue',
+                'conferencedates'
+            );
+
+            // get cmids of conference registration databases
+            $cmids = array();
+            if (isset($config->registerdelegatescmid)) {
+                $cmids[] = $config->registerdelegatescmid;
+            }
+            if (isset($config->registerpresenterscmid)) {
+                $cmids[] = $config->registerpresenterscmid;
+            }
+
+            $cmids = array_filter($cmids);
+            $cmids = array_unique($cmids);
+
+            // check if this $dataid is for a registration database
+            if (count($cmids)) {
+                list($select, $params) = $DB->get_in_or_equal($cmids, SQL_PARAMS_NAMED);
+                $select = "id $select AND module = :moduleid AND instance = :instanceid";
+                $params['moduleid'] = $DB->get_field('modules', 'id', array('name' => 'data'));
+                $params['instanceid'] = $dataid;
+                if ($DB->record_exists_select('course_modules', $select, $params)) {
+                    array_push($required[$dataid], 'dinnername',
+                                                   'dinnervenue',
+                                                   'dinnerdate',
+                                                   'dinnertime',
+                                                   'certificatedate',
+                                                   'badgenumber',
+                                                   'feereceiptnumber',
+                                                   'dinnerreceiptnumber',
+                                                   'dinnerticketnumber',
+                                                   'certificatenumber');
+                }            
+            }
+        }
+        return in_array($name, $required[$dataid]);
     }
 
     /**

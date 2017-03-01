@@ -362,7 +362,19 @@ class block_maj_submissions_edit_form extends block_edit_form {
 
             $string = array();
             foreach ($langs as $lang) {
-                $string[$lang] = $strman->load_component_strings('langconfig', $lang);
+                if ($strman->translation_exists($lang)) {
+                    // language is installed
+                    $string[$lang] = $strman->load_component_strings('langconfig', $lang);
+                } else {
+                    // language is NOT installed - create dummy lang pack
+                    $list = $strman->get_list_of_languages($lang);
+                    if (array_key_exists($lang, $list)) {
+                        $string[$lang] = array('thislanguage' => $list[$lang]);
+                    } else {
+                        // unknown language code - shouldn't happen !!
+                        $string[$lang] = array('thislanguage' => get_string('unknownlanguage', $plugin));
+                    }
+                }
             }
 
             $textoptions = array('size' => 30);

@@ -217,10 +217,10 @@ $string['toolsetupworkshops_desc'] = 'Setup a database for workshops';
 $string['toolsetupworkshops'] = 'Collect workshop proposals';
 $string['toolworkshop2data_desc'] = 'Convert Workshops -> Database';
 $string['toolworkshop2data'] = 'Publish review results';
+$string['unknownlanguage'] = 'Unknown language';
 $string['uploadpreset'] = 'Upload preset zip file';
 $string['validimportfile'] = 'Configuration settings were successfully imported';
 $string['workshopscmid_help'] = 'The page resource that displays information about the conference workshops.';
 $string['workshopscmid'] = 'Workshop information';
 $string['workshopstime_help'] = 'The start and finish dates of the conference workshops.';
 $string['workshopstime'] = 'Conference workshops';
-
