@@ -30,6 +30,7 @@ require_once($CFG->dirroot.'/blocks/maj_submissions/tools/lib.php');
 
 $blockname = 'maj_submissions';
 $plugin = "block_$blockname";
+$tool = 'toolsetupregistrations';
 
 $id = required_param('id', PARAM_INT); // block_instance id
 
@@ -60,7 +61,7 @@ require_capability('moodle/course:manageactivities', $context);
 $url = new moodle_url($SCRIPT, array('id' => $id));
 
 $strblockname = get_string('blockname', $plugin);
-$strpagetitle = get_string('toolsetupregistrations', $plugin);
+$strpagetitle = get_string($tool, $plugin);
 
 $PAGE->set_url($url);
 $PAGE->set_title($strpagetitle);
@@ -69,48 +70,12 @@ $PAGE->set_pagelayout('incourse');
 $PAGE->navbar->add($strblockname);
 $PAGE->navbar->add($strpagetitle, $url);
 
-if ($action = optional_param('action', '', PARAM_ALPHANUM)) {
-
-    $fullname = optional_param('fullname', '', PARAM_PATH);
-    list($userid, $shortname) = explode('/', $fullname, 2);
-
-    if ($action=='confirmdelete') {
-        $yes = new moodle_url($PAGE->url->out_omit_querystring(),
-                              array('fullname' => $fullname,
-                                    'action' => 'delete',
-                                    'id' => $PAGE->url->param('id')));
-        $no = new moodle_url($PAGE->url->out_omit_querystring(),
-                             array('id' => $PAGE->url->param('id')));
-        echo $OUTPUT->header();
-        echo $OUTPUT->heading($strpagetitle);
-        echo $OUTPUT->confirm(get_string('deletewarning', 'data').
-                              html_writer::empty_tag('br').$shortname, $yes, $no);
-        echo $OUTPUT->footer();
-        exit;
-    }
-
-    if ($action=='delete') {
-        require_once($CFG->dirroot.'/mod/data/lib.php');
-        $presets = data_get_available_presets($context);
-        foreach ($presets as $preset) {
-            if ($preset->shortname == $shortname && data_user_can_delete_preset($context, $preset)) {
-                data_delete_site_preset($shortname);
-                echo $OUTPUT->header();
-                echo $OUTPUT->heading($strpagetitle);
-                echo $OUTPUT->notification($shortname.' '.get_string('deleted', 'data'), 'notifysuccess');
-                echo $OUTPUT->continue_button($PAGE->url);
-                echo $OUTPUT->footer();
-                exit;
-            }
-        }
-    }
-}
-
 // initialize the form
 $customdata = array('course'   => $course,
                     'plugin'   => $plugin,
                     'instance' => $block_instance);
-$mform = new block_maj_submissions_tool_setupregistrations($url->out(false), $customdata);
+$mform = 'block_maj_submissions_tool_setupregistrations';
+$mform = new $mform($url->out(false), $customdata);
 
 if ($mform->is_cancelled()) {
     $url = new moodle_url('/course/view.php', array('id' => $course->id));
@@ -123,13 +88,13 @@ if ($mform->is_submitted()) {
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading($strpagetitle);
-echo $OUTPUT->box_start('generalbox');
 
-echo html_writer::tag('p', get_string('toolsetupregistrations_desc', $plugin).
-                           $OUTPUT->help_icon('toolsetup', $plugin));
+if ($message = $mform->process_action()) {
+    echo $message;
+} else {
+    echo html_writer::tag('p', get_string($tool.'_desc', $plugin).
+                               $OUTPUT->help_icon('toolsetup', $plugin));
+    $mform->display();
+}
 
-// display form
-$mform->display();
-
-echo $OUTPUT->box_end();
 echo $OUTPUT->footer($course);

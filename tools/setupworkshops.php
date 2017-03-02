@@ -30,6 +30,7 @@ require_once($CFG->dirroot.'/blocks/maj_submissions/tools/lib.php');
 
 $blockname = 'maj_submissions';
 $plugin = "block_$blockname";
+$tool = 'toolsetupworkshops';
 
 $id = required_param('id', PARAM_INT); // block_instance id
 
@@ -55,25 +56,12 @@ $course->context = $context;
 require_login($course->id);
 require_capability('moodle/course:manageactivities', $context);
 
-switch (true) {
-    case optional_param('apply',  '', PARAM_ALPHA): $action = 'apply';  break;
-    case optional_param('cancel', '', PARAM_ALPHA): $action = 'cancel'; break;
-    case optional_param('delete', '', PARAM_ALPHA): $action = 'delete'; break;
-    default: $action = '';
-}
-
-if ($action=='cancel') {
-    // return to course page
-    $params = array('id' => $course->id, 'sesskey' => sesskey());
-    redirect(new moodle_url('/course/view.php', $params));
-}
-
-$strblockname = get_string('blockname', $plugin);
-$strpagetitle = get_string('toolsetupworkshops', $plugin);
-
 // $SCRIPT is set by initialise_fullme() in 'lib/setuplib.php'
 // It is the path below $CFG->wwwroot of this script
 $url = new moodle_url($SCRIPT, array('id' => $id));
+
+$strblockname = get_string('blockname', $plugin);
+$strpagetitle = get_string($tool, $plugin);
 
 $PAGE->set_url($url);
 $PAGE->set_title($strpagetitle);
@@ -82,50 +70,31 @@ $PAGE->set_pagelayout('incourse');
 $PAGE->navbar->add($strblockname);
 $PAGE->navbar->add($strpagetitle, $url);
 
-// require_head_js($plugin);
+// initialize the form
+$customdata = array('course'   => $course,
+                    'plugin'   => $plugin,
+                    'instance' => $block_instance);
+$mform = 'block_maj_submissions_tool_setupworkshops';
+$mform = new $mform($url->out(false), $customdata);
+
+if ($mform->is_cancelled()) {
+    $url = new moodle_url('/course/view.php', array('id' => $course->id));
+    redirect($url);
+}
+
+if ($mform->is_submitted()) {
+    $mform->data_postprocessing();
+}
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading($strpagetitle);
-echo $OUTPUT->box_start('generalbox');
 
-echo html_writer::tag('p', get_string('toolsetupworkshops_desc', $plugin));
-
-// get incoming data, if any
-if ($cancel = optional_param('cancel', '', PARAM_ALPHA)) {
-    $data = null;
-    $action = '';
+if ($message = $mform->process_action()) {
+    echo $message;
 } else {
-    $data = data_submitted();
-    $action = optional_param('action', '', PARAM_ALPHA);
+    echo html_writer::tag('p', get_string($tool.'_desc', $plugin).
+                               $OUTPUT->help_icon('toolsetup', $plugin));
+    $mform->display();
 }
 
-// process incoming data, if required
-if ($data) {
-    if (function_exists('require_sesskey')) {
-        require_sesskey();
-    } else if (function_exists('confirm_sesskey')) {
-        confirm_sesskey();
-    }
-    // process incoming data (before creating the form)
-}
-
-// get context for workshop database, if possible
-$block_maj_submissions = block_instance($blockname, $block_instance);
-if ($cmid = $block_maj_submissions->config->registerpresenterscmid) {
-    $context = block_maj_submissions::context(CONTEXT_MODULE, $cmid);
-}
-
-// initialize the form
-$customdata = array('cmid'    => $cmid,
-                    'context' => $context,
-                    'course'  => $course,
-                    'plugin'  => $plugin);
-$mform = new block_maj_submissions_tool_setupworkshops($url->out(false), $customdata);
-
-// display form
-$defaults = array();
-$mform->set_data($defaults);
-$mform->display();
-
-echo $OUTPUT->box_end();
 echo $OUTPUT->footer($course);

@@ -29,6 +29,7 @@ defined('MOODLE_INTERNAL') || die();
 
 // get required files
 require_once($CFG->dirroot.'/lib/formslib.php');
+require_once($CFG->dirroot.'/mod/data/lib.php');
 
 /**
  * block_maj_submissions_tool
@@ -42,9 +43,10 @@ class block_maj_submissions_tool extends moodleform {
     const CREATE_NEW = -1;
     const TEXT_FIELD_SIZE = 20;
 
+    protected $cmid = 0;
     protected $type = '';
     protected $defaultpreset = '';
-    protected $modulename = 'data';
+    protected $modulename = '';
 
     protected $newdatavalues = array(
         'approval'        => 1,
@@ -78,8 +80,11 @@ class block_maj_submissions_tool extends moodleform {
         // convert block instance to "block_maj_submissions" object
         $this->instance = block_instance($this->instance->blockname, $this->instance);
 
-        // set the "course_module" id, if supplied
-        $this->cmid = $this->instance->config->{$this->type.'cmid'};
+        // set the "course_module" id, if it is defined and still exists
+        $cmid = $this->instance->config->{$this->type.'cmid'};
+        if (array_key_exists($cmid, get_fast_modinfo($this->course)->cms)) {
+            $this->cmid = $cmid;
+        }
 
         // set start time, if any, in $newdatarecord
         $time = $this->type.'timestart';
@@ -107,9 +112,8 @@ class block_maj_submissions_tool extends moodleform {
      * definition
      */
     public function definition() {
+        global $DB;
         $mform = $this->_form;
-
-        get_fast_modinfo($this->course, 0, true);
 
         // extract the module context and course section, if possible
         if ($this->cmid) {
@@ -156,7 +160,7 @@ class block_maj_submissions_tool extends moodleform {
                 $mform->addGroup($elements, $group_name, $label, html_writer::empty_tag('br'), false);
                 $mform->addHelpButton($group_name, $name, $this->plugin);
                 $mform->setType($name, PARAM_TEXT);
-                $mform->setDefault($name, '0/'.get_string('presetshortname'.$this->defaultpreset, $this->plugin));
+                $mform->setDefault($name, "0/$this->defaultpreset");
             }
         }
 
@@ -339,13 +343,11 @@ class block_maj_submissions_tool extends moodleform {
                     if ($sectionnum==self::CREATE_NEW) {
                         $section = self::get_section($this->course, $sectionname);
                     } else {
-                        $modinfo = get_fast_modinfo($this->course);
-                        $section = $modinfo->get_section_info($sectionnum);
+                        $section = get_fast_modinfo($this->course)->get_section_info($sectionnum);
                     }
                     $cm = self::get_coursemodule($this->course, $section, 'data', $databasename, $this->newdatavalues);
                 } else {
-                    $modinfo = get_fast_modinfo($this->course);
-                    $cm = $modinfo->get_cm($databasenum);
+                    $cm = get_fast_modinfo($this->course)->get_cm($databasenum);
                 }
             }
         }
@@ -386,8 +388,8 @@ class block_maj_submissions_tool extends moodleform {
                 if (is_dir($dirpath) && is_directory_a_preset($dirpath)) {
 
                     $contextid = DATA_PRESET_CONTEXT;   // SYSCONTEXTID
-                    $component = DATA_PRESET_COMPONENT; // mod_data
-                    $filearea  = DATA_PRESET_FILEAREA;  // site_presets
+                    $component = DATA_PRESET_COMPONENT; // "mod_data"
+                    $filearea  = DATA_PRESET_FILEAREA;  // "site_presets"
                     $itemid    = 0;
                     $sortorder = 0;
 
@@ -450,6 +452,81 @@ class block_maj_submissions_tool extends moodleform {
     }
 
     /**
+     * process_action
+     *
+     * @uses $DB
+     * @param object $course
+     * @param string $sectionname
+     * @return object
+     * @todo Finish documenting this function
+     */
+    public function process_action() {
+        global $DB, $PAGE, $OUTPUT;
+
+        if (! $action = optional_param('action', '', PARAM_ALPHANUM)) {
+            return ''; // no action specified
+        }
+
+        if (! optional_param('sesskey', false, PARAM_BOOL)) {
+            return ''; // no sesskey - unusual !!
+        }
+
+        if (! confirm_sesskey()) {
+            return ''; // invalid sesskey - unusual !!
+        }
+
+        $fullname = optional_param('fullname', '', PARAM_PATH);
+        list($userid, $shortname) = explode('/', $fullname, 2);
+
+        $userid    = clean_param($userid, PARAM_INT);
+        $shortname = clean_param($shortname, PARAM_TEXT);
+        $fullname  = "$userid/$shortname";
+
+        $message = '';
+
+        if ($action=='confirmdelete') {
+            $yes = array('fullname' => $fullname,
+                         'action' => 'delete',
+                         'id' => $PAGE->url->param('id'));
+            $yes = new moodle_url($PAGE->url->out_omit_querystring(), $yes);
+            $no = array('id' => $PAGE->url->param('id'));
+            $no = new moodle_url($PAGE->url->out_omit_querystring(), $no);
+            $message = get_string('deletewarning', 'data').
+                       html_writer::empty_tag('br').$shortname;
+            if ($userid) {
+                $message .= ' ('.fullname($DB->get_record('user', array('id' => $userid))).')';
+            }
+            $message = $OUTPUT->confirm($message, $yes, $no);
+        }
+
+        if ($action=='delete') {
+            if ($this->cmid) {
+                $context = block_maj_submissions::context(CONTEXT_MODULE, $this->cmid);
+            } else {
+                $context = $this->course->context;
+            }
+            $can_delete = false;
+            $presets = self::get_available_presets($context, $this->plugin, $this->cmid);
+            foreach ($presets as $preset) {
+                if ($can_delete==false && $preset->shortname==$shortname) {
+                    $can_delete = data_user_can_delete_preset($context, $preset);
+                }
+            }
+            if ($can_delete) {
+                data_delete_site_preset($shortname);
+                $url = clone($PAGE->url);
+                $url->remove_all_params();
+                $url->params(array('id' => $PAGE->url->param('id')));
+                $message = $shortname.' '.get_string('deleted', 'data');
+                $message = $OUTPUT->notification($message, 'notifysuccess').
+                           $OUTPUT->continue_button($url);
+            }
+        }
+
+        return $message;
+    }
+
+    /**
      * get_section
      *
      * @uses $DB
@@ -458,7 +535,7 @@ class block_maj_submissions_tool extends moodleform {
      * @return object
      * @todo Finish documenting this function
      */
-    public function get_section($course, $sectionname) {
+    static public function get_section($course, $sectionname) {
         global $DB;
 
         // some DBs (e.g. MSSQL) cannot compare TEXT fields
@@ -525,8 +602,8 @@ class block_maj_submissions_tool extends moodleform {
      * @return object
      * @todo Finish documenting this function
      */
-    public function get_coursemodule($course, $section, $modulename, $instancename, $newrecordvalues) {
-        global $CFG, $DB, $USER;
+    static public function get_coursemodule($course, $section, $modulename, $instancename, $newrecordvalues) {
+        global $DB, $USER;
 
         // cache the module id
         $moduleid = $DB->get_field('modules', 'id', array('name' => $modulename));
@@ -657,7 +734,6 @@ class block_maj_submissions_tool extends moodleform {
      */
     static public function get_available_presets($context, $plugin, $cmid, $exclude='') {
         global $CFG, $DB, $OUTPUT, $PAGE;
-        require_once($CFG->dirroot.'/mod/data/lib.php');
 
         $presets = array();
 
@@ -667,22 +743,22 @@ class block_maj_submissions_tool extends moodleform {
         $dirpath = $CFG->dirroot.'/blocks/maj_submissions/presets';
         if (is_dir($dirpath)) {
 
-            $items = scandir($dirpath);
-            foreach ($items as $item) {
-                if (substr($item, 0, 1)=='.') {
-                    continue; // skip hidden items
+            $shortnames = scandir($dirpath);
+            foreach ($shortnames as $shortname) {
+                if (substr($shortname, 0, 1)=='.') {
+                    continue; // skip hidden shortnames
                 }
-                $path = "$dirpath/$item";
+                $path = "$dirpath/$shortname";
                 if (! is_dir($path)) {
                     continue; // skip files and links
                 }
                 if (! is_directory_a_preset($path)) {
                     continue; // not a preset - unusual !!
                 }
-                if ($strman->string_exists('presetname'.$item, $plugin)) {
-                    $name = get_string('presetname'.$item, $plugin);
+                if ($strman->string_exists('presetname'.$shortname, $plugin)) {
+                    $name = get_string('presetname'.$shortname, $plugin);
                 } else {
-                    $name = $item;
+                    $name = $shortname;
                 }
                 if (file_exists("$path/screenshot.jpg")) {
                     $screenshot = "$path/screenshot.jpg";
@@ -697,12 +773,13 @@ class block_maj_submissions_tool extends moodleform {
                     'userid' => 0,
                     'path' => $path,
                     'name' => $name,
-                    'shortname' => $item,
+                    'shortname' => $shortname,
                     'screenshot' => $screenshot
                 );
             }
         }
 
+        // append mod_data presets, user presets and site wide presets
         $presets = array_merge($presets, data_get_available_presets($context));
 
         if (empty($exclude)) {
@@ -718,6 +795,9 @@ class block_maj_submissions_tool extends moodleform {
                 continue;
             }
 
+            // ensure each preset is only added once
+            //$exclude[] = $preset->shortname;
+
             if (empty($preset->userid)) {
                 $preset->userid = 0;
                 $preset->description = $preset->name;
@@ -729,27 +809,27 @@ class block_maj_submissions_tool extends moodleform {
             }
 
             if (strpos($preset->path, $dirpath)===0) {
-                $can_delete = false;
+                $can_delete = false; // a block preset
             } else {
                 $can_delete = data_user_can_delete_preset($context, $preset);
             }
 
             if ($can_delete) {
-                //$params = array('id'       => $cmid,
-                //                'action'   => 'confirmdelete',
-                //                'fullname' => "$preset->userid/$preset->shortname",
-                //                'sesskey'  => sesskey());
-                //$url = new moodle_url('/mod/data/preset.php', $params);
-                $params = array('id'        => $PAGE->url->param('id'),
-                                'action'    => 'confirmdelete',
+                $url = clone($PAGE->url);
+                $url->remove_all_params();
+
+                $params = array('id'       => $PAGE->url->param('id'),
+                                'action'   => 'confirmdelete',
                                 'fullname' => "$preset->userid/$preset->shortname",
-                                'sesskey'   => sesskey());
-                $url = $PAGE->url->out_omit_querystring();
-                $url = new moodle_url($url, $params);
-                $params = array('src'   => $OUTPUT->pix_url('t/delete'),
+                                'sesskey'  => sesskey());
+                $url->params($params);
+
+                $icon = $OUTPUT->pix_url('t/delete');
+                $params = array('src'   => $icon,
                                 'class' => 'iconsmall',
                                 'alt'   => "$strdelete $preset->description");
                 $icon = html_writer::empty_tag('img', $params);
+
                 $preset->description .= html_writer::link($url, $icon);
             }
 
@@ -769,8 +849,7 @@ class block_maj_submissions_tool extends moodleform {
      */
     static public function get_sectionnums($mform, $course, $plugin) {
         $options = array();
-        $modinfo = get_fast_modinfo($course);
-        $sections = $modinfo->get_section_info_all();
+        $sections = get_fast_modinfo($course)->get_section_info_all();
         foreach ($sections as $sectionnum => $section) {
             if ($name = self::get_sectionname($section)) {
                 $options[$sectionnum] = $name;
