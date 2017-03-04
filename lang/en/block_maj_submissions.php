@@ -26,7 +26,7 @@
 
 // essential strings
 $string['pluginname'] = 'MAJ Submissions';
-$string['blockdescription'] = 'This block facilitates administration of a conference submissions system based on a set of Database and Workshop　activities.';
+$string['blockdescription'] = 'This block facilitates administration of a conference submissions system based on a set of Database and Workshop activities.';
 $string['blockname'] = 'MAJ Submissions';
 $string['blocknameplural'] = 'MAJ Submissions';
 

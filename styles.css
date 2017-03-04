@@ -168,3 +168,18 @@ div.block_maj_submissions ul.importantdates li.date.timeremaining7 span::after {
 div.block_maj_submissions p.toollink {
     margin:   4px 0px;
 }
+
+/**
+ * styles used by tools for this plugin
+ */
+#page-blocks-maj_submissions-tools-setuppresentations .presetmapping,
+#page-blocks-maj_submissions-tools-registrations .presetmapping,
+#page-blocks-maj_submissions-tools-setupworkshops .presetmapping {
+    text-align: center;
+}
+
+#page-blocks-maj_submissions-tools-setuppresentations .overwritesettings,
+#page-blocks-maj_submissions-tools-registrations .overwritesettings,
+#page-blocks-maj_submissions-tools-setupworkshops .overwritesettings {
+    margin-bottom: 1em;
+}

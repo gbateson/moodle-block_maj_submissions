@@ -330,6 +330,7 @@ class block_maj_submissions_tool extends moodleform {
         global $CFG, $DB, $OUTPUT, $PAGE;
         require_once($CFG->dirroot.'/lib/xmlize.php');
 
+        // get/create the $cm record and associated $section
         $cm = false;
         if ($data = $this->get_data()) {
 
@@ -796,7 +797,7 @@ class block_maj_submissions_tool extends moodleform {
             }
 
             // ensure each preset is only added once
-            //$exclude[] = $preset->shortname;
+            $exclude[] = $preset->shortname;
 
             if (empty($preset->userid)) {
                 $preset->userid = 0;
@@ -1112,13 +1113,16 @@ class block_maj_submissions_tool extends moodleform {
 
 class block_maj_submissions_tool_setupregistrations extends block_maj_submissions_tool {
     protected $type = 'registerdelegates';
+    protected $modulename = 'data';
     protected $defaultpreset = 'registrations';
 }
 class block_maj_submissions_tool_setuppresentations extends block_maj_submissions_tool {
     protected $type = 'collectpresentations';
+    protected $modulename = 'data';
     protected $defaultpreset = 'presentations';
 }
 class block_maj_submissions_tool_setupworkshops extends block_maj_submissions_tool {
     protected $type = 'collectworkshops';
+    protected $modulename = 'data';
     protected $defaultpreset = 'workshops';
 }
