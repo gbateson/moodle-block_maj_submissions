@@ -30,9 +30,10 @@ $plugin->dependencies = array(
     'datafield_admin'    => ANY_VERSION,
     'datafield_constant' => ANY_VERSION,
     'datafield_report'   => ANY_VERSION,
-    'datafield_template' => ANY_VERSION
+    'datafield_template' => ANY_VERSION,
+    'tool_createusers'   => ANY_VERSION
 );
 $plugin->maturity  = MATURITY_STABLE;
 $plugin->requires  = 2012062500; // Moodle 2.3
-$plugin->version   = 2017030463;
-$plugin->release   = '2017-03-04 (63)';
+$plugin->version   = 2017041965;
+$plugin->release   = '2017-04-19 (65)';

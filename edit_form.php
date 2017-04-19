@@ -114,7 +114,8 @@ class block_maj_submissions_edit_form extends block_edit_form {
         //-----------------------------------------------------------------------------
 
         $this->add_time_startfinish($mform, $plugin, 'revise');
-        $this->add_cmid($mform, $plugin, 'data,page,resource', 'revisecmid');
+        $this->add_sectionnum($mform, $plugin, 'revisesectionnum');
+        $this->add_repeat_elements($mform, $plugin, 'revisecmids', 'selectgroups', true);
 
         //-----------------------------------------------------------------------------
         $this->add_header($mform, $plugin, 'publishsubmissions');
@@ -275,15 +276,22 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $label = get_string($name);
         $text = get_string('block'.$name, $plugin);
 
+        if (isset($this->block->instance)) {
+            $blockname = $this->block->instance->blockname;
+        } else {
+            // strip "block_" prefix and "_edit_form" suffix
+            $blockname = substr(get_class($this), 6, -10);
+        }
+
         $params = array('id' => $this->block->instance->id);
-        $params = array('href' => new moodle_url('/blocks/maj_submissions/export.settings.php', $params));
+        $params = array('href' => new moodle_url('/blocks/'.$blockname.'/export.settings.php', $params));
 
         $text .= html_writer::empty_tag('br');
         $text .= html_writer::tag('a', get_string('exportsettings', $plugin), $params);
         $text .= ' '.$OUTPUT->help_icon('exportsettings', $plugin);
 
         $params = array('id' => $this->block->instance->id);
-        $params = array('href' => new moodle_url('/blocks/maj_submissions/import.settings.php', $params));
+        $params = array('href' => new moodle_url('/blocks/'.$blockname.'/import.settings.php', $params));
 
         $text .= html_writer::empty_tag('br');
         $text .= html_writer::tag('a', get_string('importsettings', $plugin), $params);
@@ -656,6 +664,19 @@ class block_maj_submissions_edit_form extends block_edit_form {
     protected function get_options_reviewcmids($mform, $plugin) {
         $sectionnum = $this->get_value($mform, 'reviewsectionnum');
         return $this->get_options_cmids($mform, $plugin, 'workshop', $sectionnum);
+    }
+
+    /**
+     * get_options_revisecmids
+     *
+     * @param object $mform
+     * @param string $plugin
+     * @return array($cmid => $cmname) of fields from the revisesectionnum for this block
+     *                                 or from the whole course (if revisesectionnum==0)
+     */
+    protected function get_options_revisecmids($mform, $plugin) {
+        $sectionnum = $this->get_value($mform, 'revisesectionnum');
+        return $this->get_options_cmids($mform, $plugin, 'data', $sectionnum);
     }
 
     /**

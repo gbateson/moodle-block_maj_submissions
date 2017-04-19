@@ -28,6 +28,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 // get required files
+require_once($CFG->dirroot.'/admin/tool/createusers/classes/form.php');
+require_once($CFG->dirroot.'/course/lib.php');
 require_once($CFG->dirroot.'/lib/formslib.php');
 require_once($CFG->dirroot.'/mod/data/lib.php');
 
@@ -45,8 +47,12 @@ class block_maj_submissions_tool extends moodleform {
 
     protected $cmid = 0;
     protected $type = '';
-    protected $defaultpreset = '';
     protected $modulename = '';
+    protected $defaultpreset = '';
+
+    protected $plugin = '';
+    protected $course = null;
+    protected $instance = null;
 
     protected $newdatavalues = array(
         'approval'        => 1,
@@ -73,32 +79,39 @@ class block_maj_submissions_tool extends moodleform {
     public function __construct($action=null, $customdata=null, $method='post', $target='', $attributes=null, $editable=true) {
 
         // extract the custom data passed from the main script
-        $this->course  = $customdata['course'];
         $this->plugin  = $customdata['plugin'];
+        $this->course  = $customdata['course'];
         $this->instance = $customdata['instance'];
 
         // convert block instance to "block_maj_submissions" object
         $this->instance = block_instance($this->instance->blockname, $this->instance);
 
         // set the "course_module" id, if it is defined and still exists
-        $cmid = $this->instance->config->{$this->type.'cmid'};
-        if (array_key_exists($cmid, get_fast_modinfo($this->course)->cms)) {
-            $this->cmid = $cmid;
+        $cmid = $this->type.'cmid';
+        if (property_exists($this->instance->config, $cmid)) {
+            $cmid = $this->instance->config->$cmid;
+            if (array_key_exists($cmid, get_fast_modinfo($this->course)->cms)) {
+                $this->cmid = $cmid;
+            }
         }
 
         // set start time, if any, in $newdatarecord
         $time = $this->type.'timestart';
-        $time = $this->instance->config->$time;
-        $this->newdatavalues['timeavailablefrom'] = $time;
-        $this->newworkshopvalues['submissionstart'] = $time;
-        $this->newworkshopvalues['assessmentstart'] = $time;
+        if (property_exists($this->instance->config, $time)) {
+            $time = $this->instance->config->$time;
+            $this->newdatavalues['timeavailablefrom'] = $time;
+            $this->newworkshopvalues['submissionstart'] = $time;
+            $this->newworkshopvalues['assessmentstart'] = $time;
+        }
 
         // set finish time, if any, in $newdatarecord
         $time = $this->type.'timefinish';
-        $time = $this->instance->config->$time;
-        $this->newdatavalues['timeavailableto'] = $time;
-        $this->newworkshopvalues['submissionend'] = $time;
-        $this->newworkshopvalues['assessmentend'] = $time;
+        if (property_exists($this->instance->config, $time)) {
+            $time = $this->instance->config->$time;
+            $this->newdatavalues['timeavailableto'] = $time;
+            $this->newworkshopvalues['submissionend'] = $time;
+            $this->newworkshopvalues['assessmentend'] = $time;
+        }
 
         // call parent constructor, as normal
         if (method_exists('moodleform', '__construct')) {
@@ -250,7 +263,11 @@ class block_maj_submissions_tool extends moodleform {
      * @todo Finish documenting this function
      */
     protected function add_field_cm($mform, $course, $plugin, $name, $numdefault=0, $namedefault='') {
-        $label = get_string($this->type.'cmid', $this->plugin);
+        if (empty($this->type)) {
+            $label = get_string('modulename', 'mod_data');
+        } else {
+            $label = get_string($this->type.'cmid', $this->plugin);
+        }
         $numoptions = self::get_cmids($mform, $course, $plugin, $this->modulename);
         $disabledif = array($name.'name' => $name.'num');
         $this->add_field_numname($mform, $plugin, $name, $numoptions, array(), $numdefault, $namedefault, $label, $disabledif);
@@ -1126,3 +1143,47 @@ class block_maj_submissions_tool_setupworkshops extends block_maj_submissions_to
     protected $modulename = 'data';
     protected $defaultpreset = 'workshops';
 }
+
+/**
+ * block_maj_submissions_tool_createusers
+ *
+ * @copyright 2017 Gordon Bateson
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since     Moodle 2.0
+ */
+class block_maj_submissions_tool_createusers extends tool_createusers_form {
+
+    // properties to hold customdata
+    protected $plugin = '';
+    protected $course = null;
+    protected $instance = null;
+
+    // should we allow student/teacher enolments
+    protected $allow_student_enrolments = true;
+    protected $allow_teacher_enrolments = false;
+
+    /**
+     * constructor
+     */
+    public function __construct($action=null, $customdata=null, $method='post', $target='', $attributes=null, $editable=true) {
+
+        // extract the custom data passed from the main script
+        $this->plugin  = $customdata['plugin'];
+        $this->course  = $customdata['course'];
+        $this->instance = $customdata['instance'];
+
+        // restrict the list of student-enrollable courses to the current course
+        $this->forcecourseid = $this->course->id;
+
+        // convert block instance to "block_maj_submissions" object
+        $this->instance = block_instance($this->instance->blockname, $this->instance);
+
+        // call parent constructor, as normal
+        if (method_exists('moodleform', '__construct')) {
+            parent::__construct($action, $customdata, $method, $target, $attributes, $editable);
+        } else {
+            parent::moodleform($action, $customdata, $method, $target, $attributes, $editable);
+        }
+    }
+}
+

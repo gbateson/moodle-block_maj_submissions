@@ -183,3 +183,20 @@ div.block_maj_submissions p.toollink {
 #page-blocks-maj_submissions-tools-setupworkshops .overwritesettings {
     margin-bottom: 1em;
 }
+
+#page-blocks-maj_submissions-tools-createusers table.createusers tr.headings {
+    background-color: #eebbee;
+}
+#page-blocks-maj_submissions-tools-createusers table.createusers tr.odd {
+    background-color: #eeeeaa;
+}
+#page-blocks-maj_submissions-tools-createusers table.createusers tr.even {
+    background-color: #ffffee;
+}
+#page-blocks-maj_submissions-tools-createusers table.createusers th,
+#page-blocks-maj_submissions-tools-createusers table.createusers td {
+    border:   1px solid black;
+    border-collapse: collapse;
+    padding:              4px;
+    text-align:        center;
+}

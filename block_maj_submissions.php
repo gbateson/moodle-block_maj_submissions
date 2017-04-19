@@ -155,7 +155,8 @@ class block_maj_submissions extends block_base {
 
             'revisetimestart'  => 0,
             'revisetimefinish' => 0,
-            'revisecmid'       => 0,
+            'revisesectionnum' => 0,
+            'revisecmids' => array(),
 
             'publishtimestart'  => 0,
             'publishtimefinish' => 0,
@@ -237,8 +238,8 @@ class block_maj_submissions extends block_base {
 
         if (count($dataids)) {
 
-            $autoincrement = false;
-            $fieldnames = self::get_constant_fieldnames($autoincrement);
+            $constanttype = 0;
+            $fieldnames = self::get_constant_fieldnames($constanttype);
             foreach ($fieldnames as $fieldname => $name) {
                 if (empty($config->displaylangs)) {
                     $langs = self::get_languages();
@@ -246,14 +247,14 @@ class block_maj_submissions extends block_base {
                     $langs = self::get_languages($config->displaylangs);
                 }
                 foreach ($langs as $lang) {
-                    $this->update_constant_field($plugin, $dataids, $config, $name, $name.$lang, $fieldname."_$lang", $autoincrement);
+                    $this->update_constant_field($plugin, $dataids, $config, $name, $name.$lang, $fieldname."_$lang", $constanttype);
                 }
             }
 
-            $autoincrement = true;
-            $fieldnames = self::get_constant_fieldnames($autoincrement);
+            $constanttype = 1;
+            $fieldnames = self::get_constant_fieldnames($constanttype);
             foreach ($fieldnames as $fieldname => $name) {
-                $this->update_constant_field($plugin, $dataids, $config, $name, $name, $fieldname, $autoincrement);
+                $this->update_constant_field($plugin, $dataids, $config, $name, $name, $fieldname, $constanttype);
             }
         }
 
@@ -344,17 +345,12 @@ class block_maj_submissions extends block_base {
      *
      * @return xxx
      */
-    protected function update_constant_field($plugin, $dataids, $config, $name, $configname, $fieldname, $autoincrement) {
+    protected function update_constant_field($plugin, $dataids, $config, $name, $configname, $fieldname, $constanttype) {
         global $DB;
         if (isset($config->$name)) {
             $param1 = $config->$name;
-            if ($autoincrement) {
-                $param2 = 1;
-                $param3 = $config->{$name.'format'};
-            } else {
-                $param2 = 0;
-                $param3 = '';
-            }
+            $param2 = $constanttype;
+            $param3 = ($constanttype==2 ? $config->{$name.'format'} : '');
             foreach ($dataids as $dataid) {
                 $params = array('dataid' => $dataid, 'name' => $fieldname);
                 if ($field = $DB->get_record('data_fields', $params)) {
@@ -555,6 +551,7 @@ class block_maj_submissions extends block_base {
             $this->content->text .= $this->get_tool_link($plugin, 'setupregistrations');
             $this->content->text .= $this->get_tool_link($plugin, 'setuppresentations');
             $this->content->text .= $this->get_tool_link($plugin, 'setupworkshops');
+            $this->content->text .= $this->get_tool_link($plugin, 'createusers');
             $this->content->text .= $this->get_tool_link($plugin, 'data2workshop');
             $this->content->text .= $this->get_tool_link($plugin, 'workshop2data');
             $this->content->text .= $this->get_tool_link($plugin, 'setupschedule');
@@ -818,11 +815,10 @@ class block_maj_submissions extends block_base {
      *
      * @return array
      */
-    protected function get_icon($src, $title, $href, $class) {
+    protected function get_icon($icon, $title, $href, $class) {
         global $OUTPUT;
-        $params = array('src' => $OUTPUT->pix_url($src), 'title' => $title);
-        $icon = html_writer::empty_tag('img', $params);
-        return html_writer::tag('a', $icon, array('href' => $href, 'class' => "icon $class"));
+        $params = array('href' => $href, 'class' => "icon $class");
+        return html_writer::tag('a', $OUTPUT->pix_icon($icon, $title), $params);
     }
 
     /**
@@ -860,11 +856,11 @@ class block_maj_submissions extends block_base {
      * @param string $dir within "pix" dir where icon file is located
      * @return array
      */
-    protected function get_exportimport_icon($plugin, $action, $type, $path) {
+    protected function get_exportimport_icon($plugin, $action, $type, $icon) {
         $title = get_string($action.$type, $plugin);
         $params = array('id' => $this->instance->id, 'sesskey' => sesskey());
         $href = new moodle_url("/blocks/maj_submissions/$action.$type.php", $params);
-        return $this->get_icon($path, $title, $href, $action.$type.'icon');
+        return $this->get_icon($icon, $title, $href, $action.$type.'icon');
     }
 
     /**
@@ -1170,29 +1166,31 @@ class block_maj_submissions extends block_base {
     /**
      * get_constant_fieldnames
      *
+     * @param integer $type (0, 1 or 2)
      * @return array(database_field_name => configfieldname)
      */
-    static public function get_constant_fieldnames($autoincrement) {
-        if ($autoincrement) {
-            return array(
-                'badge_number'          => 'badgenumber',
-                'fee_receipt_number'    => 'feereceiptnumber',
-                'dinner_receipt_number' => 'dinnerreceiptnumber',
-                'dinner_ticket_number'  => 'dinnerticketnumber',
-                'certificate_number'    => 'certificatenumber',
-            );
-        } else {
-            return array(
-                'conference_name'  => 'conferencename',
-                'conference_venue' => 'conferencevenue',
-                'conference_dates' => 'conferencedates',
-                'dinner_name'      => 'dinnername',
-                'dinner_venue'     => 'dinnervenue',
-                'dinner_date'      => 'dinnerdate',
-                'dinner_time'      => 'dinnertime',
-                'certificate_date' => 'certificatedate'
-            );
+    static public function get_constant_fieldnames($constanttype) {
+        if ($constanttype==0) { // constant
+            return array('conference_name'  => 'conferencename',
+                         'conference_venue' => 'conferencevenue',
+                         'conference_dates' => 'conferencedates',
+                         'dinner_name'      => 'dinnername',
+                         'dinner_venue'     => 'dinnervenue',
+                         'dinner_date'      => 'dinnerdate',
+                         'dinner_time'      => 'dinnertime',
+                         'certificate_date' => 'certificatedate');
         }
+        if ($constanttype==1) { // autoincrement
+            return array('badge_number'          => 'badgenumber',
+                         'fee_receipt_number'    => 'feereceiptnumber',
+                         'dinner_receipt_number' => 'dinnerreceiptnumber',
+                         'dinner_ticket_number'  => 'dinnerticketnumber',
+                         'certificate_number'    => 'certificatenumber');
+        }
+        if ($constanttype==2) { // random
+            return array('unique_key' => 'uniquekey');
+        }
+        return array(); // shouldn't happen !!
     }
 
     /**
