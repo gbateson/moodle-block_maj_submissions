@@ -130,8 +130,6 @@ class block_maj_submissions extends block_base {
             'receptiontimefinish' => 0,
             'receptioncmid'       => 0,
 
-            // conference phases
-
             'collectpresentationstimestart'  => 0,
             'collectpresentationstimefinish' => 0,
             'collectpresentationscmid'       => 0,
@@ -144,19 +142,13 @@ class block_maj_submissions extends block_base {
             'collectsponsoredstimefinish' => 0,
             'collectsponsoredscmid'       => 0,
 
-            // fields used to filter data into workshops
-            // e.g. presentation_type AND presentation_language
-            'filterconditions' => array(),
-
             'reviewtimestart'  => 0,
             'reviewtimefinish' => 0,
             'reviewsectionnum' => 0,
-            'reviewcmids' => array(),
 
             'revisetimestart'  => 0,
             'revisetimefinish' => 0,
             'revisesectionnum' => 0,
-            'revisecmids' => array(),
 
             'publishtimestart'  => 0,
             'publishtimefinish' => 0,
@@ -183,9 +175,9 @@ class block_maj_submissions extends block_base {
             $this->config = new stdClass();
         }
 
-        foreach ($defaults as $name => $items) {
+        foreach ($defaults as $name => $value) {
             if (! isset($this->config->$name)) {
-                $this->config->$name = $items;
+                $this->config->$name = $value;
             }
         }
 

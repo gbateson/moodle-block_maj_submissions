@@ -105,7 +105,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
 
         $this->add_time_startfinish($mform, $plugin, 'review');
         $this->add_sectionnum($mform, $plugin, 'reviewsectionnum');
-        $this->add_repeat_elements($mform, $plugin, 'reviewcmids', 'selectgroups', true);
+        //$this->add_repeat_elements($mform, $plugin, 'reviewcmids', 'selectgroups', true);
 
         //-----------------------------------------------------------------------------
         $this->add_header($mform, $plugin, 'revisesubmissions');
@@ -113,7 +113,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
 
         $this->add_time_startfinish($mform, $plugin, 'revise');
         $this->add_sectionnum($mform, $plugin, 'revisesectionnum');
-        $this->add_repeat_elements($mform, $plugin, 'revisecmids', 'selectgroups', true);
+        //$this->add_repeat_elements($mform, $plugin, 'revisecmids', 'selectgroups', true);
 
         //-----------------------------------------------------------------------------
         $this->add_header($mform, $plugin, 'publishsubmissions');

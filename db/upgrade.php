@@ -100,7 +100,7 @@ function xmldb_block_maj_submissions_upgrade($oldversion=0) {
         // standardize names of events and phrases
         /////////////////////////////////////////////////
 
-        $fieldnames = array(
+        $names = array(
             // events
             'conference' => 'conference',
             'workshops'  => 'workshops',
@@ -116,79 +116,101 @@ function xmldb_block_maj_submissions_upgrade($oldversion=0) {
             'registerpresenter' => 'registerpresenters',
         );
 
-        $block = new block_maj_submissions;
-        $block->specialization(); // setup $block->config
+        block_maj_submissions_upgrade_fix_property_names($names);
+        upgrade_block_savepoint($result, "$newversion", 'maj_submissions');
+    }
 
-        if ($instances = $DB->get_records('block_instances', array('blockname' => 'maj_submissions'))) { 
-            foreach ($instances as $instance) {
-
-                if (empty($instance->configdata)) {
-                    continue;
-                }
-
-                $instance->config = unserialize(base64_decode($instance->configdata));
-
-                if (empty($instance->config)) {
-                    continue;
-                }
-
-                if (isset($instance->config->displaylangs)) {
-                    $langs = $instance->config->displaylangs;
-                    $langs = explode(',', $langs);
-                    $langs = array_map('trim', $langs);
-                    $langs = array_filter($langs);
-                } else {
-                    $langs = get_string_manager()->get_list_of_translations();
-                    $langs = array_keys($langs);
-                }
-
-                $oldnames = get_object_vars($instance->config);
-                foreach ($oldnames as $oldname => $value) {
-                    $suffix = '';
-                    $basename = $oldname;
-                    foreach ($langs as $lang) {
-                        $len = strlen($lang);
-                        if (substr($basename, -$len)==$lang) {
-                            $suffix = $lang;
-                            $basename = substr($basename, 0, -$len);
-                            break; // stop foreach loop
-                        }
-                    }
-                    if (substr($basename, -4)=='cmid') {
-                        $suffix = 'cmid'.$suffix;
-                        $basename = substr($basename, 0, -4);
-                    } else if (substr($basename, -5)=='cmids') {
-                        $suffix = 'cmids'.$suffix;
-                        $basename = substr($basename, 0, -5);
-                    } else if (substr($basename, -9)=='timestart') {
-                        $suffix = 'timestart'.$suffix;
-                        $basename = substr($basename, 0, -9);
-                    } else if (substr($basename, -10)=='timefinish') {
-                        $suffix = 'timefinish'.$suffix;
-                        $basename = substr($basename, 0, -10);
-                    }
-                    if (array_key_exists($basename, $fieldnames)) {
-                        $newname = $fieldnames[$basename].$suffix;
-                        if ($newname==$oldname) {
-                            // do nothing
-                        } else {
-                            $instance->config->$newname = $value;
-                            unset($instance->config->$oldname);
-                        }
-                    } else if (property_exists($block->config, $basename)) {
-                        // do nothing
-                    } else {
-                        unset($instance->config->$oldname);
-                    }
-                }
-
-                $instance->configdata = base64_encode(serialize($instance->config));
-                $DB->set_field('block_instances', 'configdata', $instance->configdata, array('id' => $instance->id));
-            }
-        }
-    
+    $newversion = 2017042068;
+    if ($oldversion < $newversion) {
+        block_maj_submissions_upgrade_fix_property_names();
         upgrade_block_savepoint($result, "$newversion", 'maj_submissions');
     }
 
     return $result;
+}
+
+function block_maj_submissions_upgrade_fix_property_names($names=null) {
+    global $DB;
+
+    if ($names===null) {
+        $names = array();
+    }
+
+    $block = new block_maj_submissions();
+    $block->specialization(); // setup $block->config
+
+    if ($instances = $DB->get_records('block_instances', array('blockname' => 'maj_submissions'))) { 
+        foreach ($instances as $instance) {
+
+            if (empty($instance->configdata)) {
+                continue;
+            }
+
+            $instance->config = unserialize(base64_decode($instance->configdata));
+
+            if (empty($instance->config)) {
+                continue;
+            }
+
+            if (isset($instance->config->displaylangs)) {
+                $langs = $instance->config->displaylangs;
+                $langs = explode(',', $langs);
+                $langs = array_map('trim', $langs);
+                $langs = array_filter($langs);
+            } else {
+                $langs = get_string_manager()->get_list_of_translations();
+                $langs = array_keys($langs);
+            }
+
+            $oldnames = get_object_vars($instance->config);
+            foreach ($oldnames as $oldname => $value) {
+                $prefix = '';
+                $suffix = '';
+                $basename = $oldname;
+
+                // $basename is $oldname without trailing lang code
+                foreach ($langs as $lang) {
+                    $len = strlen($lang);
+                    if (substr($basename, -$len)==$lang) {
+                        $suffix = $lang;
+                        $basename = substr($basename, 0, -$len);
+                        break; // stop foreach loop
+                    }
+                }
+
+                // determine the prefix and suffix for this $basename
+                if (substr($basename, -4)=='cmid') {
+                    $suffix = 'cmid'.$suffix;
+                    $prefix = substr($basename, 0, -4);
+                } else if (substr($basename, -5)=='cmids') {
+                    $suffix = 'cmids'.$suffix;
+                    $prefix = substr($basename, 0, -5);
+                } else if (substr($basename, -9)=='timestart') {
+                    $suffix = 'timestart'.$suffix;
+                    $prefix = substr($basename, 0, -9);
+                } else if (substr($basename, -10)=='timefinish') {
+                    $suffix = 'timefinish'.$suffix;
+                    $prefix = substr($basename, 0, -10);
+                }
+
+                // unset the property if it is no longer used
+                if (array_key_exists($prefix, $names)) {
+                    $newname = $names[$prefix].$suffix;
+                    if ($newname==$oldname) {
+                        // do nothing
+                    } else {
+                        unset($instance->config->$oldname);
+                        $instance->config->$newname = $value;
+                    }
+                } else if (property_exists($block->config, $basename)) {
+                    // do nothing
+                } else {
+                    unset($instance->config->$oldname);
+                }
+            }
+
+            $instance->configdata = base64_encode(serialize($instance->config));
+            $DB->set_field('block_instances', 'configdata', $instance->configdata, array('id' => $instance->id));
+        }
+    }
 }
