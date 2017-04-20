@@ -34,7 +34,7 @@ $string['blocknameplural'] = 'MAJ申請';
 $string['maj_submissions:addinstance'] = 'Add a new MAJ申請 block';
 
 // more strings
-$string['addfilterfields'] = 'Add a filter field';
+$string['addfilterconditions'] = 'Add a filter field';
 $string['addreviewcmids'] = 'Add a review activity';
 $string['addrevisecmids'] = 'Add a revision activity';
 $string['collectpresentationscmid_help'] = 'The database activity that is used to collect submissions.';
@@ -67,8 +67,8 @@ $string['dateopenedon'] = '{$a} に開始した';
 $string['dateopenson'] = '{$a} に開始する';
 $string['exportsettings_help'] = 'This link allows you export the configuration settings for this block to a file that you can import into a similar block in another course.';
 $string['exportsettings'] = '設定をエキスポートする';
-$string['filterfields_help'] = 'This field is used to filter the collected submissions into one or more workshop activities for peer review.';
-$string['filterfields'] = 'Filter field ({no})';
+$string['filterconditions_help'] = 'This field is used to filter the collected submissions into one or more workshop activities for peer review.';
+$string['filterconditions'] = 'Filter field ({no})';
 $string['fixdates_help'] = 'These settings control whether or not the leading zero on months, days and hours less than 10 are removed.';
 $string['fixdates'] = 'Remove leading zeros';
 $string['importantdates'] = '重要日時一覧';

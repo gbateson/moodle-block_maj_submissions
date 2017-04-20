@@ -34,7 +34,7 @@ $string['blocknameplural'] = 'MAJ Submissions';
 $string['maj_submissions:addinstance'] = 'Add a new MAJ Submissions block';
 
 // more strings
-$string['addfilterfields'] = 'Add a filter field';
+$string['addfilterconditions'] = 'Add a filter condition';
 $string['addreviewcmids'] = 'Add a review activity';
 $string['addrevisecmids'] = 'Add a revision activity';
 $string['autoincrementsettings_help'] = 'These settings define the starting values and output format strings for the auto-increment fields in the registration database.
@@ -118,8 +118,8 @@ $string['exportsettings_help'] = 'This link allows you export the configuration 
 $string['exportsettings'] = 'Export settings';
 $string['feereceiptnumber_help'] = 'The starting value for the auto-increment fee receipt numbers.';
 $string['feereceiptnumber'] = 'Fee receipt number';
-$string['filterfields_help'] = 'This field is used to filter the collected submissions into one or more workshop activities for peer review.';
-$string['filterfields'] = 'Filter field ({no})';
+$string['filterconditions_help'] = 'This filter is used to decide which submissions from the source database should be transferred to the target workshop activity for vetting.';
+$string['filterconditions'] = 'Filter condition ({no})';
 $string['fixdates_help'] = 'These settings control whether or not the leading zero on months, days and hours less than 10 are removed.';
 $string['fixdates'] = 'Remove leading zeros';
 $string['importantdates'] = 'Important dates';
@@ -128,6 +128,7 @@ $string['importsettings_help'] = 'This link takes you to a screen where you can 
 
 A settings file is created using the "Export settings" link on a MAJ submissions block configuration settings page.';
 $string['importsettings'] = 'Import settings';
+$string['isinlist'] = 'is in list';
 $string['invalidblockname'] = 'Invalid block name in block instance record: id={$a->id}, blockname={$a->blockname}';
 $string['invalidcontextid'] = 'Invalid parentcontextid in block instance record: id = {$a->id}, parentcontextid = {$a->parentcontextid}';
 $string['invalidcourseid'] = 'Invalid instanceid in course context record: id={$a->id}, instanceid={$a->instanceid}';
@@ -149,6 +150,11 @@ $string['moodledatefmt'] = 'Moodle date format string';
 $string['preset_help'] = 'A "preset" is a template for creating a Moodle database activity. It includes specifications of the database fields, and the layout of the webpages to edit and display records. However, it does not include any actual data.
 
 You can either choose one of the presets that is already available on this Moodle site, or you can import a preset from a zip file. Preset zip files are created using the "export" tab within a Moodle database that already exists.';
+$string['notendswith'] = 'does not end with';
+$string['notisempty'] = 'is not empty';
+$string['notisequalto'] = 'is not equal to';
+$string['notisinlist'] = 'is not in list';
+$string['notstartswith'] = 'does not start with';
 $string['preset'] = 'Database preset';
 $string['presetfile_help'] = 'Upload the zip file of a preset that has been exported from a Moodle database activity.';
 $string['presetfile'] = 'Preset zip file';
@@ -179,6 +185,14 @@ $string['registerpresenterssectionnum_help'] = 'The course section in which to c
 $string['registerpresenterssectionnum'] = 'Registration section';
 $string['registerpresenterstime_help'] = 'The dates and times at which the online registration for presenters starts and finshes.';
 $string['registerpresenterstime'] = 'Registration for presenters';
+$string['resetworkshop_help']= 'This setting specifies whether or not to reset the target workshop before transferring submissions from the source database.
+
+**No**
+: Data that is currently in the workshop will be left untouched and new data from the source database will be added to it.
+
+**Yes**
+: All data will be removed from the target workshop before submissions are transferred from the source database. In addition, any links from other databases to the workshop will be removed.';
+$string['resetworkshop']= 'Reset workshop';
 $string['reviewcmids_help'] = 'A workshop activity that is used to peer review submissions.';
 $string['reviewcmids'] = 'Review activity ({no})';
 $string['reviewsectionnum_help'] = 'The course section where the activities for reviewing submissions are located.';
@@ -195,15 +209,27 @@ $string['revisetime_help'] = 'The start and finish dates of the period during wh
 $string['revisetime'] = 'Final editing of submissions';
 $string['shortentimes_help'] = 'If this setting is enabled, then times will not be shown if the start time is 00:00 and the end time is 23:55';
 $string['shortentimes'] = 'Shorten time stamps';
+$string['sourcedatabase_help'] = 'Select the database which contains the submissions to be vetted.';
+$string['sourcedatabase'] = 'Source database';
 $string['state'] = 'State';
+$string['targetworkshop_help'] = 'Select the workshop to which the submissions matching the above conditions are to be copied for vetting.';
+$string['targetworkshop'] = 'Target workshop';
 $string['timefinish'] = 'Finish';
 $string['timestart'] = 'Start';
 $string['title_help'] = 'This is the string that will be displayed as the title of this block. If this field is blank, no title will be displayed for this block.';
 $string['title'] = 'Title';
+$string['toolsetupvetting_desc'] = 'Assign users to vet submissions';
+$string['toolsetupvetting_help'] = 'On this page you can designate which group of anonymous users will vet and review the submissions in a workshop activity.';
+$string['toolsetupvetting'] = 'Setup vetting responsibilties';
 $string['toolcreateusers_desc'] = 'Setup groups of anonymous users';
 $string['toolcreateusers'] = 'Create vetting users and groups';
 $string['tooldata2workshop_desc'] = 'Convert Database -> Workshops';
-$string['tooldata2workshop'] = 'Allocate presentations for review';
+$string['tooldata2workshop_help'] = 'On this page you can select records from a submissions database and copy them to a workshop activity where they can be assessed and reviewed anonymously. You can use a currently existing workshop activity or create a new one.
+
+**To use an existing workshop** in this course, select it from the "Target workshop" menu below.
+
+**To create a new workshop**, give a name for the new workshop and specify the section in which it should be created. This can be an existing section, or a new section. If you specify a new section you will need to give a name for the new section.';
+$string['tooldata2workshop'] = 'Prepare submissions for review';
 $string['toolsetup_help'] = 'On this page you can set up a database for a conference. You can overwrite a currently existing database or create a new one.
 
 **To use an existing database** in this course, select it from the drop down menu below.
@@ -219,10 +245,12 @@ $string['toolsetupschedule'] = 'Setup the schedule';
 $string['toolsetupworkshops_desc'] = 'Setup a database for workshops';
 $string['toolsetupworkshops'] = 'Collect workshop proposals';
 $string['toolworkshop2data_desc'] = 'Convert Workshops -> Database';
-$string['toolworkshop2data'] = 'Publish review results';
+$string['toolworkshop2data'] = 'Publish vetting results';
 $string['unknownlanguage'] = 'Unknown language';
 $string['uploadpreset'] = 'Upload preset zip file';
 $string['validimportfile'] = 'Configuration settings were successfully imported';
+$string['vettinggroup_help'] = 'Select the group of users who are to review and vet the submissions in the target workshop activity.';
+$string['vettinggroup'] = 'Vetting group';
 $string['workshopscmid_help'] = 'The page resource that displays information about the conference workshops.';
 $string['workshopscmid'] = 'Workshop information';
 $string['workshopstime_help'] = 'The start and finish dates of the conference workshops.';

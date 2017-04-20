@@ -24,7 +24,7 @@
  * @since      Moodle 2.0
  */
 
-// disable direct access to this block
+// disable direct access to this script
 defined('MOODLE_INTERNAL') || die();
 
 // get required files
@@ -34,25 +34,22 @@ require_once($CFG->dirroot.'/lib/formslib.php');
 require_once($CFG->dirroot.'/mod/data/lib.php');
 
 /**
- * block_maj_submissions_tool
+ * block_maj_submissions_tool_base
  *
  * @copyright 2014 Gordon Bateson
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since     Moodle 2.0
  */
-class block_maj_submissions_tool extends moodleform {
+abstract class block_maj_submissions_tool_base extends moodleform {
 
     const CREATE_NEW = -1;
     const TEXT_FIELD_SIZE = 20;
 
     protected $cmid = 0;
-    protected $type = '';
-    protected $modulename = '';
-    protected $defaultpreset = '';
-
     protected $plugin = '';
     protected $course = null;
     protected $instance = null;
+    protected $modulename = '';
 
     protected $newdatavalues = array(
         'approval'        => 1,
@@ -86,6 +83,635 @@ class block_maj_submissions_tool extends moodleform {
         // convert block instance to "block_maj_submissions" object
         $this->instance = block_instance($this->instance->blockname, $this->instance);
 
+        // call parent constructor, to continue normal setup
+        if (method_exists('moodleform', '__construct')) {
+            parent::__construct($action, $customdata, $method, $target, $attributes, $editable);
+        } else {
+            parent::moodleform($action, $customdata, $method, $target, $attributes, $editable);
+        }
+    }
+
+    /**
+     * add_field_cm
+     *
+     * @param object  $mform
+     * @param object  $course
+     * @param string  $plugin
+     * @param string  $name
+     * @param integer $numdefault (optional, default=0)
+     * @param string  $namedefault (optional, default="")
+     * @param string  $label (optional, default="")
+     * @return void, but will update $mform
+     * @todo Finish documenting this function
+     */
+    protected function add_field_cm($mform, $course, $plugin, $name, $numdefault=0, $namedefault='') {
+        if (empty($this->type)) {
+            $label = get_string($name, $plugin);
+        } else {
+            $label = get_string($this->type.'cmid', $this->plugin);
+        }
+        $numoptions = self::get_cmids($mform, $course, $plugin, $this->modulename, 'activity');
+        $disabledif = array($name.'name' => $name.'num');
+        $this->add_field_numname($mform, $plugin, $name, $numoptions, array(), $numdefault, $namedefault, $label, $disabledif);
+    }
+
+    /**
+     * add_field_section
+     *
+     * @param object  $mform
+     * @param object  $course
+     * @param string  $plugin
+     * @param string  $name
+     * @param integer $numdefault (optional, default=0)
+     * @param string  $namedefault (optional, default="")
+     * @return void, but will update $mform
+     * @todo Finish documenting this function
+     */
+    protected function add_field_section($mform, $course, $plugin, $name, $cmidfield, $numdefault=0, $namedefault='', $label='') {
+        $numoptions = self::get_sectionnums($mform, $course, $plugin);
+        $disabledif = array($name.'name' => $name.'num', $name.'num' => $cmidfield.'num');
+        $this->add_field_numname($mform, $plugin, $name, $numoptions, array(), $numdefault, $namedefault, $label, $disabledif);
+    }
+
+    /**
+     * add_field_numname
+     *
+     * @param object  $mform
+     * @param string  $plugin
+     * @param string  $name
+     * @param array   $numoptions
+     * @param array   $nameoptions
+     * @param integer $numdefault
+     * @param string  $namedefault
+     * @param string  $label
+     * @param array   $disabledif
+     * @return void, but will update $mform
+     * @todo Finish documenting this function
+     */
+    protected function add_field_numname($mform, $plugin, $name, $numoptions, $nameoptions=array(), $numdefault=0, $namedefault='', $label='', $disabledif=array()) {
+        $group_name = 'group_'.$name;
+        if ($label=='') {
+            $label = get_string($name, $plugin);
+        }
+        if (is_array(current($numoptions))) {
+            $select = 'selectgroups';
+        } else {
+            $select = 'select';
+        }
+        if (empty($nameoptions)) {
+            $nameoptions = array('size' => self::TEXT_FIELD_SIZE);
+        }
+        $elements = array(
+            $mform->createElement($select, $name.'num', '', $numoptions),
+            $mform->createElement('text', $name.'name', '', $nameoptions)
+        );
+        $mform->addGroup($elements, $group_name, $label, ' ', false);
+        $mform->addHelpButton($group_name, $name, $plugin);
+        $mform->setType($name.'num', PARAM_INT);
+        $mform->setType($name.'name', PARAM_TEXT);
+        $mform->setDefault($name.'num', $numdefault);
+        $mform->setDefault($name.'name', $namedefault);
+        foreach ($disabledif as $element1 => $element2) {
+            $mform->disabledIf($element1, $element2, 'neq', self::CREATE_NEW);
+        }
+    }
+
+    /**
+     * add_field
+     *
+     * @param object $mform
+     * @param string $plugin
+     * @param string $type e.g. month, day, hour
+     * @return void, but will modify $mform
+     */
+    protected function add_field($mform, $plugin, $name, $elementtype, $paramtype, $options=null, $default=null) {
+        $label = get_string($name, $plugin);
+        $mform->addElement($elementtype, $name, $label, $options);
+        $mform->setType($name, $paramtype);
+        $mform->setDefault($name, $default);
+        $mform->addHelpButton($name, $name, $plugin);
+    }
+
+    /**
+     * process_action
+     *
+     * @uses $DB
+     * @param object $course
+     * @param string $sectionname
+     * @return object
+     * @todo Finish documenting this function
+     */
+    public function process_action() {
+        global $DB, $PAGE, $OUTPUT;
+
+        if (! $action = optional_param('action', '', PARAM_ALPHANUM)) {
+            return ''; // no action specified
+        }
+
+        if (! optional_param('sesskey', false, PARAM_BOOL)) {
+            return ''; // no sesskey - unusual !!
+        }
+
+        if (! confirm_sesskey()) {
+            return ''; // invalid sesskey - unusual !!
+        }
+
+        $message = '';
+
+        if ($action=='confirmdelete') {
+        }
+
+        if ($action=='delete') {
+        }
+
+        return $message;
+    }
+
+    /**
+     * get_section
+     *
+     * @uses $DB
+     * @param object $course
+     * @param string $sectionname
+     * @return object
+     * @todo Finish documenting this function
+     */
+    static public function get_section($course, $sectionname) {
+        global $DB;
+
+        // some DBs (e.g. MSSQL) cannot compare TEXT fields
+        // so we must CAST them to something else (e.g. CHAR)
+        $summary = $DB->sql_compare_text('summary');
+        $sequence = $DB->sql_compare_text('sequence');
+
+        $select = 'course = ? AND (name = ? OR '.$summary.' = ?)';
+        $params = array($course->id, $sectionname, $sectionname);
+        if ($section = $DB->get_records_select('course_sections', $select, $params, 'section', '*', 0, 1)) {
+            $section = reset($section);
+        }
+
+        // reuse an empty section, if possible
+        if (empty($section)) {
+            $select = 'course = ? AND section > ?'.
+                      ' AND (name IS NULL OR name = ?)'.
+                      ' AND (summary IS NULL OR '.$summary.' = ?)'.
+                      ' AND (sequence IS NULL OR '.$sequence.' = ?)';
+            $params = array($course->id, 0, '', '', '');
+            if ($section = $DB->get_records_select('course_sections', $select, $params, 'section', '*', 0, 1)) {
+                $section = reset($section);
+                $section->name = $sectionname;
+                $DB->update_record('course_sections', $section);
+            }
+        }
+
+        // create a new section, if necessary
+        if (empty($section)) {
+            $sql = 'SELECT MAX(section) FROM {course_sections} WHERE course = ?';
+            if ($sectionnum = $DB->get_field_sql($sql, array($course->id))) {
+                $sectionnum ++;
+            } else {
+                $sectionnum = 1;
+            }
+            $section = (object)array(
+                'course'        => $course->id,
+                'section'       => $sectionnum,
+                'name'          => $sectionname,
+                'summary'       => '',
+                'summaryformat' => FORMAT_HTML,
+            );
+            $section->id = $DB->insert_record('course_sections', $section);
+        }
+
+        if ($section) {
+            if ($section->section > self::get_numsections($course)) {
+                self::set_numsections($course, $section->section);
+            }
+        }
+
+        return $section;
+    }
+
+    /**
+     * get_coursemodule
+     *
+     * @uses $DB
+     * @uses $USER
+     * @param object $course
+     * @param object $section
+     * @param string $modulename
+     * @param string $instancename
+     * @return object
+     * @todo Finish documenting this function
+     */
+    static public function get_coursemodule($course, $section, $modulename, $instancename, $newrecordvalues) {
+        global $DB, $USER;
+
+        // cache the module id
+        $moduleid = $DB->get_field('modules', 'id', array('name' => $modulename));
+
+        if (empty($moduleid)) {
+            return null; // shouldn't happen !!
+        }
+
+        // if possible, return the most recent visible version of this course_module
+        $select = 'cm.*';
+        $from   = '{course_modules} cm '.
+                  'JOIN {course_sections} cs ON cm.section = cs.id '.
+                  'JOIN {'.$modulename.'} x ON cm.module = ? AND cm.instance = x.id';
+        $where  = 'cs.section = ? AND x.name = ? AND cm.visible = ?';
+        $params = array($moduleid, $section->section, $instancename, 1);
+        $order  = 'cm.visible DESC, cm.added DESC'; // newest, visible cm first
+        if ($cm = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $order", $params, 0, 1)) {
+            return reset($cm);
+        }
+
+        // initialize $newrecord
+        $newrecord = (object)array(
+            'name'          => $instancename,
+            // standard fields for adding a new cm
+            'course'        => $course->id,
+            'section'       => $section->section,
+            'module'        => $moduleid,
+            'modulename'    => $modulename,
+            'add'           => $modulename,
+            'update'        => 0,
+            'return'        => 0,
+            'cmidnumber'    => '',
+            'groupmode'     => 0, // no groups
+            'MAX_FILE_SIZE' => 10485760, // 10 GB
+        );
+
+        foreach ($newrecordvalues as $column => $value) {
+            $newrecord->$column = $value;
+        }
+
+        // add default values
+        $columns = $DB->get_columns($modulename);
+        foreach ($columns as $column) {
+            if ($column->not_null) {
+                $name = $column->name;
+                if ($name=='id' || isset($newrecord->$name)) {
+                    // do nothing
+                } else if (isset($column->default_value)) {
+                    $newrecord->$name = $column->default_value;
+                } else {
+                    // see: lib/dml/database_column_info.php
+                    // R - counter (integer primary key)
+                    // I - integers
+                    // N - numbers (floats)
+                    // T - timestamp - unsupported
+                    // D - date - unsupported
+                    // L - boolean (1 bit)
+                    // C - characters and strings
+                    // X - texts
+                    // B - binary blobs
+                    if (preg_match('/^[RINTDL]$/', $column->meta_type)) {
+                        $newrecord->$name = 0;
+                    } else {
+                        $newrecord->$name = '';
+                    }
+                }
+            }
+        }
+
+        // set the instanceid i.e. the "id" in the $modulename table
+        if (! $newrecord->instance = $DB->insert_record($modulename, $newrecord)) {
+            return false;
+        }
+
+        // set the coursemoduleid i.e. the "id" in the "course_modules" table
+        if (! $newrecord->coursemodule = add_course_module($newrecord) ) {
+            throw new exception('Could not add a new course module');
+        }
+
+        $newrecord->id = $newrecord->coursemodule;
+        if (function_exists('course_add_cm_to_section')) {
+            // Moodle >= 2.4
+            $sectionid = course_add_cm_to_section($newrecord->course, $newrecord->id, $section->section);
+        } else {
+            // Moodle <= 2.3
+            $sectionid = add_mod_to_section($newrecord);
+        }
+        if (! $sectionid) {
+            throw new exception('Could not add the new course module to that section');
+        }
+        if (! $DB->set_field('course_modules', 'section',  $sectionid, array('id' => $newrecord->id))) {
+            throw new exception('Could not update the course module with the correct section');
+        }
+
+        // if the section is hidden, we should also hide the new instance
+        if (! isset($newrecord->visible)) {
+            $newrecord->visible = $DB->get_field('course_sections', 'visible', array('id' => $sectionid));
+        }
+        set_coursemodule_visible($newrecord->id, $newrecord->visible);
+
+        // Trigger mod_updated event with information about this module.
+        $event = (object)array(
+            'courseid'   => $newrecord->course,
+            'cmid'       => $newrecord->id,
+            'modulename' => $newrecord->modulename,
+            'name'       => $newrecord->name,
+            'userid'     => $USER->id
+        );
+        if (function_exists('events_trigger_legacy')) {
+            events_trigger_legacy('mod_updated', $event);
+        } else {
+            events_trigger('mod_updated', $event);
+        }
+
+        // rebuild_course_cache
+        rebuild_course_cache($course->id);
+
+        return $newrecord;
+    }
+
+    /**
+     * get_options_sectionnum
+     *
+     * @param object $mform
+     * @param object $course
+     * @param string $plugin
+     * @return array($sectionnum => $sectionname) of sections in this course
+     */
+    static public function get_sectionnums($mform, $course, $plugin) {
+        $options = array();
+        $sections = get_fast_modinfo($course)->get_section_info_all();
+        foreach ($sections as $sectionnum => $section) {
+            if ($name = self::get_sectionname($section)) {
+                $options[$sectionnum] = $name;
+            } else {
+                $options[$sectionnum] = self::get_sectionname_default($course, $sectionnum);
+            }
+        }
+        return self::format_select_options($plugin, $options, 'section');
+    }
+
+    /**
+     * get_sectionname_default
+     *
+     * @param object   $course
+     * @param object   $section
+     * @param string   $dateformat (optional, default='%b %d')
+     * @return string  name of $section
+     */
+    static public function get_sectionname_default($course, $sectionnum, $dateformat='%b %d') {
+
+        // set course section type
+        if ($course->format=='weeks') {
+            $sectiontype = 'week';
+        } else if ($course->format=='topics') {
+            $sectiontype = 'topic';
+        } else {
+            $sectiontype = 'section';
+        }
+
+        // "weeks" format
+        if ($sectiontype=='week' && $sectionnum > 0) {
+            if ($dateformat=='') {
+                $dateformat = get_string('strftimedateshort');
+            }
+            // 604800 : number of seconds in 7 days i.e. WEEKSECS
+            // 518400 : number of seconds in 6 days i.e. WEEKSECS - DAYSECS
+            $date = $course->startdate + 7200 + (($sectionnum - 1) * 604800);
+            return userdate($date, $dateformat).' - '.userdate($date + 518400, $dateformat);
+        }
+
+        // get string manager object
+        $strman = get_string_manager();
+
+        // specify course format plugin name
+        $courseformat = 'format_'.$course->format;
+
+        if ($strman->string_exists('section'.$sectionnum.'name', $courseformat)) {
+            return get_string('section'.$sectionnum.'name', $courseformat);
+        }
+
+        if ($strman->string_exists('sectionname', $courseformat)) {
+            return get_string('sectionname', $courseformat).' '.$sectionnum;
+        }
+
+        if ($strman->string_exists($sectiontype, 'moodle')) {
+            return get_string($sectiontype).' '.$sectionnum;
+        }
+
+        if ($strman->string_exists('sectionname', 'moodle')) {
+            return get_string('sectionname').' '.$sectionnum;
+        }
+
+        return $sectiontype.' '.$sectionnum;
+    }
+
+    /**
+     * get_options_cmids
+     *
+     * @param object  $mform
+     * @param string  $course
+     * @param string  $plugin
+     * @param string  $modnames
+     * @param integer $sectionnum (optional, default=0)
+     * @return array($cmid => $name) of activities from the specified $sectionnum
+     *                               or from the whole course (if $sectionnum==0)
+     */
+    static public function get_cmids($mform, $course, $plugin, $modnames, $type='', $sectionnum=0) {
+        $options = array();
+
+        $modnames = explode(',', $modnames);
+        $modnames = array_filter($modnames);
+        $count = count($modnames);
+
+        $modinfo = get_fast_modinfo($course);
+        $sections = $modinfo->get_section_info_all();
+        foreach ($sections as $section) {
+
+            $sectionname = '';
+            if ($sectionnum==0 || $sectionnum==$section->section) {
+                $cmids = $section->sequence;
+                $cmids = explode(',', $cmids);
+                $cmids = array_filter($cmids);
+                foreach ($cmids as $cmid) {
+                    if (array_key_exists($cmid, $modinfo->cms)) {
+                        $cm = $modinfo->get_cm($cmid);
+                        if ($count==0 || in_array($cm->modname, $modnames)) {
+                            if ($sectionname=='') {
+                                $sectionname = self::get_sectionname($section, 0);
+                                $options[$sectionname] = array();
+                            }
+                            $name = $cm->name;
+                            $name = block_maj_submissions::filter_text($name);
+                            $name = block_maj_submissions::trim_text($name);
+                            $options[$sectionname][$cmid] = $name;
+                        }
+                    }
+                }
+            }
+        }
+        return self::format_selectgroups_options($plugin, $options, $type);
+    }
+
+    /**
+     * format_selectgroups_options
+     *
+     * @param string   $plugin
+     * @param array    $options
+     * @param string   $type ("field", "activity" or "section")
+     * @return array  $option for a select element in $mform
+     */
+    static public function format_selectgroups_options($plugin, $options, $type) {
+        if (empty($options)) {
+            return self::format_select_options($plugin, array(), $type);
+        } else {
+            return $options + array('-----' => self::format_select_options($plugin, array(), $type));
+        }
+    }
+
+    /**
+     * format_select_options
+     *
+     * @param string   $plugin
+     * @param array    $options
+     * @param string   $type (optional, default="") "field", "activity" or "section"
+     * @return array  $option for a select element in $mform
+     */
+    static public function format_select_options($plugin, $options, $type='') {
+        if (! array_key_exists(0, $options)) {
+            $label = get_string('none');
+            $options = array(0 => $label) + $options;
+        }
+        if ($type) {
+            $label = get_string('createnew'.$type, $plugin);
+            $options += array(self::CREATE_NEW => $label);
+        }
+        return $options;
+    }
+
+    /**
+     * get_sectionname
+     *
+     * names longer than $namelength will be trancated to to HEAD ... TAIL
+     * where the number of characters in HEAD is $headlength
+     * and the number of characters in TIAL is $taillength
+     *
+     * @param object   $section
+     * @param integer  $namelength of section name (optional, default=28)
+     * @param integer  $headlength of head of section name (optional, default=10)
+     * @param integer  $taillength of tail of section name (optional, default=10)
+     * @return string  name of $section
+     */
+    static public function get_sectionname($section, $namelength=28, $headlength=10, $taillength=10) {
+
+        // extract section title from section name
+        if ($name = block_maj_submissions::filter_text($section->name)) {
+            return block_maj_submissions::trim_text($name, $namelength, $headlength, $taillength);
+        }
+
+        // extract section title from section summary
+        if ($name = block_maj_submissions::filter_text($section->summary)) {
+
+            // remove script and style blocks
+            $select = '/\s*<(script|style)[^>]*>.*?<\/\1>\s*/is';
+            $name = preg_replace($select, '', $name);
+
+            // look for HTML H1-5 tags or the first line of text
+            $tags = 'h1|h2|h3|h4|h5|h6';
+            if (preg_match('/<('.$tags.')\b[^>]*>(.*?)<\/\1>/is', $name, $matches)) {
+                $name = $matches[2];
+            } else {
+                // otherwise, get first line of text
+                $name = preg_split('/<br[^>]*>/', $name);
+                $name = array_map('strip_tags', $name);
+                $name = array_map('trim', $name);
+                $name = array_filter($name);
+                if (empty($name)) {
+                    $name = '';
+                } else {
+                    $name = reset($name);
+                }
+            }
+            $name = trim(strip_tags($name));
+            $name = block_maj_submissions::trim_text($name, $namelength, $headlength, $taillength);
+            return $name;
+        }
+
+        return ''; // section name and summary are empty
+    }
+
+    /**
+     * get_numsections
+     *
+     * a wrapper method to offer consistent API for $course->numsections
+     * in Moodle 2.0 - 2.3, "numsections" is a field in the "course" table
+     * in Moodle >= 2.4, "numsections" is in the "course_format_options" table
+     *
+     * @uses $DB
+     * @param object $course
+     * @return integer $numsections
+     */
+    static public function get_numsections($course) {
+        global $DB;
+        if (is_numeric($course)) {
+            $course = $DB->get_record('course', array('id' => $course));
+        }
+        if ($course && isset($course->id)) {
+            if (isset($course->numsections)) {
+                // Moodle <= 2.3
+                return $course->numsections;
+            }
+            if (isset($course->format)) {
+                 // Moodle >= 2.4
+                $params = array('courseid' => $course->id,
+                                'format' => $course->format,
+                                'name' => 'numsections');
+                return $DB->get_field('course_format_options', 'value', $params);
+            }
+        }
+        return 0; // shouldn't happen !!
+    }
+
+    /**
+     * set_numsections
+     *
+     * a wrapper method to offer consistent API for $course->numsections
+     * in Moodle 2.0 - 2.3, "numsections" is a field in the "course" table
+     * in Moodle >= 2.4, "numsections" is in the "course_format_options" table
+     *
+     * @uses $DB
+     * @param object $course
+     * @param integer $numsections
+     * @return void, but may update "course" or "course_format_options" table
+     */
+    static public function set_numsections($course, $numsections) {
+        global $DB;
+        if (is_numeric($course)) {
+            $course = $DB->get_record('course', array('id' => $course));
+        }
+        if (empty($course) || empty($course->id)) {
+            return false;
+        }
+        if (isset($course->numsections)) {
+            // Moodle <= 2.3
+            $params = array('id' => $course->id);
+            return $DB->set_field('course', 'numsections', $numsections, $params);
+        } else {
+            // Moodle >= 2.4
+            $params = array('courseid' => $course->id, 'format' => $course->format);
+            return $DB->set_field('course_format_options', 'value', $numsections, $params);
+        }
+    }
+}
+
+class block_maj_submissions_tool_setup extends block_maj_submissions_tool_base {
+
+    protected $type = '';
+    protected $defaultpreset = '';
+
+    /**
+     * constructor
+     */
+    public function __construct($action=null, $customdata=null, $method='post', $target='', $attributes=null, $editable=true) {
+
+        // call parent constructor, to complete normal setup
+        parent::__construct($action, $customdata, $method, $target, $attributes, $editable);
+
         // set the "course_module" id, if it is defined and still exists
         $cmid = $this->type.'cmid';
         if (property_exists($this->instance->config, $cmid)) {
@@ -112,13 +738,6 @@ class block_maj_submissions_tool extends moodleform {
             $this->newworkshopvalues['submissionend'] = $time;
             $this->newworkshopvalues['assessmentend'] = $time;
         }
-
-        // call parent constructor, as normal
-        if (method_exists('moodleform', '__construct')) {
-            parent::__construct($action, $customdata, $method, $target, $attributes, $editable);
-        } else {
-            parent::moodleform($action, $customdata, $method, $target, $attributes, $editable);
-        }
     }
 
     /**
@@ -143,8 +762,9 @@ class block_maj_submissions_tool extends moodleform {
         $mform->addElement('header', $name, $label);
         // --------------------------------------------------------
 
-        $this->add_field_cm($mform, $this->course, $this->plugin, 'databaseactivity', $this->cmid);
-        $this->add_field_section($mform, $this->course, $this->plugin, 'coursesection', $sectionnum);
+        $name = 'databaseactivity';
+        $this->add_field_cm($mform, $this->course, $this->plugin, $name, $this->cmid);
+        $this->add_field_section($mform, $this->course, $this->plugin, 'coursesection', $name, $sectionnum);
 
         // --------------------------------------------------------
         $name = 'preset';
@@ -248,92 +868,6 @@ class block_maj_submissions_tool extends moodleform {
 
         return $errors;
     }
-
-    /**
-     * add_field_cm
-     *
-     * @param object  $mform
-     * @param object  $course
-     * @param string  $plugin
-     * @param string  $name
-     * @param integer $numdefault (optional, default=0)
-     * @param string  $namedefault (optional, default="")
-     * @param string  $label (optional, default="")
-     * @return void, but will update $mform
-     * @todo Finish documenting this function
-     */
-    protected function add_field_cm($mform, $course, $plugin, $name, $numdefault=0, $namedefault='') {
-        if (empty($this->type)) {
-            $label = get_string('modulename', 'mod_data');
-        } else {
-            $label = get_string($this->type.'cmid', $this->plugin);
-        }
-        $numoptions = self::get_cmids($mform, $course, $plugin, $this->modulename);
-        $disabledif = array($name.'name' => $name.'num');
-        $this->add_field_numname($mform, $plugin, $name, $numoptions, array(), $numdefault, $namedefault, $label, $disabledif);
-    }
-
-    /**
-     * add_field_section
-     *
-     * @param object  $mform
-     * @param object  $course
-     * @param string  $plugin
-     * @param string  $name
-     * @param integer $numdefault (optional, default=0)
-     * @param string  $namedefault (optional, default="")
-     * @return void, but will update $mform
-     * @todo Finish documenting this function
-     */
-    protected function add_field_section($mform, $course, $plugin, $name, $numdefault=0, $namedefault='', $label='') {
-        $numoptions = self::get_sectionnums($mform, $course, $plugin);
-        $disabledif = array($name.'name' => $name.'num', $name.'num' => 'databaseactivitynum');
-        $this->add_field_numname($mform, $plugin, $name, $numoptions, array(), $numdefault, $namedefault, $label, $disabledif);
-    }
-
-    /**
-     * add_field_section
-     *
-     * @param object  $mform
-     * @param string  $plugin
-     * @param string  $name
-     * @param array   $numoptions
-     * @param array   $nameoptions
-     * @param integer $numdefault
-     * @param string  $namedefault
-     * @param string  $label
-     * @param array   $disabledif
-     * @return void, but will update $mform
-     * @todo Finish documenting this function
-     */
-    protected function add_field_numname($mform, $plugin, $name, $numoptions, $nameoptions=array(), $numdefault=0, $namedefault='', $label='', $disabledif=array()) {
-        $group_name = 'group_'.$name;
-        if ($label=='') {
-            $label = get_string($name, $plugin);
-        }
-        if (is_array(current($numoptions))) {
-            $select = 'selectgroups';
-        } else {
-            $select = 'select';
-        }
-        if (empty($nameoptions)) {
-            $nameoptions = array('size' => self::TEXT_FIELD_SIZE);
-        }
-        $elements = array(
-            $mform->createElement($select, $name.'num', '', $numoptions),
-            $mform->createElement('text', $name.'name', '', $nameoptions)
-        );
-        $mform->addGroup($elements, $group_name, $label, ' ', false);
-        $mform->addHelpButton($group_name, $name, $plugin);
-        $mform->setType($name.'num', PARAM_INT);
-        $mform->setType($name.'name', PARAM_TEXT);
-        $mform->setDefault($name.'num', $numdefault);
-        $mform->setDefault($name.'name', $namedefault);
-        foreach ($disabledif as $element1 => $element2) {
-                $mform->disabledIf($element1, $element2, 'neq', self::CREATE_NEW);
-        }
-    }
-
 
     /**
      * data_postprocessing
@@ -545,204 +1079,6 @@ class block_maj_submissions_tool extends moodleform {
     }
 
     /**
-     * get_section
-     *
-     * @uses $DB
-     * @param object $course
-     * @param string $sectionname
-     * @return object
-     * @todo Finish documenting this function
-     */
-    static public function get_section($course, $sectionname) {
-        global $DB;
-
-        // some DBs (e.g. MSSQL) cannot compare TEXT fields
-        // so we must CAST them to something else (e.g. CHAR)
-        $summary = $DB->sql_compare_text('summary');
-        $sequence = $DB->sql_compare_text('sequence');
-
-        $select = 'course = ? AND (name = ? OR '.$summary.' = ?)';
-        $params = array($course->id, $sectionname, $sectionname);
-        if ($section = $DB->get_records_select('course_sections', $select, $params, 'section', '*', 0, 1)) {
-            $section = reset($section);
-        }
-
-        // reuse an empty section, if possible
-        if (empty($section)) {
-            $select = 'course = ? AND section > ?'.
-                      ' AND (name IS NULL OR name = ?)'.
-                      ' AND (summary IS NULL OR '.$summary.' = ?)'.
-                      ' AND (sequence IS NULL OR '.$sequence.' = ?)';
-            $params = array($course->id, 0, '', '', '');
-            if ($section = $DB->get_records_select('course_sections', $select, $params, 'section', '*', 0, 1)) {
-                $section = reset($section);
-                $section->name = $sectionname;
-                $DB->update_record('course_sections', $section);
-            }
-        }
-
-        // create a new section, if necessary
-        if (empty($section)) {
-            $sql = 'SELECT MAX(section) FROM {course_sections} WHERE course = ?';
-            if ($sectionnum = $DB->get_field_sql($sql, array($course->id))) {
-                $sectionnum ++;
-            } else {
-                $sectionnum = 1;
-            }
-            $section = (object)array(
-                'course'        => $course->id,
-                'section'       => $sectionnum,
-                'name'          => $sectionname,
-                'summary'       => '',
-                'summaryformat' => FORMAT_HTML,
-            );
-            $section->id = $DB->insert_record('course_sections', $section);
-        }
-
-        if ($section) {
-            if ($section->section > self::get_numsections($course)) {
-                self::set_numsections($course, $section->section);
-            }
-        }
-
-        return $section;
-    }
-
-    /**
-     * get_coursemodule
-     *
-     * @uses $DB
-     * @uses $USER
-     * @param object $course
-     * @param object $section
-     * @param string $modulename
-     * @param string $instancename
-     * @return object
-     * @todo Finish documenting this function
-     */
-    static public function get_coursemodule($course, $section, $modulename, $instancename, $newrecordvalues) {
-        global $DB, $USER;
-
-        // cache the module id
-        $moduleid = $DB->get_field('modules', 'id', array('name' => $modulename));
-
-        if (empty($moduleid)) {
-            return null; // shouldn't happen !!
-        }
-
-        // if possible, return the most recent visible version of this course_module
-        $select = 'cm.*';
-        $from   = '{course_modules} cm '.
-                  'JOIN {course_sections} cs ON cm.section = cs.id '.
-                  'JOIN {'.$modulename.'} x ON cm.module = ? AND cm.instance = x.id';
-        $where  = 'cs.section = ? AND x.name = ? AND cm.visible = ?';
-        $params = array($moduleid, $section->section, $instancename, 1);
-        $order  = 'cm.visible DESC, cm.added DESC'; // newest, visible cm first
-        if ($cm = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $order", $params, 0, 1)) {
-            return reset($cm);
-        }
-
-        // initialize $newrecord
-        $newrecord = (object)array(
-            'name'          => $instancename,
-            // standard fields for adding a new cm
-            'course'        => $course->id,
-            'section'       => $section->section,
-            'module'        => $moduleid,
-            'modulename'    => $modulename,
-            'add'           => $modulename,
-            'update'        => 0,
-            'return'        => 0,
-            'cmidnumber'    => '',
-            'groupmode'     => 0, // no groups
-            'MAX_FILE_SIZE' => 10485760, // 10 GB
-        );
-
-        foreach ($newrecordvalues as $column => $value) {
-            $newrecord->$column = $value;
-        }
-
-        // add default values
-        $columns = $DB->get_columns($modulename);
-        foreach ($columns as $column) {
-            if ($column->not_null) {
-                $name = $column->name;
-                if ($name=='id' || isset($newrecord->$name)) {
-                    // do nothing
-                } else if (isset($column->default_value)) {
-                    $newrecord->$name = $column->default_value;
-                } else {
-                    // see: lib/dml/database_column_info.php
-                    // R - counter (integer primary key)
-                    // I - integers
-                    // N - numbers (floats)
-                    // T - timestamp - unsupported
-                    // D - date - unsupported
-                    // L - boolean (1 bit)
-                    // C - characters and strings
-                    // X - texts
-                    // B - binary blobs
-                    if (preg_match('/^[RINTDL]$/', $column->meta_type)) {
-                        $newrecord->$name = 0;
-                    } else {
-                        $newrecord->$name = '';
-                    }
-                }
-            }
-        }
-
-        // set the instanceid i.e. the "id" in the $modulename table
-        if (! $newrecord->instance = $DB->insert_record($modulename, $newrecord)) {
-            return false;
-        }
-
-        // set the coursemoduleid i.e. the "id" in the "course_modules" table
-        if (! $newrecord->coursemodule = add_course_module($newrecord) ) {
-            throw new exception('Could not add a new course module');
-        }
-
-        $newrecord->id = $newrecord->coursemodule;
-        if (function_exists('course_add_cm_to_section')) {
-            // Moodle >= 2.4
-            $sectionid = course_add_cm_to_section($newrecord->course, $newrecord->id, $section->section);
-        } else {
-            // Moodle <= 2.3
-            $sectionid = add_mod_to_section($newrecord);
-        }
-        if (! $sectionid) {
-            throw new exception('Could not add the new course module to that section');
-        }
-        if (! $DB->set_field('course_modules', 'section',  $sectionid, array('id' => $newrecord->id))) {
-            throw new exception('Could not update the course module with the correct section');
-        }
-
-        // if the section is hidden, we should also hide the new instance
-        if (! isset($newrecord->visible)) {
-            $newrecord->visible = $DB->get_field('course_sections', 'visible', array('id' => $sectionid));
-        }
-        set_coursemodule_visible($newrecord->id, $newrecord->visible);
-
-        // Trigger mod_updated event with information about this module.
-        $event = (object)array(
-            'courseid'   => $newrecord->course,
-            'cmid'       => $newrecord->id,
-            'modulename' => $newrecord->modulename,
-            'name'       => $newrecord->name,
-            'userid'     => $USER->id
-        );
-        if (function_exists('events_trigger_legacy')) {
-            events_trigger_legacy('mod_updated', $event);
-        } else {
-            events_trigger('mod_updated', $event);
-        }
-
-        // rebuild_course_cache
-        rebuild_course_cache($course->id);
-
-        return $newrecord;
-    }
-
-    /**
      * get_available_presets
      *
      * @uses $DB
@@ -856,289 +1192,19 @@ class block_maj_submissions_tool extends moodleform {
 
         return $presets;
     }
-
-    /**
-     * get_options_sectionnum
-     *
-     * @param object $mform
-     * @param object $course
-     * @param string $plugin
-     * @return array($sectionnum => $sectionname) of sections in this course
-     */
-    static public function get_sectionnums($mform, $course, $plugin) {
-        $options = array();
-        $sections = get_fast_modinfo($course)->get_section_info_all();
-        foreach ($sections as $sectionnum => $section) {
-            if ($name = self::get_sectionname($section)) {
-                $options[$sectionnum] = $name;
-            } else {
-                $options[$sectionnum] = self::get_sectionname_default($course, $sectionnum);
-            }
-        }
-        return self::format_select_options($plugin, $options, 'section');
-    }
-
-    /**
-     * get_sectionname_default
-     *
-     * @param object   $course
-     * @param object   $section
-     * @param string   $dateformat (optional, default='%b %d')
-     * @return string  name of $section
-     */
-    static public function get_sectionname_default($course, $sectionnum, $dateformat='%b %d') {
-
-        // set course section type
-        if ($course->format=='weeks') {
-            $sectiontype = 'week';
-        } else if ($course->format=='topics') {
-            $sectiontype = 'topic';
-        } else {
-            $sectiontype = 'section';
-        }
-
-        // "weeks" format
-        if ($sectiontype=='week' && $sectionnum > 0) {
-            if ($dateformat=='') {
-                $dateformat = get_string('strftimedateshort');
-            }
-            // 604800 : number of seconds in 7 days i.e. WEEKSECS
-            // 518400 : number of seconds in 6 days i.e. WEEKSECS - DAYSECS
-            $date = $course->startdate + 7200 + (($sectionnum - 1) * 604800);
-            return userdate($date, $dateformat).' - '.userdate($date + 518400, $dateformat);
-        }
-
-        // get string manager object
-        $strman = get_string_manager();
-
-        // specify course format plugin name
-        $courseformat = 'format_'.$course->format;
-
-        if ($strman->string_exists('section'.$sectionnum.'name', $courseformat)) {
-            return get_string('section'.$sectionnum.'name', $courseformat);
-        }
-
-        if ($strman->string_exists('sectionname', $courseformat)) {
-            return get_string('sectionname', $courseformat).' '.$sectionnum;
-        }
-
-        if ($strman->string_exists($sectiontype, 'moodle')) {
-            return get_string($sectiontype).' '.$sectionnum;
-        }
-
-        if ($strman->string_exists('sectionname', 'moodle')) {
-            return get_string('sectionname').' '.$sectionnum;
-        }
-
-        return $sectiontype.' '.$sectionnum;
-    }
-
-    /**
-     * get_options_cmids
-     *
-     * @param object  $mform
-     * @param string  $course
-     * @param string  $plugin
-     * @param string  $modnames (optional, default="")
-     * @param integer $sectionnum (optional, default=0)
-     * @return array($cmid => $name) of activities from the specified $sectionnum
-     *                               or from the whole course (if $sectionnum==0)
-     */
-    static public function get_cmids($mform, $course, $plugin, $modnames='', $sectionnum=0) {
-        $options = array();
-
-        $modnames = explode(',', $modnames);
-        $modnames = array_filter($modnames);
-        $count = count($modnames);
-
-        $modinfo = get_fast_modinfo($course);
-        $sections = $modinfo->get_section_info_all();
-        foreach ($sections as $section) {
-
-            $sectionname = '';
-            if ($sectionnum==0 || $sectionnum==$section->section) {
-                $cmids = $section->sequence;
-                $cmids = explode(',', $cmids);
-                $cmids = array_filter($cmids);
-                foreach ($cmids as $cmid) {
-                    if (array_key_exists($cmid, $modinfo->cms)) {
-                        $cm = $modinfo->get_cm($cmid);
-                        if ($count==0 || in_array($cm->modname, $modnames)) {
-                            if ($sectionname=='') {
-                                $sectionname = self::get_sectionname($section, 0);
-                                $options[$sectionname] = array();
-                            }
-                            $name = $cm->name;
-                            $name = block_maj_submissions::filter_text($name);
-                            $name = block_maj_submissions::trim_text($name);
-                            $options[$sectionname][$cmid] = $name;
-                        }
-                    }
-                }
-            }
-        }
-        return self::format_selectgroups_options($plugin, $options, 'activity');
-    }
-
-    /**
-     * format_selectgroups_options
-     *
-     * @param string  $plugin
-     * @param array   $options
-     * @param string  $type ("field", "activity" or "section")
-     * @return array  $option for a select element in $mform
-     */
-    static public function format_selectgroups_options($plugin, $options, $type) {
-        if (empty($options)) {
-            return self::format_select_options($plugin, array(), $type);
-        } else {
-            return $options + array('-----' => self::format_select_options($plugin, array(), $type));
-        }
-    }
-
-    /**
-     * format_select_options
-     *
-     * @param string  $plugin
-     * @param array   $options
-     * @param string  $type ("field", "activity" or "section")
-     * @return array  $option for a select element in $mform
-     */
-    static public function format_select_options($plugin, $options, $type) {
-        if (! array_key_exists(0, $options)) {
-            $label = get_string('none');
-            $options = array(0 => $label) + $options;
-        }
-        $label = get_string('createnew'.$type, $plugin);
-        return $options + array(self::CREATE_NEW => $label);
-    }
-
-    /**
-     * get_sectionname
-     *
-     * names longer than $namelength will be trancated to to HEAD ... TAIL
-     * where the number of characters in HEAD is $headlength
-     * and the number of characters in TIAL is $taillength
-     *
-     * @param object   $section
-     * @param integer  $namelength of section name (optional, default=28)
-     * @param integer  $headlength of head of section name (optional, default=10)
-     * @param integer  $taillength of tail of section name (optional, default=10)
-     * @return string  name of $section
-     */
-    static public function get_sectionname($section, $namelength=28, $headlength=10, $taillength=10) {
-
-        // extract section title from section name
-        if ($name = block_maj_submissions::filter_text($section->name)) {
-            return block_maj_submissions::trim_text($name, $namelength, $headlength, $taillength);
-        }
-
-        // extract section title from section summary
-        if ($name = block_maj_submissions::filter_text($section->summary)) {
-
-            // remove script and style blocks
-            $select = '/\s*<(script|style)[^>]*>.*?<\/\1>\s*/is';
-            $name = preg_replace($select, '', $name);
-
-            // look for HTML H1-5 tags or the first line of text
-            $tags = 'h1|h2|h3|h4|h5|h6';
-            if (preg_match('/<('.$tags.')\b[^>]*>(.*?)<\/\1>/is', $name, $matches)) {
-                $name = $matches[2];
-            } else {
-                // otherwise, get first line of text
-                $name = preg_split('/<br[^>]*>/', $name);
-                $name = array_map('strip_tags', $name);
-                $name = array_map('trim', $name);
-                $name = array_filter($name);
-                if (empty($name)) {
-                    $name = '';
-                } else {
-                    $name = reset($name);
-                }
-            }
-            $name = trim(strip_tags($name));
-            $name = block_maj_submissions::trim_text($name, $namelength, $headlength, $taillength);
-            return $name;
-        }
-
-        return ''; // section name and summary are empty
-    }
-
-    /**
-     * get_numsections
-     *
-     * a wrapper method to offer consistent API for $course->numsections
-     * in Moodle 2.0 - 2.3, "numsections" is a field in the "course" table
-     * in Moodle >= 2.4, "numsections" is in the "course_format_options" table
-     *
-     * @uses $DB
-     * @param object $course
-     * @return integer $numsections
-     */
-    static public function get_numsections($course) {
-        global $DB;
-        if (is_numeric($course)) {
-            $course = $DB->get_record('course', array('id' => $course));
-        }
-        if ($course && isset($course->id)) {
-            if (isset($course->numsections)) {
-                // Moodle <= 2.3
-                return $course->numsections;
-            }
-            if (isset($course->format)) {
-                 // Moodle >= 2.4
-                $params = array('courseid' => $course->id,
-                                'format' => $course->format,
-                                'name' => 'numsections');
-                return $DB->get_field('course_format_options', 'value', $params);
-            }
-        }
-        return 0; // shouldn't happen !!
-    }
-
-    /**
-     * set_numsections
-     *
-     * a wrapper method to offer consistent API for $course->numsections
-     * in Moodle 2.0 - 2.3, "numsections" is a field in the "course" table
-     * in Moodle >= 2.4, "numsections" is in the "course_format_options" table
-     *
-     * @uses $DB
-     * @param object $course
-     * @param integer $numsections
-     * @return void, but may update "course" or "course_format_options" table
-     */
-    static public function set_numsections($course, $numsections) {
-        global $DB;
-        if (is_numeric($course)) {
-            $course = $DB->get_record('course', array('id' => $course));
-        }
-        if (empty($course) || empty($course->id)) {
-            return false;
-        }
-        if (isset($course->numsections)) {
-            // Moodle <= 2.3
-            $params = array('id' => $course->id);
-            return $DB->set_field('course', 'numsections', $numsections, $params);
-        } else {
-            // Moodle >= 2.4
-            $params = array('courseid' => $course->id, 'format' => $course->format);
-            return $DB->set_field('course_format_options', 'value', $numsections, $params);
-        }
-    }
 }
 
-class block_maj_submissions_tool_setupregistrations extends block_maj_submissions_tool {
+class block_maj_submissions_tool_setupregistrations extends block_maj_submissions_tool_setup {
     protected $type = 'registerdelegates';
     protected $modulename = 'data';
     protected $defaultpreset = 'registrations';
 }
-class block_maj_submissions_tool_setuppresentations extends block_maj_submissions_tool {
+class block_maj_submissions_tool_setuppresentations extends block_maj_submissions_tool_setup {
     protected $type = 'collectpresentations';
     protected $modulename = 'data';
     protected $defaultpreset = 'presentations';
 }
-class block_maj_submissions_tool_setupworkshops extends block_maj_submissions_tool {
+class block_maj_submissions_tool_setupworkshops extends block_maj_submissions_tool_setup {
     protected $type = 'collectworkshops';
     protected $modulename = 'data';
     protected $defaultpreset = 'workshops';
@@ -1187,3 +1253,208 @@ class block_maj_submissions_tool_createusers extends tool_createusers_form {
     }
 }
 
+/**
+ * block_maj_submissions_tool_data2workshop
+ *
+ * @copyright 2017 Gordon Bateson
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since     Moodle 2.0
+ */
+class block_maj_submissions_tool_data2workshop extends block_maj_submissions_tool_base {
+
+    protected $type = '';
+    protected $modulename = 'workshop';
+
+    const FILTER_NONE           = 0;
+    const FILTER_CONTAINS       = 1;
+    const FILTER_NOT_CONTAINS   = 2;
+    const FILTER_EQUALS         = 3;
+    const FILTER_NOT_EQUALS     = 4;
+    const FILTER_STARTSWITH     = 5;
+    const FILTER_NOT_STARTSWITH = 6;
+    const FILTER_ENDSWITH       = 7;
+    const FILTER_NOT_ENDSWITH   = 8;
+    const FILTER_EMPTY          = 9;
+    const FILTER_NOT_EMPTY      = 10;
+    const FILTER_IN             = 11;
+    const FILTER_NOT_IN         = 12;
+
+    /**
+     * definition
+     */
+    public function definition() {
+        $mform = $this->_form;
+
+        // extract the module context and course section, if possible
+        if ($this->cmid) {
+            $context = block_maj_submissions::context(CONTEXT_MODULE, $this->cmid);
+            $sectionnum = get_fast_modinfo($this->course)->get_cm($this->cmid)->sectionnum;
+        } else {
+            $context = $this->course->context;
+            $sectionnum = 0;
+        }
+
+        $name = 'sourcedatabase';
+        $options = self::get_cmids($mform, $this->course, $this->plugin, 'data');
+        $this->add_field($mform, $this->plugin, $name, 'selectgroups', PARAM_INT, $options, 0);
+
+        $name = 'filterconditions';
+        $label = get_string($name, $this->plugin);
+
+        // create the $elements for a single filter condition
+        $elements = array();
+        $elements[] = $mform->createElement('select', $name.'field',    null, $this->get_field_options());
+        $elements[] = $mform->createElement('select', $name.'operator', null, $this->get_operator_options());
+        $elements[] = $mform->createElement('text',   $name.'value',    null, array('size' => self::TEXT_FIELD_SIZE));
+
+        // prepare the parameters to pass to the "repeat_elements()" method
+        $elements = array($mform->createElement('group', $name, $label, $elements, ' ', false));
+        $repeats = optional_param('count'.$name, 0, PARAM_INT);
+        $options = array($name.'field'    => array('type' => PARAM_INT),
+                         $name.'operator' => array('type' => PARAM_INT),
+                         $name.'value'    => array('type' => PARAM_TEXT),
+                         $name => array('helpbutton' => array($name, $this->plugin)));
+        $addstring = get_string('add'.$name, $this->plugin, 1);
+        $this->repeat_elements($elements, $repeats, $options, 'count'.$name, 'add'.$name, 1, $addstring, true);
+
+        $mform->disabledIf('add'.$name, 'sourcedatabase', 'eq', 0);
+        $mform->disabledIf('add'.$name, 'sourcedatabase', 'eq', self::CREATE_NEW);
+
+        $name = 'targetworkshop';
+        $this->add_field_cm($mform, $this->course, $this->plugin, $name, $this->cmid);
+        $this->add_field_section($mform, $this->course, $this->plugin, 'coursesection', $name, $sectionnum);
+
+        $name = 'resetworkshop';
+        $this->add_field($mform, $this->plugin, $name, 'selectyesno', PARAM_INT);
+        $mform->disabledIf($name, 'targetworkshopnum', 'eq', 0);
+        $mform->disabledIf($name, 'targetworkshopnum', 'eq', self::CREATE_NEW);
+
+        $this->add_action_buttons();
+    }
+
+    /**
+     * get_field_options
+     *
+     * @uses $DB
+     * @return array of database fieldnames
+     */
+    protected function get_field_options() {
+        global $DB;
+        if ($cmid = optional_param('sourcedatabase', null, PARAM_INT)) {
+            $dataid = get_fast_modinfo($this->course)->get_cm($cmid)->instance;
+            $options = $DB->get_records_menu('data_fields', array('dataid' => $dataid), null, 'id,name');
+        } else {
+            $options = false;
+        }
+        if ($options==false) {
+            $options = array();
+        }
+        return $this->format_select_options($this->plugin, $options);
+    }
+
+    /**
+     * get_operator_options
+     *
+     * see mod/taskchain/form/helper/records.php
+     * "get_filter()" method (around line 662)
+     *
+     * @uses $DB
+     * @return array of database fieldnames
+     */
+    protected function get_operator_options() {
+        return array(self::FILTER_CONTAINS       => get_string('contains',       'filters'),
+                     self::FILTER_NOT_CONTAINS   => get_string('doesnotcontain', 'filters'),
+                     self::FILTER_EQUALS         => get_string('isequalto',      'filters'),
+                     self::FILTER_NOT_EQUALS     => get_string('notisequalto',   $this->plugin),
+                     self::FILTER_STARTSWITH     => get_string('startswith',     'filters'),
+                     self::FILTER_NOT_STARTSWITH => get_string('notstartswith',  $this->plugin),
+                     self::FILTER_ENDSWITH       => get_string('endswith',       'filters'),
+                     self::FILTER_NOT_ENDSWITH   => get_string('notendswith',    $this->plugin),
+                     self::FILTER_EMPTY          => get_string('isempty',        'filters'),
+                     self::FILTER_NOT_EMPTY      => get_string('notisempty',     $this->plugin),
+                     self::FILTER_IN             => get_string('isinlist',       $this->plugin),
+                     self::FILTER_NOT_IN         => get_string('notisinlist',    $this->plugin));
+    }
+
+    /**
+     * data_postprocessing
+     *
+     * @uses $DB
+     * @param object $data
+     * @return not sure ...
+     * @todo Finish documenting this function
+     */
+    public function data_postprocessing() {
+        global $CFG, $DB, $OUTPUT, $PAGE;
+        require_once($CFG->dirroot.'/lib/xmlize.php');
+
+        // get/create the $cm record and associated $section
+        $cm = false;
+        if ($data = $this->get_data()) {
+
+            $workshopnum  = $data->targetworkshopnum;
+            $workshopname = $data->targetworkshopname;
+            $sectionnum   = $data->coursesectionnum;
+            $sectionname  = $data->coursesectionname;
+
+            if ($workshopnum) {
+                if ($workshopnum==self::CREATE_NEW) {
+                    if ($sectionnum==self::CREATE_NEW) {
+                        $section = self::get_section($this->course, $sectionname);
+                    } else {
+                        $section = get_fast_modinfo($this->course)->get_section_info($sectionnum);
+                    }
+                    $cm = self::get_coursemodule($this->course, $section, 'workshop', $workshopname, $this->newdatavalues);
+                } else {
+                    $cm = get_fast_modinfo($this->course)->get_cm($workshopnum);
+                }
+            }
+        }
+
+        if ($cm) {
+
+            // get workshop
+            $workshop = $DB->get_record('workshop', array('id' => $cm->instance), '*', MUST_EXIST);
+            $workshop->cmidnumber = (empty($cm->idnumber) ? '' : $cm->idnumber);
+            $workshop->instance   = $cm->instance;
+        }
+
+        return false; // shouldn't happen !!
+    }
+}
+
+/**
+ * block_maj_submissions_tool_setupvetting
+ *
+ * @copyright 2017 Gordon Bateson
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since     Moodle 2.0
+ */
+class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool_base {
+
+    /**
+     * definition
+     */
+    public function definition() {
+        $mform = $this->_form;
+
+        // extract the module context and course section, if possible
+        if ($this->cmid) {
+            $context = block_maj_submissions::context(CONTEXT_MODULE, $this->cmid);
+            $sectionnum = get_fast_modinfo($this->course)->get_cm($this->cmid)->sectionnum;
+        } else {
+            $context = $this->course->context;
+            $sectionnum = 0;
+        }
+
+        $name = 'targetworkshop';
+        $options = self::get_cmids($mform, $this->course, $this->plugin, 'workshop');
+        $this->add_field($mform, $this->plugin, $name, 'selectgroups', PARAM_INT, $options, 0);
+
+        $name = 'vettinggroup';
+        $options = groups_list_to_menu(groups_get_all_groups($this->course->id));
+        $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options);
+
+        $this->add_action_buttons();
+    }
+}

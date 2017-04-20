@@ -99,8 +99,6 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $this->add_time_startfinish($mform, $plugin, 'collectsponsoreds');
         $this->add_cmid($mform, $plugin, 'data,page,resource', 'collectsponsoredscmid');
 
-        $this->add_repeat_elements($mform, $plugin, 'filterfields', 'select', true);
-
         //-----------------------------------------------------------------------------
         $this->add_header($mform, $plugin, 'reviewsubmissions');
         //-----------------------------------------------------------------------------
@@ -493,7 +491,6 @@ class block_maj_submissions_edit_form extends block_edit_form {
      * @return void, but will update $mform
      */
     protected function add_repeat_elements($mform, $plugin, $name, $elementtype, $addbuttoninside=false) {
-        global $OUTPUT;
         $config_name = 'config_'.$name;
         $label = get_string($name, $plugin);
         $method = 'get_options_'.$name;
@@ -630,27 +627,6 @@ class block_maj_submissions_edit_form extends block_edit_form {
         }
 
         return $sectiontype.' '.$sectionnum;
-    }
-
-    /**
-     * get_options_filterfields
-     *
-     * @param object $mform
-     * @param string $plugin
-     * @return array($fieldid => $fieldname) of fields from the collectpresentationscmid for this block
-     */
-    protected function get_options_filterfields($mform, $plugin) {
-        global $DB;
-        if ($cmid = $this->get_value($mform, 'collectpresentationscmid')) {
-            $dataid = $this->get_course_modinfo()->get_cm($cmid)->instance;
-            $options = $DB->get_records_menu('data_fields', array('dataid' => $dataid), null, 'id,name');
-        } else {
-            $options = false;
-        }
-        if ($options==false) {
-            $options = array();
-        }
-        return $this->format_select_options($plugin, $options, 'field');
     }
 
     /**
@@ -905,7 +881,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
     }
 
     /**
-     * get_field
+     * add_field
      *
      * @param object $mform
      * @param string $plugin

@@ -146,7 +146,7 @@ class block_maj_submissions extends block_base {
 
             // fields used to filter data into workshops
             // e.g. presentation_type AND presentation_language
-            'filterfields' => array(),
+            'filterconditions' => array(),
 
             'reviewtimestart'  => 0,
             'reviewtimefinish' => 0,
@@ -551,8 +551,9 @@ class block_maj_submissions extends block_base {
             $this->content->text .= $this->get_tool_link($plugin, 'setupregistrations');
             $this->content->text .= $this->get_tool_link($plugin, 'setuppresentations');
             $this->content->text .= $this->get_tool_link($plugin, 'setupworkshops');
-            $this->content->text .= $this->get_tool_link($plugin, 'createusers');
             $this->content->text .= $this->get_tool_link($plugin, 'data2workshop');
+            $this->content->text .= $this->get_tool_link($plugin, 'createusers');
+            $this->content->text .= $this->get_tool_link($plugin, 'setupvetting');
             $this->content->text .= $this->get_tool_link($plugin, 'workshop2data');
             $this->content->text .= $this->get_tool_link($plugin, 'setupschedule');
         }
