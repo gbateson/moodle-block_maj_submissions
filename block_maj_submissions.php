@@ -142,6 +142,8 @@ class block_maj_submissions extends block_base {
             'collectsponsoredstimefinish' => 0,
             'collectsponsoredscmid'       => 0,
 
+            'eventscmid' => 0,
+
             'reviewtimestart'  => 0,
             'reviewtimefinish' => 0,
             'reviewsectionnum' => 0,
@@ -230,7 +232,7 @@ class block_maj_submissions extends block_base {
 
         if (count($dataids)) {
 
-            $constanttype = 0;
+            $constanttype = 0; // constant fields
             $fieldnames = self::get_constant_fieldnames($constanttype);
             foreach ($fieldnames as $fieldname => $name) {
                 if (empty($config->displaylangs)) {
@@ -243,7 +245,7 @@ class block_maj_submissions extends block_base {
                 }
             }
 
-            $constanttype = 1;
+            $constanttype = 1; // autoincrement fields
             $fieldnames = self::get_constant_fieldnames($constanttype);
             foreach ($fieldnames as $fieldname => $name) {
                 $this->update_constant_field($plugin, $dataids, $config, $name, $name, $fieldname, $constanttype);
@@ -549,6 +551,7 @@ class block_maj_submissions extends block_base {
             $this->content->text .= $this->get_tool_link($plugin, 'setupvetting');
             $this->content->text .= html_writer::tag('p', '', array('class' => 'tooldivider'));
             $this->content->text .= $this->get_tool_link($plugin, 'workshop2data');
+            $this->content->text .= $this->get_tool_link($plugin, 'setupevents');
             $this->content->text .= $this->get_tool_link($plugin, 'setupschedule');
         }
 
@@ -1152,7 +1155,7 @@ class block_maj_submissions extends block_base {
                                                    'dinnerreceiptnumber',
                                                    'dinnerticketnumber',
                                                    'certificatenumber');
-                }            
+                }
             }
         }
         return in_array($name, $required[$dataid]);

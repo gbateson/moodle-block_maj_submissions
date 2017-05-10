@@ -86,6 +86,9 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $this->add_time_startfinish($mform, $plugin, 'reception');
         $this->add_cmid($mform, $plugin, 'resource,file,page,url', 'receptioncmid');
 
+        $this->add_cmid($mform, $plugin, 'data', 'eventscmid');
+        //$this->add_repeat_elements($mform, $plugin, 'events', 'text', true);
+
         //-----------------------------------------------------------------------------
         $this->add_header($mform, $plugin, 'collectsubmissions');
         //-----------------------------------------------------------------------------
@@ -500,6 +503,17 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $options = array($config_name => array('type' => PARAM_INT, 'helpbutton' => array($name, $plugin)));
         $addstring = get_string('add'.$name, $plugin, 1);
         $this->repeat_elements($elements, $repeats, $options, 'count'.$name, 'add'.$name, 1, $addstring, $addbuttoninside);
+    }
+
+    /**
+     * get_options_events
+     *
+     * @param object $mform
+     * @param string $plugin
+     * @return array() of sections in this course
+     */
+    protected function get_options_events($mform, $plugin) {
+        return array('size' => 40);
     }
 
     /**

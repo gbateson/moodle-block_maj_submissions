@@ -699,7 +699,7 @@ abstract class block_maj_submissions_tool_base extends moodleform {
     }
 }
 
-class block_maj_submissions_tool_setup extends block_maj_submissions_tool_base {
+class block_maj_submissions_tool_setupdatabase extends block_maj_submissions_tool_base {
 
     protected $type = '';
     protected $defaultpreset = '';
@@ -1194,20 +1194,25 @@ class block_maj_submissions_tool_setup extends block_maj_submissions_tool_base {
     }
 }
 
-class block_maj_submissions_tool_setupregistrations extends block_maj_submissions_tool_setup {
+class block_maj_submissions_tool_setupregistrations extends block_maj_submissions_tool_setupdatabase {
     protected $type = 'registerdelegates';
     protected $modulename = 'data';
     protected $defaultpreset = 'registrations';
 }
-class block_maj_submissions_tool_setuppresentations extends block_maj_submissions_tool_setup {
+class block_maj_submissions_tool_setuppresentations extends block_maj_submissions_tool_setupdatabase {
     protected $type = 'collectpresentations';
     protected $modulename = 'data';
     protected $defaultpreset = 'presentations';
 }
-class block_maj_submissions_tool_setupworkshops extends block_maj_submissions_tool_setup {
+class block_maj_submissions_tool_setupworkshops extends block_maj_submissions_tool_setupdatabase {
     protected $type = 'collectworkshops';
     protected $modulename = 'data';
     protected $defaultpreset = 'workshops';
+}
+class block_maj_submissions_tool_setupevents extends block_maj_submissions_tool_setupdatabase {
+    protected $type = 'events';
+    protected $modulename = 'data';
+    protected $defaultpreset = 'events';
 }
 
 /**
@@ -1438,15 +1443,6 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
     public function definition() {
         $mform = $this->_form;
 
-        // extract the module context and course section, if possible
-        if ($this->cmid) {
-            $context = block_maj_submissions::context(CONTEXT_MODULE, $this->cmid);
-            $sectionnum = get_fast_modinfo($this->course)->get_cm($this->cmid)->sectionnum;
-        } else {
-            $context = $this->course->context;
-            $sectionnum = 0;
-        }
-
         $name = 'targetworkshop';
         $options = self::get_cmids($mform, $this->course, $this->plugin, 'workshop');
         $this->add_field($mform, $this->plugin, $name, 'selectgroups', PARAM_INT, $options, 0);
@@ -1456,5 +1452,134 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
         $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options);
 
         $this->add_action_buttons();
+    }
+}
+
+/**
+ * block_maj_submissions_tool_setupschedule
+ *
+ * @copyright 2017 Gordon Bateson
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since     Moodle 2.0
+ */
+class block_maj_submissions_tool_setupschedule extends block_maj_submissions_tool_base {
+
+    protected $schedule_day      = null;
+    protected $schedule_time     = null;
+    protected $schedule_duration = null;
+    protected $schedule_room     = null;
+    protected $schedule_audience = null;
+    protected $schedule_event    = array();
+
+    /**
+     * definition
+     */
+    public function definition() {
+        $mform = $this->_form;
+
+        $this->set_schedule_menus();
+
+        $name = 'schedule_event';
+        $this->add_field($mform, $this->plugin, $name, 'selectgroups', PARAM_INT, $this->$name);
+
+        $name = 'schedule_day';
+        $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
+
+        $name = 'schedule_time';
+        $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
+
+        $name = 'schedule_duration';
+        $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
+
+        $name = 'schedule_room';
+        $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
+
+        $name = 'schedule_audience';
+        $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
+
+        $this->add_action_buttons();
+    }
+
+    /**
+     * set_schedule_menus
+     *
+     * @param boolean $shorten_texts (optional, default=FALSE)
+     * @return void, but will update "schedule_xxx" properties
+     */
+    public function set_schedule_menus($shorten_texts=false) {
+        global $DB;
+
+        $config = $this->instance->config;
+        $modinfo = get_fast_modinfo($this->course);
+
+        $types = array('presentation',
+                       'workshop',
+                       'sponsored',
+                       'event');
+
+        $names = array('schedule_day',
+                       'schedule_time',
+                       'schedule_duration',
+                       'schedule_room',
+                       'schedule_audience');
+
+        foreach ($types as $type) {
+            if ($type=='event') {
+                $types_cmid = $type.'scmid';
+            } else {
+                $types_cmid = 'collect'.$type.'scmid';
+            }
+            if (empty($config->$types_cmid)) {
+                continue;
+            }
+            $cmid = $config->$types_cmid;
+            if (! array_key_exists($cmid, $modinfo->cms)) {
+                continue;
+            }
+            $cm = $modinfo->get_cm($cmid);
+            if ($cm->modname != 'data') {
+                continue;
+            }
+            $dataid = $cm->instance;
+            foreach ($names as $name) {
+                if ($this->$name) {
+                    continue;
+                }
+                $params = array('dataid' => $dataid, 'name' => $name);
+                if (! $field = $DB->get_record('data_fields', $params)) {
+                    continue;
+                }
+                if (! $field->param1) {
+                    continue;
+                }
+                if (self::is_menu_field($field)) {
+                    $this->$name = preg_split('/[\\r\\n]+/', $field->param1);
+                    $this->$name = array_filter($this->$name);
+                }
+            }
+
+            $params = array('dataid' => $dataid, 'name' => $type.'_title');
+            if ($field = $DB->get_record('data_fields', $params)) {
+                $params = array('fieldid' => $field->id);
+                if ($menu = $DB->get_records_menu('data_content', $params, 'content', 'id,content')) {
+                    $name = get_string($types_cmid, $this->plugin);
+                    $this->schedule_event[$name] = array_filter($menu);
+                }
+            }
+        }
+    }
+
+    /**
+     * is_menu_field
+     *
+     * @param object $field a record from the "data_fields" table
+     * @return boolean TRUE if this is a "menu" field; otherwise FALSE
+     */
+    static public function is_menu_field($field) {
+        if ($field->type=='admin') {
+            return ($field->param10=='menu');
+        } else {
+            return ($field->type=='menu');
+        }
     }
 }

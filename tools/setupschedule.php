@@ -28,8 +28,11 @@
 require_once('../../../config.php');
 require_once($CFG->dirroot.'/blocks/maj_submissions/tools/lib.php');
 
+$blockname = 'maj_submissions';
+$plugin = "block_$blockname";
+$tool = 'toolsetupschedule';
+
 $id = required_param('id', PARAM_INT); // block_instance id
-$plugin = 'block_maj_submissions';
 
 if (! $block_instance = $DB->get_record('block_instances', array('id' => $id))) {
     print_error('invalidinstanceid', $plugin);
@@ -53,49 +56,45 @@ $course->context = $context;
 require_login($course->id);
 require_capability('moodle/course:manageactivities', $context);
 
-switch (true) {
-    case optional_param('apply',  '', PARAM_ALPHA): $action = 'apply';  break;
-    case optional_param('cancel', '', PARAM_ALPHA): $action = 'cancel'; break;
-    case optional_param('delete', '', PARAM_ALPHA): $action = 'delete'; break;
-    default: $action = '';
-}
-
-if ($action=='cancel') {
-    // return to course page
-    $params = array('id' => $course->id, 'sesskey' => sesskey());
-    redirect(new moodle_url('/course/view.php', $params));
-}
-
-$blockname = get_string('blockname', $plugin);
-$pagetitle = get_string('toolsetupschedule', $plugin);
-
 // $SCRIPT is set by initialise_fullme() in 'lib/setuplib.php'
 // It is the path below $CFG->wwwroot of this script
 $url = new moodle_url($SCRIPT, array('id' => $id));
 
+$strblockname = get_string('blockname', $plugin);
+$strpagetitle = get_string($tool, $plugin);
+
 $PAGE->set_url($url);
-$PAGE->set_title($pagetitle);
+$PAGE->set_title($strpagetitle);
 $PAGE->set_heading($course->fullname);
 $PAGE->set_pagelayout('incourse');
-$PAGE->navbar->add($blockname);
-$PAGE->navbar->add($pagetitle, $url);
+$PAGE->navbar->add($strblockname);
+$PAGE->navbar->add($strpagetitle, $url);
 
-// require_head_js($plugin);
+// initialize the form
+$customdata = array('course'   => $course,
+                    'plugin'   => $plugin,
+                    'instance' => $block_instance);
+$mform = 'block_maj_submissions_tool_setupschedule';
+$mform = new $mform($url->out(false), $customdata);
 
-echo $OUTPUT->header();
-echo $OUTPUT->heading($pagetitle);
-echo $OUTPUT->box_start('generalbox');
-
-if (data_submitted()) {
-    // check Moodle session is valid ...
-    if (function_exists('require_sesskey')) {
-        require_sesskey();
-    } else if (function_exists('confirm_sesskey')) {
-        confirm_sesskey();
-    }
+if ($mform->is_cancelled()) {
+    $url = new moodle_url('/course/view.php', array('id' => $course->id));
+    redirect($url);
 }
 
-echo html_writer::tag('p', get_string('toolsetupschedule_desc', $plugin));
+if ($mform->is_submitted()) {
+    $mform->data_postprocessing();
+}
 
-echo $OUTPUT->box_end();
+echo $OUTPUT->header();
+echo $OUTPUT->heading($strpagetitle);
+
+if ($message = $mform->process_action()) {
+    echo $message;
+} else {
+    echo html_writer::tag('p', get_string($tool.'_desc', $plugin).
+                               $OUTPUT->help_icon($tool, $plugin));
+    $mform->display();
+}
+
 echo $OUTPUT->footer($course);
