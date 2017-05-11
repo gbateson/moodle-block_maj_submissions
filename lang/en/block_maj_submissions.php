@@ -249,8 +249,8 @@ $string['toolsetup_help'] = 'On this page you can set up a database for a confer
 
 **To create a new database**, give a name for the new database and specify the section in which it should be created. This can be an existing section, or a new section. If you specify a new section you will need to give a name for the new section.';
 $string['toolsetup'] = 'Setup a database for a conference.';
-$string['toolsetupevents_desc'] = 'Create, edit and delete events';
-$string['toolsetupevents'] = 'Manage events database';
+$string['toolsetupevents_desc'] = 'Setup a database for extra events';
+$string['toolsetupevents'] = 'Add conference events';
 $string['toolsetuppresentations_desc'] = 'Setup a database for presentations';
 $string['toolsetuppresentations'] = 'Collect presentation proposals';
 $string['toolsetupregistrations_desc'] = 'Setup a database for registrations';

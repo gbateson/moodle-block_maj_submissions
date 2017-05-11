@@ -973,10 +973,10 @@ class block_maj_submissions extends block_base {
         // set the $year, $month and $day characters for CJK languages
         list($year, $month, $day) = $this->get_date_chars();
 
-        if ($day && ! preg_match("/[0-9]+$year/", $date)) {
+        if ($year && ! preg_match("/[0-9]+$year/", $date)) {
             $this->fixyearchar = true;
         }
-        if ($day && ! preg_match("/[0-9]+$month/", $date)) {
+        if ($month && ! preg_match("/[0-9]+$month/", $date)) {
             $this->fixmonthchar = true;
         }
         if ($day && ! preg_match("/[0-9]+$day/", $date)) {
