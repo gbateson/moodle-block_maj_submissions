@@ -167,6 +167,7 @@ class block_maj_submissions extends block_base {
             // date settings
             'moodledatefmt' => 'strftimerecent', // 11 Nov, 10:12
             'customdatefmt' => '%b %d (%a) %H:%M', // Nov 11th (Wed) 10:12
+            'removeyear'    => 0, // 0=no, 1=yes remove current year from dates
             'fixmonth'      => 1, // 0=no, 1=remove leading "0" from months
             'fixday'        => 1, // 0=no, 1=remove leading "0" from days
             'fixhour'       => 1, // 0=no, 1=remove leading "0" from hours
@@ -569,9 +570,6 @@ class block_maj_submissions extends block_base {
      */
     protected function format_date_range($plugin, $dateformat, $timenow, $timestart, $timefinish) {
 
-        $removestart  = ($this->config->$timestart && (strftime('%H:%M', $this->config->$timestart)=='00:00'));
-        $removefinish = ($this->config->$timefinish && (strftime('%H:%M', $this->config->$timefinish)=='23:55'));
-
         $removedate = self::REMOVE_NONE;
         if ($this->config->$timestart && $this->config->$timefinish) {
             if (strftime('%Y', $this->config->$timestart)==strftime('%Y', $this->config->$timefinish)) {
@@ -595,22 +593,36 @@ class block_maj_submissions extends block_base {
             $removetime   = ($removestart && $removefinish);
         }
 
+        // if requested, remove the current year from dates
+        $removeyear = self::REMOVE_NONE;
+        if ($this->config->removeyear) {
+            if ($this->config->$timestart) {
+                if (strftime('%Y', $this->config->$timestart)==strftime('%Y')) {
+                    $removeyear = self::REMOVE_YEAR;
+                }
+            } else if ($this->config->$timefinish) {
+                if (strftime('%Y', $this->config->$timefinish)==strftime('%Y')) {
+                    $removeyear = self::REMOVE_YEAR;
+                }
+            }
+        }
+
         $date = '';
         if ($this->config->$timestart && $this->config->$timefinish) {
             $date = (object)array(
-                'open'  => $this->userdate($this->config->$timestart, $dateformat, $removetime),
+                'open'  => $this->userdate($this->config->$timestart, $dateformat, $removetime, $removeyear),
                 'close' => $this->userdate($this->config->$timefinish, $dateformat, $removetime, $removedate)
             );
             $date = $this->get_string('dateopenclose', $plugin, $date);
         } else if ($this->config->$timestart) {
-            $date = $this->userdate($this->config->$timestart, $dateformat, $removestart);
+            $date = $this->userdate($this->config->$timestart, $dateformat, $removestart, $removeyear);
             if ($this->config->$timestart < $timenow) {
                 $date = $this->get_string('dateopenedon', $plugin, $date);
             } else {
                 $date = $this->get_string('dateopenson', $plugin, $date);
             }
         } else if ($this->config->$timefinish) {
-            $date = $this->userdate($this->config->$timefinish, $dateformat, $removefinish);
+            $date = $this->userdate($this->config->$timefinish, $dateformat, $removefinish, $removeyear);
             if ($this->config->$timefinish < $timenow) {
                 $date = $this->get_string('dateclosedon', $plugin, $date);
             } else {

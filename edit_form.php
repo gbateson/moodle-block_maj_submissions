@@ -142,6 +142,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $this->add_field_moodledatefmt($mform, $plugin);
         $this->add_field_customdatefmt($mform, $plugin);
         $this->add_field_fixdates($mform, $plugin);
+        $this->add_field($mform, $plugin, 'removeyear', 'selectyesno', PARAM_INT);
         $this->add_field($mform, $plugin, 'manageevents', 'selectyesno', PARAM_INT);
     }
 

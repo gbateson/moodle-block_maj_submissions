@@ -189,6 +189,8 @@ $string['registerpresenterssectionnum_help'] = 'The course section in which to c
 $string['registerpresenterssectionnum'] = 'Registration section';
 $string['registerpresenterstime_help'] = 'The dates and times at which the online registration for presenters starts and finshes.';
 $string['registerpresenterstime'] = 'Registration for presenters';
+$string['removeyear_help'] = 'If this option is enabled, then the current year will be removed from dates.';
+$string['removeyear'] = 'Remove current year';
 $string['resetworkshop_help']= 'This setting specifies whether or not to reset the target workshop before transferring submissions from the source database.
 
 **No**
