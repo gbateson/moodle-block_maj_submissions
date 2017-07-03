@@ -137,7 +137,7 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
     $table = preg_replace('/<tr([^<]*)>\s*<\/tr>/', $replace, $table);
 
     // append $table to html $content
-    $content .= "\n".$table;
+    $content .= "\n".$table."\n";
 }
 
 if (empty($instance->config->title)) {

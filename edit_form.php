@@ -428,8 +428,9 @@ class block_maj_submissions_edit_form extends block_edit_form {
      *
      * @param object  $mform
      * @param string  $plugin
-     * @param string  $type e.g. collect, collectworkshop, collectsponsored,
-     *                review, revise, publish, register, registerpresenter
+     * @param string  $type e.g. conference, workshops, reception,
+     *                collectcollectpresentations, collectworkshops, collectsponsoreds
+     *                review, revise, publish, registerdelegates, registerpresenters
      * @return void, but will update $mform
      */
     protected function add_time_startfinish($mform, $plugin, $type) {
