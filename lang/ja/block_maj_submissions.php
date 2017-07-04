@@ -174,6 +174,7 @@ $string['publishcmid'] = 'Schedule activity';
 $string['publishsubmissions'] = 'Publish schedule';
 $string['publishtime_help'] = 'The start and finish dates of the period during which the conference schedule is available online to the public.';
 $string['publishtime'] = 'スケジュールの公開';
+$string['quicklinks'] = '直通リンク';
 $string['receptioncmid_help'] = 'The page resource that displays information about the conference reception.';
 $string['receptioncmid'] = '懇親会に関する情報';
 $string['receptiontime_help'] = '懇親会の開始と終了日時';

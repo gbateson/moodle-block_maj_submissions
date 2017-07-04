@@ -93,6 +93,7 @@ class block_maj_submissions extends block_base {
             'title' => get_string('blockname', $plugin),
             'displaydates' => 1, // 0=no, 1=yes
             'displaystats' => 1, // 0=no, 1=yes
+            'displaylinks' => 1, // 0=no, 1=yes
             'displaylangs' => implode(',', self::get_languages()),
 
             // database CONSTANT fields
@@ -412,6 +413,33 @@ class block_maj_submissions extends block_base {
         }
 
         $modinfo = get_fast_modinfo($this->page->course);
+
+        // build menu of quick links to course sections
+        $links = array();
+        if ($this->config->displaylinks) {
+            $canviewhidden = 'moodle/course:viewhiddensections';
+            $canviewhidden = has_capability($canviewhidden, $this->page->context);
+            foreach ($modinfo->get_section_info_all() as $sectionnum => $section) {
+                if ($sectionnum && ($section->visible || $canviewhidden)) {
+                    if ($section->name) {
+                        $sectionname = self::filter_text($section->name);
+                    } else {
+                        $sectionname = self::filter_text($section->summary);
+                    }
+                    $url = new moodle_url('/course/view.php', array('id' => $this->page->course->id));
+                    if ($coursedisplay==COURSE_DISPLAY_SINGLEPAGE) {
+                        $url->set_anchor("section-$sectionnum");
+                    } else {
+                        $url->param('section', $sectionnum);
+                    }
+                    $sectionname = html_writer::link($url, $sectionname);
+                    $params = array('class' => ($section->visible ? '' : 'dimmed_text'));
+                    $links[] = html_writer::tag('li', $sectionname, $params);
+                }
+            }
+        }
+
+        // build list of important dates
         foreach (self::get_timetypes() as $types) {
 
             // skip the divider, if $dates is still empty
@@ -463,13 +491,12 @@ class block_maj_submissions extends block_base {
                         $sectionnum = $this->config->$sectionnum;
                         if (is_numeric($sectionnum) && $sectionnum >= 0) { // 0 is allowed ;-)
                             $params = array('id' => $this->page->course->id);
-                            if ($coursedisplay==COURSE_DISPLAY_MULTIPAGE) {
-                                $params['section'] = $sectionnum;
-                                $anchor = null;
+                            $url = new moodle_url('/course/view.php', $params);
+                            if ($coursedisplay==COURSE_DISPLAY_SINGLEPAGE) {
+                                $url->set_anchor("section-$sectionnum");
                             } else {
-                                $anchor = "section-$sectionnum";
+                                $url->param('section', $sectionnum);
                             }
-                            $url = new moodle_url('/course/view.php', $params, $anchor);
                         }
                     }
 
@@ -516,9 +543,7 @@ class block_maj_submissions extends block_base {
         }
 
         // If necessary, format the export, import and edit icons.
-        // These icons will be printed next to the "Important Dates" heading
-        // if there any important dates.
-        // Otherwise, they will appear next to the "Conference tools" heading
+        // These icons will be printed next to the first heading in this block
         $icons = '';
         if ($this->user_can_edit()) {
             if ($countdates) {
@@ -529,6 +554,13 @@ class block_maj_submissions extends block_base {
             if (empty($USER->editing)) {
                 $icons .= ' '.$this->get_edit_icon($plugin);
             }
+        }
+
+        if ($links = implode('', $links)) {
+            $heading = $this->get_string('quicklinks', $plugin).$icons;
+            $this->content->text .= html_writer::tag('h4', $heading, array('class' => 'quicklinks'));
+            $this->content->text .= html_writer::tag('ul', $links, array('class' => 'quicklinks'));
+            $icons = ''; // to ensure we only print the icons once
         }
 
         // add important dates, if necessary
@@ -1234,7 +1266,7 @@ class block_maj_submissions extends block_base {
     }
 
     /**
-     * get_timetypes
+     * get_php_lang
      *
      * @return array
      */

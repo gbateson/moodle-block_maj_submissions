@@ -60,6 +60,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $this->add_field($mform, $plugin, 'title', 'text', PARAM_TEXT, array('size' => 50));
         $this->add_field($mform, $plugin, 'displaydates', 'selectyesno', PARAM_INT);
         $this->add_field($mform, $plugin, 'displaystats', 'selectyesno', PARAM_INT);
+        $this->add_field($mform, $plugin, 'displaylinks', 'selectyesno', PARAM_INT);
         $this->add_field($mform, $plugin, 'displaylangs', 'text', PARAM_TEXT);
         $mform->disabledIf('config_displaystats', 'config_displaydates', 'eq', '0');
 
