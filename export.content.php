@@ -74,7 +74,7 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
     // remove statistics about registrations/submissions so far
     $content = preg_replace('/\s*<i\b[^>]*>.*?<\/i>/', '', $content);
 
-    // remove "H4 toollinks", "P toollink" and "P tooldivider" tags
+    // remove "h4.toollinks", "p.toollink" and "p.tooldivider" tags
     $content = preg_replace('/\s*<(h4|p)\b[^>]*class="(toollinks?|tooldivider)"[^>]*>.*?<\/\1>/s', '', $content);
 
     // format block and style tags

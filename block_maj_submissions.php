@@ -598,11 +598,11 @@ class block_maj_submissions extends block_base {
         if ($this->config->removeyear) {
             if ($this->config->$timestart) {
                 if (strftime('%Y', $this->config->$timestart)==strftime('%Y')) {
-                    $removeyear = self::REMOVE_YEAR;
+                    $removeyear |= self::REMOVE_YEAR;
                 }
             } else if ($this->config->$timefinish) {
                 if (strftime('%Y', $this->config->$timefinish)==strftime('%Y')) {
-                    $removeyear = self::REMOVE_YEAR;
+                    $removeyear |= self::REMOVE_YEAR;
                 }
             }
         }
@@ -965,6 +965,10 @@ class block_maj_submissions extends block_base {
             $userdate = strtr($userdate, $replace);
         }
 
+        // remove unnecessary white space
+        $userdate = trim($userdate);
+        $userdate = preg_replace('/  +/', ' ', $userdate);
+
         return $userdate;
     }
 
@@ -1049,6 +1053,11 @@ class block_maj_submissions extends block_base {
                     $spans[$lang] = $string;
                 }
             }
+        }
+
+        // special case if this string occurs in only one language pack
+        if (count($spans)==1) {
+            return reset($spans);
         }
 
         // format strings as multilang $spans
