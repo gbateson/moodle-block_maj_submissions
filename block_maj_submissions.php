@@ -91,9 +91,9 @@ class block_maj_submissions extends block_base {
         $defaults = array(
 
             'title' => get_string('blockname', $plugin),
+            'displaylinks' => 1, // 0=no, 1=yes
             'displaydates' => 1, // 0=no, 1=yes
             'displaystats' => 1, // 0=no, 1=yes
-            'displaylinks' => 1, // 0=no, 1=yes
             'displaylangs' => implode(',', self::get_languages()),
 
             // database CONSTANT fields
@@ -212,7 +212,8 @@ class block_maj_submissions extends block_base {
         // update CONSTANT fields, if required
         /////////////////////////////////////////////////
 
-        $courseid = $this->page->course->id;
+        $course = $this->page->course;
+        $courseid = $course->id;
         $moduleid = $DB->get_field('modules', 'id', array('name' => 'data'));
 
         $dataids = array();
@@ -261,7 +262,7 @@ class block_maj_submissions extends block_base {
         if ($config->manageevents) {
             $events = array();
 
-            $modinfo = get_fast_modinfo($this->page->course);
+            $modinfo = get_fast_modinfo($course);
             foreach (self::get_timetypes() as $types) {
                 foreach ($types as $type) {
 
@@ -325,7 +326,7 @@ class block_maj_submissions extends block_base {
             }
 
             if (count($events)) {
-                $this->add_events($events, $this->page->course, $plugin);
+                $this->add_events($events, $course, $plugin);
             }
         }
 
@@ -375,7 +376,7 @@ class block_maj_submissions extends block_base {
      * @return xxx
      */
     function get_content() {
-        global $USER;
+        global $FULLME, $USER;
 
         if ($this->content !== null) {
             return $this->content;
@@ -392,6 +393,9 @@ class block_maj_submissions extends block_base {
         $countdates = 0;
         $formatdates = ($this->config->displaydates || $this->multilang);
 
+        $links = array();
+        $countlinks = 0;
+
         // get $dateformat
         if (! $dateformat = $this->config->customdatefmt) {
             if (! $dateformat = $this->config->moodledatefmt) {
@@ -401,40 +405,35 @@ class block_maj_submissions extends block_base {
         }
         $timenow = time();
 
+        $course = $this->page->course;
+        $courseid = $course->id;
+
         // cache $coursedisplay (single/multi page)
-        if (isset($this->page->course->coursedisplay)) {
-            $coursedisplay = $this->page->course->coursedisplay;
+        if (isset($course->coursedisplay)) {
+            $coursedisplay = $course->coursedisplay;
         } else if (function_exists('course_get_format')) {
-            $coursedisplay = course_get_format($this->page->course);
+            $coursedisplay = course_get_format($course);
             $coursedisplay = $coursedisplay->get_format_options();
             $coursedisplay = $coursedisplay['coursedisplay'];
         } else {
             $coursedisplay = COURSE_DISPLAY_SINGLEPAGE; // =0
         }
 
-        $modinfo = get_fast_modinfo($this->page->course);
+        // get info about sections and mods in this course
+        $modinfo = get_fast_modinfo($course);
 
         // build menu of quick links to course sections
-        $links = array();
         if ($this->config->displaylinks) {
             $canviewhidden = 'moodle/course:viewhiddensections';
             $canviewhidden = has_capability($canviewhidden, $this->page->context);
             foreach ($modinfo->get_section_info_all() as $sectionnum => $section) {
                 if ($sectionnum && ($section->visible || $canviewhidden)) {
-                    if ($section->name) {
-                        $sectionname = self::filter_text($section->name);
-                    } else {
-                        $sectionname = self::filter_text($section->summary);
+                    if ($sectionname = self::get_sectionname($section)) {
+                        $url = self::get_sectionlink($courseid, $sectionnum, $coursedisplay);
+                        $sectionname = html_writer::link($url, $sectionname);
+                        $linkclass = ($section->visible ? '' : 'dimmed_text');
+                        $links[] = html_writer::tag('li', $sectionname, array('class' => $linkclass));
                     }
-                    $url = new moodle_url('/course/view.php', array('id' => $this->page->course->id));
-                    if ($coursedisplay==COURSE_DISPLAY_SINGLEPAGE) {
-                        $url->set_anchor("section-$sectionnum");
-                    } else {
-                        $url->param('section', $sectionnum);
-                    }
-                    $sectionname = html_writer::link($url, $sectionname);
-                    $params = array('class' => ($section->visible ? '' : 'dimmed_text'));
-                    $links[] = html_writer::tag('li', $sectionname, $params);
                 }
             }
         }
@@ -467,13 +466,13 @@ class block_maj_submissions extends block_base {
                         case 'collectpresentations':
                         case 'collectworkshops':
                         case 'collectsponsoreds':
-                        case 'revise':
                         case 'publish':
                         case 'registerdelegates':
                         case 'registerpresenters':
                             $cmid = $type.'cmid';
                             break;
 
+                        case 'revise':
                         case 'review':
                             $sectionnum = $type.'sectionnum';
                             break;
@@ -490,13 +489,7 @@ class block_maj_submissions extends block_base {
                     if ($sectionnum && isset($this->config->$sectionnum)) {
                         $sectionnum = $this->config->$sectionnum;
                         if (is_numeric($sectionnum) && $sectionnum >= 0) { // 0 is allowed ;-)
-                            $params = array('id' => $this->page->course->id);
-                            $url = new moodle_url('/course/view.php', $params);
-                            if ($coursedisplay==COURSE_DISPLAY_SINGLEPAGE) {
-                                $url->set_anchor("section-$sectionnum");
-                            } else {
-                                $url->param('section', $sectionnum);
-                            }
+                            $url = self::get_sectionlink($courseid, $sectionnum, $coursedisplay);
                         }
                     }
 
@@ -552,10 +545,11 @@ class block_maj_submissions extends block_base {
             }
             $icons .= ' '.$this->get_exportimport_icon($plugin, 'import', 'settings', 'i/import');
             if (empty($USER->editing)) {
-                $icons .= ' '.$this->get_edit_icon($plugin);
+                $icons .= ' '.$this->get_edit_icon($plugin, $courseid);
             }
         }
 
+        // add quick links, if necessary
         if ($links = implode('', $links)) {
             $heading = $this->get_string('quicklinks', $plugin).$icons;
             $this->content->text .= html_writer::tag('h4', $heading, array('class' => 'quicklinks'));
@@ -868,16 +862,16 @@ class block_maj_submissions extends block_base {
      *
      * @return array
      */
-    protected function get_edit_icon($plugin) {
+    protected function get_edit_icon($plugin, $courseid) {
 
         // the "return" url which leads to the block edit page
-        $params = array('id' => $this->page->course->id,
+        $params = array('id' => $courseid,
                         'sesskey' => sesskey(),
                         'bui_editid' => $this->instance->id);
         $href = new moodle_url('/course/view.php', $params);
 
         // the URL to enable editing and redirect to the block edit page
-        $params = array('id' => $this->page->course->id,
+        $params = array('id' => $courseid,
                         'edit' => 'on',
                         'sesskey' => sesskey(),
                         'return' => $href->out_as_local_url(false));
@@ -1292,6 +1286,135 @@ class block_maj_submissions extends block_base {
         } else {
             return 'en'; // default PHP language
         }
+    }
+
+    /**
+     * get_sectionname
+     *
+     * names longer than $namelength will be trancated to to HEAD ... TAIL
+     * where the number of characters in HEAD is $headlength
+     * and the number of characters in TIAL is $taillength
+     *
+     * @param object   $section
+     * @param integer  $namelength of section name (optional, default=28)
+     * @param integer  $headlength of head of section name (optional, default=10)
+     * @param integer  $taillength of tail of section name (optional, default=10)
+     * @return string  name of $section
+     */
+    static public function get_sectionlink($courseid, $sectionnum, $coursedisplay) {
+        $url = new moodle_url('/course/view.php', array('id' => $courseid));
+        if ($coursedisplay==COURSE_DISPLAY_SINGLEPAGE) {
+            $url->set_anchor("section-$sectionnum");
+        } else {
+            $url->param('section', $sectionnum);
+        }
+        return $url;
+    }
+
+    /**
+     * get_sectionname
+     *
+     * names longer than $namelength will be trancated to to HEAD ... TAIL
+     * where the number of characters in HEAD is $headlength
+     * and the number of characters in TIAL is $taillength
+     *
+     * @param object   $section
+     * @param integer  $namelength of section name (optional, default=28)
+     * @param integer  $headlength of head of section name (optional, default=10)
+     * @param integer  $taillength of tail of section name (optional, default=10)
+     * @return string  name of $section
+     */
+    static public function get_sectionname($section, $namelength=28, $headlength=10, $taillength=10) {
+
+        // extract section title from section name
+        if ($name = self::filter_text($section->name)) {
+            return self::trim_text($name, $namelength, $headlength, $taillength);
+        }
+
+        // extract section title from section summary
+        if ($name = self::filter_text($section->summary)) {
+
+            // remove script and style blocks
+            $select = '/\s*<(script|style)[^>]*>.*?<\/\1>\s*/is';
+            $name = preg_replace($select, '', $name);
+
+            // look for HTML H1-5 tags or the first line of text
+            $tags = 'h1|h2|h3|h4|h5|h6';
+            if (preg_match('/<('.$tags.')\b[^>]*>(.*?)<\/\1>/is', $name, $matches)) {
+                $name = $matches[2];
+            } else {
+                // otherwise, get first line of text
+                $name = preg_split('/<br[^>]*>/', $name);
+                $name = array_map('strip_tags', $name);
+                $name = array_map('trim', $name);
+                $name = array_filter($name);
+                if (empty($name)) {
+                    $name = '';
+                } else {
+                    $name = reset($name);
+                }
+            }
+            $name = trim(strip_tags($name));
+            $name = self::trim_text($name, $namelength, $headlength, $taillength);
+            return $name;
+        }
+
+        return ''; // section name and summary are empty
+    }
+
+    /**
+     * get_sectionname_default
+     *
+     * @param object   $course
+     * @param object   $section
+     * @param string   $dateformat (optional, default='%b %d')
+     * @return string  name of $section
+     */
+    static public function get_sectionname_default($course, $sectionnum, $dateformat='%b %d') {
+
+        // set course section type
+        if ($course->format=='weeks') {
+            $sectiontype = 'week';
+        } else if ($course->format=='topics') {
+            $sectiontype = 'topic';
+        } else {
+            $sectiontype = 'section';
+        }
+
+        // "weeks" format
+        if ($sectiontype=='week' && $sectionnum > 0) {
+            if ($dateformat=='') {
+                $dateformat = get_string('strftimedateshort');
+            }
+            // 604800 : number of seconds in 7 days i.e. WEEKSECS
+            // 518400 : number of seconds in 6 days i.e. WEEKSECS - DAYSECS
+            $date = $course->startdate + 7200 + (($sectionnum - 1) * 604800);
+            return userdate($date, $dateformat).' - '.userdate($date + 518400, $dateformat);
+        }
+
+        // get string manager object
+        $strman = get_string_manager();
+
+        // specify course format plugin name
+        $courseformat = 'format_'.$course->format;
+
+        if ($strman->string_exists('section'.$sectionnum.'name', $courseformat)) {
+            return get_string('section'.$sectionnum.'name', $courseformat);
+        }
+
+        if ($strman->string_exists('sectionname', $courseformat)) {
+            return get_string('sectionname', $courseformat).' '.$sectionnum;
+        }
+
+        if ($strman->string_exists($sectiontype, 'moodle')) {
+            return get_string($sectiontype).' '.$sectionnum;
+        }
+
+        if ($strman->string_exists('sectionname', 'moodle')) {
+            return get_string('sectionname').' '.$sectionnum;
+        }
+
+        return $sectiontype.' '.$sectionnum;
     }
 
     /**

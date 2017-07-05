@@ -58,9 +58,9 @@ class block_maj_submissions_edit_form extends block_edit_form {
 
         $this->add_field_description($mform, $plugin, 'description');
         $this->add_field($mform, $plugin, 'title', 'text', PARAM_TEXT, array('size' => 50));
+        $this->add_field($mform, $plugin, 'displaylinks', 'selectyesno', PARAM_INT);
         $this->add_field($mform, $plugin, 'displaydates', 'selectyesno', PARAM_INT);
         $this->add_field($mform, $plugin, 'displaystats', 'selectyesno', PARAM_INT);
-        $this->add_field($mform, $plugin, 'displaylinks', 'selectyesno', PARAM_INT);
         $this->add_field($mform, $plugin, 'displaylangs', 'text', PARAM_TEXT);
         $mform->disabledIf('config_displaystats', 'config_displaydates', 'eq', '0');
 
@@ -483,7 +483,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
      */
     protected function add_sectionnum($mform, $plugin, $name) {
         $options = $this->get_options_sectionnum($mform, $plugin);
-        $this->add_field($mform, $plugin, $name, 'select', PARAM_INT, $options);
+        $this->add_field($mform, $plugin, $name, 'select', PARAM_ALPHANUM, $options);
     }
 
     /**
@@ -531,119 +531,13 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $course = $this->get_course();
         $sections = get_fast_modinfo($course)->get_section_info_all();
         foreach ($sections as $sectionnum => $section) {
-            if ($name = $this->get_sectionname($section)) {
-                $options[$sectionnum] = $name;
+            if ($name = block_maj_submissions::get_sectionname($section)) {
+                $options["$sectionnum"] = $name;
             } else {
-                $options[$sectionnum] = $this->get_sectionname_default($course, $sectionnum);
+                $options["$sectionnum"] = block_maj_submissions::get_sectionname_default($course, $sectionnum);
             }
         }
-        return $this->format_select_options($plugin, $options, 'section');
-    }
-
-    /**
-     * get_sectionname
-     *
-     * names longer than $namelength will be trancated to to HEAD ... TAIL
-     * where the number of characters in HEAD is $headlength
-     * and the number of characters in TIAL is $taillength
-     *
-     * @param object   $section
-     * @param integer  $namelength of section name (optional, default=28)
-     * @param integer  $headlength of head of section name (optional, default=10)
-     * @param integer  $taillength of tail of section name (optional, default=10)
-     * @return string  name of $section
-     */
-    protected function get_sectionname($section, $namelength=28, $headlength=10, $taillength=10) {
-
-        // extract section title from section name
-        if ($name = block_maj_submissions::filter_text($section->name)) {
-            return block_maj_submissions::trim_text($name, $namelength, $headlength, $taillength);
-        }
-
-        // extract section title from section summary
-        if ($name = block_maj_submissions::filter_text($section->summary)) {
-
-            // remove script and style blocks
-            $select = '/\s*<(script|style)[^>]*>.*?<\/\1>\s*/is';
-            $name = preg_replace($select, '', $name);
-
-            // look for HTML H1-5 tags or the first line of text
-            $tags = 'h1|h2|h3|h4|h5|h6';
-            if (preg_match('/<('.$tags.')\b[^>]*>(.*?)<\/\1>/is', $name, $matches)) {
-                $name = $matches[2];
-            } else {
-                // otherwise, get first line of text
-                $name = preg_split('/<br[^>]*>/', $name);
-                $name = array_map('strip_tags', $name);
-                $name = array_map('trim', $name);
-                $name = array_filter($name);
-                if (empty($name)) {
-                    $name = '';
-                } else {
-                    $name = reset($name);
-                }
-            }
-            $name = trim(strip_tags($name));
-            $name = block_maj_submissions::trim_text($name, $namelength, $headlength, $taillength);
-            return $name;
-        }
-
-        return ''; // section name and summary are empty
-    }
-
-    /**
-     * get_sectionname_default
-     *
-     * @param object   $course
-     * @param object   $section
-     * @param string   $dateformat (optional, default='%b %d')
-     * @return string  name of $section
-     */
-    protected function get_sectionname_default($course, $sectionnum, $dateformat='%b %d') {
-
-        // set course section type
-        if ($course->format=='weeks') {
-            $sectiontype = 'week';
-        } else if ($course->format=='topics') {
-            $sectiontype = 'topic';
-        } else {
-            $sectiontype = 'section';
-        }
-
-        // "weeks" format
-        if ($sectiontype=='week' && $sectionnum > 0) {
-            if ($dateformat=='') {
-                $dateformat = get_string('strftimedateshort');
-            }
-            // 604800 : number of seconds in 7 days i.e. WEEKSECS
-            // 518400 : number of seconds in 6 days i.e. WEEKSECS - DAYSECS
-            $date = $course->startdate + 7200 + (($sectionnum - 1) * 604800);
-            return userdate($date, $dateformat).' - '.userdate($date + 518400, $dateformat);
-        }
-
-        // get string manager object
-        $strman = get_string_manager();
-
-        // specify course format plugin name
-        $courseformat = 'format_'.$course->format;
-
-        if ($strman->string_exists('section'.$sectionnum.'name', $courseformat)) {
-            return get_string('section'.$sectionnum.'name', $courseformat);
-        }
-
-        if ($strman->string_exists('sectionname', $courseformat)) {
-            return get_string('sectionname', $courseformat).' '.$sectionnum;
-        }
-
-        if ($strman->string_exists($sectiontype, 'moodle')) {
-            return get_string($sectiontype).' '.$sectionnum;
-        }
-
-        if ($strman->string_exists('sectionname', 'moodle')) {
-            return get_string('sectionname').' '.$sectionnum;
-        }
-
-        return $sectiontype.' '.$sectionnum;
+        return $this->format_select_options($plugin, $options, 'section', '');
     }
 
     /**
@@ -703,7 +597,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
                         $cm = $modinfo->get_cm($cmid);
                         if ($count==0 || in_array($cm->modname, $modnames)) {
                             if ($sectionname=='') {
-                                $sectionname = $this->get_sectionname($section, 0);
+                                $sectionname = block_maj_submissions::get_sectionname($section, 0);
                                 $options[$sectionname] = array();
                             }
                             $name = $cm->name;
@@ -726,13 +620,13 @@ class block_maj_submissions_edit_form extends block_edit_form {
      * @param string  $type ("field", "activity" or "section")
      * @return array  $option for a select element in $mform
      */
-    protected function format_select_options($plugin, $options, $type) {
-        if (! array_key_exists(0, $options)) {
-            $none = get_string('none');
-            $options = array(0 => "($none)") + $options;
+    protected function format_select_options($plugin, $options, $type, $nonevalue=0, $newvalue=-1) {
+        if (! array_key_exists($nonevalue, $options)) {
+            $text = get_string('none');
+            $options = array($nonevalue => "($text)") + $options;
         }
-        $createnew = get_string('createnew'.$type, $plugin);
-        return $options + array(-1 => "($createnew)");
+        $text = get_string('createnew'.$type, $plugin);
+        return $options + array($newvalue => "($text)");
     }
 
     /**

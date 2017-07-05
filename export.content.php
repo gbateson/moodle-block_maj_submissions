@@ -75,7 +75,7 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
     $content = preg_replace('/\s*<i\b[^>]*>.*?<\/i>/', '', $content);
 
     // remove "h4.toollinks", "p.toollink" and "p.tooldivider" tags
-    $content = preg_replace('/\s*<(h4|p)\b[^>]*class="(toollinks?|tooldivider)"[^>]*>.*?<\/\1>/s', '', $content);
+    $content = preg_replace('/\s*<(h4|p|ul)\b[^>]*class="(quicklinks|toollinks?|tooldivider)"[^>]*>.*?<\/\1>/s', '', $content);
 
     // format block and style tags
     $s = '    ';

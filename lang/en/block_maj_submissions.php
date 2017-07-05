@@ -112,7 +112,7 @@ Otherwise, the dates will not be displayed on the course page. Ordinary users wi
 $string['displaydates'] = 'Display dates';
 $string['displaylangs_help'] = 'Enter the language codes, separated by commas, for languages you wish to use on this conference system.';
 $string['displaylangs'] = 'Display languages';
-$string['displaylinks_help'] = 'If this setting is enabled, this block will display a list of links to the sections in this course.';
+$string['displaylinks_help'] = 'If this setting is enabled, this block will display a list of links - one to each section in this course.';
 $string['displaylinks'] = 'Display links';
 $string['displaystats_help'] = 'If this setting is enabled, the number of submissions and registrations received so far will be displayed in this MAJ Submissions block on the course page.';
 $string['displaystats'] = 'Display statistics';
