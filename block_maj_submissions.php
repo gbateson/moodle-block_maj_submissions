@@ -1073,7 +1073,7 @@ class block_maj_submissions extends block_base {
         $spans = array();
         foreach ($langs as $lang) {
             $strings = $strman->load_component_strings($component, $lang);
-            if ($strings[$identifier]) {
+            if (array_key_exists($identifier, $strings)) {
                 $string = $strman->get_string($identifier, $component, $a, $lang);
                 if (array_search($string, $spans)===false) {
                     $spans[$lang] = $string;
@@ -1081,7 +1081,12 @@ class block_maj_submissions extends block_base {
             }
         }
 
-        // special case if this string occurs in only one language pack
+        // this string does not exist - should not happen !!
+        if (empty($spans)) {
+            return '';
+        }
+
+        // special case - this string occurs in only one language pack
         if (count($spans)==1) {
             return reset($spans);
         }

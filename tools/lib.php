@@ -131,6 +131,9 @@ abstract class block_maj_submissions_tool_base extends moodleform {
         }
         $numoptions = self::get_cmids($mform, $course, $plugin, $this->modulename, 'activity');
         $disabledif = array($name.'name' => $name.'num');
+        if ($numdefault==0 && max(array_keys($numoptions))<=0) {
+            $numdefault = self::CREATE_NEW;
+        }
         $this->add_field_numname($mform, $plugin, $name, $numoptions, array(), $numdefault, $namedefault, $label, $disabledif);
     }
 
@@ -1244,7 +1247,7 @@ class block_maj_submissions_tool_setupworkshops extends block_maj_submissions_to
     protected $defaultpreset = 'workshops';
 }
 class block_maj_submissions_tool_setupevents extends block_maj_submissions_tool_setupdatabase {
-    protected $type = 'events';
+    protected $type = 'conferenceevents';
     protected $modulename = 'data';
     protected $defaultpreset = 'events';
 }
