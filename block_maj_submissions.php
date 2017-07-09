@@ -1309,6 +1309,8 @@ class block_maj_submissions extends block_base {
             $url->param('section', $sectionnum);
         }
         return $url;
+        //$params = array('id' => $courseid, 'section' => $sectionnum);
+        //return new moodle_url('/course/view.php', $params);
     }
 
     /**

@@ -50,6 +50,7 @@ $string['certificatenumber_help'] = 'The starting value for the auto-increment c
 $string['certificatenumber'] = 'Certificate number';
 $string['collectpresentationscmid_help'] = 'The database activity that is used to collect presentation proposals.';
 $string['collectpresentationscmid'] = 'Presentation proposals';
+$string['collectpresentationsname'] = 'Submit a Proposal for a Presentation';
 $string['collectpresentationstime_help'] = 'The dates and times at which the online collection of proposals for presentations starts and finshes.';
 $string['collectpresentationstime'] = 'Call for presentation proposals';
 $string['collectsponsoredscmid_help'] = 'The database activity that is used to collect proposals for sponsored presentations.';
@@ -59,6 +60,7 @@ $string['collectsponsoredstime'] = 'Call for sponsored proposals';
 $string['collectsubmissions'] = 'Submit proposals';
 $string['collectworkshopscmid_help'] = 'The database activity that is used to collect proposals for workshops.';
 $string['collectworkshopscmid'] = 'Workshop proposals';
+$string['collectworkshopsname'] = 'Submit a Proposal for a Workshop';
 $string['collectworkshopstime_help'] = 'The dates and times at which the online collection of proposals for workshops starts and finshes.';
 $string['collectworkshopstime'] = 'Call for workshop proposals';
 $string['conferencecmid_help'] = 'The page resource that displays information about the conference.';
@@ -152,7 +154,7 @@ $string['moodledatefmt_help'] = 'Start and finish dates will be formatted in a s
 
 If you click on the &quot;+&quot; sign next to one of the dates, the name of the date format string for that date will be displayed, along with its format codes. This is useful if you want to create your own date format string in the &quot;Custom date format string&quot; setting below.
 
-Note that if the &quot;Show date last modified&quot; is set to &quot;No&quot; then no date will be displayed. Also, if a format is specified in the &quot;Custom date format string&quot; setting, then that will override the string selected here.';
+Note that if the &quot;Display dates&quot; is set to &quot;No&quot; then no date will be displayed. Also, if a format is specified in the &quot;Custom date format string&quot; setting, then that will override the string selected here.';
 $string['moodledatefmt'] = 'Moodle date format string';
 $string['preset_help'] = 'A "preset" is a template for creating a Moodle database activity. It includes specifications of the database fields, and the layout of the webpages to edit and display records. However, it does not include any actual data.
 
@@ -183,6 +185,7 @@ $string['receptiontime_help'] = 'The start and finish times of the conference re
 $string['receptiontime'] = 'Conference reception';
 $string['registerdelegatescmid_help'] = 'The database activity where delegates register their intention to attend and participate in the conference.';
 $string['registerdelegatescmid'] = 'Delegate registrations';
+$string['registerdelegatesname'] = 'Register for the Conference';
 $string['registerdelegatestime_help'] = 'The dates and times at which the online registration for delegates starts and finshes.';
 $string['registerdelegatestime'] = 'Registration for delegates';
 $string['registerparticipation'] = 'Register participation';

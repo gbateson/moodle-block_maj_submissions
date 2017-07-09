@@ -50,6 +50,7 @@ $string['certificatenumber_help'] = 'The starting value for the auto-increment c
 $string['certificatenumber'] = 'Certificate number';
 $string['collectpresentationscmid_help'] = '個人発表申請を収集するためのデータベース';
 $string['collectpresentationscmid'] = '個人発表申請のデータベース';
+$string['collectpresentationsname'] = '発表提案の提出';
 $string['collectpresentationstime_help'] = '個人発表申請のオンライン受付開始と終了の日時';
 $string['collectpresentationstime'] = '個人発表申請の案内';
 $string['collectsponsoredscmid_help'] = 'スポンサー発表申請を収集するためのデータベース';
@@ -59,6 +60,7 @@ $string['collectsponsoredstime'] = 'スポンサー発表申請の案内';
 $string['collectsubmissions'] = '申請の提出';
 $string['collectworkshopscmid_help'] = 'ワークショップ申請を収集するためのデータベース';
 $string['collectworkshopscmid'] = 'ワークショップ申請';
+$string['collectworkshopsname'] = 'ワークショップ提案の提出';
 $string['collectworkshopstime_help'] = 'ワークショップ申請のオンライン受付開始と終了の日時';
 $string['collectworkshopstime'] = 'ワークショップ申請の案内';
 $string['conferencecmid_help'] = '大会に関する情報を集約したページ';
@@ -116,8 +118,8 @@ $string['displaystats_help'] = 'If this setting is enabled, the number of submis
 $string['displaystats'] = 'Display statistics';
 $string['events_help'] = 'Enter the name of an event that can be added to the schedule.';
 $string['events'] = 'Conference event [{no}]';
-$string['eventscmid_help'] = 'Select the database of conference events, such as registration and food breaks, that can be added to the schedule.';
-$string['eventscmid'] = 'Events database';
+$string['eventscmid_help'] = '受付・食事休憩などのスケジュールに加われる大会行事を収集するためのデータベース';
+$string['eventscmid'] = '大会行事のデータベース';
 $string['exportcontent'] = 'コンテンツをエキスポートする';
 $string['exportsettings_help'] = 'This link allows you export the configuration settings for this block to a file that you can import into a similar block in another course.';
 $string['exportsettings'] = '設定をエキスポートする';
@@ -150,7 +152,7 @@ $string['moodledatefmt_help'] = 'Start and finish dates will be formatted in a s
 
 If you click on the &quot;+&quot; sign next to one of the dates, the name of the date format string for that date will be displayed, along with its format codes. This is useful if you want to create your own date format string in the &quot;Custom date format string&quot; setting below.
 
-Note that if the &quot;Show date last modified&quot; is set to &quot;No&quot; then no date will be displayed. Also, if a format is specified in the &quot;Custom date format string&quot; setting, then that will override the string selected here.';
+Note that if the &quot;Display dates&quot; is set to &quot;No&quot; then no date will be displayed. Also, if a format is specified in the &quot;Custom date format string&quot; setting, then that will override the string selected here.';
 $string['moodledatefmt'] = 'Moodle date format string';
 $string['preset_help'] = 'A "preset" is a template for creating a Moodle database activity. It includes specifications of the database fields, and the layout of the webpages to edit and display records. However, it does not include any actual data.
 
@@ -179,8 +181,9 @@ $string['receptioncmid_help'] = 'The page resource that displays information abo
 $string['receptioncmid'] = '懇親会に関する情報';
 $string['receptiontime_help'] = '懇親会の開始と終了日時';
 $string['receptiontime'] = '大会の親睦会';
-$string['registerdelegatescmid_help'] = 'The database activity where delegates register their intention to attend and participate in the conference.';
-$string['registerdelegatescmid'] = 'Delegate registrations';
+$string['registerdelegatescmid_help'] = '参加申請を収集するためのデータベース';
+$string['registerdelegatescmid'] = '参加情報のデータベース';
+$string['registerdelegatesname'] = '大会参加情報を登録';
 $string['registerdelegatestime_help'] = '参加者（発表者以外）のオンライン受付の開始と終了日時';
 $string['registerdelegatestime'] = '参加者（発表者以外）の受付';
 $string['registerparticipation'] = '参加の申請';

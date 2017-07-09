@@ -75,7 +75,26 @@ abstract class block_maj_submissions_tool_base extends moodleform {
      */
     public function __construct($action=null, $customdata=null, $method='post', $target='', $attributes=null, $editable=true) {
 
-        // extract the custom data passed from the main script
+        // cache $this->plugin, $this->course and $this->instance
+        $this->cache_customdata($customdata);
+
+        // call parent constructor, to continue normal setup
+        // which includes calling the "definition()" method
+        if (method_exists('moodleform', '__construct')) {
+            parent::__construct($action, $customdata, $method, $target, $attributes, $editable);
+        } else {
+            parent::moodleform($action, $customdata, $method, $target, $attributes, $editable);
+        }
+    }
+
+    /**
+     * cache_customdata
+     *
+     * @param array $customdata
+     * @return void, but will update plugin, course and instance properties
+     */
+    public function cache_customdata($customdata) {
+        // cache the custom data passed from the main script
         $this->plugin  = $customdata['plugin'];
         $this->course  = $customdata['course'];
         $this->instance = $customdata['instance'];
@@ -83,12 +102,9 @@ abstract class block_maj_submissions_tool_base extends moodleform {
         // convert block instance to "block_maj_submissions" object
         $this->instance = block_instance($this->instance->blockname, $this->instance);
 
-        // call parent constructor, to continue normal setup
-        if (method_exists('moodleform', '__construct')) {
-            parent::__construct($action, $customdata, $method, $target, $attributes, $editable);
-        } else {
-            parent::moodleform($action, $customdata, $method, $target, $attributes, $editable);
-        }
+        // set the "multilang" property, because we may need
+        // multilang name strings for new activities
+        $this->instance->set_multilang(true);
     }
 
     /**
@@ -108,7 +124,10 @@ abstract class block_maj_submissions_tool_base extends moodleform {
         if (empty($this->type)) {
             $label = get_string($name, $plugin);
         } else {
-            $label = get_string($this->type.'cmid', $this->plugin);
+            $label = get_string($this->type.'cmid', $plugin);
+        }
+        if ($numdefault==0 && $namedefault=='') {
+            $namedefault = $this->instance->get_string($this->type.'name', $plugin);
         }
         $numoptions = self::get_cmids($mform, $course, $plugin, $this->modulename, 'activity');
         $disabledif = array($name.'name' => $name.'num');
@@ -321,8 +340,8 @@ abstract class block_maj_submissions_tool_base extends moodleform {
         $from   = '{course_modules} cm '.
                   'JOIN {course_sections} cs ON cm.section = cs.id '.
                   'JOIN {'.$modulename.'} x ON cm.module = ? AND cm.instance = x.id';
-        $where  = 'cs.section = ? AND x.name = ? AND cm.visible = ?';
-        $params = array($moduleid, $section->section, $instancename, 1);
+        $where  = 'cs.course = ? AND cs.section = ? AND x.name = ? AND cm.visible = ?';
+        $params = array($moduleid, $course->id, $section->section, $instancename, 1);
         $order  = 'cm.visible DESC, cm.added DESC'; // newest, visible cm first
         if ($cm = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $order", $params, 0, 1)) {
             return reset($cm);
@@ -708,12 +727,15 @@ class block_maj_submissions_tool_setupdatabase extends block_maj_submissions_too
     protected $defaultpreset = '';
 
     /**
-     * constructor
+     * cache_customdata
+     *
+     * @param array $customdata
+     * @return void, but will update plugin, course and instance properties
      */
-    public function __construct($action=null, $customdata=null, $method='post', $target='', $attributes=null, $editable=true) {
+    public function cache_customdata($customdata) {
 
-        // call parent constructor, to complete normal setup
-        parent::__construct($action, $customdata, $method, $target, $attributes, $editable);
+        // cache $this->plugin, $this->course and $this->instance
+        parent::cache_customdata($customdata);
 
         // set the "course_module" id, if it is defined and still exists
         $cmid = $this->type.'cmid';
@@ -988,6 +1010,15 @@ class block_maj_submissions_tool_setupdatabase extends block_maj_submissions_too
                 $search = '/(<form method="post" action=")(">)/';
                 $replace = new moodle_url('/mod/data/preset.php', array('id' => $cm->id));
                 $importform = preg_replace($search, '$1'.$replace.'$2', $importform);
+
+                // on a new database, remove warning about overwriting fields
+                if (empty($importer->get_preset_settings()->currentfields)) {
+                    $name = 'overwritesettings';
+                    $params = array('type' => 'hidden', 'name' => $name, 'value' => 0);
+                    $search = '/(\s*<p>.*?<\/p>)?\s*<div class="'.$name.'">.*?<\/div>/s';
+                    $replace = html_writer::empty_tag('input', $params);
+                    $importform = preg_replace($search, $replace, $importform);
+                }
 
                 // send the import form to the browser
                 echo $OUTPUT->header();

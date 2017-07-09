@@ -196,16 +196,26 @@ div.block_maj_submissions p.toollink {
 /**
  * styles used by tools for this plugin
  */
-#page-blocks-maj_submissions-tools-setuppresentations .presetmapping,
-#page-blocks-maj_submissions-tools-registrations .presetmapping,
-#page-blocks-maj_submissions-tools-setupworkshops .presetmapping {
-    text-align: center;
+#page-blocks-maj_submissions-tools-setupregistrations .presetmapping,
+#page-blocks-maj_submissions-tools-setupsponsoreds .presetmapping,
+#page-blocks-maj_submissions-tools-setupworkshops .presetmapping,
+#page-blocks-maj_submissions-tools-setupevents .presetmapping {
+    text-align:        center;
 }
 
-#page-blocks-maj_submissions-tools-setuppresentations .overwritesettings,
-#page-blocks-maj_submissions-tools-registrations .overwritesettings,
-#page-blocks-maj_submissions-tools-setupworkshops .overwritesettings {
-    margin-bottom: 1em;
+#page-blocks-maj_submissions-tools-setupregistrations .overwritesettings,
+#page-blocks-maj_submissions-tools-setupsponsoreds .overwritesettings,
+#page-blocks-maj_submissions-tools-setupworkshops .overwritesettings,
+#page-blocks-maj_submissions-tools-setupevents .overwritesettings {
+    margin-bottom:       12px;
+}
+
+#page-blocks-maj_submissions-tools-setupregistrations .overwritesettings label,
+#page-blocks-maj_submissions-tools-setupsponsoreds .overwritesettings label,
+#page-blocks-maj_submissions-tools-setupworkshops .overwritesettings label,
+#page-blocks-maj_submissions-tools-setupevents .overwritesettings label {
+    display:     inline-block;
+    margin-right:         6px;
 }
 
 #page-blocks-maj_submissions-tools-createusers table.createusers tr.headings {
