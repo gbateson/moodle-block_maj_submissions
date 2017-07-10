@@ -1247,7 +1247,7 @@ class block_maj_submissions_tool_setupworkshops extends block_maj_submissions_to
     protected $defaultpreset = 'workshops';
 }
 class block_maj_submissions_tool_setupevents extends block_maj_submissions_tool_setupdatabase {
-    protected $type = 'conferenceevents';
+    protected $type = 'registerevents';
     protected $modulename = 'data';
     protected $defaultpreset = 'events';
 }

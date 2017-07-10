@@ -87,7 +87,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $this->add_time_startfinish($mform, $plugin, 'reception');
         $this->add_cmid($mform, $plugin, 'resource,file,page,url', 'receptioncmid');
 
-        $this->add_cmid($mform, $plugin, 'data', 'eventscmid');
+        $this->add_cmid($mform, $plugin, 'data', 'registereventscmid');
         //$this->add_repeat_elements($mform, $plugin, 'events', 'text', true);
 
         //-----------------------------------------------------------------------------

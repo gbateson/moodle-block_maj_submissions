@@ -1259,8 +1259,8 @@ class block_maj_submissions extends block_base {
             array('review',
                   'revise',
                   'publish'),
-            array('registerdelegates',
-                  'registerpresenters')
+            array('registerpresenters',
+                  'registerdelegates')
         );
     }
 
