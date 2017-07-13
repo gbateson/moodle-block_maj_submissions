@@ -129,6 +129,14 @@ $string['filterconditions_help'] = 'This filter is used to decide which submissi
 $string['filterconditions'] = 'Filter condition [{no}]';
 $string['fixdates_help'] = 'These settings control whether or not the leading zero on months, days and hours less than 10 are removed.';
 $string['fixdates'] = 'Remove leading zeros';
+$string['howtoadd'] = 'To submit a new presentation proposal, please click the "Add entry" link below, and fill out the form on the next page.';
+$string['howtobegin'] = 'In order to submit, edit or delete proposals for this conference, you need log in to this website and enrol in this Moodle course.';
+$string['howtodelete'] = 'To delete a previously submitted presentation proposal, please click the "View single" link below, and then click the delete icon on the next page.';
+$string['howtoedit'] = 'To edit a previously submitted presentation proposal, please click the "View single" link below, and then click the edit icon on the next page.';
+$string['howtoenrol'] = 'If you have a username but are not enrolled in this Moodle course, <a href="{$a}">please click here</a> to enrol and then revisit this page to continue the proposal submission process.';
+$string['howtologin'] = 'If you already have a username on this website, <a href="{$a}">please click here</a> to login and then continue the proposal submission process.';
+$string['howtosignup'] = 'If you do NOT already have a username for this Moodle website, please use the links below to complete the Moodle course enrolment formalities, and then return to this page to continue the proposal submission process.';
+$string['howtoswitchrole'] = '<b style="color: red;">Note:</b> The role you are currently using is <i>a different role from your usual role</i>. The messages below are those that would appear if you were actually logged in as a user with that role. The messages are displayed for testing purposes, even though they may not strictly be relevant to your actual login status.';
 $string['importantdates'] = 'Important dates';
 $string['importcontent'] = 'Import content';
 $string['importsettings_help'] = 'This link takes you to a screen where you can import configuration settings from a MAJ submissions block configuration settings file.
@@ -141,6 +149,9 @@ $string['invalidcontextid'] = 'Invalid parentcontextid in block instance record:
 $string['invalidcourseid'] = 'Invalid instanceid in course context record: id={$a->id}, instanceid={$a->instanceid}';
 $string['invalidimportfile'] = 'Import file was missing, empty or invalid';
 $string['invalidinstanceid'] = 'Invalid block instance id: id = {$a}';
+$string['linkenrol'] = 'Enrol in this Moodle course';
+$string['linklogin'] = 'Login to this Moodle site';
+$string['linksignup'] = 'Create an account on this Moodle site';
 $string['manageevents_help'] = 'If this option is enabled, then calendar events for start and finish times will automatically be added, updated or removed when this block\'s settings are saved.';
 $string['manageevents'] = 'Manage calendar events';
 $string['missingdatabaseactivitynum'] = 'Please select a database';

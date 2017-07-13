@@ -50,25 +50,13 @@ abstract class block_maj_submissions_tool_base extends moodleform {
     protected $course = null;
     protected $instance = null;
     protected $modulename = '';
-
-    protected $newdatavalues = array(
-        'approval'        => 1,
-        'manageapproved'  => 0,
-        'comments'        => 0,
-        'requiredentries' => 10,
-        'requiredentriestoview' => 10,
-        'maxentries'      => 1,
-        'timeavailablefrom' => 0,
-        'timeavailableto' => 0,
-        'assessed'        => 0
+    protected $defaultvalues = array();
+    protected $timefields = array(
+        'timestart' => array(),
+        'timefinish' => array()
     );
-
-    protected $newworkshopvalues = array(
-        'submissionstart' => 0,
-        'submissionend'   => 0,
-        'assessmentstart' => 0,
-        'assessmentend'   => 0
-    );
+    protected $permissions = array();
+    protected $availability = null;
 
     /**
      * constructor
@@ -93,7 +81,7 @@ abstract class block_maj_submissions_tool_base extends moodleform {
      * @param array $customdata
      * @return void, but will update plugin, course and instance properties
      */
-    public function cache_customdata($customdata) {
+    protected function cache_customdata($customdata) {
         // cache the custom data passed from the main script
         $this->plugin  = $customdata['plugin'];
         $this->course  = $customdata['course'];
@@ -105,6 +93,35 @@ abstract class block_maj_submissions_tool_base extends moodleform {
         // set the "multilang" property, because we may need
         // multilang name strings for new activities
         $this->instance->set_multilang(true);
+
+        if ($this->type) {
+            // set the "course_module" id, if it is defined and still exists
+            $cmid = $this->type.'cmid';
+            if (property_exists($this->instance->config, $cmid)) {
+                $cmid = $this->instance->config->$cmid;
+                if (array_key_exists($cmid, get_fast_modinfo($this->course)->cms)) {
+                    $this->cmid = $cmid;
+                }
+            }
+
+            // set start time, if any, in $newdatarecord
+            $time = $this->type.'timestart';
+            if (property_exists($this->instance->config, $time)) {
+                $time = $this->instance->config->$time;
+                foreach ($this->timefields['timestart'] as $timefield) {
+                    $this->defaultvalues[$timefield] = $time;
+                }
+            }
+
+            // set finish time, if any, in $newdatarecord
+            $time = $this->type.'timefinish';
+            if (property_exists($this->instance->config, $time)) {
+                $time = $this->instance->config->$time;
+                foreach ($this->timefields['timefinish'] as $timefield) {
+                    $this->defaultvalues[$timefield] = $time;
+                }
+            }
+        }
     }
 
     /**
@@ -131,7 +148,7 @@ abstract class block_maj_submissions_tool_base extends moodleform {
         }
         $numoptions = self::get_cmids($mform, $course, $plugin, $this->modulename, 'activity');
         $disabledif = array($name.'name' => $name.'num');
-        if ($numdefault==0 && max(array_keys($numoptions))<=0) {
+        if ($numdefault==0 && is_scalar(current($numoptions))) {
             $numdefault = self::CREATE_NEW;
         }
         $this->add_field_numname($mform, $plugin, $name, $numoptions, array(), $numdefault, $namedefault, $label, $disabledif);
@@ -253,6 +270,16 @@ abstract class block_maj_submissions_tool_base extends moodleform {
     }
 
     /**
+     * get_defaultvalues
+     *
+     * @todo Finish documenting this function
+     */
+    protected function get_defaultvalues() {
+        $this->defaultvalues['intro'] = $this->get_defaultintro();
+        return $this->defaultvalues;
+    }
+
+    /**
      * get_section
      *
      * @uses $DB
@@ -325,10 +352,11 @@ abstract class block_maj_submissions_tool_base extends moodleform {
      * @param object $section
      * @param string $modulename
      * @param string $instancename
+     * @param array  $defaultvalues
      * @return object
      * @todo Finish documenting this function
      */
-    static public function get_coursemodule($course, $section, $modulename, $instancename, $newrecordvalues) {
+    static public function get_coursemodule($course, $section, $modulename, $instancename, $defaultvalues) {
         global $DB, $USER;
 
         // cache the module id
@@ -343,8 +371,8 @@ abstract class block_maj_submissions_tool_base extends moodleform {
         $from   = '{course_modules} cm '.
                   'JOIN {course_sections} cs ON cm.section = cs.id '.
                   'JOIN {'.$modulename.'} x ON cm.module = ? AND cm.instance = x.id';
-        $where  = 'cs.course = ? AND cs.section = ? AND x.name = ? AND cm.visible = ?';
-        $params = array($moduleid, $course->id, $section->section, $instancename, 1);
+        $where  = 'cs.course = ? AND cs.section = ? AND x.name = ?';
+        $params = array($moduleid, $course->id, $section->section, $instancename);
         $order  = 'cm.visible DESC, cm.added DESC'; // newest, visible cm first
         if ($cm = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $order", $params, 0, 1)) {
             return reset($cm);
@@ -366,7 +394,7 @@ abstract class block_maj_submissions_tool_base extends moodleform {
             'MAX_FILE_SIZE' => 10485760, // 10 GB
         );
 
-        foreach ($newrecordvalues as $column => $value) {
+        foreach ($defaultvalues as $column => $value) {
             $newrecord->$column = $value;
         }
 
@@ -448,6 +476,39 @@ abstract class block_maj_submissions_tool_base extends moodleform {
         rebuild_course_cache($course->id);
 
         return $newrecord;
+    }
+
+    /**
+     * set permissions on a newly created $cm
+     *
+     * @uses $DB
+     * @todo Finish documenting this function
+     */
+    static public function set_cm_permissions($cm, $permissions) {
+        global $DB;
+        $context = block_maj_submissions::context(CONTEXT_MODULE, $cm->id);
+        foreach ($permissions as $roleshortname => $capabilities) {
+            if ($roleid = $DB->get_field('role', 'id', array('shortname' => $roleshortname))) {
+                foreach ($capabilities as $capability => $permission) {
+                    assign_capability($capability, $permission, $roleid, $context->id);
+                }
+            }
+        }
+    }
+
+    /**
+     * set availability on a newly created $cm
+     *
+     * @uses $DB
+     * @todo Finish documenting this function
+     */
+    static public function set_cm_availability($cm, $availability) {
+        // e.g. restrict "Events database" to admins only
+        // see "update_course_module_availability()"
+        // in "block_taskchain_navigation/accesscontrol.php"
+        if (property_exists($cm, 'availability') && $availability && property_exists($availability, 'c')) {
+            $tree = new \core_availability\tree($availability);
+        }
     }
 
     /**
@@ -728,45 +789,30 @@ class block_maj_submissions_tool_setupdatabase extends block_maj_submissions_too
 
     protected $type = '';
     protected $defaultpreset = '';
+    protected $modulename = 'data';
+    protected $defaultvalues = array(
+        'visible'         => 1,  // course_modules.visible
+        'intro'           => '', // see set_defaultintro()
+        'introformat'     => FORMAT_HTML, // =1
+        'comments'        => 0,
+        'timeavailablefrom' => 0,
+        'timeavailableto' => 0,
+        'requiredentries' => 10,
+        'requiredentriestoview' => 10,
+        'maxentries'      => 1,
+        'approval'        => 1,
+        'manageapproved'  => 0,
+        'assessed'        => 0
+    );
+    protected $timefields = array(
+        'timestart' => array('timeavailablefrom'),
+        'timefinish' => array('timeavailableto')
+    );
+    protected $permissions = array(
+        'user' => array('mod/data:viewentry' => CAP_ALLOW,
+                        'mod/data:writeentry' => CAP_ALLOW,)
+    );
 
-    /**
-     * cache_customdata
-     *
-     * @param array $customdata
-     * @return void, but will update plugin, course and instance properties
-     */
-    public function cache_customdata($customdata) {
-
-        // cache $this->plugin, $this->course and $this->instance
-        parent::cache_customdata($customdata);
-
-        // set the "course_module" id, if it is defined and still exists
-        $cmid = $this->type.'cmid';
-        if (property_exists($this->instance->config, $cmid)) {
-            $cmid = $this->instance->config->$cmid;
-            if (array_key_exists($cmid, get_fast_modinfo($this->course)->cms)) {
-                $this->cmid = $cmid;
-            }
-        }
-
-        // set start time, if any, in $newdatarecord
-        $time = $this->type.'timestart';
-        if (property_exists($this->instance->config, $time)) {
-            $time = $this->instance->config->$time;
-            $this->newdatavalues['timeavailablefrom'] = $time;
-            $this->newworkshopvalues['submissionstart'] = $time;
-            $this->newworkshopvalues['assessmentstart'] = $time;
-        }
-
-        // set finish time, if any, in $newdatarecord
-        $time = $this->type.'timefinish';
-        if (property_exists($this->instance->config, $time)) {
-            $time = $this->instance->config->$time;
-            $this->newdatavalues['timeavailableto'] = $time;
-            $this->newworkshopvalues['submissionend'] = $time;
-            $this->newworkshopvalues['assessmentend'] = $time;
-        }
-    }
 
     /**
      * definition
@@ -925,7 +971,10 @@ class block_maj_submissions_tool_setupdatabase extends block_maj_submissions_too
                     } else {
                         $section = get_fast_modinfo($this->course)->get_section_info($sectionnum);
                     }
-                    $cm = self::get_coursemodule($this->course, $section, 'data', $databasename, $this->newdatavalues);
+                    $defaultvalues = $this->get_defaultvalues();
+                    $cm = self::get_coursemodule($this->course, $section, $this->modulename,  $databasename, $defaultvalues);
+                    self::set_cm_permissions($cm, $this->permissions);
+                    self::set_cm_availability($cm, $this->availability);
                 } else {
                     $cm = get_fast_modinfo($this->course)->get_cm($databasenum);
                 }
@@ -1038,6 +1087,53 @@ class block_maj_submissions_tool_setupdatabase extends block_maj_submissions_too
         }
 
         return false; // shouldn't happen !!
+    }
+
+    /**
+     * get_defaultintro
+     *
+     * @todo Finish documenting this function
+     */
+    protected function get_defaultintro() {
+        $intro = '';
+
+        // useful urls
+        $urls = array(
+            'signup' => new moodle_url('/login/signup.php'),
+            'login'  => new moodle_url('/login/index.php'),
+            'enrol'  => new moodle_url('/enrol/index.php', array('id' => $this->course->id))
+        );
+
+        // add intro sections
+        $howtos = array('switchrole', 'begin', 'login', 'enrol', 'signup', 'add', 'edit' ,'delete');
+        foreach ($howtos as $howto) {
+            $intro .= html_writer::start_tag('div', array('class' => "howto $howto"));
+            $text = $this->instance->get_string("howto$howto", $this->plugin);
+            switch ($howto) {
+                case 'login':
+                case 'enrol':
+                    $text = str_replace('{$a}', $urls[$howto], $text);
+                    break;
+                case 'signup':
+                    $text .= html_writer::start_tag('ol');
+                    foreach ($urls as $name => $url) {
+                        $link = $this->instance->get_string("link$name", $this->plugin);
+                        if ($name=='signup' || $name=='login') {
+                            $params = array('target' => '_blank');
+                        } else {
+                            $params = array(); // enrol
+                        }
+                        $link = html_writer::link($url, $link, $params);
+                        $text .= html_writer::tag('li', $link);
+                    }
+                    $text .= html_writer::end_tag('ol');
+                    break;
+            }
+            $intro .= html_writer::tag('p', $text);
+            $intro .= html_writer::end_tag('div');
+        }
+
+        return $intro;
     }
 
     /**
@@ -1233,23 +1329,21 @@ class block_maj_submissions_tool_setupdatabase extends block_maj_submissions_too
 
 class block_maj_submissions_tool_setupregistrations extends block_maj_submissions_tool_setupdatabase {
     protected $type = 'registerdelegates';
-    protected $modulename = 'data';
     protected $defaultpreset = 'registrations';
 }
 class block_maj_submissions_tool_setuppresentations extends block_maj_submissions_tool_setupdatabase {
     protected $type = 'collectpresentations';
-    protected $modulename = 'data';
     protected $defaultpreset = 'presentations';
 }
 class block_maj_submissions_tool_setupworkshops extends block_maj_submissions_tool_setupdatabase {
     protected $type = 'collectworkshops';
-    protected $modulename = 'data';
     protected $defaultpreset = 'workshops';
 }
 class block_maj_submissions_tool_setupevents extends block_maj_submissions_tool_setupdatabase {
     protected $type = 'registerevents';
-    protected $modulename = 'data';
     protected $defaultpreset = 'events';
+    protected $permissions = array();
+    protected function get_defaultintro() {}
 }
 
 /**
@@ -1306,6 +1400,17 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
 
     protected $type = '';
     protected $modulename = 'workshop';
+    protected $defaultvalues = array(
+        'visible'         => 0,
+        'submissionstart' => 0,
+        'submissionend'   => 0,
+        'assessmentstart' => 0,
+        'assessmentend'   => 0
+    );
+    protected $timefields = array(
+        'timestart' => array('submissionstart', 'assessmentstart'),
+        'timefinish' => array('submissionend', 'assessmentend')
+    );
 
     const FILTER_NONE           = 0;
     const FILTER_CONTAINS       = 1;
@@ -1446,7 +1551,9 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
                     } else {
                         $section = get_fast_modinfo($this->course)->get_section_info($sectionnum);
                     }
-                    $cm = self::get_coursemodule($this->course, $section, 'workshop', $workshopname, $this->newdatavalues);
+                    $cm = self::get_coursemodule($this->course, $section, $this->modulename, $workshopname, $this->defaultvalues);
+                    self::set_cm_permissions($cm, $this->permissions);
+                    self::set_cm_availability($cm, $this->availability);
                 } else {
                     $cm = get_fast_modinfo($this->course)->get_cm($workshopnum);
                 }
@@ -1473,6 +1580,13 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
  * @since     Moodle 2.0
  */
 class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool_base {
+
+    //protected $availability = (object)array(
+    //    'op'    => '&',
+    //    'c'     => array((object)array('type' => 'group', 'id' => 0)),
+    //    'showc' => array(true),
+    //    'show'  => false
+    //);
 
     /**
      * definition

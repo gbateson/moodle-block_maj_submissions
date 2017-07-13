@@ -273,13 +273,12 @@ class block_maj_submissions extends block_base {
                     $visible     =  1;
                     $description = '';
                     switch ($type) {
-                        case 'collectregistrations':
+                        case 'collectpresentations':
                         case 'collectworkshops':
                         case 'collectsponsoreds':
                         case 'conference':
                         case 'workshops':
                         case 'reception':
-                        case 'revise':
                         case 'publish':
                         case 'registerdelegates':
                         case 'registerpresenters':

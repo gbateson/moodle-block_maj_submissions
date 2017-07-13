@@ -127,6 +127,14 @@ $string['filterconditions_help'] = 'This filter is used to decide which submissi
 $string['filterconditions'] = 'Filter condition [{no}]';
 $string['fixdates_help'] = 'These settings control whether or not the leading zero on months, days and hours less than 10 are removed.';
 $string['fixdates'] = 'Remove leading zeros';
+$string['howtoadd'] = '新しい発表原稿を提出するため、下記の「エントリを追加する」リンクをクリックし、次のページの書式を入力してください。';
+$string['howtobegin'] = '発表原稿を提出・編集・削除するためには、 本ウェッブサイトのログインやムードルコース登録が必要です。';
+$string['howtodelete'] = '以前提出された発表原稿を削除するため、下記の「個別表示」リンクをクリックし,次のページにある削除アイコンをクリックしてください。';
+$string['howtoedit'] = '以前提出された発表原稿を編集するため、下記の「個別表示」リンクをクリックし,次のページにある編集アイコンをクリックしてください。';
+$string['howtoenrol'] = 'ユーザ名はお持ちですが、まだムードルコースに登録されていない方は <a href="{$a}">ここをクリックし、</a> ムードルコースに登録してから、このページに戻り、発表原稿の提出手続きをお進めください。';
+$string['howtologin'] = '既に本ウェッブサイトのユーザ名をお持ちの方は <a href="{$a}">ここをクリックし、</a> ログインしてから発表原稿の提出手続きをお進めください。';
+$string['howtosignup'] = 'まだ本ウェッブサイトのユーザ名をお持ちではない方は 下記のリンクを使ってムードルコース登録の手順をこなしてから、 このページに戻り、発表原稿の提出手続きをお進めください。';
+$string['howtoswitchrole'] = '<b style="color: red;">注意：</b> 只今使用されているロールは<i>通常と違うロール</i>です。 下記に表示されているメッセージは実際にそのロールのユーさとしてログインされたら、表示されるものです。 只今のログイン状態に無関係の場合でも、サイトの通常動きを確認するため、メッセージが表示されます。ご了承ください。';
 $string['importantdates'] = '重要日時一覧';
 $string['importcontent'] = 'Import content';
 $string['importsettings_help'] = 'This link takes you to a screen where you can import configuration settings from a MAJ submissions block configuration settings file.
@@ -139,6 +147,9 @@ $string['invalidcontextid'] = 'Invalid parentcontextid in block instance record:
 $string['invalidcourseid'] = 'Invalid instanceid in course context record: id={$a->id}, instanceid={$a->instanceid}';
 $string['invalidimportfile'] = 'Import file was missing, empty or invalid';
 $string['invalidinstanceid'] = 'Invalid block instance id: id = {$a}';
+$string['linkenrol'] = 'このコースに登録する';
+$string['linklogin'] = 'このムードルサイトにログイン';
+$string['linksignup'] = 'このムードルサイトのアカウントを作成';
 $string['manageevents_help'] = 'If this option is enabled, then calendar events for start and finish times will automatically be added, updated or removed when this block\'s settings are saved.';
 $string['manageevents'] = 'Manage calendar events';
 $string['missingdatabaseactivitynum'] = 'Please select a database';
