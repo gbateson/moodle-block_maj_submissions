@@ -127,13 +127,14 @@ $string['filterconditions_help'] = 'This filter is used to decide which submissi
 $string['filterconditions'] = 'Filter condition [{no}]';
 $string['fixdates_help'] = 'These settings control whether or not the leading zero on months, days and hours less than 10 are removed.';
 $string['fixdates'] = 'Remove leading zeros';
-$string['howtoadd'] = '新しい発表原稿を提出するため、下記の「エントリを追加する」リンクをクリックし、次のページの書式を入力してください。';
-$string['howtobegin'] = '発表原稿を提出・編集・削除するためには、 本ウェッブサイトのログインやムードルコース登録が必要です。';
-$string['howtodelete'] = '以前提出された発表原稿を削除するため、下記の「個別表示」リンクをクリックし,次のページにある削除アイコンをクリックしてください。';
-$string['howtoedit'] = '以前提出された発表原稿を編集するため、下記の「個別表示」リンクをクリックし,次のページにある編集アイコンをクリックしてください。';
-$string['howtoenrol'] = 'ユーザ名はお持ちですが、まだムードルコースに登録されていない方は <a href="{$a}">ここをクリックし、</a> ムードルコースに登録してから、このページに戻り、発表原稿の提出手続きをお進めください。';
-$string['howtologin'] = '既に本ウェッブサイトのユーザ名をお持ちの方は <a href="{$a}">ここをクリックし、</a> ログインしてから発表原稿の提出手続きをお進めください。';
-$string['howtosignup'] = 'まだ本ウェッブサイトのユーザ名をお持ちではない方は 下記のリンクを使ってムードルコース登録の手順をこなしてから、 このページに戻り、発表原稿の提出手続きをお進めください。';
+$string['howtoadd'] = '新しい{$a->record}を提出するため、下記の「エントリを追加する」リンクをクリックし、次のページの書式を入力してください。';
+$string['howtobegin'] = '{$a->record}を追加・編集・削除するためには、 本ウェッブサイトのログインやムードルコース登録が必要です。';
+$string['howtodelete'] = '以前提出された{$a->record}を削除するため、下記の「個別表示」リンクをクリックし,次のページにある削除アイコンをクリックしてください。';
+$string['howtoedit'] = '以前提出された{$a->record}を編集するため、下記の「個別表示」リンクをクリックし,次のページにある編集アイコンをクリックしてください。';
+$string['howtoenrol'] = 'ユーザ名はお持ちですが、まだムードルコースに登録されていない方は <a href="{$url}">ここをクリックし、</a> ムードルコースに登録してから、このページに戻り、{$a->process}をお進めください。';
+$string['howtologin'] = '既に本ウェッブサイトのユーザ名をお持ちの方は <a href="{$url}">ここをクリックし、</a> ログインしてから{$a->process}をお進めください。';
+$string['howtosignup'] = 'まだ本ウェッブサイトのユーザ名をお持ちではない方は 下記のリンクを使ってムードルコース登録の手順をこなしてから、 このページに戻り、{$a->process}をお進めください。';
+$string['howtosetupevents'] = 'このデータベースのエントリーは大会スケジュールに挿入できます。';
 $string['howtoswitchrole'] = '<b style="color: red;">注意：</b> 只今使用されているロールは<i>通常と違うロール</i>です。 下記に表示されているメッセージは実際にそのロールのユーさとしてログインされたら、表示されるものです。 只今のログイン状態に無関係の場合でも、サイトの通常動きを確認するため、メッセージが表示されます。ご了承ください。';
 $string['importantdates'] = '重要日時一覧';
 $string['importcontent'] = 'Import content';
@@ -171,6 +172,8 @@ $string['notisempty'] = 'is not empty';
 $string['notisequalto'] = 'is not equal to';
 $string['notisinlist'] = 'is not in list';
 $string['notstartswith'] = 'does not start with';
+$string['presentationsprocess'] = '発表提案の提出手続き';
+$string['presentationsrecord'] = '発表提案';
 $string['preset'] = 'Database preset';
 $string['presetfile_help'] = 'Upload the zip file of a preset that has been exported from a Moodle database activity.';
 $string['presetfile'] = 'Preset zip file';
@@ -205,6 +208,8 @@ $string['registerpresenterssectionnum_help'] = 'The course section in which to c
 $string['registerpresenterssectionnum'] = 'Registration section';
 $string['registerpresenterstime_help'] = '発表者のオンライン受付の開始と終了日時';
 $string['registerpresenterstime'] = '発表者の受付';
+$string['registrationsprocess'] = '大会参加情報の登録手続き';
+$string['registrationsrecord'] = '大会参加情報';
 $string['resetworkshop_help']= 'This setting specifies whether or not to reset the target workshop before transferring submissions from the source database.
 
 **No**
@@ -288,5 +293,7 @@ $string['vettinggroup_help'] = 'Select the group of users who are to review and 
 $string['vettinggroup'] = 'Vetting group';
 $string['workshopscmid_help'] = 'The page resource that displays information about the conference workshops.';
 $string['workshopscmid'] = 'ワークショップ情報';
+$string['workshopsprocess'] = 'ワークショップ提案の提出手続き';
+$string['workshopsrecord'] = 'ワークショップ提案';
 $string['workshopstime_help'] = 'ワークショップの開始と終了日時';
 $string['workshopstime'] = 'ワークショップ';

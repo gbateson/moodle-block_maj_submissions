@@ -129,13 +129,14 @@ $string['filterconditions_help'] = 'This filter is used to decide which submissi
 $string['filterconditions'] = 'Filter condition [{no}]';
 $string['fixdates_help'] = 'These settings control whether or not the leading zero on months, days and hours less than 10 are removed.';
 $string['fixdates'] = 'Remove leading zeros';
-$string['howtoadd'] = 'To submit a new presentation proposal, please click the "Add entry" link below, and fill out the form on the next page.';
-$string['howtobegin'] = 'In order to submit, edit or delete proposals for this conference, you need log in to this website and enrol in this Moodle course.';
-$string['howtodelete'] = 'To delete a previously submitted presentation proposal, please click the "View single" link below, and then click the delete icon on the next page.';
-$string['howtoedit'] = 'To edit a previously submitted presentation proposal, please click the "View single" link below, and then click the edit icon on the next page.';
-$string['howtoenrol'] = 'If you have a username but are not enrolled in this Moodle course, <a href="{$a}">please click here</a> to enrol and then revisit this page to continue the proposal submission process.';
-$string['howtologin'] = 'If you already have a username on this website, <a href="{$a}">please click here</a> to login and then continue the proposal submission process.';
-$string['howtosignup'] = 'If you do NOT already have a username for this Moodle website, please use the links below to complete the Moodle course enrolment formalities, and then return to this page to continue the proposal submission process.';
+$string['howtoadd'] = 'To add {$a->record}, please click the "Add entry" link below, and fill out the form on the next page.';
+$string['howtobegin'] = 'In order to add, edit or delete {$a->record} for this conference, you need log in to this website and enrol in this Moodle course.';
+$string['howtodelete'] = 'To delete {$a->record}, please click the "View single" link below, and then click the delete icon on the next page.';
+$string['howtoedit'] = 'To edit {$a->record}, please click the "View single" link below, and then click the edit icon on the next page.';
+$string['howtoenrol'] = 'If you have a username but are not enrolled in this Moodle course, <a href="{$url}">please click here</a> to enrol and then revisit this page to continue {$a->process}.';
+$string['howtologin'] = 'If you already have a username on this website, <a href="{$url}">please click here</a> to login and then continue {$a->process}.';
+$string['howtosignup'] = 'If you do NOT already have a username for this Moodle website, please use the links below to complete the Moodle course enrolment formalities, and then return to this page to continue {$a->process}.';
+$string['howtosetupevents'] = 'This entries in this database can be added to the conference scehdule.';
 $string['howtoswitchrole'] = '<b style="color: red;">Note:</b> The role you are currently using is <i>a different role from your usual role</i>. The messages below are those that would appear if you were actually logged in as a user with that role. The messages are displayed for testing purposes, even though they may not strictly be relevant to your actual login status.';
 $string['importantdates'] = 'Important dates';
 $string['importcontent'] = 'Import content';
@@ -173,6 +174,8 @@ $string['notisempty'] = 'is not empty';
 $string['notisequalto'] = 'is not equal to';
 $string['notisinlist'] = 'is not in list';
 $string['notstartswith'] = 'does not start with';
+$string['presentationsprocess'] = 'the proposal submission process';
+$string['presentationsrecord'] = 'a presentation proposal';
 $string['preset'] = 'Database preset';
 $string['presetfile_help'] = 'Upload the zip file of a preset that has been exported from a Moodle database activity.';
 $string['presetfile'] = 'Preset zip file';
@@ -207,6 +210,8 @@ $string['registerpresenterssectionnum_help'] = 'The course section in which to c
 $string['registerpresenterssectionnum'] = 'Registration section';
 $string['registerpresenterstime_help'] = 'The dates and times at which the online registration for presenters starts and finshes.';
 $string['registerpresenterstime'] = 'Registration for presenters';
+$string['registrationsprocess'] = 'the conference registration process';
+$string['registrationsrecord'] = 'your registration details';
 $string['removeyear_help'] = 'If this option is enabled, then the current year will be removed from dates.';
 $string['removeyear'] = 'Remove current year';
 $string['resetworkshop_help']= 'This setting specifies whether or not to reset the target workshop before transferring submissions from the source database.
@@ -270,7 +275,7 @@ $string['toolsetup_help'] = 'On this page you can set up a database for a confer
 **To create a new database**, give a name for the new database and specify the section in which it should be created. This can be an existing section, or a new section. If you specify a new section you will need to give a name for the new section.';
 $string['toolsetup'] = 'Setup a database for a conference.';
 $string['toolsetupevents_desc'] = 'Setup a database for extra events';
-$string['toolsetupevents'] = 'Register conference events';
+$string['toolsetupevents'] = 'Add conference events';
 $string['toolsetuppresentations_desc'] = 'Setup a database for presentations';
 $string['toolsetuppresentations'] = 'Collect presentation proposals';
 $string['toolsetupregistrations_desc'] = 'Setup a database for registrations';
@@ -292,5 +297,7 @@ $string['vettinggroup_help'] = 'Select the group of users who are to review and 
 $string['vettinggroup'] = 'Vetting group';
 $string['workshopscmid_help'] = 'The page resource that displays information about the conference workshops.';
 $string['workshopscmid'] = 'Workshop information';
+$string['workshopsprocess'] = 'the workshop submission process';
+$string['workshopsrecord'] = 'a workshop proposal';
 $string['workshopstime_help'] = 'The start and finish dates of the conference workshops.';
 $string['workshopstime'] = 'Conference workshops';

@@ -1049,15 +1049,35 @@ class block_maj_submissions extends block_base {
     }
 
     /**
+     * get_multilang_params
+     *
+     * @return array($lang => string params object)
+     */
+    public function get_multilang_params($names, $plugin, $a=null) {
+        $params = array();
+        foreach ($names as $paramname => $stringname) {
+            $texts = $this->get_string($stringname, $plugin, $a, true);
+            foreach ($texts as $lang => $text) {
+                if (empty($params[$lang])) {
+                    $params[$lang] = new stdClass();
+                }
+                $params[$lang]->$paramname = $text;
+            }
+        }
+        return $params;
+    }
+
+    /**
      * get_string
      *
      * @return string, if $this->multilang is set, return the "multilang" verison of the required string;
+     *                 i.e. <span lang="xx" class="multilang">...></span><span...>...</span>
      *                 otherwise, return Moodle's standard get_string() output
      */
-    public function get_string($identifier, $component='', $a=null, $lazyload=false) {
+    public function get_string($identifier, $component='', $a=null, $returnarray=false) {
 
         if ($this->multilang==false) {
-            return get_string($identifier, $component, $a, $lazyload);
+            return get_string($identifier, $component, $a);
         }
 
         $strman = get_string_manager();
@@ -1068,35 +1088,49 @@ class block_maj_submissions extends block_base {
         // and parent langs appear before child langs
         usort($langs, array($this, 'usort_langs'));
 
+        // initialize $params for get_string
+        if ($a_is_multilang = is_array($a)) {
+            $params = reset($a);
+        } else {
+            $params = $a; // either scaler or object
+        }
+
         // extract unique strings
-        $spans = array();
+        $texts = array();
         foreach ($langs as $lang) {
             $strings = $strman->load_component_strings($component, $lang);
             if (array_key_exists($identifier, $strings)) {
-                $string = $strman->get_string($identifier, $component, $a, $lang);
-                if (array_search($string, $spans)===false) {
-                    $spans[$lang] = $string;
+                if ($a_is_multilang && array_key_exists($lang, $a)) {
+                    $params = $a[$lang];
+                }
+                $text = $strman->get_string($identifier, $component, $params, $lang);
+                if (array_search($text, $texts)===false) {
+                    $texts[$lang] = $text;
                 }
             }
         }
 
+        if ($returnarray) {
+            return $texts;
+        }
+
         // this string does not exist - should not happen !!
-        if (empty($spans)) {
+        if (empty($texts)) {
             return '';
         }
 
         // special case - this string occurs in only one language pack
-        if (count($spans)==1) {
-            return reset($spans);
+        if (count($texts)==1) {
+            return reset($texts);
         }
 
-        // format strings as multilang $spans
-        foreach ($spans as $lang => $span) {
+        // format strings as multilang $texts
+        foreach ($texts as $lang => $text) {
             $params = array('lang' => $lang, 'class' => 'multilang');
-            $spans[$lang] = html_writer::tag('span', $span, $params);
+            $texts[$lang] = html_writer::tag('span', $text, $params);
         }
 
-        return implode('', $spans);
+        return implode('', $texts);
     }
 
     /**

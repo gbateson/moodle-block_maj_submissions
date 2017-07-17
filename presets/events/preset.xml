@@ -1,0 +1,147 @@
+<preset>
+
+<settings>
+<intro></intro>
+<comments>0</comments>
+<requiredentries>0</requiredentries>
+<requiredentriestoview>0</requiredentriestoview>
+<maxentries>0</maxentries>
+<rssarticles>0</rssarticles>
+<approval>1</approval>
+<manageapproved>0</manageapproved>
+<defaultsortdir>0</defaultsortdir>
+<defaultsort>0</defaultsort>
+</settings>
+
+<field>
+<type>admin</type>
+<name>unapprove</name>
+<description>承認の取消 Unapprove</description>
+<required>0</required>
+<param9>0</param9>
+<param10>number</param10>
+</field>
+
+<field>
+<type>text</type>
+<name>event_name</name>
+<description>行事名 Event name</description>
+<required>1</required>
+</field>
+
+<field>
+<type>menu</type>
+<name>event_type</name>
+<description>行事の種類 Event type</description>
+<required>1</required>
+<param1>登録行事 Registration
+
+交流行事 Social event
+
+飲食行事 Refreshment</param1>
+</field>
+
+<field>
+<type>textarea</type>
+<name>event_description</name>
+<description>行事説明 Event description</description>
+<required>1</required>
+</field>
+
+<field>
+<type>admin</type>
+<name>schedule_day</name>
+<description>開催予定日 Schedule day</description>
+<required>0</required>
+<param1>２月１７日（金） Feb 17th (Fri)
+２月１８日（土） Feb 18th (Sat)
+２月１９日（日） Feb 19th (Sun)</param1>
+<param9>6</param9>
+<param10>menu</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>schedule_time</name>
+<description>開催予定時刻 Schedule time</description>
+<required>0</required>
+<param1>08:30 - 09:00
+09:00 - 09:40
+09:30 - 10:10
+09:50 - 10:30
+10:20 - 11:00
+10:40 - 11:30
+11:10 - 11:50
+11:30 - 12:45
+11:50 - 12:50
+12:30 - 14:00
+12:45 - 13:25
+12:50 - 13:40
+13:25 - 13:35
+13:40 - 13:50
+13:45 - 14:25
+14:00 - 14:40
+14:10 - 15:40
+14:35 - 15:15
+14:40 - 15:00
+15:00 - 15:40
+15:25 - 15:50
+15:50 - 16:30
+15:50 - 17:20
+16:40 - 17:40
+18:00 - 20:00</param1>
+<param9>6</param9>
+<param10>menu</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>schedule_duration</name>
+<description>開催予定時間 Duration</description>
+<required>0</required>
+<param1>10分 10 mins
+20分 20 mins
+25分 25 mins
+30分 30 mins
+40分 40 mins
+50分 50 mins
+60分 60 mins
+75分 75 mins
+80分 80 mins
+90分 90 mins
+120分 120 mins</param1>
+<param9>6</param9>
+<param10>menu</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>schedule_room</name>
+<description>開催予定室 Schedule Room</description>
+<required>0</required>
+<param1>講堂（230席） Main Hall (230 seats)
+大教室1（135席） Class Room L-1 (135 seats)
+大教室2（135席） Class Room L-2 (135 seats)
+大教室4（135席） Class Room L-4 (135 seats)
+大教室5（135席） Class Room L-5 (135 seats)
+中教室3（60席） Class Room M-3 (60 seats)
+ERB (3F) Room M-3 (60 seats)
+MB (6F) Class Room (50 seats)
+MB (7F) Room L (30 seats)
+MB (11F) PC Room (140 seats)</param1>
+<param9>6</param9>
+<param10>menu</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>schedule_audience</name>
+<description>聴講予定者 Schedule Audience</description>
+<required>0</required>
+<param1>開催室のみ Single room
+大会参加者全員 All delegates</param1>
+<param9>6</param9>
+<param10>menu</param10>
+</field>
+
+</preset>

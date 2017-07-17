@@ -1,0 +1,1042 @@
+<preset>
+
+<settings>
+<intro></intro>
+<comments>0</comments>
+<requiredentries>0</requiredentries>
+<requiredentriestoview>0</requiredentriestoview>
+<maxentries>4</maxentries>
+<rssarticles>0</rssarticles>
+<approval>1</approval>
+<manageapproved>0</manageapproved>
+<defaultsortdir>0</defaultsortdir>
+<defaultsort>0</defaultsort>
+</settings>
+
+<field>
+<type>menu</type>
+<name>name_title</name>
+<description>肩書 Title</description>
+<required>0</required>
+<param1>Dr.
+Mr.
+Ms.
+Prof.</param1>
+</field>
+
+<field>
+<type>text</type>
+<name>name_given_en</name>
+<description>下の名前（ローマ字）Given name (en)</description>
+<required>1</required>
+</field>
+
+<field>
+<type>text</type>
+<name>name_surname_en</name>
+<description>上の名前（ローマ字） Surname (en)</description>
+<required>1</required>
+</field>
+
+<field>
+<type>text</type>
+<name>name_given_ja</name>
+<description>下の名前（漢字）Given name (ja)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>name_surname_ja</name>
+<description>上の名前（漢字）Surname (ja)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>affiliation_en</name>
+<description>所属機関（英語）Affiliation (en)</description>
+<required>1</required>
+</field>
+
+<field>
+<type>text</type>
+<name>affiliation_ja</name>
+<description>所属機関（日本語）Affiliation (ja)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>affiliation_state</name>
+<description>都道府県 State or Prefecture</description>
+<required>1</required>
+</field>
+
+<field>
+<type>text</type>
+<name>affiliation_country</name>
+<description>国 Country</description>
+<required>1</required>
+</field>
+
+<field>
+<type>text</type>
+<name>email</name>
+<description>Ｅメールアドレス Email address</description>
+<required>1</required>
+</field>
+
+<field>
+<type>menu</type>
+<name>name_title_2</name>
+<description>肩書 Title</description>
+<required>0</required>
+<param1>Dr.
+Mr.
+Ms.
+Prof.</param1>
+</field>
+
+<field>
+<type>text</type>
+<name>name_given_2_en</name>
+<description>下の名前（ローマ字）Given name (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>name_surname_2_en</name>
+<description>上の名前（ローマ字）Surname (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>affiliation_2_en</name>
+<description>所属機関（英語）Affiliation (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>menu</type>
+<name>name_title_3</name>
+<description>肩書 Title</description>
+<required>0</required>
+<param1>Dr.
+Mr.
+Ms.
+Prof.</param1>
+</field>
+
+<field>
+<type>text</type>
+<name>name_given_3_en</name>
+<description>下の名前（ローマ字）Given name (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>name_surname_3_en</name>
+<description>上の名前（ローマ字）Surname (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>affiliation_3_en</name>
+<description>所属機関（英語）Affiliation (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>menu</type>
+<name>name_title_4</name>
+<description>肩書 Title</description>
+<required>0</required>
+<param1>Dr.
+Mr.
+Ms.
+Prof.</param1>
+</field>
+
+<field>
+<type>text</type>
+<name>name_given_4_en</name>
+<description>下の名前（ローマ字）Given name (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>name_surname_4_en</name>
+<description>上の名前（ローマ字）Surname (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>affiliation_4_en</name>
+<description>所属機関（英語）Affiliation (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>menu</type>
+<name>name_title_5</name>
+<description>肩書 Title</description>
+<required>0</required>
+<param1>Dr.
+Mr.
+Ms.
+Prof.</param1>
+</field>
+
+<field>
+<type>text</type>
+<name>name_given_5_en</name>
+<description>下の名前（ローマ字）Given name (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>name_surname_5_en</name>
+<description>上の名前（ローマ字）Surname (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>affiliation_5_en</name>
+<description>所属機関（英語）Affiliation (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>presentation_title</name>
+<description>発表の題名 Workshop title</description>
+<required>1</required>
+</field>
+
+<field>
+<type>textarea</type>
+<name>presentation_abstract</name>
+<description>発表の要約 Workshop abstract</description>
+<required>1</required>
+<param2>60</param2>
+<param3>10</param3>
+<param4>1</param4>
+<param5>10485760</param5>
+</field>
+
+<field>
+<type>text</type>
+<name>presentation_url</name>
+<description>発表のＵＲＬ Presentation URL</description>
+<required>0</required>
+</field>
+
+<field>
+<type>file</type>
+<name>presentation_handout_file</name>
+<description>資料のファイル Handout file</description>
+<required>0</required>
+<param3>0</param3>
+</field>
+
+<field>
+<type>file</type>
+<name>presentation_slides_file</name>
+<description>スライドのファイル Presentation slides file</description>
+<required>0</required>
+<param3>0</param3>
+</field>
+
+<field>
+<type>textarea</type>
+<name>comments_questions</name>
+<description>コメント・質問 Comments or questions</description>
+<required>0</required>
+<param2>40</param2>
+<param3>3</param3>
+<param4>1</param4>
+<param5>0</param5>
+</field>
+
+<field>
+<type>constant</type>
+<name>conference_name_en</name>
+<description>大会名 Conference name (en)</description>
+<required>0</required>
+<param1>MoodleMoot Japan 2017</param1>
+</field>
+
+<field>
+<type>constant</type>
+<name>conference_name_ja</name>
+<description>大会名 Conference name (ja)</description>
+<required>0</required>
+<param1>2017年度日本ムードル学会</param1>
+</field>
+
+<field>
+<type>constant</type>
+<name>conference_venue_en</name>
+<description>大会開催地 Conference venue (en)</description>
+<required>0</required>
+<param1>Jichi Medical University, JAPAN</param1>
+</field>
+
+<field>
+<type>constant</type>
+<name>conference_venue_ja</name>
+<description>大会開催地 Conference venue (ja)</description>
+<required>0</required>
+<param1>自治医科大学</param1>
+</field>
+
+<field>
+<type>constant</type>
+<name>conference_dates_en</name>
+<description>大会開催期間 Conference dates (en)</description>
+<required>0</required>
+<param1>Feb 17th - 19th, 2017</param1>
+</field>
+
+<field>
+<type>constant</type>
+<name>conference_dates_ja</name>
+<description>大会開催期間 Conference dates (ja)</description>
+<required>0</required>
+<param1>2017年 2月 17日~19日</param1>
+</field>
+
+<field>
+<type>admin</type>
+<name>setdefaultvalues</name>
+<description>規定値設定 Set default values</description>
+<required>0</required>
+<param1>nametitle =&gt; name_title
+firstname =&gt; name_given_en
+lastname =&gt; name_surname_en
+firstnamephonetic =&gt; name_given_ja
+lastnamephonetic =&gt; name_surname_ja
+institution =&gt; affiliation_en
+department =&gt; affiliation_ja
+city =&gt; affiliation_state
+country =&gt; affiliation_country</param1>
+<param9>0</param9>
+<param10>menu</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>fixdisabledfields</name>
+<description>不足値修正 Fix disabled fields</description>
+<required>0</required>
+<param9>0</param9>
+<param10>number</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>unapprove</name>
+<description>承認の取消 Unapprove</description>
+<required>0</required>
+<param9>0</param9>
+<param10>number</param10>
+</field>
+
+<field>
+<type>action</type>
+<name>confirm_add_record</name>
+<description>新規登録確認 Confirm ADD record</description>
+<required>0</required>
+<param1>confirm</param1>
+<param2>0</param2>
+<param3>Submission data added</param3>
+<param4>&lt;img src=&quot;http://localhost/maj/pluginfile.php/5954/mod_data/intro/2017_MAJ_tochigi_banner.0640.jpg&quot; alt=&quot;MoodleMoot Japan 2017 banner&quot; width=&quot;640&quot; height=&quot;83&quot; style=&quot;vertical-align:text-bottom; margin: 0 .5em;&quot; class=&quot;img-responsive&quot;&gt;
+
+
+
+Dear [[firstname]] [[lastname]],
+
+this email confirms that you have added a submission for [[conference_name_english]].
+
+
+
+The submission details appear below.
+
+
+
+You can review and update this information online on the following URL:
+
+[[recordurl]]
+
+
+
+best regards
+
+[[conference_name_english]] committee
+
+
+
+======================================
+
+Submission details:
+
+======================================
+
+
+
+[[submission_details]]</param4>
+</field>
+
+<field>
+<type>action</type>
+<name>confirm_update_record</name>
+<description>登録更新確認 Confirm UPDATE record</description>
+<required>0</required>
+<param1>confirm</param1>
+<param2>1</param2>
+<param3>Submission data modified</param3>
+<param4>&lt;img src=&quot;http://localhost/maj/pluginfile.php/5954/mod_data/intro/2017_MAJ_tochigi_banner.0640.jpg&quot; alt=&quot;MoodleMoot Japan 2017 banner&quot; width=&quot;640&quot; height=&quot;83&quot; style=&quot;vertical-align:text-bottom; margin: 0 .5em;&quot; class=&quot;img-responsive&quot;&gt;
+
+
+
+Dear [[firstname]] [[lastname]],
+
+this email confirms that you have updated your submission details for [[conference_name_english]].
+
+
+
+The revised submission details appear below.
+
+
+
+You can review and update this information online on the following URL:
+
+[[recordurl]]
+
+
+
+best regards
+
+[[conference_name_english]] committee
+
+
+
+======================================
+
+Submission details:
+
+======================================
+
+
+
+[[submission_details]]</param4>
+</field>
+
+<field>
+<type>template</type>
+<name>other_presenters</name>
+<description>共同発表者 Other presenters</description>
+<required>0</required>
+<param1>[[IF name_given_2_en]]
+&lt;tr id=&quot;id_name_2&quot; class=&quot;name&quot;&gt;
+    &lt;th class=&quot;template-field cell c0&quot; style=&quot;&quot;&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Co-presenter (2)&lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;共同研究者（２）&lt;/span&gt; :&lt;/th&gt;
+    &lt;td class=&quot;template-token cell c1&quot; colspan=&quot;2&quot;&gt;[[name_title_2]] [[name_given_2_en]] [[name_surname_2_en]] ([[affiliation_2_en]])&lt;/td&gt;
+&lt;/tr&gt;
+[[ENDIF]]
+[[IF name_given_3_en]]
+&lt;tr id=&quot;id_name_3&quot; class=&quot;name&quot;&gt;
+    &lt;th class=&quot;template-field cell c0&quot; style=&quot;&quot;&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Co-presenter (3)&lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;共同研究者（３）&lt;/span&gt; :&lt;/th&gt;
+    &lt;td class=&quot;template-token cell c1&quot; colspan=&quot;3&quot;&gt;[[name_title_3]] [[name_given_3_en]] [[name_surname_3_en]] ([[affiliation_3_en]])&lt;/td&gt;
+&lt;/tr&gt;
+[[ENDIF]]
+[[IF name_given_4_en]]
+&lt;tr id=&quot;id_name_4&quot; class=&quot;name&quot;&gt;
+    &lt;th class=&quot;template-field cell c0&quot; style=&quot;&quot;&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Co-presenter (4)&lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;共同研究者（４）&lt;/span&gt; :&lt;/th&gt;
+    &lt;td class=&quot;template-token cell c1&quot; colspan=&quot;4&quot;&gt;[[name_title_4]] [[name_given_4_en]] [[name_surname_4_en]] ([[affiliation_4_en]])&lt;/td&gt;
+&lt;/tr&gt;
+[[ENDIF]]
+[[IF name_given_5_en]]
+&lt;tr id=&quot;id_name_5&quot; class=&quot;name&quot;&gt;
+    &lt;th class=&quot;template-field cell c0&quot; style=&quot;&quot;&gt;&lt;span class=&quot;multilang&quot; lang=&quot;en&quot;&gt;Co-presenter (5)&lt;/span&gt;&lt;span class=&quot;multilang&quot; lang=&quot;ja&quot;&gt;共同研究者（５）&lt;/span&gt; :&lt;/th&gt;
+    &lt;td class=&quot;template-token cell c1&quot; colspan=&quot;5&quot;&gt;[[name_title_5]] [[name_given_5_en]] [[name_surname_5_en]] ([[affiliation_5_en]])&lt;/td&gt;
+&lt;/tr&gt;
+[[ENDIF]]</param1>
+<param2>1</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>main_presenter</name>
+<description>筆頭発表者 Main presenter</description>
+<required>0</required>
+<param1>[[IF name_title NOT_EMPTY]][[name_title]] [[ENDIF]][[IF name_given_en NOT_EMPTY]][[name_given_en]] [[ENDIF]][[IF name_surname_en NOT_EMPTY]][[name_surname_en]][[ENDIF]]</param1>
+<param2>0</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>submission_details</name>
+<description>申請データ Submission details</description>
+<required>0</required>
+<param1>SUBMISSION DETAILS
+
+
+
+Title: [[presentation_title]]
+
+
+
+Presentation type: [[presentation_type]]
+
+Presentation language: [[presentation_language]]
+
+
+
+Abstract: [[presentation_abstract]]
+
+
+
+Topics: [[presentation_topics]]
+
+Keywords: [[presentation_keywords]]
+
+
+
+[[IF presentation_handout_file]]
+
+Handout: [[presentation_handout_file]]
+
+[[ENDIF]]
+
+[[IF presentation_slides_file]]
+
+Slides: [[presentation_slides_file]]
+
+[[ENDIF]]
+
+[[IF presentation_url]]
+
+URL: [[presentation_url]]
+
+[[ENDIF]]
+
+
+
+MAIN PRESENTER
+
+
+
+Name: [[IF name_title EMPTY]][[ELIF name_title START_WITH Mr]][[ELSE]][[name_title]][[ENDIF]]
+
+ [[name_given_en]] [[name_surname_en]] [[name_surname_ja]] [[name_given_ja]]
+
+Affiliation: [[affiliation_en]]
+
+Email: [[email]]
+
+
+
+[[IF name_surname_2_en]]
+
+CO-PRESENTERS:
+
+
+
+(2) [[IF name_title_2 EMPTY]][[ELIF name_title_2 START_WITH Mr]][[ELSE]][[name_title_2]][[ENDIF]]
+
+ [[name_given_2_en]] [[name_surname_2_en]] [[affiliation_2_en]]
+
+[[ENDIF]]
+
+[[IF name_surname_3_en]]
+
+(3) [[IF name_title_3 EMPTY]][[ELIF name_title_3 START_WITH Mr]][[ELSE]][[name_title_3]][[ENDIF]]
+
+ [[name_given_3_en]] [[name_surname_3_en]] [[affiliation_3_en]]
+
+[[ENDIF]]
+
+[[IF name_surname_4_en]]
+
+(4) [[IF name_title_4 EMPTY]][[ELIF name_title_4 START_WITH Mr]][[ELSE]][[name_title_4]][[ENDIF]]
+
+ [[name_given_4_en]] [[name_surname_4_en]] [[affiliation_4_en]]
+
+[[ENDIF]]
+
+[[IF name_surname_5_en]]
+
+(5) [[IF name_title_5 EMPTY]][[ELIF name_title_5 START_WITH Mr]][[ELSE]][[name_title_5]][[ENDIF]]
+
+ [[name_given_5_en]] [[name_surname_5_en]] [[affiliation_5_en]]
+
+[[ENDIF]]</param1>
+<param2>0</param2>
+</field>
+
+<field>
+<type>menu</type>
+<name>presentation_type</name>
+<description>発表の種類 Presentation type</description>
+<required>1</required>
+<param1>プレゼンテーション（９０分） Presentation (90 mins)
+
+プレゼンテーション（４０分） Presentation (40 mins)
+
+ケース・スタディー（２０分） Case study (20 mins)
+
+ライトニング・トーク（１０分） Lightning talk (10 mins)
+
+ショーケース（９０分） Showcase (90 mins)
+
+ワークショップ（９０分） Workshop (90 mins)
+
+商用プレゼンテーション（９０分） Commercial presentation (90 mins)
+
+商用プレゼンテーション（４０分） Commercial presentation (40 mins)
+
+商用ライトニング・トーク（１０分） Commercial lightning talk (10 mins)</param1>
+</field>
+
+<field>
+<type>checkbox</type>
+<name>presentation_topics</name>
+<description>発表のトピック Presentation topics</description>
+<required>1</required>
+<param1>Moodleの利用 Using Moodle
+
+Moodleの統合 Integrating Moodle
+
+Moodleの開発 Moodle development
+
+インストールと管理 Installation and Administration
+
+学校でのMoodle導入事例 Moodle in traditional educational settings
+
+学校以外の場所でのMoodle導入事例 Moodle in non-traditional settings
+
+学生の観点 Students' perspectives
+
+Moodleの教授法 Moodle Pedagogy</param1>
+</field>
+
+<field>
+<type>menu</type>
+<name>presentation_language</name>
+<description>発表の言語 Presentation language</description>
+<required>1</required>
+<param1>英語 English
+
+日本語 Japanese</param1>
+</field>
+
+<field>
+<type>text</type>
+<name>presentation_keywords</name>
+<description>発表のキーワード Presentation keywords</description>
+<required>1</required>
+</field>
+
+<field>
+<type>admin</type>
+<name>peer_review_link</name>
+<description>査読リンク Peer review link</description>
+<required>0</required>
+<param9>0</param9>
+<param10>text</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>peer_review_score</name>
+<description>査読評価 Peer review score</description>
+<required>0</required>
+<param9>2</param9>
+<param10>number</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>peer_review_details</name>
+<description>査読詳細 Peer review details</description>
+<required>0</required>
+<param2>60</param2>
+<param3>10</param3>
+<param4>1</param4>
+<param5>0</param5>
+<param9>2</param9>
+<param10>textarea</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>peer_review_notes</name>
+<description>査読メモ Peer review notes</description>
+<required>0</required>
+<param2>60</param2>
+<param3>5</param3>
+<param4>1</param4>
+<param9>2</param9>
+<param10>textarea</param10>
+</field>
+
+<field>
+<type>template</type>
+<name>peer_review_score_bgcolor</name>
+<description>査読評価背景色 Peer Review Score BG Color</description>
+<required>0</required>
+<param1>[[IF peer_review_score NUM_LESS_THAN 60]]#ff7373[[ELIF peer_review_score NUM_LESS_THAN 70]]#ffcc66[[ELIF peer_review_score NUM_LESS_THAN 80]]#ffff99[[ELSE]]#ccff99[[ENDIF]]</param1>
+<param2>0</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>submission_rating</name>
+<description>提出評価 Submission rating</description>
+<required>0</required>
+<param1>[[recordrating]]</param1>
+<param2>0</param2>
+<param9>0</param9>
+</field>
+
+<field>
+<type>template</type>
+<name>submission_url</name>
+<description>提出URL Submission URL</description>
+<required>0</required>
+<param1>[[recordurl]]</param1>
+<param2>0</param2>
+<param9>0</param9>
+</field>
+
+<field>
+<type>template</type>
+<name>submission_id</name>
+<description>提出ID Submission ID</description>
+<required>0</required>
+<param1>[[recordid]]</param1>
+<param2>0</param2>
+<param9>0</param9>
+</field>
+
+<field>
+<type>admin</type>
+<name>submission_status</name>
+<description>処理状況 Submission status</description>
+<required>0</required>
+<param1>審査待ち Waiting for review
+
+認められた Accepted
+
+認められていない Not accepted
+
+条件付きで認められた Conditionally accepted
+
+キャンセルされた Cancelled</param1>
+<param9>6</param9>
+<param10>menu</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>schedule_number</name>
+<description>スケジュール番号 Schedule number</description>
+<required>0</required>
+<param9>6</param9>
+<param10>text</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>schedule_duration</name>
+<description>開催予定時間 Duration</description>
+<required>0</required>
+<param1>10分 10 mins
+
+20分 20 mins
+
+25分 25 mins
+
+30分 30 mins
+
+40分 40 mins
+
+50分 50 mins
+
+60分 60 mins
+
+75分 75 mins
+
+80分 80 mins
+
+90分 90 mins
+
+120分 120 mins</param1>
+<param9>6</param9>
+<param10>menu</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>schedule_day</name>
+<description>開催予定日 Schedule day</description>
+<required>0</required>
+<param1>２月１７日（金） Feb 17th (Fri)
+
+２月１８日（土） Feb 18th (Sat)
+
+２月１９日（日） Feb 19th (Sun)</param1>
+<param9>6</param9>
+<param10>menu</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>schedule_time</name>
+<description>開催予定時刻 Schedule time</description>
+<required>0</required>
+<param1>08:30 - 09:00
+
+09:00 - 09:40
+
+09:30 - 10:10
+
+09:50 - 10:30
+
+10:20 - 11:00
+
+10:40 - 11:30
+
+11:10 - 11:50
+
+11:30 - 12:45
+
+11:50 - 12:50
+
+12:30 - 14:00
+
+12:45 - 13:25
+
+12:50 - 13:40
+
+13:25 - 13:35
+
+13:40 - 13:50
+
+13:45 - 14:25
+
+14:00 - 14:40
+
+14:10 - 15:40
+
+14:35 - 15:15
+
+14:40 - 15:00
+
+15:00 - 15:40
+
+15:25 - 15:50
+
+15:50 - 16:30
+
+15:50 - 17:20
+
+16:40 - 17:40
+
+18:00 - 20:00</param1>
+<param9>6</param9>
+<param10>menu</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>schedule_room</name>
+<description>開催予定室 Schedule Room</description>
+<required>0</required>
+<param1>講堂（230席） Main Hall (230 seats)
+
+大教室1（135席） Class Room L-1 (135 seats)
+
+大教室2（135席） Class Room L-2 (135 seats)
+
+大教室4（135席） Class Room L-4 (135 seats)
+
+大教室5（135席） Class Room L-5 (135 seats)
+
+中教室3（60席） Class Room M-3 (60 seats)
+
+ERB (3F) Room M-3 (60 seats)
+
+MB (6F) Class Room (50 seats)
+
+MB (7F) Room L (30 seats)
+
+MB (11F) PC Room (140 seats)</param1>
+<param9>6</param9>
+<param10>menu</param10>
+</field>
+
+<field>
+<type>admin</type>
+<name>schedule_audience</name>
+<description>聴講予定者 Schedule Audience</description>
+<required>0</required>
+<param1>開催室のみ Single room
+
+大会参加者全員 All delegates</param1>
+<param9>6</param9>
+<param10>menu</param10>
+</field>
+
+<field>
+<type>template</type>
+<name>schedule_session</name>
+<description>開催予定行事 Schedule session</description>
+<required>0</required>
+<param1>[[IF submission_status CONTAINS &quot;認められた&quot;]]
+
+&lt;div class=&quot;session [[day_css_class]] [[time_css_class]] [[room_css_class]] [[duration_css_class]] [[audience_css_class]] [[type_css_class]]&quot;
+
+     onclick=&quot;window.location.assign('/mod/data/view.php?id=[[dataid]]&amp;rid=[[recordid]]')&quot;&gt;
+
+    &lt;b&gt;[[title]]&lt;/b&gt;
+
+    &lt;i&gt;[[presenters]]&lt;/i&gt;
+
+    &lt;small&gt;[[schedule_time]] ([[schedule_duration]]) [[schedule_room]]&lt;/small&gt;
+
+&lt;/div&gt;
+
+[[ENDIF]]</param1>
+<param2>0</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>schedule_presenters</name>
+<description>発表者達 Schedule presenters</description>
+<required>0</required>
+<param1>[[IF name_surname_en NOT_EMPTY]][[TITLECASE name_surname_en]][[ENDIF]]
+
+[[IF name_surname_2_en NOT_EMPTY]], [[TITLECASE name_surname_2_en]][[ENDIF]]
+
+[[IF name_surname_3_en NOT_EMPTY]], [[TITLECASE name_surname_3_en]][[ENDIF]]
+
+[[IF name_surname_4_en NOT_EMPTY]], [[TITLECASE name_surname_4_en]][[ENDIF]]
+
+[[IF name_surname_5_en NOT_EMPTY]], [[TITLECASE name_surname_5_en]][[ENDIF]]</param1>
+<param2>1</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>day_css_class</name>
+<description>Schedule day (CSS)</description>
+<required>0</required>
+<param1>[[IF schedule_day CONTAINS &quot;Fri&quot;]]day1
+
+[[ELIF schedule_day CONTAINS &quot;Sat&quot;]]day2
+
+[[ELIF schedule_day CONTAINS &quot;Sun&quot;]]day3
+
+[[ENDIF]]</param1>
+<param2>0</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>time_css_class</name>
+<description>Schedule time (CSS)</description>
+<required>0</required>
+<param1>[[IF schedule_time == &quot;10:00&quot;]]time1
+
+[[ELIF schedule_time == &quot;11:00&quot;]]time2
+
+[[ELIF schedule_time == &quot;13:00&quot;]]time3
+
+[[ELIF schedule_time == &quot;14:00&quot;]]time4
+
+[[ENDIF]]</param1>
+<param2>0</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>room_css_class</name>
+<description>Schedule room (CSS)</description>
+<required>0</required>
+<param1>[[IF schedule_room == &quot;Room 495&quot;]]room1
+
+[[ELIF schedule_room == &quot;Room 496&quot;]]room2
+
+[[ELIF schedule_room == &quot;Room 497&quot;]]room3
+
+[[ELIF schedule_room == &quot;Room 498&quot;]]room4
+
+[[ELIF schedule_room == &quot;Room 499&quot;]]room5
+
+[[ELIF schedule_room == &quot;Main Hall&quot;]]room6
+
+[[ENDIF]]</param1>
+<param2>0</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>duration_css_class</name>
+<description>Schedule duration (CSS)</description>
+<required>0</required>
+<param1>[[IF schedule_duration == &quot;10 mins&quot;]]duration1
+
+[[ELIF schedule_duration == &quot;20 mins&quot;]]duration2
+
+[[ELIF schedule_duration == &quot;40 mins&quot;]]duration3
+
+[[ELIF schedule_duration == &quot;90 mins&quot;]]duration4
+
+[[ENDIF]]</param1>
+<param2>0</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>audience_css_class</name>
+<description>Schedule audience (CSS)</description>
+<required>0</required>
+<param1>[[IF audience CONTAINS &quot;Single room&quot;]]audience1
+
+[[ELIF audience CONTAINS &quot;All delegates&quot;]]audience2
+
+[[ENDIF]]</param1>
+<param2>0</param2>
+</field>
+
+<field>
+<type>template</type>
+<name>type_css_class</name>
+<description>Schedule type (CSS)</description>
+<required>0</required>
+<param1>[[IF presentation_type CONTAINS &quot;Presentation&quot;]]typepresentation
+
+[[ELIF presentation_type CONTAINS &quot;Case study&quot;]]typecasestudy
+
+[[ELIF presentation_type CONTAINS &quot;Lightning talk&quot;]]typelightningtalk
+
+[[ELIF presentation_type CONTAINS &quot;Showcase&quot;]]typeshowcase
+
+[[ELIF presentation_type CONTAINS &quot;Workshop&quot;]]typeworkshop
+
+[[ENDIF]]</param1>
+<param2>0</param2>
+</field>
+
+</preset>

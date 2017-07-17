@@ -280,6 +280,15 @@ abstract class block_maj_submissions_tool_base extends moodleform {
     }
 
     /**
+     * get_defaultintro
+     *
+     * @todo Finish documenting this function
+     */
+    protected function get_defaultintro() {
+        return '';
+    }
+
+    /**
      * get_section
      *
      * @uses $DB
@@ -809,8 +818,10 @@ class block_maj_submissions_tool_setupdatabase extends block_maj_submissions_too
         'timefinish' => array('timeavailableto')
     );
     protected $permissions = array(
-        'user' => array('mod/data:viewentry' => CAP_ALLOW,
-                        'mod/data:writeentry' => CAP_ALLOW,)
+        // "user" is the "Authenticated user" role. A "user" is
+        // logged in, but may not be enrolled in the current course.
+        // They can view, but not write to, this database activity
+        'user' => array('mod/data:viewentry' => CAP_ALLOW)
     );
 
 
@@ -1104,15 +1115,22 @@ class block_maj_submissions_tool_setupdatabase extends block_maj_submissions_too
             'enrol'  => new moodle_url('/enrol/index.php', array('id' => $this->course->id))
         );
 
+        // setup the multiparams for the multilang strings
+        $names = array('record' => $this->defaultpreset.'record',
+                       'process' => $this->defaultpreset.'process');
+        $multilangparams = $this->instance->get_multilang_params($names, $this->plugin);
+
         // add intro sections
         $howtos = array('switchrole', 'begin', 'login', 'enrol', 'signup', 'add', 'edit' ,'delete');
         foreach ($howtos as $howto) {
-            $intro .= html_writer::start_tag('div', array('class' => "howto $howto"));
-            $text = $this->instance->get_string("howto$howto", $this->plugin);
+            $params = array('class' => "howto $howto",
+                            'style' => 'display: none;');
+            $intro .= html_writer::start_tag('div', $params);
+            $text = $this->instance->get_string("howto$howto", $this->plugin, $multilangparams);
             switch ($howto) {
                 case 'login':
                 case 'enrol':
-                    $text = str_replace('{$a}', $urls[$howto], $text);
+                    $text = str_replace('{$url}', $urls[$howto], $text);
                     break;
                 case 'signup':
                     $text .= html_writer::start_tag('ol');
@@ -1121,7 +1139,7 @@ class block_maj_submissions_tool_setupdatabase extends block_maj_submissions_too
                         if ($name=='signup' || $name=='login') {
                             $params = array('target' => '_blank');
                         } else {
-                            $params = array(); // enrol
+                            $params = array(); // $name=='enrol'
                         }
                         $link = html_writer::link($url, $link, $params);
                         $text .= html_writer::tag('li', $link);
@@ -1343,7 +1361,20 @@ class block_maj_submissions_tool_setupevents extends block_maj_submissions_tool_
     protected $type = 'registerevents';
     protected $defaultpreset = 'events';
     protected $permissions = array();
-    protected function get_defaultintro() {}
+
+    /**
+     * get_defaultintro
+     *
+     * @return string
+     */
+    protected function get_defaultintro() {
+        $howto = 'setupevents';
+        if ($intro = $this->instance->get_string("howto$howto", $this->plugin)) {
+            $intro = html_writer::tag('p', $intro);
+            $intro = html_writer::tag('div', $intro, array('class' => "howto $howto"));
+        }
+        return $intro;
+    }
 }
 
 /**

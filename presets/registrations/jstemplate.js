@@ -2,6 +2,12 @@
     // fetch the standard js and css files for MAJ Submisisons
     var r = new RegExp("^(.*?)/mod/data/.*?(\\bi?d=\\d+\\b).*$");
     var m = location.href.match(r);
+    if (m==null) {
+        var a = document.querySelectorAll("ul.nav.nav-tabs li a[href]");
+        if (a.length) {
+            m = a[0].href.match(r);
+        }
+    }
     if (m && m[0]) {
         var src = m[1] + "/blocks/maj_submissions/presets.js.php";
         src += "?" + m[2] + "&" + "preset=registrations";
