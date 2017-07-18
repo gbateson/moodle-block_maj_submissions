@@ -123,13 +123,15 @@ class block_maj_submissions extends block_base {
             'conferencetimefinish' => 0,
             'conferencecmid'       => 0,
 
-            'workshopstimestart'  => 0,
-            'workshopstimefinish' => 0,
-            'workshopscmid'       => 0,
+            'workshopstimestart'   => 0,
+            'workshopstimefinish'  => 0,
+            'workshopscmid'        => 0,
 
-            'receptiontimestart'  => 0,
-            'receptiontimefinish' => 0,
-            'receptioncmid'       => 0,
+            'receptiontimestart'   => 0,
+            'receptiontimefinish'  => 0,
+            'receptioncmid'        => 0,
+
+            'registereventscmid'   => 0,
 
             'collectpresentationstimestart'  => 0,
             'collectpresentationstimefinish' => 0,
@@ -142,8 +144,6 @@ class block_maj_submissions extends block_base {
             'collectsponsoredstimestart'  => 0,
             'collectsponsoredstimefinish' => 0,
             'collectsponsoredscmid'       => 0,
-
-            'eventscmid' => 0,
 
             'reviewtimestart'  => 0,
             'reviewtimefinish' => 0,
@@ -172,7 +172,7 @@ class block_maj_submissions extends block_base {
             'fixmonth'      => 1, // 0=no, 1=remove leading "0" from months
             'fixday'        => 1, // 0=no, 1=remove leading "0" from days
             'fixhour'       => 1, // 0=no, 1=remove leading "0" from hours
-            'manageevents'  => 0  // 0=no, 1=yes
+            'manageevents'  => 0  // 0=no, 1=yes (i.e. sync calendar events)
         );
 
         if (empty($this->config)) {
@@ -216,15 +216,17 @@ class block_maj_submissions extends block_base {
         $courseid = $course->id;
         $moduleid = $DB->get_field('modules', 'id', array('name' => 'data'));
 
+        file_postupdate_standard_filemanager($config, 'files', self::get_fileoptions(), $this->page->context, $plugin, 'files', 0);
+
         $dataids = array();
-        $names = array('collectpresentationscmid',
-                       'collectworkshopscmid',
-                       'collectsponsoredscmid',
-                       'registerdelegatescmid',
-                       'registerpresenterscmid');
+        $names = array_keys(get_object_vars($config));
+        $names = preg_grep('/^(collect|register).*cmid$/', $names);
+        // we expect the following settings:
+        // - collect(presentations|sponsoreds|workshops)cmid
+        // - register(delegates|presenters)cmid
 
         foreach ($names as $name) {
-            if (isset($config->$name)) {
+            if (! empty($config->$name)) {
                 $params = array('id' => $config->$name, 'course' => $courseid, 'module' => $moduleid);
                 $dataids[] = $DB->get_field('course_modules', 'instance', $params);
             }
@@ -234,7 +236,6 @@ class block_maj_submissions extends block_base {
         $dataids = array_unique($dataids);
 
         if (count($dataids)) {
-
             $constanttype = 0; // constant fields
             $fieldnames = self::get_constant_fieldnames($constanttype);
             foreach ($fieldnames as $fieldname => $name) {
@@ -244,6 +245,9 @@ class block_maj_submissions extends block_base {
                     $langs = self::get_languages($config->displaylangs);
                 }
                 foreach ($langs as $lang) {
+                    if ($lang=='en') {
+                        $this->update_constant_field($plugin, $dataids, $config, $name, $name.$lang, $fieldname, $constanttype);
+                    }
                     $this->update_constant_field($plugin, $dataids, $config, $name, $name.$lang, $fieldname."_$lang", $constanttype);
                 }
             }
@@ -273,12 +277,12 @@ class block_maj_submissions extends block_base {
                     $visible     =  1;
                     $description = '';
                     switch ($type) {
-                        case 'collectpresentations':
-                        case 'collectworkshops':
-                        case 'collectsponsoreds':
                         case 'conference':
                         case 'workshops':
                         case 'reception':
+                        case 'collectpresentations':
+                        case 'collectworkshops':
+                        case 'collectsponsoreds':
                         case 'publish':
                         case 'registerdelegates':
                         case 'registerpresenters':
@@ -339,16 +343,25 @@ class block_maj_submissions extends block_base {
     /**
      * update_constant_field
      *
+     * @param string $plugin
+     * @param array  $dataids
+     * @param object $config values from recently submitted form
+     * @param string $name the base name of this config setting, e.g. conferencename
+     * @param string $configname the name of the setting in the form, e.g. conferencenameen
+     * @param string $fieldname the name of the setting in the database, e.g. conference_name_en
+     * @param string $constanttype 0=constant, 1=autoincrement, 2=random
      * @return xxx
      */
     protected function update_constant_field($plugin, $dataids, $config, $name, $configname, $fieldname, $constanttype) {
         global $DB;
-        if (isset($config->$name)) {
-            $param1 = $config->$name;
+        if (isset($config->$configname)) {
+            $param1 = $config->$configname;
             $param2 = $constanttype;
-            $param3 = ($constanttype==2 ? $config->{$name.'format'} : '');
+            $param3 = ($constanttype==1 ? $config->{$configname.'format'} : '');
             foreach ($dataids as $dataid) {
-                $params = array('dataid' => $dataid, 'name' => $fieldname);
+                $params = array('dataid' => $dataid,
+                                'type' => 'constant',
+                                'name' => $fieldname);
                 if ($field = $DB->get_record('data_fields', $params)) {
                     $field->param1 = $param1;
                     $field->param2 = $param2;
@@ -1295,6 +1308,14 @@ class block_maj_submissions extends block_base {
             array('registerpresenters',
                   'registerdelegates')
         );
+    }
+
+    static public function get_fileoptions() {
+        return array('subdirs' => 1,
+                     'maxbytes' => 0,
+                     'maxfiles' => -1,
+                     'mainfile' => false,
+                     'accepted_types' => '*');
     }
 
     /**
