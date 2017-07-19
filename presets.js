@@ -147,8 +147,11 @@ MAJ.extract_page_info = function() {
                 break;
         }
     } else {
-        var x = $("div.usermenu span.login").length;
-        MAJ.is_loggedin = (x==0 ? true : false);
+        var x = $("div.usermenu span.login");
+        MAJ.is_loggedin = (x.length==0 ? true : false);
+
+        x = x.find("a[href$='/login/index.php']");
+        MAJ.is_guestuser = (x.length==0 ? false : true);
 
         var x = $("#settingsnav a[href*='/enrol/index.php']").length;
         MAJ.is_enrolled = (x==0 ? true : false);
@@ -201,7 +204,7 @@ MAJ.hide_nav_tabs = function() {
     }
 
     // users who are not logged or not enrolled cannot see any tabs
-    if (MAJ.is_loggedin==false || MAJ.is_enrolled==false) {
+    if (MAJ.is_loggedin==false || MAJ.is_enrolled==false || MAJ.is_guestuser) {
         $("ul.nav-tabs").remove();
         return true;
     }
@@ -262,9 +265,8 @@ MAJ.show_explanations = function() {
         $("div.howto.switchrole").css("display", "block");
     }
 
-    // detect user who is NOT logged in
-    // $("div.usermenu span.guest-role")
-    if (MAJ.is_loggedin==false) {
+    // detect guest user and user who is NOT logged in
+    if (MAJ.is_guestuser || MAJ.is_loggedin==false) {
         $("div.howto.begin").css("display", "block");
         $("div.howto.login").css("display", "block");
         $("div.howto.signup").css("display", "block");
