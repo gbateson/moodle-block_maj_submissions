@@ -40,7 +40,7 @@ class restore_maj_submissions_block_task extends restore_block_task {
     }
 
     public function get_fileareas() {
-        return array(); // No associated fileareas
+        return array('files');
     }
 
     public function get_configdata_encoded_attributes() {
