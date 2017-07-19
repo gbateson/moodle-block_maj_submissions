@@ -26,7 +26,7 @@
 
 // essential strings
 $string['pluginname'] = 'MAJ Submissions';
-$string['blockdescription'] = 'This block facilitates administration of a conference submissions system based on a set of Database and Workshop activities.';
+$string['blockdescription'] = 'This block facilitates administration of a conference registration and submissions system based on a set of Database and Workshop activities.';
 $string['blockname'] = 'MAJ Submissions';
 $string['blocknameplural'] = 'MAJ Submissions';
 
@@ -126,7 +126,8 @@ $string['exportsettings'] = 'Export settings';
 $string['feereceiptnumber_help'] = 'The starting value for the auto-increment fee receipt numbers.';
 $string['feereceiptnumber'] = 'Fee receipt number';
 $string['files_help'] = 'You can upload images and other files to this file area, from where they can be shared by activities and resources in this course.';
-$string['files'] = 'Files';
+$string['files'] = 'Conference files';
+$string['fileslink'] = 'Base URL for these conference files:';
 $string['filterconditions_help'] = 'This filter is used to decide which submissions from the source database should be transferred to the target workshop activity for vetting.';
 $string['filterconditions'] = 'Filter condition [{no}]';
 $string['fixdates_help'] = 'These settings control whether or not the leading zero on months, days and hours less than 10 are removed.';

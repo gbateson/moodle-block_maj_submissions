@@ -49,7 +49,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $field = 'config_'.$name;
         $plugin = 'block_maj_submissions';
         $options = block_maj_submissions::get_fileoptions();
-        file_prepare_standard_filemanager($data, $field, $options, $this->page->context, $plugin, $name, 0);
+        file_prepare_standard_filemanager($data, $field, $options, $this->block->context, $plugin, $name, 0);
         parent::set_data($data);
     }
 
@@ -78,13 +78,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $this->add_field($mform, $plugin, 'displaystats', 'selectyesno', PARAM_INT);
         $this->add_field($mform, $plugin, 'displaylangs', 'text', PARAM_TEXT);
         $mform->disabledIf('config_displaystats', 'config_displaydates', 'eq', '0');
-
-        $name = 'files';
-        $field = 'config_'.$name.'_filemanager';
-        $label = get_string($name, $plugin);
-        $options = block_maj_submissions::get_fileoptions();
-        $mform->addElement('filemanager', $field, $label, null, $options);
-        $mform->addHelpButton($field, $name, $plugin);
+        $this->add_field_filemanager($mform, $plugin, 'files');
 
         //-----------------------------------------------------------------------------
         $this->add_header($mform, $plugin, 'conferencestrings', false, true);
@@ -311,19 +305,50 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $params = array('id' => $this->block->instance->id);
         $params = array('href' => new moodle_url('/blocks/'.$blockname.'/export.settings.php', $params));
 
-        $text .= html_writer::empty_tag('br');
-        $text .= html_writer::tag('a', get_string('exportsettings', $plugin), $params);
-        $text .= ' '.$OUTPUT->help_icon('exportsettings', $plugin);
+        $text .= ' '.html_writer::tag('a', get_string('exportsettings', $plugin), $params);
+        $text .= $OUTPUT->help_icon('exportsettings', $plugin);
 
         $params = array('id' => $this->block->instance->id);
         $params = array('href' => new moodle_url('/blocks/'.$blockname.'/import.settings.php', $params));
 
-        $text .= html_writer::empty_tag('br');
-        $text .= html_writer::tag('a', get_string('importsettings', $plugin), $params);
-        $text .= ' '.$OUTPUT->help_icon('importsettings', $plugin);
+        $text .= ' '.html_writer::tag('a', get_string('importsettings', $plugin), $params);
+        $text .= $OUTPUT->help_icon('importsettings', $plugin);
 
         $text = html_writer::tag('div', $text, array('id' => 'id_description_text'));
         $mform->addElement('static', $name, $label, $text);
+    }
+
+    /**
+     * add_field_filemanager
+     *
+     * @param object  $mform
+     * @param string  $plugin
+     * @param string  $name of field
+     * @return void, but will update $mform
+     */
+    protected function add_field_filemanager($mform, $plugin, $name) {
+        $configname = 'config_'.$name;
+        $groupname = 'group_'.$name;
+
+        $elements = array();
+
+        $filemanager = $configname.'_filemanager';
+        $options = block_maj_submissions::get_fileoptions();
+        $elements[] = $mform->createElement('filemanager', $filemanager, null, $options);
+
+        $text = get_string($name.'link', $plugin);
+        $elements[] = $mform->createElement('static', '', '', $text);
+
+        $link = '/'.$this->block->context->id."/$plugin/files/";
+        $link = new moodle_url('/pluginfile.php').$link;
+        $link = html_writer::tag('small', html_writer::tag('b', $link));
+        $elements[] = $mform->createElement('static', '', '', $link);
+
+        $label = get_string($name, $plugin);
+        $join = html_writer::empty_tag('br');
+        $mform->addGroup($elements, $groupname, $label, $join, false);
+
+        $mform->addHelpButton($groupname, $name, $plugin);
     }
 
     /**

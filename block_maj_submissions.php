@@ -216,7 +216,10 @@ class block_maj_submissions extends block_base {
         $courseid = $course->id;
         $moduleid = $DB->get_field('modules', 'id', array('name' => 'data'));
 
-        file_postupdate_standard_filemanager($config, 'files', self::get_fileoptions(), $this->page->context, $plugin, 'files', 0);
+        // retrieve the files from the filemanager
+        $name = 'files';
+        $options = self::get_fileoptions();
+        file_postupdate_standard_filemanager($config, $name, $options, $this->context, $plugin, $name, 0);
 
         $dataids = array();
         $names = array_keys(get_object_vars($config));
@@ -246,6 +249,7 @@ class block_maj_submissions extends block_base {
                 }
                 foreach ($langs as $lang) {
                     if ($lang=='en') {
+                        // update fields which have no separate "_$lang" values
                         $this->update_constant_field($plugin, $dataids, $config, $name, $name.$lang, $fieldname, $constanttype);
                     }
                     $this->update_constant_field($plugin, $dataids, $config, $name, $name.$lang, $fieldname."_$lang", $constanttype);
@@ -338,6 +342,38 @@ class block_maj_submissions extends block_base {
         /////////////////////////////////////////////////
 
         return parent::instance_config_save($config, $pinned);
+    }
+
+    /**
+     * Ensure file area is cleared when removing an instance of this block.
+     *
+     * @return boolean
+     */
+    function instance_delete() {
+        $fs = get_file_storage();
+        $fs->delete_area_files($this->context->id, 'block_maj_submisisons');
+        return parent::instance_delete();
+    }
+
+    /**
+     * Copy any block-specific data when copying to a new block instance.
+     * @param int $fromid the id number of the block instance to copy from
+     * @return boolean
+     */
+    public function instance_copy($fromid) {
+        $fromcontext = self::context(CONTEXT_BLOCK, $fromid);
+        $component = 'block_maj_submissions';
+        $filearea = 'files';
+        $fs = get_file_storage();
+        if ($fs->is_area_empty($fromcontext->id, $component, $filearea, 0, false)) {
+            // do nothing - saves several SQL queries
+        } else {
+            $draftitemid = 0;
+            $options = self::get_fileoptions();
+            file_prepare_draft_area($draftitemid, $fromcontext->id, $component, $filearea, 0, $options);
+            file_save_draft_area_files($draftitemid, $this->context->id, $component, $filearea, 0, $options);
+        }
+        return parent::instance_copy($fromid);
     }
 
     /**
@@ -1485,7 +1521,7 @@ class block_maj_submissions extends block_base {
      * @return string
      */
     static public function filter_text($text) {
-        global $COURSE, $PAGE;
+        global $PAGE;
 
         $filter = filter_manager::instance();
 
