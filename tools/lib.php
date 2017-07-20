@@ -982,10 +982,20 @@ class block_maj_submissions_tool_setupdatabase extends block_maj_submissions_too
                     } else {
                         $section = get_fast_modinfo($this->course)->get_section_info($sectionnum);
                     }
-                    $defaultvalues = $this->get_defaultvalues();
-                    $cm = self::get_coursemodule($this->course, $section, $this->modulename,  $databasename, $defaultvalues);
-                    self::set_cm_permissions($cm, $this->permissions);
-                    self::set_cm_availability($cm, $this->availability);
+                    if ($section) {
+                        $defaultvalues = $this->get_defaultvalues();
+                        $cm = self::get_coursemodule($this->course, $section, $this->modulename,  $databasename, $defaultvalues);
+                    }
+                    if ($cm) {
+                        self::set_cm_permissions($cm, $this->permissions);
+                        self::set_cm_availability($cm, $this->availability);
+                        if ($this->cmid==0) {
+                            $this->cmid = $cm->id;
+                            $cmid = $this->type.'cmid';
+                            $this->instance->config->$cmid = $cm->id;
+                            $this->instance->instance_config_save($this->instance->config);
+                        }
+                    }
                 } else {
                     $cm = get_fast_modinfo($this->course)->get_cm($databasenum);
                 }
