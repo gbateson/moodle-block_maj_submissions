@@ -403,3 +403,31 @@ MAJ.trim = function(s) {
     var regexp = new RegExp("(^\\s+)|(\\s+$)","g");
     return s.replace(regexp, "");
 }
+
+/*
+ * remove rows with nothing in the rightmost column
+ */
+MAJ.remove_empty_rows = function(rowselector) {
+    $(rowselector).each(function(){
+        var text = $(this).find("td").last().text();
+        if (MAJ.trim(text)=="") {
+            var cell = $(this).prev().find(".c0").first();
+            var rowspan = cell.attr("rowspan");
+            if (rowspan && rowspan > 1) {
+                cell.attr("rowspan", rowspan - 1);
+            }
+            $(this).remove();
+        }
+    });
+}
+
+/*
+ * remove section headings for sections that contain no rows
+ */
+MAJ.remove_empty_section = function(sectionselector, subheading) {
+    var section = $(sectionselector);
+    if (section.nextUntil(subheading).length==0) {
+        section.remove();
+    }
+}
+

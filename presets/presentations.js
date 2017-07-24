@@ -13,20 +13,10 @@ MAJ.onload_edit = function() {
     MAJ.position_img_tags();
     MAJ.setup_affiliation();
     MAJ.setup_other_presenters();
-}
-
-MAJ.remove_empty_rows = function(rows) {
-    $(rows).each(function(){
-        var text = $(this).find("td").last().text();
-        if (MAJ.trim(text)=="") {
-            var cell = $(this).prev().find(".c0").first();
-            var rowspan = cell.attr("rowspan");
-            if (rowspan && rowspan > 1) {
-                cell.attr("rowspan", rowspan - 1);
-            }
-            $(this).remove();
-        }
-    });
+    MAJ.remove_empty_rows("tr.schedule");
+    MAJ.remove_empty_rows("tr.peer_review");
+    MAJ.remove_empty_section("#id_schedule_subheading", "tr.subheading");
+    MAJ.remove_empty_section("#id_peer_review_subheading", "tr.subheading");
 }
 
 MAJ.remove_empty_other_presenters = function() {

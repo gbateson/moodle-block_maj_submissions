@@ -65,20 +65,6 @@ MAJ.add_help_link = function(en, ja, href, rows) {
     });
 }
 
-MAJ.remove_empty_rows = function(rows) {
-    $(rows).each(function(){
-        var text = $(this).find("td").last().text();
-        if (MAJ.trim(text)=="") {
-            var cell = $(this).prev().find(".c0").first();
-            var rowspan = cell.attr("rowspan");
-            if (rowspan && rowspan > 1) {
-                cell.attr("rowspan", rowspan - 1);
-            }
-            $(this).remove();
-        }
-    });
-}
-
 MAJ.remove_empty_presenter = function() {
     MAJ.remove_empty_rows("tr#id_presenter");
 }
