@@ -32,6 +32,7 @@ require_once('../../config.php');
 $d = optional_param('d', 0, PARAM_INT);
 $id = optional_param('id', 0, PARAM_INT);
 $preset = optional_param('preset', '', PARAM_ALPHANUM);
+$runonload = optional_param('runonload', false, PARAM_BOOL);
 
 if (($d || $id) && $preset) {
     if ($d) {
@@ -147,12 +148,14 @@ if (($d || $id) && $preset) {
         readfile($file);
     }
 
-    // initiate the onload procedures
-    // when the page has fully loaded
     echo "\n";
-    echo 'if (window.addEventListener) {'."\n";
-    echo '    window.addEventListener("load", MAJ.onload, false);'."\n";
-    echo '} else if (window.attachEvent) {'."\n";
-    echo '    window.attachEvent("onload", MAJ.onload);'."\n";
-    echo '}'."\n";
+    if ($runonload) {
+        echo 'if (window.addEventListener) {'."\n";
+        echo '    window.addEventListener("load", MAJ.onload, false);'."\n";
+        echo '} else if (window.attachEvent) {'."\n";
+        echo '    window.attachEvent("onload", MAJ.onload);'."\n";
+        echo '}'."\n";
+    } else {
+        echo 'MAJ.onload();'."\n";
+    }
 }
