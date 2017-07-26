@@ -26,6 +26,10 @@
 
 require_once('../../config.php');
 
+require_once($CFG->dirroot.'/blocks/moodleblock.class.php');
+require_once($CFG->dirroot.'/blocks/maj_submissions/block_maj_submissions.php');
+require_once($CFG->dirroot.'/blocks/maj_submissions/lib.php');
+
 $d = optional_param('d', 0, PARAM_INT);
 $id = optional_param('id', 0, PARAM_INT);
 $preset = optional_param('preset', '', PARAM_ALPHANUM);
@@ -57,13 +61,21 @@ if (($d || $id) && $preset) {
     header('Pragma: ');
     header('Content-type: text/css; charset=utf-8');
 
+    $css = '';
+
     $file = $CFG->dirroot.'/blocks/maj_submissions/presets.css';
     if (file_exists($file)) {
-        readfile($file);
+        $css .= trim(file_get_contents($file))."\n";
     }
 
-    $file = $CFG->dirroot.'/blocks/maj_submissions/presets/$preset.css';
+    $file = $CFG->dirroot."/blocks/maj_submissions/presets/$preset.css";
     if (file_exists($file)) {
-        readfile($file);
+        $css .= trim(file_get_contents($file))."\n";
     }
+
+    if ($pluginfiles = block_maj_submissions_pluginfile_baseurl($course)) {
+        $css = str_replace('[[pluginfiles]]', $pluginfiles, $css);
+    }
+
+    echo $css;
 }

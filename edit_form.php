@@ -327,6 +327,9 @@ class block_maj_submissions_edit_form extends block_edit_form {
      * @return void, but will update $mform
      */
     protected function add_field_filemanager($mform, $plugin, $name) {
+        global $CFG;
+        require_once($CFG->dirroot.'/blocks/maj_submissions/lib.php');
+
         $configname = 'config_'.$name;
         $groupname = 'group_'.$name;
 
@@ -339,10 +342,10 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $text = get_string($name.'link', $plugin);
         $elements[] = $mform->createElement('static', '', '', $text);
 
-        $link = '/'.$this->block->context->id."/$plugin/files/";
-        $link = new moodle_url('/pluginfile.php').$link;
-        $link = html_writer::tag('small', html_writer::tag('b', $link));
-        $elements[] = $mform->createElement('static', '', '', $link);
+        $url = block_maj_submissions_pluginfile_baseurl($this->get_course(),
+                                                        $this->block->context);
+        $url = html_writer::tag('small', html_writer::tag('b', $url));
+        $elements[] = $mform->createElement('static', '', '', $url);
 
         $label = get_string($name, $plugin);
         $join = html_writer::empty_tag('br');

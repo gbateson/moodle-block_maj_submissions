@@ -58,16 +58,16 @@ CSS for the View All/Single/Search pages
     border-radius: 0px;
 }
 #page-mod-data-view .badge {
-    background-image: url("%pluginfiles%/background-badge.jpg") !important;
+    background-image: url("[[pluginfiles]]/background-badge.jpg") !important;
 }
 #page-mod-data-view .receipt {
-    background-image: url("%pluginfiles%/background-receipt.jpg") !important;
+    background-image: url("[[pluginfiles]]/background-receipt.jpg") !important;
 }
 #page-mod-data-view .dinner_ticket {
-    background-image: url("%pluginfiles%/background-ticket.jpg") !important;
+    background-image: url("[[pluginfiles]]/background-ticket.jpg") !important;
 }
 #page-mod-data-view .participation_certificate {
-    background-image: url("%pluginfiles%/background-certificate.jpg") !important;
+    background-image: url("[[pluginfiles]]/background-certificate.jpg") !important;
 }
 
 #page-mod-data-view .badge TD,

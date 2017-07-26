@@ -129,3 +129,32 @@ function block_maj_submissions_global_db_replace($search, $replace) {
     }
     $instances->close();
 }
+
+/**
+ * Get the pluginfile URL for the maj_submissions_block in the given $course.
+ * @param  $course
+ * @return void
+ */
+function block_maj_submissions_pluginfile_baseurl($course, $blockcontext=null) {
+    global $CFG, $DB;
+
+    $blockname = 'maj_submissions';
+    $pluginname = "block_$blockname";
+
+    if ($blockcontext===null) {
+        if ($coursecontext = block_maj_submissions::context(CONTEXT_COURSE, $course->id)) {
+            $params = array('blockname' => $blockname,
+                            'parentcontextid' => $context->id);
+            if ($block = $DB->get_records('block_instances', $params)) {
+                $block = reset($block);
+                $blockcontext = block_maj_submissions::context(CONTEXT_BLOCK, $block->id);
+            }
+        }
+    }
+
+    $url = new moodle_url('/pluginfile.php');
+    if (empty($CFG->slasharguments)) {
+        $url .= '?file=';
+    }
+    return $url."/$blockcontext->id/$pluginname/files/";
+}
