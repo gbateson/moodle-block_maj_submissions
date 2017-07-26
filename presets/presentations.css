@@ -1,0 +1,87 @@
+/**********************************
+CSS for the Add/Edit pages
+**********************************/
+
+#page-mod-data-edit table.mod-data-default-template { width: 100%; max-width 720px; }
+
+#page-mod-data-edit tr.subheading th span.hide_copresenters,
+#page-mod-data-edit tr.subheading th span.show_copresenters {
+    color: #CC6666;
+    display: inline-block;
+    text-decoration: underline;
+    font-size: 12px;
+    padding-left: 12px;
+}
+
+#page-mod-data-edit tr.other_presenter.name td div input.basefieldinput { width: 102px; }
+#page-mod-data-edit tr.other_presenter.affiliation td div input.basefieldinput { width: 232px; }
+
+#page-mod-data-edit tr.presentation_file div.filemanager { max-width: 360px; }
+
+#page-mod-data-edit p.explanation { color: #ff9900; max-width: 560px; }
+#page-mod-data-edit div.margintopbottom { margin-top: 12px; margin-bottom: 12px; }
+
+/**********************************
+CSS for schedule
+(List View using absolute positions)
+**********************************/
+
+#page-mod-data-view div.schedule,
+#page-mod-data-view div.schedule div.times,
+#page-mod-data-view div.schedule div.rooms,
+#page-mod-data-view div.schedule div.sessions { position: relative; }
+
+#page-mod-data-view div.schedule div.times div.time
+#page-mod-data-view div.schedule div.rooms div.room
+#page-mod-data-view div.schedule div.sessions div.session { position: absolute; }
+
+#page-mod-data-view div.schedule div.times div.time { width: 60px; }
+#page-mod-data-view div.schedule div.rooms div.room { height: 40px; }
+
+#page-mod-data-view div.schedule div.time1 { top: 0px; }
+#page-mod-data-view div.schedule div.time2 { top: 40px; }
+#page-mod-data-view div.schedule div.time3 { top: 80px; }
+#page-mod-data-view div.schedule div.time4 { top: 120px; }
+#page-mod-data-view div.schedule div.time5 { top: 160px; }
+#page-mod-data-view div.schedule div.time6 { top: 200px; }
+
+#page-mod-data-view div.schedule div.room1 { left: 0px; }
+#page-mod-data-view div.schedule div.room2 { left: 40px; }
+#page-mod-data-view div.schedule div.room3 { left: 80px; }
+#page-mod-data-view div.schedule div.room4 { left: 120px; }
+#page-mod-data-view div.schedule div.room5 { left: 160px; }
+#page-mod-data-view div.schedule div.room6 { left: 200px; }
+
+#page-mod-data-view div.schedule div.duration1 { height: 40px; }
+#page-mod-data-view div.schedule div.duration2 { height: 80px; }
+#page-mod-data-view div.schedule div.duration3 { height: 120px; }
+#page-mod-data-view div.schedule div.duration4 { height: 160px; }
+
+#page-mod-data-view div.schedule div.audience1 { width: 40px; }
+#page-mod-data-view div.schedule div.audience2 { width: 100%; left : 0px; }
+
+#page-mod-data-view div.schedule div.typepresentation { background-color: #ffffcc; }
+#page-mod-data-view div.schedule div.typecasestudy { background-color: #999933; }
+#page-mod-data-view div.schedule div.typegeniusbar { background-color: #cc9966; }
+#page-mod-data-view div.schedule div.typelightningtalk { background-color: #6699ff; }
+#page-mod-data-view div.schedule div.typeworkshop { background-color: #ccccff; }
+
+/**********************************
+CSS for the View All/Single/Search pages
+**********************************/
+
+#page-mod-data-view input[type="checkbox"].recordcheckbox { margin: 0px; }
+
+#page-mod-data-view tr.peer_review div.peer_review_notes {
+    background-color: #fffcf6;
+    border-color: #ff8c00;
+    border-radius: 6px;
+    border-style: solid;
+    border-width: 1px;
+    box-shadow: 2px 2px 2px #E0E0E0;
+    font-size: large;
+    font-weight: bold;
+    margin-bottom: 6px;
+    margin-top: 6px;
+    padding: 6px 12px 0px;
+}

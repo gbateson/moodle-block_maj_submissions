@@ -24,9 +24,6 @@
  * @since      Moodle 2.0
  */
 
-// session not used here
-//define('NO_MOODLE_COOKIES', true);
-
 require_once('../../config.php');
 
 $d = optional_param('d', 0, PARAM_INT);
