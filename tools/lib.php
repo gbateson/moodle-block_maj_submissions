@@ -1133,8 +1133,7 @@ class block_maj_submissions_tool_setupdatabase extends block_maj_submissions_too
         // add intro sections
         $howtos = array('switchrole', 'begin', 'login', 'enrol', 'signup', 'add', 'edit' ,'delete');
         foreach ($howtos as $howto) {
-            $params = array('class' => "howto $howto",
-                            'style' => 'display: none;');
+            $params = array('class' => "howto $howto");
             $intro .= html_writer::start_tag('div', $params);
             $text = $this->instance->get_string("howto$howto", $this->plugin, $multilangparams);
             switch ($howto) {
@@ -1157,10 +1156,28 @@ class block_maj_submissions_tool_setupdatabase extends block_maj_submissions_too
                     $text .= html_writer::end_tag('ol');
                     break;
             }
-            $intro .= html_writer::tag('p', $text);
+            if ($text) {
+                $intro .= html_writer::tag('p', $text);
+            }
             $intro .= html_writer::end_tag('div');
         }
 
+        if ($intro) {
+            $js = array();
+            $js[] = '<script type="text/javascript">';
+            $js[] = '//<![CDATA[';
+            $js[] = '(function(){';
+            $js[] = '    var css = ".path-mod-data .howto { display: none; }";';
+            $js[] = '    var style = document.createElement("style");';
+            $js[] = '    style.setAttribute("type","text/css");';
+            $js[] = '    style.appendChild(document.createTextNode(css));';
+            $js[] = '    var head = document.getElementsByTagName("head");';
+            $js[] = '    head[0].appendChild(style);';
+            $js[] = '}());';
+            $js[] = '//]]>';
+            $js[] = '</script>';
+            $intro = implode("\n", $js)."\n".$intro;
+        }
         return $intro;
     }
 

@@ -1,5 +1,4 @@
 .path-mod-data .howto {
-    display:              none;
     max-width:           648px;
     text-align:        justify;
 }
@@ -7,6 +6,7 @@
     background-color:  #ffffee;
     border-radius:         4px;
     border:   1px solid orange;
+    display:              none;
     margin-bottom:        12px;
     max-width:           624px;
     padding: 6px 12px 0px 12px;
@@ -23,7 +23,7 @@ CSS for the ALL pages
 .path-mod-data legend { margin: 0px; border: 0px; }
 .path-mod-data th { vertical-align: top; }
 .path-mod-data th.c0 { width: 184px; }
-.path-mod-data th.c1 { padding-left: 6px; text-align: right; width: 96px; }
+ .path-mod-data th.c1 { padding-left: 6px; text-align: right; width: 96px; }
 .path-mod-data td.c1 { padding-left: 6px; text-align: left; }
 .path-mod-data tr.name td div,
 .path-mod-data tr.affiliation td div { display: inline-block; }
