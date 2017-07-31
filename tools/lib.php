@@ -1161,23 +1161,6 @@ class block_maj_submissions_tool_setupdatabase extends block_maj_submissions_too
             }
             $intro .= html_writer::end_tag('div');
         }
-
-        if ($intro) {
-            $js = array();
-            $js[] = '<script type="text/javascript">';
-            $js[] = '//<![CDATA[';
-            $js[] = '(function(){';
-            $js[] = '    var css = ".path-mod-data .howto { display: none; }";';
-            $js[] = '    var style = document.createElement("style");';
-            $js[] = '    style.setAttribute("type","text/css");';
-            $js[] = '    style.appendChild(document.createTextNode(css));';
-            $js[] = '    var head = document.getElementsByTagName("head");';
-            $js[] = '    head[0].appendChild(style);';
-            $js[] = '}());';
-            $js[] = '//]]>';
-            $js[] = '</script>';
-            $intro = implode("\n", $js)."\n".$intro;
-        }
         return $intro;
     }
 
