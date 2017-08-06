@@ -138,7 +138,7 @@ $string['howtoenrol'] = 'ユーザ名はお持ちですが、まだムードル�
 $string['howtologin'] = '既に本ウェッブサイトのユーザ名をお持ちの方は <a href="{$url}">ここをクリックし、</a> ログインしてから{$a->process}をお進めください。';
 $string['howtosignup'] = 'まだ本ウェッブサイトのユーザ名をお持ちではない方は 下記のリンクを使ってムードルコース登録の手順をこなしてから、 このページに戻り、{$a->process}をお進めください。';
 $string['howtosetupevents'] = 'このデータベースのエントリーは大会スケジュールに挿入できます。';
-$string['howtoswitchrole'] = '<b style="color: red;">注意：</b> 只今使用されているロールは<i>通常と違うロール</i>です。 下記に表示されているメッセージは実際にそのロールのユーさとしてログインされたら、表示されるものです。 只今のログイン状態に無関係の場合でも、サイトの通常動きを確認するため、メッセージが表示されます。ご了承ください。';
+$string['howtoswitchrole'] = '<b style="color: red;">注意：</b> 只今使用されているロールは<i>通常と違うロール</i>です。 下記に表示されているメッセージは実際にそのロールのユーザとしてログインされたら、表示されるものです。 只今のロ登録状態に無関係の場合でも、サイトの通常動きを確認するため、メッセージが表示されます。ご了承ください。';
 $string['importantdates'] = '重要日時一覧';
 $string['importcontent'] = 'Import content';
 $string['importsettings_help'] = 'This link takes you to a screen where you can import configuration settings from a MAJ submissions block configuration settings file.

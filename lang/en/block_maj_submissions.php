@@ -140,7 +140,7 @@ $string['howtoenrol'] = 'If you have a username but are not enrolled in this Moo
 $string['howtologin'] = 'If you already have a username on this website, <a href="{$url}">please click here</a> to login and then continue {$a->process}.';
 $string['howtosignup'] = 'If you do NOT already have a username for this Moodle website, please use the links below to complete the Moodle course enrolment formalities, and then return to this page to continue {$a->process}.';
 $string['howtosetupevents'] = 'This entries in this database can be added to the conference scehdule.';
-$string['howtoswitchrole'] = '<b style="color: red;">Note:</b> The role you are currently using is <i>a different role from your usual role</i>. The messages below are those that would appear if you were actually logged in as a user with that role. The messages are displayed for testing purposes, even though they may not strictly be relevant to your actual login status.';
+$string['howtoswitchrole'] = '<b style="color: red;">Note:</b> The role you are currently using is <i>a different role from your usual role</i>. The messages below are those that would appear if you were actually logged in as a user with this role. The messages are displayed for testing purposes, and they may not strictly be relevant to your actual registration status.';
 $string['importantdates'] = 'Important dates';
 $string['importcontent'] = 'Import content';
 $string['importsettings_help'] = 'This link takes you to a screen where you can import configuration settings from a MAJ submissions block configuration settings file.

@@ -1,12 +1,15 @@
 .path-mod-data .howto {
-    display:              none;
     max-width:           648px;
     text-align:        justify;
 }
 .path-mod-data .howto.switchrole {
+    display:              none;
+}
+.path-mod-data.userswitchedrole .howto.switchrole {
     background-color:  #ffffee;
     border-radius:         4px;
     border:   1px solid orange;
+    display:             block;
     margin-bottom:        12px;
     max-width:           624px;
     padding: 6px 12px 0px 12px;

@@ -262,7 +262,6 @@ MAJ.show_explanations = function() {
     if (MAJ.is_switchrole) {
         // insert switched role into <i>...</i> of explanation
         $("div.howto.switchrole i").text(MAJ.is_switchrole);
-        $("div.howto.switchrole").css("display", "block");
     }
 
     // detect guest user and user who is NOT logged in

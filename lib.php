@@ -144,7 +144,7 @@ function block_maj_submissions_pluginfile_baseurl($course, $blockcontext=null) {
     if ($blockcontext===null) {
         if ($coursecontext = block_maj_submissions::context(CONTEXT_COURSE, $course->id)) {
             $params = array('blockname' => $blockname,
-                            'parentcontextid' => $context->id);
+                            'parentcontextid' => $coursecontext->id);
             if ($block = $DB->get_records('block_instances', $params)) {
                 $block = reset($block);
                 $blockcontext = block_maj_submissions::context(CONTEXT_BLOCK, $block->id);
