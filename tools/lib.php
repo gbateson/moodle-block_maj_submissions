@@ -260,10 +260,7 @@ abstract class block_maj_submissions_tool_base extends moodleform {
 
         $message = '';
 
-        if ($action=='confirmdelete') {
-        }
-
-        if ($action=='delete') {
+        if ($action=='something') {
         }
 
         return $message;
@@ -1590,7 +1587,7 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
      * @todo Finish documenting this function
      */
     public function data_postprocessing() {
-        global $CFG, $DB, $OUTPUT, $PAGE;
+        global $CFG, $DB;
         require_once($CFG->dirroot.'/lib/xmlize.php');
 
         // get/create the $cm record and associated $section
@@ -1629,6 +1626,111 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
         return false; // shouldn't happen !!
     }
 }
+
+/**
+ * block_maj_submissions_tool_workshop2data
+ *
+ * @copyright 2017 Gordon Bateson
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since     Moodle 2.0
+ */
+class block_maj_submissions_tool_workshop2data extends block_maj_submissions_tool_base {
+
+    protected $type = '';
+    protected $modulename = 'data';
+    protected $defaultvalues = array(
+        'visible'         => 1,  // course_modules.visible
+        'intro'           => '', // see set_defaultintro()
+        'introformat'     => FORMAT_HTML, // =1
+        'comments'        => 0,
+        'timeavailablefrom' => 0,
+        'timeavailableto' => 0,
+        'requiredentries' => 10,
+        'requiredentriestoview' => 10,
+        'maxentries'      => 1,
+        'approval'        => 1,
+        'manageapproved'  => 0,
+        'assessed'        => 0
+    );
+    protected $timefields = array(
+        'timestart' => array('timeavailablefrom'),
+        'timefinish' => array('timeavailableto')
+    );
+
+    /**
+     * definition
+     */
+    public function definition() {
+        $mform = $this->_form;
+
+        // extract the module context and course section, if possible
+        if ($this->cmid) {
+            $context = block_maj_submissions::context(CONTEXT_MODULE, $this->cmid);
+            $sectionnum = get_fast_modinfo($this->course)->get_cm($this->cmid)->sectionnum;
+        } else {
+            $context = $this->course->context;
+            $sectionnum = 0;
+        }
+
+        $name = 'sourceworkshop';
+        $options = self::get_cmids($mform, $this->course, $this->plugin, 'workshop');
+        $this->add_field($mform, $this->plugin, $name, 'selectgroups', PARAM_INT, $options, 0);
+
+        $name = 'targetdatabase';
+        $this->add_field_cm($mform, $this->course, $this->plugin, $name, $this->cmid);
+        $this->add_field_section($mform, $this->course, $this->plugin, 'coursesection', $name, $sectionnum);
+
+        $this->add_action_buttons();
+    }
+
+    /**
+     * data_postprocessing
+     *
+     * @uses $DB
+     * @param object $data
+     * @return not sure ...
+     * @todo Finish documenting this function
+     */
+    public function data_postprocessing() {
+        global $DB;
+
+        // get/create the $cm record and associated $section
+        $cm = false;
+        if ($data = $this->get_data()) {
+
+            $databasenum  = $data->targetdatabasenum;
+            $databasename = $data->targetdatabasename;
+            $sectionnum   = $data->coursesectionnum;
+            $sectionname  = $data->coursesectionname;
+
+            if ($databasenum) {
+                if ($databasenum==self::CREATE_NEW) {
+                    if ($sectionnum==self::CREATE_NEW) {
+                        $section = self::get_section($this->course, $sectionname);
+                    } else {
+                        $section = get_fast_modinfo($this->course)->get_section_info($sectionnum);
+                    }
+                    $cm = self::get_coursemodule($this->course, $section, $this->modulename, $databasename, $this->defaultvalues);
+                    self::set_cm_permissions($cm, $this->permissions);
+                    self::set_cm_availability($cm, $this->availability);
+                } else {
+                    $cm = get_fast_modinfo($this->course)->get_cm($databasenum);
+                }
+            }
+        }
+
+        if ($cm) {
+
+            // get database
+            $database = $DB->get_record('data', array('id' => $cm->instance), '*', MUST_EXIST);
+            $database->cmidnumber = (empty($cm->idnumber) ? '' : $cm->idnumber);
+            $database->instance   = $cm->instance;
+        }
+
+        return false; // shouldn't happen !!
+    }
+}
+
 
 /**
  * block_maj_submissions_tool_setupvetting

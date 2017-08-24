@@ -251,7 +251,11 @@ $string['shortentimes_help'] = 'If this setting is enabled, then times will not 
 $string['shortentimes'] = 'Shorten time stamps';
 $string['sourcedatabase_help'] = 'Select the database which contains the submissions to be vetted.';
 $string['sourcedatabase'] = 'Source database';
+$string['sourceworkshop_help'] = 'Select the workshop activity which contains the submissions that have been vetted.';
+$string['sourceworkshop'] = 'Source workshop';
 $string['state'] = 'State';
+$string['targetdatabase_help'] = 'Select the database to which the vetted submissions are to be copied.';
+$string['targetdatabase'] = 'Target database';
 $string['targetworkshop_help'] = 'Select the workshop to which the submissions matching the above conditions are to be copied for vetting.';
 $string['targetworkshop'] = 'Target workshop';
 $string['timefinish'] = '終了';
@@ -288,6 +292,11 @@ $string['toolsetupvetting'] = 'Setup vetting responsibilties';
 $string['toolsetupworkshops_desc'] = 'Setup a database for workshops';
 $string['toolsetupworkshops'] = 'Collect workshop proposals';
 $string['toolworkshop2data_desc'] = 'Convert Workshops -> Database';
+$string['toolworkshop2data_help'] = 'On this page you can copy reviewers\' feedback and scores from a workshop activity to a database activity. Usually, the target database will be the database in which the submissions were originally collected, but you can also choose to create a new database.
+
+**To use an existing database** in this course, select it from the "Target database" menu below.
+
+**To create a new database**, give a name for the new database activity and specify the section in which it should be created. This can be an existing section, or a new section. If you specify a new section you will need to give a name for the new section.';
 $string['toolworkshop2data'] = 'Publish vetting results';
 $string['unknownlanguage'] = 'Unknown language';
 $string['uploadpreset'] = 'Upload preset zip file';
@@ -300,3 +309,4 @@ $string['workshopsprocess'] = 'ワークショップ提案の提出手続き';
 $string['workshopsrecord'] = 'ワークショップ提案';
 $string['workshopstime_help'] = 'ワークショップの開始と終了日時';
 $string['workshopstime'] = 'ワークショップ';
+
