@@ -133,7 +133,7 @@ $string['filterconditions'] = 'Filter condition [{no}]';
 $string['fixdates_help'] = 'These settings control whether or not the leading zero on months, days and hours less than 10 are removed.';
 $string['fixdates'] = 'Remove leading zeros';
 $string['howtoadd'] = 'To add {$a->record}, please click the "Add entry" link below, and fill out the form on the next page.';
-$string['howtobegin'] = 'In order to add, edit or delete {$a->record} for this conference, you need log in to this website and enrol in this Moodle course.';
+$string['howtobegin'] = 'In order to add, edit or delete {$a->record} for this conference, you need to log in to this website and enrol in this Moodle course.';
 $string['howtodelete'] = 'To delete {$a->record}, please click the "View single" link below, and then click the delete icon on the next page.';
 $string['howtoedit'] = 'To edit {$a->record}, please click the "View single" link below, and then click the edit icon on the next page.';
 $string['howtoenrol'] = 'If you have a username but are not enrolled in this Moodle course, <a href="{$url}">please click here</a> to enrol and then revisit this page to continue {$a->process}.';

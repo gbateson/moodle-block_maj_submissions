@@ -112,7 +112,7 @@ div.block_maj_submissions ul.quicklinks a {
     max-width:          210px;
     margin:   1px 0px 2px 0px;
     padding:          4px 8px;
-    width:               100%;
+    width:  calc(100% - 16px);
 }
 div.block_maj_submissions ul.quicklinks a:hover {
     background-color: #07889b;
