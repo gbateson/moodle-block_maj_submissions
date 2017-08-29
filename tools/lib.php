@@ -44,11 +44,33 @@ abstract class block_maj_submissions_tool_base extends moodleform {
 
     const CREATE_NEW = -1;
     const TEXT_FIELD_SIZE = 20;
+    const TEMPLATE_COUNT = 8;
 
-    protected $cmid = 0;
+    /** values passed from tool creating this form */
     protected $plugin = '';
     protected $course = null;
     protected $instance = null;
+
+    /**
+     * The "course_module" id of the course activity, if any, to which this form relates
+     */
+    protected $cmid = 0;
+
+    /**
+     * The course activity type, if any, to which this form relates
+     *
+     * We expect one of the following values:
+     *  - register(delegates|presenters|events)
+     *  - collect(presentations|sponsoreds|workshops)
+     *
+     * For a complete list, see the "get_timetypes()" method
+     * in "blocks/maj_subimssions/block_maj_subimssions.php"
+     */
+    protected $type = '';
+
+    /**
+     * settings used by forms that create a new activity
+     */
     protected $modulename = '';
     protected $defaultvalues = array();
     protected $timefields = array(
@@ -94,7 +116,9 @@ abstract class block_maj_submissions_tool_base extends moodleform {
         // multilang name strings for new activities
         $this->instance->set_multilang(true);
 
+        // setup values that may required to create a new activity
         if ($this->type) {
+
             // set the "course_module" id, if it is defined and still exists
             $cmid = $this->type.'cmid';
             if (property_exists($this->instance->config, $cmid)) {
@@ -104,7 +128,7 @@ abstract class block_maj_submissions_tool_base extends moodleform {
                 }
             }
 
-            // set start time, if any, in $newdatarecord
+            // set start times, if any, in $defaultvalues
             $time = $this->type.'timestart';
             if (property_exists($this->instance->config, $time)) {
                 $time = $this->instance->config->$time;
@@ -113,7 +137,7 @@ abstract class block_maj_submissions_tool_base extends moodleform {
                 }
             }
 
-            // set finish time, if any, in $newdatarecord
+            // set finish times, if any, in $defaultvalues
             $time = $this->type.'timefinish';
             if (property_exists($this->instance->config, $time)) {
                 $time = $this->instance->config->$time;
@@ -121,6 +145,46 @@ abstract class block_maj_submissions_tool_base extends moodleform {
                     $this->defaultvalues[$timefield] = $time;
                 }
             }
+        }
+    }
+
+    /**
+     * add_field_template
+     *
+     * create a list of activities of the required type
+     * that can be used as a template for creating a new activity
+     *
+     * @param object  $mform
+     * @param string  $plugin
+     * @param string  $name
+     * @param string  $modulenames
+     * @param string  $cmidfield
+     * @return void, but will update $mform
+     * @todo Finish documenting this function
+     */
+    protected function add_field_template($mform, $plugin, $name, $modulenames, $cmidfield) {
+        global $DB;
+        $options = array();
+        $select = 'SELECT DISTINCT parentcontextid FROM {block_instances} WHERE blockname = ?';
+        $select = "SELECT DISTINCT instanceid FROM {context} ctx WHERE ctx.id IN ($select) AND ctx.contextlevel = ?";
+        $select = "id IN ($select)";
+        $params = array($this->instance->instance->blockname, CONTEXT_COURSE);
+        if ($courses = $DB->get_records_select('course', $select, $params, 'startdate DESC, id DESC')) {
+            foreach ($courses as $course) {
+                if ($cmids = self::get_cmids($mform, $course, $plugin, $modulenames, '', 0, true)) {
+                    $coursename = $course->shortname;
+                    $coursename = block_maj_submissions::filter_text($coursename);
+                    $coursename = block_maj_submissions::trim_text($coursename);
+                    $options[$coursename] = $cmids;
+                    if (count($options) >= self::TEMPLATE_COUNT) {
+                        break;
+                    }
+                }
+            }
+        }
+        $this->add_field($mform, $plugin, $name, 'selectgroups', PARAM_INT, $options);
+        if ($cmidfield) {
+            $mform->disabledIf($name, $cmidfield.'num', 'neq', self::CREATE_NEW);
         }
     }
 
@@ -235,6 +299,24 @@ abstract class block_maj_submissions_tool_base extends moodleform {
     }
 
     /**
+     * get_field_options
+     *
+     * @uses $DB
+     * @return array of database fieldnames
+     */
+    protected function get_group_options() {
+        global $DB;
+        $groups = groups_list_to_menu(groups_get_all_groups($this->course->id));
+        $sql = 'SELECT COUNT(*) FROM {groups_members} WHERE groupid = ?';
+        foreach ($groups as $id => $name) {
+            if ($count = $DB->get_field_sql($sql, array('groupid' => $id))) {
+                $a = (object)array('name' => $name, 'count' => $count);
+                $groups[$id] = get_string('groupnamecount', $this->plugin, $a);
+            }
+        }
+        return $groups;
+    }
+    /**
      * process_action
      *
      * @uses $DB
@@ -244,26 +326,7 @@ abstract class block_maj_submissions_tool_base extends moodleform {
      * @todo Finish documenting this function
      */
     public function process_action() {
-        global $DB, $PAGE, $OUTPUT;
-
-        if (! $action = optional_param('action', '', PARAM_ALPHANUM)) {
-            return ''; // no action specified
-        }
-
-        if (! optional_param('sesskey', false, PARAM_BOOL)) {
-            return ''; // no sesskey - unusual !!
-        }
-
-        if (! confirm_sesskey()) {
-            return ''; // invalid sesskey - unusual !!
-        }
-
-        $message = '';
-
-        if ($action=='something') {
-        }
-
-        return $message;
+        return '';
     }
 
     /**
@@ -283,6 +346,96 @@ abstract class block_maj_submissions_tool_base extends moodleform {
      */
     protected function get_defaultintro() {
         return '';
+    }
+
+    /**
+     * peer_review_link_fieldid
+     *
+     * @param string  $plugin
+     * @param integer $dataid
+     * @param string  $name of the field (optional, default="peer_review_link")
+     * @return integer an id from "data_fields" table
+     */
+    static public function peer_review_link_fieldid($plugin, $dataid, $name='peer_review_link') {
+        global $DB;
+
+        $table = 'data_fields';
+        $params = array('dataid' => $dataid,
+                        'name' => $name);
+        if ($field = $DB->get_record($table, $params)) {
+            return $field->id;
+        }
+
+        $field = (object)array(
+            'dataid'      => $dataid,
+            'type'        => 'admin',
+            'name'        => $name,
+            'description' => get_string($name, $plugin),
+            'param9'      => '0',
+            'param10'     => 'text'
+        );
+        return $DB->insert_record($table, $field);
+    }
+
+    /**
+     * plain_text
+     *
+     * @param string $text string possibly containing HTML and/or unicode chars
+     * @return single-line, plain-text version of $text
+     */
+    static public function plain_text($text) {
+        $search = '/(?: |\t|\r|\n|\x{00A0}|&nbsp;|(?:<[^>]*>))+/us';
+        return preg_replace($search, ' ', $text);
+    }
+
+    /**
+     * Return a regexp sub-string to match a sequence of low ascii chars.
+     */
+    static public function low_ascii_substring() {
+        // 0000 - 001F Control characters e.g. tab
+        // 0020 - 007F ASCII basic e.g. abc
+        // 0080 - 009F Control characters
+        // 00A0 - 00FF ASCII extended (1) e.g. àáâãäå
+        // 0100 - 017F ASCII extended (2) e.g. āăą
+        return '\\x{0000}-\\x{007F}';
+    }
+
+    /**
+     * is_low_ascii_language
+     *
+     * @param string $lang (optional, defaults to name current language)
+     * @return boolean TRUE if $lang appears to be ascii language e.g. English; otherwise, FALSE
+     */
+    static public function is_low_ascii_language($lang='') {
+        if ($lang=='') {
+            $lang = get_string('thislanguage', 'langconfig');
+        }
+        $ascii = self::low_ascii_substring();
+        return preg_match('/^['.$ascii.']+$/u', $lang);
+    }
+
+    /**
+     * Return a regexp string to match string made up of
+     * non-ascii chars at the start and ascii chars at the end.
+     */
+    static public function bilingual_string() {
+        $ascii = self::low_ascii_substring();
+        return '/^([^'.$ascii.']+) *(['.$ascii.']+?)$/u';
+    }
+
+    /**
+     * Return a regexp string to match string made up of
+     * non-ascii chars at the start and ascii chars at the end.
+     */
+    static public function convert_to_multilang($text, $config) {
+        $langs = block_maj_submissions::get_languages($config->displaylangs);
+        if (count($langs) > 1) {
+            $search = self::bilingual_string();
+            $replace = '<span class="multilang" lang="'.$langs[0].'">$2</span>'.
+                       '<span class="multilang" lang="'.$langs[1].'">$1</span>';
+            $text = preg_replace($search, $replace, $text);
+        }
+        return $text;
     }
 
     /**
@@ -600,16 +753,19 @@ abstract class block_maj_submissions_tool_base extends moodleform {
      * @param string  $course
      * @param string  $plugin
      * @param string  $modnames
+     * @param string  $type (optional, default="")
      * @param integer $sectionnum (optional, default=0)
+     * @param boolean $simplelist (optional, default=false)
      * @return array($cmid => $name) of activities from the specified $sectionnum
      *                               or from the whole course (if $sectionnum==0)
      */
-    static public function get_cmids($mform, $course, $plugin, $modnames, $type='', $sectionnum=0) {
+    static public function get_cmids($mform, $course, $plugin, $modnames, $type='', $sectionnum=0, $simplelist=false) {
+        global $DB;
         $options = array();
 
         $modnames = explode(',', $modnames);
         $modnames = array_filter($modnames);
-        $count = count($modnames);
+        $modcount = count($modnames);
 
         $modinfo = get_fast_modinfo($course);
         $sections = $modinfo->get_section_info_all();
@@ -623,19 +779,40 @@ abstract class block_maj_submissions_tool_base extends moodleform {
                 foreach ($cmids as $cmid) {
                     if (array_key_exists($cmid, $modinfo->cms)) {
                         $cm = $modinfo->get_cm($cmid);
-                        if ($count==0 || in_array($cm->modname, $modnames)) {
-                            if ($sectionname=='') {
+                        if ($modcount==0 || in_array($cm->modname, $modnames)) {
+                            if ($sectionname=='' && $simplelist==false) {
                                 $sectionname = self::get_sectionname($section, 0);
                                 $options[$sectionname] = array();
                             }
                             $name = $cm->name;
                             $name = block_maj_submissions::filter_text($name);
                             $name = block_maj_submissions::trim_text($name);
-                            $options[$sectionname][$cmid] = $name;
+                            if ($cm->modname=='data') {
+                                $params = array('dataid' => $cm->instance);
+                                if ($count = $DB->get_field('data_records', 'COUNT(*)', $params)) {
+                                    $a = (object)array('name' => $name, 'count' => $count);
+                                    $name = get_string('databasenamecount', $plugin, $a);
+                                }
+                            }
+                            if ($cm->modname=='workshop') {
+                                $params = array('workshopid' => $cm->instance);
+                                if ($count = $DB->get_field('workshop_submissions', 'COUNT(*)', $params)) {
+                                    $a = (object)array('name' => $name, 'count' => $count);
+                                    $name = get_string('workshopnamecount', $plugin, $a);
+                                }
+                            }
+                            if ($simplelist) {
+                                $options[$cmid] = $name;
+                            } else {
+                                $options[$sectionname][$cmid] = $name;
+                            }
                         }
                     }
                 }
             }
+        }
+        if ($simplelist) {
+            return $options;
         }
         return self::format_selectgroups_options($plugin, $options, $type);
     }
@@ -952,14 +1129,14 @@ class block_maj_submissions_tool_setupdatabase extends block_maj_submissions_too
     }
 
     /**
-     * data_postprocessing
+     * form_postprocessing
      *
      * @uses $DB
      * @param object $data
      * @return not sure ...
      * @todo Finish documenting this function
      */
-    public function data_postprocessing() {
+    public function form_postprocessing() {
         global $CFG, $DB, $OUTPUT, $PAGE;
         require_once($CFG->dirroot.'/lib/xmlize.php');
 
@@ -1460,7 +1637,16 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
         'submissionstart' => 0,
         'submissionend'   => 0,
         'assessmentstart' => 0,
-        'assessmentend'   => 0
+        'assessmentend'   => 0,
+        'phase'           => 10, // 10=setup, 20=submission, 30=assessment, 40=evaluation, 50=closed
+        'grade'           => 100.0,
+        'gradinggrade'    => 0.0,
+        'strategy'        => 'rubric',
+        'evaluation'      => 'best',
+        'latesubmissions' => 1,
+        'maxbytes'        => 0,
+        'usepeerassessment' => 1,
+        'overallfeedbackmaxbytes' => 0
     );
     protected $timefields = array(
         'timestart' => array('submissionstart', 'assessmentstart'),
@@ -1524,12 +1710,17 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
 
         $name = 'targetworkshop';
         $this->add_field_cm($mform, $this->course, $this->plugin, $name, $this->cmid);
+        $this->add_field_template($mform, $this->plugin, 'templateactivity', $this->modulename, $name);
         $this->add_field_section($mform, $this->course, $this->plugin, 'coursesection', $name, $sectionnum);
 
         $name = 'resetworkshop';
         $this->add_field($mform, $this->plugin, $name, 'selectyesno', PARAM_INT);
         $mform->disabledIf($name, 'targetworkshopnum', 'eq', 0);
         $mform->disabledIf($name, 'targetworkshopnum', 'eq', self::CREATE_NEW);
+
+        $name = 'anonymoususers';
+        $options = $this->get_group_options();
+        $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options);
 
         $this->add_action_buttons();
     }
@@ -1544,7 +1735,24 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
         global $DB;
         if ($cmid = optional_param('sourcedatabase', null, PARAM_INT)) {
             $dataid = get_fast_modinfo($this->course)->get_cm($cmid)->instance;
-            $options = $DB->get_records_menu('data_fields', array('dataid' => $dataid), null, 'id,name');
+            $select = 'dataid = ? AND type NOT IN (?, ?, ?, ?, ?, ?)';
+            $params = array($dataid, 'action', 'admin', 'constant', 'template', 'report', 'file');
+            if ($options = $DB->get_records_select('data_fields', $select, $params, null, "id,name,description")) {
+                $search = self::bilingual_string();
+                if (self::is_low_ascii_language()) {
+                    $replace = '$2'; // low-ascii language e.g. English
+                } else {
+                    $replace = '$1'; // high-ascii/multibyte language
+                }
+                foreach ($options as $id => $option) {
+                    if (preg_match('/_\d+(_[a-z]{2})?$/', $option->name)) {
+                        unset($options[$id]);
+                    } else {
+                        $option->description = preg_replace($search, $replace, $option->description);
+                        $options[$id] = $option->description.' ['.$option->name.']';
+                    }
+                }
+            }
         } else {
             $options = false;
         }
@@ -1579,23 +1787,30 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
     }
 
     /**
-     * data_postprocessing
+     * form_postprocessing
      *
      * @uses $DB
      * @param object $data
      * @return not sure ...
      * @todo Finish documenting this function
      */
-    public function data_postprocessing() {
+    public function form_postprocessing() {
         global $CFG, $DB;
-        require_once($CFG->dirroot.'/lib/xmlize.php');
+
+        $cm = false;
+        $time = time();
+        $msg = array();
+        $template = null;
+        $config = $this->instance->config;
 
         // get/create the $cm record and associated $section
-        $cm = false;
         if ($data = $this->get_data()) {
+
+            $databasenum = $data->sourcedatabase;
 
             $workshopnum  = $data->targetworkshopnum;
             $workshopname = $data->targetworkshopname;
+
             $sectionnum   = $data->coursesectionnum;
             $sectionname  = $data->coursesectionname;
 
@@ -1603,12 +1818,38 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
                 if ($workshopnum==self::CREATE_NEW) {
                     if ($sectionnum==self::CREATE_NEW) {
                         $section = self::get_section($this->course, $sectionname);
+                        $msg[] = get_string('newsectioncreated', $this->plugin, $section->name);
                     } else {
                         $section = get_fast_modinfo($this->course)->get_section_info($sectionnum);
                     }
-                    $cm = self::get_coursemodule($this->course, $section, $this->modulename, $workshopname, $this->defaultvalues);
+                    if ($cmid = $data->templateactivity) {
+                        require_once($CFG->dirroot.'/mod/workshop/locallib.php');
+                        $cm = $DB->get_record('course_modules', array('id' => $cmid));
+                        $instance = $DB->get_record($this->modulename, array('id' => $cm->instance));
+                        $course = $DB->get_record('course', array('id' => $instance->course));
+                        $template = new workshop($instance, $cm, $course);
+                    }
+                    $defaultvalues = $this->get_defaultvalues();
+                    if ($template) {
+                        foreach ($template as $name => $value) {
+                            if ($name=='id' || $name=='name') {
+                                continue; // skip these fields
+                            }
+                            if (is_scalar($value)) {
+                                $defaultvalues[$name] = $value;
+                            }
+                        }
+                    }
+                    foreach ($this->timefields['timestart'] as $name) {
+                        $defaultvalues[$name] = $time;
+                    }
+                    foreach ($this->timefields['timefinish'] as $name) {
+                        $defaultvalues[$name] = 0;
+                    }
+                    $cm = self::get_coursemodule($this->course, $section, $this->modulename, $workshopname, $defaultvalues);
                     self::set_cm_permissions($cm, $this->permissions);
                     self::set_cm_availability($cm, $this->availability);
+                    $msg[] = get_string('newactivitycreated', $this->plugin, $workshopname);
                 } else {
                     $cm = get_fast_modinfo($this->course)->get_cm($workshopnum);
                 }
@@ -1617,13 +1858,378 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
 
         if ($cm) {
 
-            // get workshop
-            $workshop = $DB->get_record('workshop', array('id' => $cm->instance), '*', MUST_EXIST);
-            $workshop->cmidnumber = (empty($cm->idnumber) ? '' : $cm->idnumber);
-            $workshop->instance   = $cm->instance;
+            // cache the database id
+            $dataid = get_fast_modinfo($this->course)->get_cm($databasenum)->instance;
+
+            // initialize counters
+            $counttotal = $DB->get_field('data_records', 'COUNT(*)', array('dataid' => $dataid));
+            $countselected = 0;
+            $counttransferred = 0;
+
+            // get workshop object
+            $workshop = $DB->get_record('workshop', array('id' => $cm->instance));
+            $workshop = new workshop($workshop, $cm, $this->course);
+
+            // transfer grading strategy from $template to $workshop
+            if ($template) {
+                $strategy = $template->grading_strategy_instance();
+                $formdata = $this->get_strategy_formdata($strategy);
+                $formdata->workshopid = $workshop->id;
+                $strategy = $workshop->grading_strategy_instance();
+                $strategy->save_edit_strategy_form($formdata);
+            }
+
+            $workshop->switch_phase(workshop::PHASE_ASSESSMENT);
+
+            // get ids of anonymous users
+            $params = array('groupid' => $data->anonymoususers);
+            $anonymoususers = $DB->get_records_menu('groups_members', $params, null, 'id,userid');
+
+            // basic SQL to fetch records from database activity
+            $select = array('dr.id AS recordid, dr.dataid');
+            $from   = array('{data_records} dr');
+            $where  = array('dr.dataid = ?');
+            $params = array($dataid);
+
+            // add SQL to fetch only required records
+            $this->add_filter_sql($data, $select, $from, $where, $params);
+
+            // add SQL to fetch presentation content
+            $fields = array('title' => '',
+                            'type' => '',
+                            'language' => '',
+                            'keywords' => '',
+                            'abstract' => '');
+            $this->add_content_sql($data, $select, $from, $where, $params, $fields, $dataid);
+
+            $select = implode(', ', $select);
+            $from   = implode(' LEFT JOIN ', $from);
+            $where  = implode(' AND ', $where);
+
+            if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
+
+                $peer_review_link_fieldid = self::peer_review_link_fieldid($this->plugin, $dataid);
+                $overwrite_peer_review_links = true;
+
+                foreach ($records as $record) {
+
+                    // sanitize submission title
+                    $name = 'title';
+                    if (empty($record->$name)) {
+                        $record->$name = get_string('notitle', $this->plugin);
+                    } else {
+                        $record->$name = self::plain_text($record->$name);
+                    }
+
+                    // sanitize submission abstract
+                    $name = 'abstract';
+                    if (empty($record->$name)) {
+                        $record->$name = get_string('noabstract', $this->plugin);
+                    } else {
+                        $record->$name = self::plain_text($record->$name);
+                    }
+
+                    // create content for this submission
+                    $content = '';
+                    foreach ($fields as $name => $field) {
+                        if (isset($record->$name)) {
+                            if ($name=='title') {
+                                // skip this field
+                            } else if ($name=='abstract') {
+                                $content .= html_writer::tag('p', $record->$name);
+                            } else {
+                                $fieldname = self::convert_to_multilang($field, $config);
+                                $fieldname = html_writer::tag('b', $fieldname.': ');
+                                $fieldvalue = self::plain_text($record->$name);
+                                $fieldvalue = self::convert_to_multilang($fieldvalue, $config);
+                                $content .= html_writer::tag('p', $fieldname.$fieldvalue);
+                            }
+                        }
+                    }
+
+                    // create new submission record
+                    $submission = (object)array(
+                        'workshopid' => $cm->instance,
+                        'authorid' => array_shift($anonymoususers),
+                        'timecreated' => $time,
+                        'timemodified' => $time,
+                        'title' => $record->title,
+                        'content' => $content,
+                        'contentformat' => 0,
+                        'contenttrust' => 0
+                    );
+
+                    // add submission to workshop
+                    if ($submission->id = $DB->insert_record('workshop_submissions', $submission)) {
+
+                        // add reference to this submission from the database record
+                        $params = array('cmid' => $cm->id, 'id' => $submission->id);
+                        $link = new moodle_url('/mod/workshop/submission.php', $params);
+
+                        $params = array('fieldid'  => $peer_review_link_fieldid,
+                                        'recordid' => $record->recordid);
+                        if ($content = $DB->get_record('data_content', $params)) {
+                            if (empty($content->content) || $overwrite_peer_review_links) {
+                                $content->content = "$link";
+                                $DB->update_record('data_content', $content);
+                            }
+                        } else {
+                            $content = (object)array(
+                                'fieldid'  => $peer_review_link_fieldid,
+                                'recordid' => $record->recordid,
+                                'content'  => "$link"
+                            );
+                            $content->id = $DB->insert_record('data_content', $content);
+                        }
+                        $counttransferred++;
+                    }
+                    $countselected++;
+                }
+                $a = (object)array('total' => $counttotal,
+                                   'selected' => $countselected,
+                                   'transferred' => $counttransferred);
+                $msg[] = get_string('submissionstranferred', $this->plugin, $a);
+            }
         }
 
-        return false; // shouldn't happen !!
+        return implode(html_writer::empty_tag('br'), $msg);
+    }
+
+    /**
+     * add_filter_sql
+     *
+     * @param object $data   (passed by reference)
+     * @param string $select (passed by reference)
+     * @param string $from   (passed by reference)
+     * @param string $where  (passed by reference)
+     * @param array  $params (passed by reference)
+     * @return void, but may modify $data, $select, $from $where, and $params
+     */
+    protected function add_filter_sql(&$data, &$select, &$from, &$where, &$params) {
+        global $DB;
+
+        foreach ($data->filterconditionsfield as $i => $fieldid) {
+
+            // skip empty filters
+            if (empty($fieldid)) {
+                continue;
+            }
+
+            // define an SQL alias for the "data_content" table
+            $alias = 'dc'.$i;
+
+            array_push($select, "$alias.recordid AS recordid$i",
+                                "$alias.fieldid AS fieldid$i",
+                                "$alias.content AS content$i");
+
+            $from[] = '{data_content}'." $alias ON $alias.recordid = dr.id";
+
+            if (isset($data->filterconditionsvalue[$i])) {
+                $value = $data->filterconditionsvalue[$i];
+            } else {
+                $value = null;
+            }
+
+            switch ($data->filterconditionsoperator[$i]) {
+
+                case self::FILTER_CONTAINS:
+                    $where[] = "$alias.fieldid = ? AND ".$DB->sql_like("$alias.content", '?');
+                    array_push($params, $fieldid, '%'.$value.'%');
+                    break;
+
+                case self::FILTER_NOT_CONTAINS:
+                    $where[] = "$alias.fieldid = ? AND ".$DB->sql_like("$alias.content", '?', false, false, true);
+                    array_push($params, $fieldid, '%'.$value.'%');
+                    break;
+                    break;
+
+                case self::FILTER_EQUALS:
+                    $where[] = "$alias.fieldid = ? AND $alias.content = ?";
+                    array_push($params, $fieldid, $value);
+                    break;
+
+                case self::FILTER_NOT_EQUALS:
+                    $where[] = "$alias.fieldid = ? AND $alias.content != ?";
+                    array_push($params, $fieldid, $value);
+                    break;
+
+                case self::FILTER_STARTSWITH:
+                    $where[] = "$alias.fieldid = ? AND ".$DB->sql_like('$alias.content', '?');
+                    array_push($params, $fieldid, $value.'%');
+                    break;
+
+                case self::FILTER_NOT_STARTSWITH:
+                    $where[] = "$alias.fieldid = ? AND ".$DB->sql_like('$alias.content', '?', false, false, true);
+                    array_push($params, $fieldid, $value.'%');
+                    break;
+
+                case self::FILTER_ENDSWITH:
+                    $where[] = "$alias.fieldid = ? AND ".$DB->sql_like('$alias.content', '?');
+                    array_push($params, $fieldid, '%'.$value);
+                    break;
+
+                case self::FILTER_NOT_ENDSWITH:
+                    $where[] = "$alias.fieldid = ? AND ".$DB->sql_like('$alias.content', '?', false, false, true);
+                    array_push($params, $fieldid, '%'.$value);
+                    break;
+
+                case self::FILTER_EMPTY:
+                    $where[] = "($alias.fieldid IS NULL OR ($alias.fieldid = ? AND ($alias.content IS NULL OR $alias.content = ?)))";
+                    array_push($params, $fieldid, '');
+                    break;
+
+                case self::FILTER_NOT_EMPTY:
+                    $where[] = "$alias.fieldid = ? AND $alias.content IS NOT NULL AND $alias.content != ?";
+                    array_push($params, $fieldid, '');
+                    break;
+
+                case self::FILTER_IN:
+                    $value = explode(',', $value);
+                    $value = array_map('trim', $value);
+                    if (count($value)) {
+                        $value = $DB->get_in_or_equal($value);
+                        $params[] = $fieldid;
+                        $params = array_merge($params, $value[1]);
+                        $where[] = "$alias.fieldid = ? AND content ".$value[0];
+                    }
+                    break;
+
+                case self::FILTER_NOT_IN:
+                    $value = explode(',', $value);
+                    $value = array_map('trim', $value);
+                    if (count($value)) {
+                        $value = $DB->get_in_or_equal($value, SQL_PARAMS_QM, 'param', false);
+                        $params[] = $fieldid;
+                        $params = array_merge($params, $value[1]);
+                        $where[] = "$alias.fieldid = ? AND content ".$value[0];
+                    }
+                    break;
+            }
+        }
+    }
+
+    /**
+     * add_filter_sql
+     * 
+     * generate SQL to fetch presentation_(title|abstract|type|language|keywords)
+     *
+     * @param object  $data   (passed by reference)
+     * @param string  $select (passed by reference)
+     * @param string  $from   (passed by reference)
+     * @param string  $where  (passed by reference)
+     * @param array   $params (passed by reference)
+     * @param array   $fields (passed by reference)
+     * @param integer $dataid
+     * @return void, but may modify $data, $select, $from $where, and $params
+     */
+    protected function add_content_sql(&$data, &$select, &$from, &$where, &$params, &$fields, $dataid) {
+        global $DB;
+
+        $i = count($data->filterconditionsfield);
+        foreach (array_keys($fields) as $name) {
+
+            $fieldparams = array('dataid' => $dataid,
+                                 'name' => "presentation_$name");
+            if ($field = $DB->get_record('data_fields', $fieldparams)) {
+                $fields[$name] = $field->description;
+
+                $alias = 'dc'.$i;
+                array_push($select, "$alias.recordid AS recordid$i",
+                                    "$alias.fieldid AS fieldid$i",
+                                    "$alias.content AS $name");
+                $from[] = '{data_content}'." $alias ON $alias.recordid = dr.id";
+                $where[] = "$alias.fieldid = ?";
+                $params[] = $field->id;
+                $i++;
+            } else {
+                // $name field does not exist in this database
+                unset($fields[$name]);
+            }
+        }
+    }
+
+    /**
+     * get_strategy_formdata
+     *
+     * @param object $strategy
+     */
+    protected function get_strategy_formdata($strategy) {
+        $mform = $strategy->get_edit_strategy_form();
+        $mform = $mform->_form;
+
+        // initialize form $data object
+        $data = new stdClass();
+
+        // add hidden fields
+        $names = array('workshopid',
+                       'strategy',
+                       'norepeats',
+                       'sesskey',
+                       '_qf__workshop_edit_rubric_strategy_form');
+        foreach ($names as $name) {
+            $data->$name = $mform->getElement($name)->getValue();
+        }
+
+        // add criteria
+        $x = 0;
+        while ($mform->elementExists("dimension$x")) {
+
+            // set the dimensionid to 0, to force creation of a new record
+            // $data->$name = $mform->getElement($name)->getValue();
+            $name = "dimensionid__idx_{$x}";
+            $data->$name = 0;
+
+            // fetch criterion description
+            $name = "description__idx_{$x}_editor";
+            $element = $mform->getElement($name);
+            $data->$name = $element->getValue();
+
+            // fetch criterion levels
+            $y = 0;
+            while ($mform->elementExists("levelid__idx_{$x}__idy_{$y}")) {
+
+                // set the levelid to 0, to force creation of a new record
+                // $data->$name = $mform->getElement($name)->getValue();
+                $name = "levelid__idx_{$x}__idy_{$y}";
+                $data->$name = 0;
+
+                // get grade and definition(format) for each level
+                $group = $mform->getElement("level__idx_{$x}__idy_{$y}");
+                foreach ($group->getElements() as $element) {
+                    $name = $element->getName();
+                    $value = $element->getValue();
+                    if (is_array($value)) {
+                        $value = reset($value);
+                    }
+                    $data->$name = $value;
+                }
+                $y++;
+            }
+
+            $name = "numoflevels__idx_{$x}";
+            $data->$name = $y;
+
+            $x++;
+        }
+
+        $name = 'config_layout';
+        $group = $mform->getElement('layoutgrp');
+        foreach ($group->getElements() as $element) {
+            if ($name==$element->getName() && $element->getChecked()) {
+                $data->$name = $element->getValue();
+            }
+        }
+
+        // add submit button
+        $group = $mform->getElement('buttonar');
+        foreach ($group->getElements() as $element) {
+            $name = $element->getName();
+            if ($name=='saveandclose') {
+                $data->$name = $element->getValue();
+            }
+        }
+
+        return $data;
     }
 }
 
@@ -1684,14 +2290,14 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
     }
 
     /**
-     * data_postprocessing
+     * form_postprocessing
      *
      * @uses $DB
      * @param object $data
      * @return not sure ...
      * @todo Finish documenting this function
      */
-    public function data_postprocessing() {
+    public function form_postprocessing() {
         global $DB;
 
         // get/create the $cm record and associated $section
@@ -1759,7 +2365,7 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
         $this->add_field($mform, $this->plugin, $name, 'selectgroups', PARAM_INT, $options, 0);
 
         $name = 'vettinggroup';
-        $options = groups_list_to_menu(groups_get_all_groups($this->course->id));
+        $options = $this->get_group_options();
         $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options);
 
         $this->add_action_buttons();

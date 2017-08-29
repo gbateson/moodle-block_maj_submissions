@@ -38,6 +38,8 @@ $string['addevents'] = 'Add a conference event';
 $string['addfilterconditions'] = 'Add a filter condition';
 $string['addreviewcmids'] = 'Add a review activity';
 $string['addrevisecmids'] = 'Add a revision activity';
+$string['anonymoususers_help'] = 'Select the group containing anonymous users who will be registered as the owners of submissions in the target workshop. The number of users in the group should greater than, or equal to, the number of submissions, so that each submission is assigned a unique owner.';
+$string['anonymoususers'] = 'Anonymous users';
 $string['autoincrementsettings_help'] = 'These settings define the starting values and output format strings for the auto-increment fields in the registration database.
 
 When a new record is added to the registration database, each of the auto-increment fields in the new record is automatically assigned a value that is one higher than the highest value of that field in any other record in the database. Thus, each record will have a unique value for each of these settings.';
@@ -90,6 +92,7 @@ $string['customdatefmt_help'] = 'If you specify a date format here, it will be u
 $string['customdatefmt'] = 'Custom date format string';
 $string['databaseactivity_help'] = 'Either choose a specific database activity that you wish to setup, or choose "Create new activity", and specify the course section in which the new database should be created.';
 $string['databaseactivity'] = 'Database activity';
+$string['databasenamecount'] = '{$a->name} [{$a->count} records]';
 $string['dateclosedon'] = 'closed on {$a}';
 $string['datecloseson'] = 'closes on {$a}';
 $string['dateformats'] = 'Date formats';
@@ -132,6 +135,7 @@ $string['filterconditions_help'] = 'This filter is used to decide which submissi
 $string['filterconditions'] = 'Filter condition [{no}]';
 $string['fixdates_help'] = 'These settings control whether or not the leading zero on months, days and hours less than 10 are removed.';
 $string['fixdates'] = 'Remove leading zeros';
+$string['groupnamecount'] = '{$a->name} [{$a->count} users]';
 $string['howtoadd'] = 'To add {$a->record}, please click the "Add entry" link below, and fill out the form on the next page.';
 $string['howtobegin'] = 'In order to add, edit or delete {$a->record} for this conference, you need to log in to this website and enrol in this Moodle course.';
 $string['howtodelete'] = 'To delete {$a->record}, please click the "View single" link below, and then click the delete icon on the next page.';
@@ -169,16 +173,21 @@ If you click on the &quot;+&quot; sign next to one of the dates, the name of the
 
 Note that if the &quot;Display dates&quot; is set to &quot;No&quot; then no date will be displayed. Also, if a format is specified in the &quot;Custom date format string&quot; setting, then that will override the string selected here.';
 $string['moodledatefmt'] = 'Moodle date format string';
-$string['preset_help'] = 'A "preset" is a template for creating a Moodle database activity. It includes specifications of the database fields, and the layout of the webpages to edit and display records. However, it does not include any actual data.
-
-You can either choose one of the presets that is already available on this Moodle site, or you can import a preset from a zip file. Preset zip files are created using the "export" tab within a Moodle database that already exists.';
+$string['newactivitycreated'] = 'New activity created: {$a}';
+$string['newsectioncreated'] = 'New section created: {$a}';
+$string['noabstract'] = 'Oops - no abstract found for this presentation.';
 $string['notendswith'] = 'does not end with';
 $string['notisempty'] = 'is not empty';
 $string['notisequalto'] = 'is not equal to';
 $string['notisinlist'] = 'is not in list';
+$string['notitle'] = '(No title)';
 $string['notstartswith'] = 'does not start with';
+$string['peer_review_link'] = 'Peer review link';
 $string['presentationsprocess'] = 'the proposal submission process';
 $string['presentationsrecord'] = 'a presentation proposal';
+$string['preset_help'] = 'A "preset" is a template for creating a Moodle database activity. It includes specifications of the database fields, and the layout of the webpages to edit and display records. However, it does not include any actual data.
+
+You can either choose one of the presets that is already available on this Moodle site, or you can import a preset from a zip file. Preset zip files are created using the "export" tab within a Moodle database that already exists.';
 $string['preset'] = 'Database preset';
 $string['presetfile_help'] = 'Upload the zip file of a preset that has been exported from a Moodle database activity.';
 $string['presetfile'] = 'Preset zip file';
@@ -257,11 +266,14 @@ $string['sourcedatabase_help'] = 'Select the database which contains the submiss
 $string['sourcedatabase'] = 'Source database';
 $string['sourceworkshop_help'] = 'Select the workshop activity which contains the submissions that have been vetted.';
 $string['sourceworkshop'] = 'Source workshop';
+$string['submissionstranferred'] = 'Transferred {$a->transferred} of {$a->selected} submissions selected from {$a->total} database records.';
 $string['state'] = 'State';
 $string['targetdatabase_help'] = 'Select the database to which the vetted submissions are to be copied.';
 $string['targetdatabase'] = 'Target database';
 $string['targetworkshop_help'] = 'Select the workshop to which the submissions matching the above conditions are to be copied for vetting.';
 $string['targetworkshop'] = 'Target workshop';
+$string['templateactivity_help'] = 'Select an activity to use as a template when creating a new activity. Settings from the template activity will be copied across to the new activity.';
+$string['templateactivity'] = 'Template activity';
 $string['timefinish'] = 'Finish';
 $string['timestart'] = 'Start';
 $string['title_help'] = 'This is the string that will be displayed as the title of this block. If this field is blank, no title will be displayed for this block.';
@@ -307,9 +319,11 @@ $string['uploadpreset'] = 'Upload preset zip file';
 $string['validimportfile'] = 'Configuration settings were successfully imported';
 $string['vettinggroup_help'] = 'Select the group of users who are to review and vet the submissions in the target workshop activity.';
 $string['vettinggroup'] = 'Vetting group';
+$string['workshopnamecount'] = '{$a->name} [{$a->count} submissions]';
 $string['workshopscmid_help'] = 'The page resource that displays information about the conference workshops.';
 $string['workshopscmid'] = 'Workshop information';
 $string['workshopsprocess'] = 'the workshop submission process';
 $string['workshopsrecord'] = 'a workshop proposal';
 $string['workshopstime_help'] = 'The start and finish dates of the conference workshops.';
 $string['workshopstime'] = 'Conference workshops';
+

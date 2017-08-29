@@ -83,7 +83,7 @@ if ($mform->is_cancelled()) {
 }
 
 if ($mform->is_submitted()) {
-    $mform->data_postprocessing();
+    $mform->form_postprocessing();
 }
 
 echo $OUTPUT->header();

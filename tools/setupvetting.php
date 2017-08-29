@@ -83,18 +83,14 @@ if ($mform->is_cancelled()) {
 }
 
 if ($mform->is_submitted()) {
-    $mform->data_postprocessing();
+    $mform->form_postprocessing();
 }
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading($strpagetitle);
 
-if ($message = $mform->process_action()) {
-    echo $message;
-} else {
-    echo html_writer::tag('p', get_string($tool.'_desc', $plugin).
-                               $OUTPUT->help_icon($tool, $plugin));
-    $mform->display();
-}
+echo html_writer::tag('p', get_string($tool.'_desc', $plugin).
+                           $OUTPUT->help_icon($tool, $plugin));
+$mform->display();
 
 echo $OUTPUT->footer($course);

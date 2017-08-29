@@ -38,6 +38,8 @@ $string['addevents'] = 'Add a conference event';
 $string['addfilterconditions'] = 'Add a filter condition';
 $string['addreviewcmids'] = 'Add a review activity';
 $string['addrevisecmids'] = 'Add a revision activity';
+$string['anonymousgroup_help'] = 'Select the group containing anonymous users who will be registered as the owners of submissions in the target workshop. The number of users in the group should greater than, or equal to, the number of submissions, so that each submission is assigned a unique owner.';
+$string['anonymousgroup'] = 'Anonymous group';
 $string['autoincrementsettings_help'] = 'These settings define the starting values and output format strings for the auto-increment fields in the registration database.
 
 When a new record is added to the registration database, each of the auto-increment fields in the new record is automatically assigned a value that is one higher than the highest value of that field in any other record in the database. Thus, each record will have a unique value for each of these settings.';
@@ -130,6 +132,7 @@ $string['filterconditions_help'] = 'This filter is used to decide which submissi
 $string['filterconditions'] = 'Filter condition [{no}]';
 $string['fixdates_help'] = 'These settings control whether or not the leading zero on months, days and hours less than 10 are removed.';
 $string['fixdates'] = 'Remove leading zeros';
+$string['groupusercount'] = '{$a->groupname} [{$a->usercount} users]';
 $string['howtoadd'] = '新しい{$a->record}を提出するため、下記の「エントリを追加する」リンクをクリックし、次のページの書式を入力してください。';
 $string['howtobegin'] = '{$a->record}を追加・編集・削除するためには、 本ウェッブサイトのログインやムードルコース登録が必要です。';
 $string['howtodelete'] = '以前提出された{$a->record}を削除するため、下記の「個別表示」リンクをクリックし,次のページにある削除アイコンをクリックしてください。';
