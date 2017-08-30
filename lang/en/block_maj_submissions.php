@@ -50,6 +50,7 @@ $string['certificatedate_help'] = 'The date, as a text string, that appears on t
 $string['certificatedate'] = 'Certificate date';
 $string['certificatenumber_help'] = 'The starting value for the auto-increment certificate numbers.';
 $string['certificatenumber'] = 'Certificate number';
+$string['charcount'] = 'Number of characters';
 $string['collectpresentationscmid_help'] = 'The database activity that is used to collect presentation proposals.';
 $string['collectpresentationscmid'] = 'Presentation proposals';
 $string['collectpresentationsname'] = 'Submit a Proposal for a Presentation';
@@ -121,6 +122,7 @@ $string['displaylinks_help'] = 'If this setting is enabled, this block will disp
 $string['displaylinks'] = 'Display links';
 $string['displaystats_help'] = 'If this setting is enabled, the number of submissions and registrations received so far will be displayed in this MAJ Submissions block on the course page.';
 $string['displaystats'] = 'Display statistics';
+$string['duplicatesubmission'] = 'Duplicate submission was NOT transferred: {$a}';
 $string['events_help'] = 'Enter the name of an event that can be added to the schedule.';
 $string['events'] = 'Conference event [{no}]';
 $string['exportcontent'] = 'Export content';
@@ -151,12 +153,13 @@ $string['importsettings_help'] = 'This link takes you to a screen where you can 
 
 A settings file is created using the "Export settings" link on a MAJ submissions block configuration settings page.';
 $string['importsettings'] = 'Import settings';
-$string['isinlist'] = 'is in list';
+$string['insufficientusers'] = 'No records were transferred because the number of users in the group, {$a->users}, is less than the number of records selected from the database, {$a->selected}.';
 $string['invalidblockname'] = 'Invalid block name in block instance record: id={$a->id}, blockname={$a->blockname}';
 $string['invalidcontextid'] = 'Invalid parentcontextid in block instance record: id = {$a->id}, parentcontextid = {$a->parentcontextid}';
 $string['invalidcourseid'] = 'Invalid instanceid in course context record: id={$a->id}, instanceid={$a->instanceid}';
 $string['invalidimportfile'] = 'Import file was missing, empty or invalid';
 $string['invalidinstanceid'] = 'Invalid block instance id: id = {$a}';
+$string['isinlist'] = 'is in list';
 $string['linkenrol'] = 'Enrol in this Moodle course';
 $string['linklogin'] = 'Login to this Moodle site';
 $string['linksignup'] = 'Create an account on this Moodle site';
@@ -266,6 +269,7 @@ $string['sourcedatabase_help'] = 'Select the database which contains the submiss
 $string['sourcedatabase'] = 'Source database';
 $string['sourceworkshop_help'] = 'Select the workshop activity which contains the submissions that have been vetted.';
 $string['sourceworkshop'] = 'Source workshop';
+$string['submissionsdeleted'] = 'Workshop was reset and {$a} old submission(s) were removed.';
 $string['submissionstranferred'] = 'Transferred {$a->transferred} of {$a->selected} submissions selected from {$a->total} database records.';
 $string['state'] = 'State';
 $string['targetdatabase_help'] = 'Select the database to which the vetted submissions are to be copied.';
@@ -319,6 +323,7 @@ $string['uploadpreset'] = 'Upload preset zip file';
 $string['validimportfile'] = 'Configuration settings were successfully imported';
 $string['vettinggroup_help'] = 'Select the group of users who are to review and vet the submissions in the target workshop activity.';
 $string['vettinggroup'] = 'Vetting group';
+$string['wordcount'] = 'Number of words';
 $string['workshopnamecount'] = '{$a->name} [{$a->count} submissions]';
 $string['workshopscmid_help'] = 'The page resource that displays information about the conference workshops.';
 $string['workshopscmid'] = 'Workshop information';
@@ -326,4 +331,3 @@ $string['workshopsprocess'] = 'the workshop submission process';
 $string['workshopsrecord'] = 'a workshop proposal';
 $string['workshopstime_help'] = 'The start and finish dates of the conference workshops.';
 $string['workshopstime'] = 'Conference workshops';
-

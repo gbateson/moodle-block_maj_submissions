@@ -1796,6 +1796,7 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
      */
     public function form_postprocessing() {
         global $CFG, $DB;
+        require_once($CFG->dirroot.'/mod/workshop/locallib.php');
 
         $cm = false;
         $time = time();
@@ -1823,7 +1824,6 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
                         $section = get_fast_modinfo($this->course)->get_section_info($sectionnum);
                     }
                     if ($cmid = $data->templateactivity) {
-                        require_once($CFG->dirroot.'/mod/workshop/locallib.php');
                         $cm = $DB->get_record('course_modules', array('id' => $cmid));
                         $instance = $DB->get_record($this->modulename, array('id' => $cm->instance));
                         $course = $DB->get_record('course', array('id' => $instance->course));
@@ -1870,17 +1870,6 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
             $workshop = $DB->get_record('workshop', array('id' => $cm->instance));
             $workshop = new workshop($workshop, $cm, $this->course);
 
-            // transfer grading strategy from $template to $workshop
-            if ($template) {
-                $strategy = $template->grading_strategy_instance();
-                $formdata = $this->get_strategy_formdata($strategy);
-                $formdata->workshopid = $workshop->id;
-                $strategy = $workshop->grading_strategy_instance();
-                $strategy->save_edit_strategy_form($formdata);
-            }
-
-            $workshop->switch_phase(workshop::PHASE_ASSESSMENT);
-
             // get ids of anonymous users
             $params = array('groupid' => $data->anonymoususers);
             $anonymoususers = $DB->get_records_menu('groups_members', $params, null, 'id,userid');
@@ -1899,6 +1888,8 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
                             'type' => '',
                             'language' => '',
                             'keywords' => '',
+                            'charcount' => 0,
+                            'wordcount' => 0,
                             'abstract' => '');
             $this->add_content_sql($data, $select, $from, $where, $params, $fields, $dataid);
 
@@ -1908,91 +1899,154 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
 
             if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
 
-                $peer_review_link_fieldid = self::peer_review_link_fieldid($this->plugin, $dataid);
-                $overwrite_peer_review_links = true;
 
-                foreach ($records as $record) {
+                $countusers = count($anonymoususers);
+                $countselected = count($records);
+                if ($countusers < $countselected) {
+                    $a = (object)array('users' => $countusers,
+                                       'selected' => $countselected);
+                    $msg[] = get_string('insufficientusers', $this->plugin, $a);
+                } else {
 
-                    // sanitize submission title
-                    $name = 'title';
-                    if (empty($record->$name)) {
-                        $record->$name = get_string('notitle', $this->plugin);
+                    // select only the requied number of users and shuffle them randomly
+                    $anonymoususers = array_slice($anonymoususers, 0, $countselected);
+                    shuffle($anonymoususers);
+
+                    // get/create id of "peer_review_link" field
+                    $peer_review_link_fieldid = self::peer_review_link_fieldid($this->plugin, $dataid);
+
+                    // do we want to overwrite previous peer_review_links ?
+                    if ($workshopnum==self::CREATE_NEW) {
+                        $overwrite_peer_review_links = true;
+                    } else if ($data->resetworkshop) {
+                        $overwrite_peer_review_links = true;
                     } else {
-                        $record->$name = self::plain_text($record->$name);
+                        $overwrite_peer_review_links = false;
                     }
 
-                    // sanitize submission abstract
-                    $name = 'abstract';
-                    if (empty($record->$name)) {
-                        $record->$name = get_string('noabstract', $this->plugin);
-                    } else {
-                        $record->$name = self::plain_text($record->$name);
+                    // transfer grading strategy from $template to $workshop
+                    if ($template) {
+                        $strategy = $template->grading_strategy_instance();
+                        $formdata = $this->get_strategy_formdata($strategy);
+                        $formdata->workshopid = $workshop->id;
+                        $strategy = $workshop->grading_strategy_instance();
+                        $strategy->save_edit_strategy_form($formdata);
                     }
 
-                    // create content for this submission
-                    $content = '';
-                    foreach ($fields as $name => $field) {
-                        if (isset($record->$name)) {
-                            if ($name=='title') {
-                                // skip this field
-                            } else if ($name=='abstract') {
-                                $content .= html_writer::tag('p', $record->$name);
-                            } else {
-                                $fieldname = self::convert_to_multilang($field, $config);
-                                $fieldname = html_writer::tag('b', $fieldname.': ');
-                                $fieldvalue = self::plain_text($record->$name);
-                                $fieldvalue = self::convert_to_multilang($fieldvalue, $config);
-                                $content .= html_writer::tag('p', $fieldname.$fieldvalue);
-                            }
-                        }
-                    }
-
-                    // create new submission record
-                    $submission = (object)array(
-                        'workshopid' => $cm->instance,
-                        'authorid' => array_shift($anonymoususers),
-                        'timecreated' => $time,
-                        'timemodified' => $time,
-                        'title' => $record->title,
-                        'content' => $content,
-                        'contentformat' => 0,
-                        'contenttrust' => 0
-                    );
-
-                    // add submission to workshop
-                    if ($submission->id = $DB->insert_record('workshop_submissions', $submission)) {
-
-                        // add reference to this submission from the database record
-                        $params = array('cmid' => $cm->id, 'id' => $submission->id);
-                        $link = new moodle_url('/mod/workshop/submission.php', $params);
-
-                        $params = array('fieldid'  => $peer_review_link_fieldid,
-                                        'recordid' => $record->recordid);
-                        if ($content = $DB->get_record('data_content', $params)) {
-                            if (empty($content->content) || $overwrite_peer_review_links) {
-                                $content->content = "$link";
-                                $DB->update_record('data_content', $content);
-                            }
-                        } else {
-                            $content = (object)array(
-                                'fieldid'  => $peer_review_link_fieldid,
-                                'recordid' => $record->recordid,
-                                'content'  => "$link"
+                    // reset workshop (=remove previous submissions), if necessary
+                    if ($data->resetworkshop) {
+                        if ($count = $workshop->count_submissions()) {
+                            $reset = (object)array(
+                                // mimic settings from course reset form
+                                'reset_workshop_assessments' => 1,
+                                'reset_workshop_submissions' => 1,
+                                'reset_workshop_phase' => 1
                             );
-                            $content->id = $DB->insert_record('data_content', $content);
+                            $workshop->reset_userdata($reset);
+                            $msg[] = get_string('submissionsdeleted', $this->plugin, $count);
                         }
-                        $counttransferred++;
                     }
-                    $countselected++;
+
+                    // switch workshop to ASSESSMENT phase
+                    $workshop->switch_phase(workshop::PHASE_ASSESSMENT);
+
+                    // transfer submission records from database to workshop
+                    foreach ($records as $record) {
+
+                        // sanitize submission title
+                        $name = 'title';
+                        if (empty($record->$name)) {
+                            $record->$name = get_string('notitle', $this->plugin);
+                        } else {
+                            $record->$name = self::plain_text($record->$name);
+                        }
+
+                        // sanitize submission abstract
+                        $name = 'abstract';
+                        if (empty($record->$name)) {
+                            $record->$name = get_string('noabstract', $this->plugin);
+                        } else {
+                            $record->$name = self::plain_text($record->$name);
+                            if (substr_count($record->abstract, ' ') > 2) {
+                                $record->wordcount = str_word_count($record->abstract);
+                            }
+                            $record->charcount = block_maj_submissions::textlib('strlen', $record->abstract);
+                        }
+
+                        // create content for this submission
+                        $content = '';
+                        foreach ($fields as $name => $field) {
+                            if (isset($record->$name)) {
+                                if ($name=='title') {
+                                    // skip this field
+                                } else if ($name=='abstract') {
+                                    $content .= html_writer::tag('p', $record->$name);
+                                } else if ($name=='charcount' || $name=='wordcount' && $record->$name) {
+                                    if ($record->$name > 0) {
+                                        $fieldname = $this->instance->get_string($name, $this->plugin);
+                                        $fieldname = html_writer::tag('b', $fieldname.': ');
+                                        $content .= html_writer::tag('p', $fieldname.$record->$name);
+                                    }
+                                } else {
+                                    $fieldname = self::convert_to_multilang($field, $config);
+                                    $fieldname = html_writer::tag('b', $fieldname.': ');
+                                    $fieldvalue = self::plain_text($record->$name);
+                                    $fieldvalue = self::convert_to_multilang($fieldvalue, $config);
+                                    $content .= html_writer::tag('p', $fieldname.$fieldvalue);
+                                }
+                            }
+                        }
+
+                        // create new submission record
+                        $submission = (object)array(
+                            'workshopid' => $cm->instance,
+                            'authorid' => array_shift($anonymoususers),
+                            'timecreated' => $time,
+                            'timemodified' => $time,
+                            'title' => $record->title,
+                            'content' => $content,
+                            'contentformat' => 0,
+                            'contenttrust' => 0
+                        );
+
+                        // add submission to workshop
+                        if ($DB->record_exists('workshop_submissions', array('title' => $submission->title))) {
+                            // Oops - this submission appears to be a duplicate
+                            $msg[] = get_string('duplicatesubmission', $this->plugin, $submission->title);
+
+                        } else if ($submission->id = $DB->insert_record('workshop_submissions', $submission)) {
+
+                            // add reference to this submission from the database record
+                            $params = array('cmid' => $cm->id, 'id' => $submission->id);
+                            $link = new moodle_url('/mod/workshop/submission.php', $params);
+
+                            $params = array('fieldid'  => $peer_review_link_fieldid,
+                                            'recordid' => $record->recordid);
+                            if ($content = $DB->get_record('data_content', $params)) {
+                                if (empty($content->content) || $overwrite_peer_review_links) {
+                                    $content->content = "$link";
+                                    $DB->update_record('data_content', $content);
+                                }
+                            } else {
+                                $content = (object)array(
+                                    'fieldid'  => $peer_review_link_fieldid,
+                                    'recordid' => $record->recordid,
+                                    'content'  => "$link"
+                                );
+                                $content->id = $DB->insert_record('data_content', $content);
+                            }
+                            $counttransferred++;
+                        }
+                    }
+                    $a = (object)array('total' => $counttotal,
+                                       'selected' => $countselected,
+                                       'transferred' => $counttransferred);
+                    $msg[] = get_string('submissionstranferred', $this->plugin, $a);
                 }
-                $a = (object)array('total' => $counttotal,
-                                   'selected' => $countselected,
-                                   'transferred' => $counttransferred);
-                $msg[] = get_string('submissionstranferred', $this->plugin, $a);
             }
         }
 
-        return implode(html_writer::empty_tag('br'), $msg);
+        return (empty($msg) ? '' : (count($msg)==1 ? reset($msg) : html_writer::alist($msg)));
     }
 
     /**
@@ -2110,7 +2164,7 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
 
     /**
      * add_filter_sql
-     * 
+     *
      * generate SQL to fetch presentation_(title|abstract|type|language|keywords)
      *
      * @param object  $data   (passed by reference)
@@ -2127,7 +2181,9 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
 
         $i = count($data->filterconditionsfield);
         foreach (array_keys($fields) as $name) {
-
+            if ($name=='charcount' || $name=='wordcount') {
+                continue;
+            }
             $fieldparams = array('dataid' => $dataid,
                                  'name' => "presentation_$name");
             if ($field = $DB->get_record('data_fields', $fieldparams)) {
