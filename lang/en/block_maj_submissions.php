@@ -177,6 +177,8 @@ If you click on the &quot;+&quot; sign next to one of the dates, the name of the
 Note that if the &quot;Display dates&quot; is set to &quot;No&quot; then no date will be displayed. Also, if a format is specified in the &quot;Custom date format string&quot; setting, then that will override the string selected here.';
 $string['moodledatefmt'] = 'Moodle date format string';
 $string['newactivitycreated'] = 'New activity created: {$a}';
+$string['newgroupcreated'] = 'New group created: {$a}';
+$string['newgroupmembers'] = '{$a->count} member(s) added to group: {$a->name}';
 $string['newsectioncreated'] = 'New section created: {$a}';
 $string['noabstract'] = 'Oops - no abstract found for this presentation.';
 $string['notendswith'] = 'does not end with';

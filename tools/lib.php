@@ -78,7 +78,7 @@ abstract class block_maj_submissions_tool_base extends moodleform {
         'timefinish' => array()
     );
     protected $permissions = array();
-    protected $availability = null;
+    protected $restrictions = array();
 
     /**
      * constructor
@@ -349,6 +349,33 @@ abstract class block_maj_submissions_tool_base extends moodleform {
     }
 
     /**
+     * get_permissions for a new activity created with this form
+     *
+     * @param object containing newly submitted form $data
+     * @todo array of stdClass()
+     */
+    public function get_permissions($data) {
+        return $this->permissions;
+    }
+
+    /**
+     * get_restrictions for a new activity created with this form
+     *
+     * @param object containing newly submitted form $data
+     * @todo array of stdClass()
+     */
+    public function get_restrictions($data) {
+        $restrictions = $this->restrictions;
+        if (isset($data->anonymoususers) && is_numeric($data->anonymoususers)) {
+            $restrictions[] = (object)array(
+                'type' => 'group',
+                'id' => intval($data->anonymoususers)
+            );
+        }
+        return $restrictions;
+    }
+
+    /**
      * peer_review_link_fieldid
      *
      * @param string  $plugin
@@ -384,7 +411,7 @@ abstract class block_maj_submissions_tool_base extends moodleform {
      * @return single-line, plain-text version of $text
      */
     static public function plain_text($text) {
-        $search = '/(?: |\t|\r|\n|\x{00A0}|&nbsp;|(?:<[^>]*>))+/us';
+        $search = '/(?: |\t|\r|\n|\x{00A0}|\x{3000}|&nbsp;|(?:<[^>]*>))+/us';
         return preg_replace($search, ' ', $text);
     }
 
@@ -633,6 +660,7 @@ abstract class block_maj_submissions_tool_base extends moodleform {
 
         // rebuild_course_cache
         rebuild_course_cache($course->id);
+        course_modinfo::clear_instance_cache($course);
 
         return $newrecord;
     }
@@ -656,18 +684,164 @@ abstract class block_maj_submissions_tool_base extends moodleform {
     }
 
     /**
-     * set availability on a newly created $cm
+     * set access restrctions (=availability) on a newly created $cm
      *
-     * @uses $DB
+     * @param array of stdClass $availability (decoded from JSON)
      * @todo Finish documenting this function
      */
-    static public function set_cm_availability($cm, $availability) {
+    static public function set_cm_restrictions($cm, $restrictions) {
+        global $DB;
+
         // e.g. restrict "Events database" to admins only
         // see "update_course_module_availability()"
-        // in "block_taskchain_navigation/accesscontrol.php"
-        if (property_exists($cm, 'availability') && $availability && property_exists($availability, 'c')) {
-            $tree = new \core_availability\tree($availability);
+        // in "blocks/taskchain_navigation/accesscontrol.php"
+
+        if (class_exists('\core_availability\info_module')) {
+            // Moodle >= 2.7
+
+            if ($cm instanceof stdClass) {
+                $cm = course_modinfo::instance($cm->course)->get_cm($cm->id);
+            }
+
+            // get current availability structure for this $cm
+            if (empty($cm->availability)) {
+                $structure = null;
+            } else {
+                $info = new \core_availability\info_module($cm);
+                $tree = $info->get_availability_tree();
+                $structure = $tree->save();
+            }
+
+            $structure = self::fix_cm_restrictions($cm, $structure, $restrictions);
+
+            // encode availability $structure
+            if (empty($structure->c)) {
+                $availability = null;
+            } else {
+                $availability = json_encode($structure);
+                //if (preg_match_all('/(?<="showc":\[).*?(?=\])/', $availability, $matches, PREG_OFFSET_CAPTURE)) {
+                //    $replace = array('0' => 'false',
+                //                     '1' => 'true');
+                //    $i_max = (count($matches[0]) - 1);
+                //    for ($i=$i_max; $i>=0; $i--) {
+                //        list($match, $start) = $matches[0][$i];
+                //        $availability = substr_replace($availability, strtr($match, $replace), $start, strlen($match));
+                //    }
+                //}
+            }
+
+            // update availability in database
+            if ($cm->availability==$availability) {
+                // do nothing
+            } else {
+                $DB->set_field('course_modules', 'availability', $availability, array('id' => $cm->id));
+                rebuild_course_cache($cm->course);
+            }
         }
+
+    }
+
+    /**
+     * fix_cm_restrictions
+     *
+     * @param object $cm
+     * @param object $structure
+     * @param array of stdClass() $restrictions
+     */
+    static public function fix_cm_restrictions($cm, $structure, $restrictions) {
+        global $DB;
+
+        if (empty($structure)) {
+            $structure = new stdClass();
+        }
+        if (! isset($structure->op)) {
+            $structure->op = '|';
+        }
+        if (! isset($structure->c)) {
+            $structure->c = array();
+        }
+        if (! isset($structure->showc)) {
+            $structure->showc = array();
+        }
+        if (! isset($structure->show)) {
+            $structure->show = true;
+        }
+
+        // remove conditions in $structure that refer to groups,
+        // gropuings, activities or grade items in another course
+        for ($i = (count($structure->c) - 1); $i >= 0; $i--) {
+            $old = $structure->c[$i];
+            if (isset($old->type)) {
+                switch ($old->type) {
+                    case 'completion':
+                        $table = 'course_modules';
+                        $params = array('id' => $old->cm, 'course' => $cm->course);
+                        break;
+                    case 'grade':
+                        $table = 'grade_items';
+                        $params = array('id' => $old->id, 'courseid' => $cm->course);
+                        break;
+                    case 'group':
+                        $table = 'groups';
+                        $params = array('id' => $old->id, 'courseid' => $cm->course);
+                        break;
+                    case 'grouping':
+                        $table = 'groupings';
+                        $params = array('id' => $old->id, 'courseid' => $cm->course);
+                        break;
+                    default:
+                        $table = '';
+                        $params = array();
+                }
+                if ($table=='' || $DB->record_exists($table, $params)) {
+                    // do nothing
+                } else {
+                    array_splice($structure->c, $i, 1);
+                }
+            } else if (isset($old->op) && isset($old->c)) {
+                // a subset of restrictions
+            }
+        }
+
+        // add new $restrictions if they do not exists in $structure
+        foreach ($restrictions as $i => $new) {
+            $found = false;
+            foreach ($structure->c as $old) {
+                $params = false;
+                if ($old->type==$new->type) {
+                    switch ($old->type) {
+                        case 'completion': $params = array('cm', 'e');          break;
+                        case 'date':       $params = array('d',  't');          break;
+                        case 'grade':      $params = array('id', 'min', 'max'); break;
+                        case 'group':      $params = array('id');               break;
+                        case 'grouping':   $params = array('id');               break;
+                        case 'profile':    $params = array('sf', 'op', 'v');    break;
+                    }
+                }
+                if ($params) {
+                    $found = true;
+                    foreach ($params as $param) {
+                        if (isset($old->$param) && isset($new->$param) && $old->$param==$new->$param) {
+                            // do nothing
+                        } else {
+                            $found = false;
+                        }
+                    }
+                }
+                if ($found) {
+                    break;
+                }
+            }
+            if ($found==false) {
+                array_push($structure->c, $new);
+            }
+        }
+
+        if (empty($structure->showc)) {
+            unset($structure->showc);
+        }
+
+        return $structure;
     }
 
     /**
@@ -1161,8 +1335,12 @@ class block_maj_submissions_tool_setupdatabase extends block_maj_submissions_too
                         $cm = self::get_coursemodule($this->course, $section, $this->modulename,  $databasename, $defaultvalues);
                     }
                     if ($cm) {
-                        self::set_cm_permissions($cm, $this->permissions);
-                        self::set_cm_availability($cm, $this->availability);
+                        $permissions = $this->get_permissions($data);
+                        self::set_cm_permissions($cm, $permissions);
+
+                        $restrictions = $this->get_restrictions($data);
+                        self::set_cm_restrictions($cm, $restrictions);
+
                         if ($this->cmid==0) {
                             $this->cmid = $cm->id;
                             $cmid = $this->type.'cmid';
@@ -1633,7 +1811,7 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
     protected $type = '';
     protected $modulename = 'workshop';
     protected $defaultvalues = array(
-        'visible'         => 0,
+        'visible'         => 1,
         'submissionstart' => 0,
         'submissionend'   => 0,
         'assessmentstart' => 0,
@@ -1823,8 +2001,8 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
                     } else {
                         $section = get_fast_modinfo($this->course)->get_section_info($sectionnum);
                     }
-                    if ($cmid = $data->templateactivity) {
-                        $cm = $DB->get_record('course_modules', array('id' => $cmid));
+                    if ($data->templateactivity) {
+                        $cm = $DB->get_record('course_modules', array('id' => $data->templateactivity));
                         $instance = $DB->get_record($this->modulename, array('id' => $cm->instance));
                         $course = $DB->get_record('course', array('id' => $instance->course));
                         $template = new workshop($instance, $cm, $course);
@@ -1847,12 +2025,17 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
                         $defaultvalues[$name] = 0;
                     }
                     $cm = self::get_coursemodule($this->course, $section, $this->modulename, $workshopname, $defaultvalues);
-                    self::set_cm_permissions($cm, $this->permissions);
-                    self::set_cm_availability($cm, $this->availability);
+
+                    $permissions = $this->get_permissions($data);
+                    self::set_cm_permissions($cm, $permissions);
+
                     $msg[] = get_string('newactivitycreated', $this->plugin, $workshopname);
                 } else {
                     $cm = get_fast_modinfo($this->course)->get_cm($workshopnum);
                 }
+
+                $restrictions = $this->get_restrictions($data);
+                self::set_cm_restrictions($cm, $restrictions);
             }
         }
 
@@ -1879,6 +2062,10 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
             $from   = array('{data_records} dr');
             $where  = array('dr.dataid = ?');
             $params = array($dataid);
+
+            if (empty($data->filterconditionsfield)) {
+                $data->filterconditionsfield = array();
+            }
 
             // add SQL to fetch only required records
             $this->add_filter_sql($data, $select, $from, $where, $params);
@@ -1908,7 +2095,7 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
                     $msg[] = get_string('insufficientusers', $this->plugin, $a);
                 } else {
 
-                    // select only the requied number of users and shuffle them randomly
+                    // select only the required number of users and shuffle them randomly
                     $anonymoususers = array_slice($anonymoususers, 0, $countselected);
                     shuffle($anonymoususers);
 
@@ -1924,8 +2111,9 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
                         $overwrite_peer_review_links = false;
                     }
 
-                    // transfer grading strategy from $template to $workshop
+                    // transfer settings from $template to $workshop
                     if ($template) {
+                        // transfer grading strategy (e.g. rubric)
                         $strategy = $template->grading_strategy_instance();
                         $formdata = $this->get_strategy_formdata($strategy);
                         $formdata->workshopid = $workshop->id;
@@ -1934,7 +2122,7 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
                     }
 
                     // reset workshop (=remove previous submissions), if necessary
-                    if ($data->resetworkshop) {
+                    if (isset($data->resetworkshop) && $data->resetworkshop) {
                         if ($count = $workshop->count_submissions()) {
                             $reset = (object)array(
                                 // mimic settings from course reset form
@@ -1980,7 +2168,9 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
                                 if ($name=='title') {
                                     // skip this field
                                 } else if ($name=='abstract') {
-                                    $content .= html_writer::tag('p', $record->$name);
+                                    $params = array('style' => 'text-align: justify; '.
+                                                               'text-indent: 20px;');
+                                    $content .= html_writer::tag('p', $record->$name, $params);
                                 } else if ($name=='charcount' || $name=='wordcount' && $record->$name) {
                                     if ($record->$name > 0) {
                                         $fieldname = $this->instance->get_string($name, $this->plugin);
@@ -2010,7 +2200,9 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
                         );
 
                         // add submission to workshop
-                        if ($DB->record_exists('workshop_submissions', array('title' => $submission->title))) {
+                        $params = array('workshopid' => $cm->instance,
+                                        'title' => $submission->title);
+                        if ($DB->record_exists('workshop_submissions', $params)) {
                             // Oops - this submission appears to be a duplicate
                             $msg[] = get_string('duplicatesubmission', $this->plugin, $submission->title);
 
@@ -2024,14 +2216,14 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
                                             'recordid' => $record->recordid);
                             if ($content = $DB->get_record('data_content', $params)) {
                                 if (empty($content->content) || $overwrite_peer_review_links) {
-                                    $content->content = "$link";
+                                    $content->content = "$link"; // convert to string
                                     $DB->update_record('data_content', $content);
                                 }
                             } else {
                                 $content = (object)array(
                                     'fieldid'  => $peer_review_link_fieldid,
                                     'recordid' => $record->recordid,
-                                    'content'  => "$link"
+                                    'content'  => "$link" // convert to string
                                 );
                                 $content->id = $DB->insert_record('data_content', $content);
                             }
@@ -2163,7 +2355,7 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
     }
 
     /**
-     * add_filter_sql
+     * add_content_sql
      *
      * generate SQL to fetch presentation_(title|abstract|type|language|keywords)
      *
@@ -2373,8 +2565,12 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                         $section = get_fast_modinfo($this->course)->get_section_info($sectionnum);
                     }
                     $cm = self::get_coursemodule($this->course, $section, $this->modulename, $databasename, $this->defaultvalues);
-                    self::set_cm_permissions($cm, $this->permissions);
-                    self::set_cm_availability($cm, $this->availability);
+
+                    $permissions = $this->get_permissions($data);
+                    self::set_cm_permissions($cm, $permissions);
+
+                    $restrictions = $this->get_restrictions($data);
+                    self::set_cm_restrictions($cm, $restrictions);
                 } else {
                     $cm = get_fast_modinfo($this->course)->get_cm($databasenum);
                 }
