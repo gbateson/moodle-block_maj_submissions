@@ -234,3 +234,10 @@ div.block_maj_submissions p.toollink {
     padding:              4px;
     text-align:        center;
 }
+.path-blocks-maj_submissions-tools .toolmessagelist {
+    max-width:          540px;
+}
+.path-blocks-maj_submissions-tools .toolmessagelist li {
+    margin-bottom:        6px;
+    margin-top:           6px;
+}

@@ -83,7 +83,9 @@ if ($mform->is_cancelled()) {
 }
 
 if ($mform->is_submitted()) {
-    $mform->form_postprocessing();
+    $message = $mform->form_postprocessing();
+} else {
+    $message = '';
 }
 
 echo $OUTPUT->header();
@@ -91,6 +93,10 @@ echo $OUTPUT->heading($strpagetitle);
 
 echo html_writer::tag('p', get_string($tool.'_desc', $plugin).
                            $OUTPUT->help_icon($tool, $plugin));
+if ($message) {
+    echo $OUTPUT->notification($message, 'notifysuccess');
+}
+
 $mform->display();
 
 echo $OUTPUT->footer($course);

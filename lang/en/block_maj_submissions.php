@@ -38,8 +38,11 @@ $string['addevents'] = 'Add a conference event';
 $string['addfilterconditions'] = 'Add a filter condition';
 $string['addreviewcmids'] = 'Add a review activity';
 $string['addrevisecmids'] = 'Add a revision activity';
-$string['anonymoususers_help'] = 'Select the group containing anonymous users who will be registered as the owners of submissions in the target workshop. The number of users in the group should greater than, or equal to, the number of submissions, so that each submission is assigned a unique owner.';
-$string['anonymoususers'] = 'Anonymous users';
+$string['anonymousauthors_help'] = 'Select the group or anonymous users who will be registered as the authors of submissions in the target workshop. The number of users in the group should greater than, or equal to, the number of submissions, so that each submission is assigned a unique owner.';
+$string['anonymousauthors'] = 'Anonymous authors';
+$string['anonymousreviewers_help'] = 'Select the group of anonymous users who will review and assess the submissions in the target workshop activity.';
+$string['anonymousreviewers'] = 'Anonymous reviewers';
+$string['assessmentsdeleted'] = 'Workshop was reset and {$a} old assessments(s) were removed.';
 $string['autoincrementsettings_help'] = 'These settings define the starting values and output format strings for the auto-increment fields in the registration database.
 
 When a new record is added to the registration database, each of the auto-increment fields in the new record is automatically assigned a value that is one higher than the highest value of that field in any other record in the database. Thus, each record will have a unique value for each of these settings.';
@@ -94,6 +97,7 @@ $string['customdatefmt'] = 'Custom date format string';
 $string['databaseactivity_help'] = 'Either choose a specific database activity that you wish to setup, or choose "Create new activity", and specify the course section in which the new database should be created.';
 $string['databaseactivity'] = 'Database activity';
 $string['databasenamecount'] = '{$a->name} [{$a->count} records]';
+$string['datarecordsreset'] = '<b>Peer review data was reset</b> for {$a->count} data record(s).<br/ >Data record id list: <i>{$a->ids}</i>';
 $string['dateclosedon'] = 'closed on {$a}';
 $string['datecloseson'] = 'closes on {$a}';
 $string['dateformats'] = 'Date formats';
@@ -153,7 +157,6 @@ $string['importsettings_help'] = 'This link takes you to a screen where you can 
 
 A settings file is created using the "Export settings" link on a MAJ submissions block configuration settings page.';
 $string['importsettings'] = 'Import settings';
-$string['insufficientusers'] = 'No records were transferred because the number of users in the group, {$a->users}, is less than the number of records selected from the database, {$a->selected}.';
 $string['invalidblockname'] = 'Invalid block name in block instance record: id={$a->id}, blockname={$a->blockname}';
 $string['invalidcontextid'] = 'Invalid parentcontextid in block instance record: id = {$a->id}, parentcontextid = {$a->parentcontextid}';
 $string['invalidcourseid'] = 'Invalid instanceid in course context record: id={$a->id}, instanceid={$a->instanceid}';
@@ -231,18 +234,31 @@ $string['registrationsprocess'] = 'the conference registration process';
 $string['registrationsrecord'] = 'your registration details';
 $string['removeyear_help'] = 'If this option is enabled, then the current year will be removed from dates.';
 $string['removeyear'] = 'Remove current year';
-$string['resetworkshop_help']= 'This setting specifies whether or not to reset the target workshop before transferring submissions from the source database.
+$string['resetassessments_help']= 'This setting specifies whether or not to remove old data about reviewers and their reviews before setting up new reviewrs.
 
 **No**
-: Data that is currently in the workshop will be left untouched and new data from the source database will be added to it.
+: Current data about reviewers and their reviews will be left untouched and new reviewers will only be assigned if necessary.
 
 **Yes**
-: All data will be removed from the target workshop before submissions are transferred from the source database. In addition, any links from other databases to the workshop will be removed.';
-$string['resetworkshop']= 'Reset workshop';
+: Current data about reviewers and their reviews will be removed from the target workshop before the new reviewers are assigned. In addition, review results will be removed from the submissions database related to the target workshop.';
+$string['resetassessments']= 'Reset review data';
+$string['resetsubmissions_help']= 'This setting specifies whether or not to reset the target workshop before transferring submissions from the source database.
+
+**No**
+: Submissions that are currently in the workshop will be left untouched and any new submissions from the source database will be added to the workshop.
+
+**Yes**
+: All old submissions will be removed from the target workshop before new submissions are transferred from the source database. In addition, any links from other databases to the target workshop will be removed.';
+$string['resetsubmissions']= 'Reset submissions';
 $string['reviewcmids_help'] = 'A workshop activity that is used to peer review submissions.';
 $string['reviewcmids'] = 'Review activity [{no}]';
+$string['reviewers_help'] = 'Select the group of real users who will review and assess the submisions in the target workshop. Each real user will be mapped to an anonymous reviewer. The system will not assign anonymous reviewers to submission by the real users they represent.';
+$string['reviewers'] = 'Group of reviewers';
+$string['reviewersadded'] = '<b>{$a->count} reviewers were added</b> to workshop submission (id={$a->sid}).<br/ >Reviewer id list: <i>{$a->ids}</i>';
 $string['reviewsectionnum_help'] = 'The course section where the activities for reviewing submissions are located.';
 $string['reviewsectionnum'] = 'Review section';
+$string['reviewspersubmission_help'] = 'The number of reviews required for each submission. If this number if zero, then ALL reviewers will be assigned to ALL submissions. Otherwise, the system will try to assign this number of reviewers to each submission, and try to assign the same number of submissions to each anonymous reviewer.';
+$string['reviewspersubmission'] = 'Reviews per submission';
 $string['reviewsubmissions'] = 'Review submissions';
 $string['reviewtime_help'] = 'The start and finish dates of the submission selection period.';
 $string['reviewtime'] = 'Selection of submissions';
@@ -271,9 +287,10 @@ $string['sourcedatabase_help'] = 'Select the database which contains the submiss
 $string['sourcedatabase'] = 'Source database';
 $string['sourceworkshop_help'] = 'Select the workshop activity which contains the submissions that have been vetted.';
 $string['sourceworkshop'] = 'Source workshop';
+$string['state'] = 'State';
+$string['submissiongradesreset'] = '<b>Grade and assessment data was reset</b> for {$a->count} workshop submission(s).<br />Submission id list: <i>{$a->ids}</i>';
 $string['submissionsdeleted'] = 'Workshop was reset and {$a} old submission(s) were removed.';
 $string['submissionstranferred'] = 'Transferred {$a->transferred} of {$a->selected} submissions selected from {$a->total} database records.';
-$string['state'] = 'State';
 $string['targetdatabase_help'] = 'Select the database to which the vetted submissions are to be copied.';
 $string['targetdatabase'] = 'Target database';
 $string['targetworkshop_help'] = 'Select the workshop to which the submissions matching the above conditions are to be copied for vetting.';
@@ -284,6 +301,8 @@ $string['timefinish'] = 'Finish';
 $string['timestart'] = 'Start';
 $string['title_help'] = 'This is the string that will be displayed as the title of this block. If this field is blank, no title will be displayed for this block.';
 $string['title'] = 'Title';
+$string['toofewauthors'] = 'No records were transferred because the number of anonymous users, {$a->countanonymous}, is less than the number of records selected from the database, {$a->countselected}.';
+$string['toofewreviewers'] = 'No reviewers were assigned to the submissions, because the number of anonymous reviewers, {$a->countanonymous}, is less than the number of real reviewers, {$a->countreviewers}.';
 $string['toolcreateusers_desc'] = 'Setup groups of anonymous users';
 $string['toolcreateusers'] = 'Create vetting users and groups';
 $string['tooldata2workshop_desc'] = 'Convert Database -> Workshops';
@@ -323,8 +342,6 @@ $string['toolworkshop2data'] = 'Publish vetting results';
 $string['unknownlanguage'] = 'Unknown language';
 $string['uploadpreset'] = 'Upload preset zip file';
 $string['validimportfile'] = 'Configuration settings were successfully imported';
-$string['vettinggroup_help'] = 'Select the group of users who are to review and vet the submissions in the target workshop activity.';
-$string['vettinggroup'] = 'Vetting group';
 $string['wordcount'] = 'Number of words';
 $string['workshopnamecount'] = '{$a->name} [{$a->count} submissions]';
 $string['workshopscmid_help'] = 'The page resource that displays information about the conference workshops.';
@@ -333,3 +350,6 @@ $string['workshopsprocess'] = 'the workshop submission process';
 $string['workshopsrecord'] = 'a workshop proposal';
 $string['workshopstime_help'] = 'The start and finish dates of the conference workshops.';
 $string['workshopstime'] = 'Conference workshops';
+
+$string['reviewspersubmission_help'] = 'The number of reviews required for each submission. The system will try to assign this number of reviewers to each submission, and try to assign the same number of submissions to each anonymous reviewer.';
+$string['reviewspersubmission'] = 'Reviews per submission';
