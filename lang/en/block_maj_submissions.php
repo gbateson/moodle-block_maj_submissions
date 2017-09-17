@@ -191,6 +191,7 @@ $string['notisinlist'] = 'is not in list';
 $string['notitle'] = '(No title)';
 $string['notstartswith'] = 'does not start with';
 $string['peer_review_link'] = 'Peer review link';
+$string['peerreviewnumber'] = 'Peer Review {$a}';
 $string['presentationsprocess'] = 'the proposal submission process';
 $string['presentationsrecord'] = 'a presentation proposal';
 $string['preset_help'] = 'A "preset" is a template for creating a Moodle database activity. It includes specifications of the database fields, and the layout of the webpages to edit and display records. However, it does not include any actual data.
@@ -353,3 +354,26 @@ $string['workshopstime'] = 'Conference workshops';
 
 $string['reviewspersubmission_help'] = 'The number of reviews required for each submission. The system will try to assign this number of reviewers to each submission, and try to assign the same number of submissions to each anonymous reviewer.';
 $string['reviewspersubmission'] = 'Reviews per submission';
+
+$string['peerreviewgreeting'] = 'Thanks for your submission!';
+
+$string['accepted'] = 'Your proposal has been <u>accepted</u>.';
+$string['notaccepted'] = 'Unfortunately, your proposal has <u>NOT</u> been accepted.';
+$string['waitingforreview'] = 'Your proposal is <u>waiting to be reviewed</u>.';
+$string['conditionallyaccepted'] = 'Your proposal has been <u>conditionally accepted</u>.';
+
+$string['pleasemakechanges'] = 'For this submission to be fully accepted, please make the requested changes to your abstract/presentation before <u>{$a}</u>.';
+$string['youwillbenotified'] = 'When the changes have been made, they will be reviewed and you will be notified of the new acceptance status.';
+
+$string['pleaseregisteryourself'] = 'Please remember to register for the conference ({$a}).';
+$string['pleaseregistercopresenters'] = 'Please be sure to have any co-presenters register as well.';
+
+$string['acceptedfarewell'] = 'We look forward to seeing you at the conference in {$a}.';
+
+$string['addstatusfilter'] = 'Add a status filter';
+$string['statusfilter_help'] = 'Select a minimum grade for submissions in the source workshop and the corresponding status for proposals in the target database.';
+$string['statusfilter'] = 'Status filter [{no}]';
+$string['statusfilter1'] = 'If grade is';
+$string['statusfilter2'] = ', set status to';
+$string['statusfilter3'] = '.';
+

@@ -85,3 +85,43 @@ CSS for the View All/Single/Search pages
     margin-top: 6px;
     padding: 6px 12px 0px;
 }
+
+#page-mod-data-view tr.peer_review p.thanks {
+    color: #FF0000;
+    font-size: 1.4em;
+    margin-top: 6px;
+    margin-bottom: 6px;
+}
+
+#page-mod-data-view tr.peer_review p.status {
+    color: #FF0000;
+    margin-top: 12px;
+    margin-bottom: 12px;
+}
+
+#page-mod-data-view tr.peer_review ul.advice li {
+    font-weight: normal;
+    margin-top: 6px;
+}
+
+#page-mod-data-view tr.peer_review td.criteriagrade {
+    text-align: center;
+}
+
+#page-mod-data-view tr.peer_review td.submissiongrade {
+    border-bottom: double 4px #000000;
+    border-top: double 4px #000000;
+    text-align: center;
+}
+
+#page-mod-data-view tr.peer_review p.feedback {
+    margin-bottom: 12px;
+    margin-top: 6px;
+    text-align: justify;
+}
+
+#page-mod-data-view tr.peer_review p.farewell {
+    color: #FF0000;
+    margin-bottom: 12px;
+    margin-top: 6px;
+}
