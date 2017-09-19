@@ -377,3 +377,4 @@ $string['statusfilter1'] = 'If grade is';
 $string['statusfilter2'] = ', set status to';
 $string['statusfilter3'] = '.';
 
+$string['scheduleupdated'] = 'Schedule data for "{$a}" was updated';

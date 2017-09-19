@@ -1229,7 +1229,6 @@ class block_maj_submissions_tool_setupdatabase extends block_maj_submissions_too
         'user' => array('mod/data:viewentry' => CAP_ALLOW)
     );
 
-
     /**
      * definition
      */
@@ -2152,7 +2151,6 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
 
             if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
 
-
                 $countanonymous = count($anonymous);
                 $countselected = count($records);
                 if ($countanonymous < $countselected) {
@@ -2978,7 +2976,6 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
     }
 }
 
-
 /**
  * block_maj_submissions_tool_setupvetting
  *
@@ -3339,6 +3336,16 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
      * definition
      */
     public function definition() {
+        global $PAGE;
+
+        if (method_exists($PAGE->requires, 'jquery')) {
+            $PAGE->requires->jquery();
+            $PAGE->requires->jquery_plugin('ui');
+        } else {
+            // get JQuery some other way
+        }
+        $PAGE->requires->js('/blocks/maj_submissions/tools/setupschedule.js', true);
+
         $mform = $this->_form;
 
         $this->set_schedule_menus();
@@ -3445,5 +3452,82 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
         } else {
             return ($field->type=='menu');
         }
+    }
+
+    /**
+     * form_postprocessing
+     *
+     * @uses $DB
+     * @param object $data
+     * @return not sure ...
+     * @todo Finish documenting this function
+     */
+    public function form_postprocessing() {
+        global $DB;
+
+        $msg = array();
+
+        // check we have some form data
+        if ($data = $this->get_data()) {
+
+            $this->set_schedule_menus();
+
+            $recordid = 0;
+            $fields = array('schedule_event',    'schedule_day',  'schedule_time',
+                            'schedule_duration', 'schedule_room', 'schedule_audience');
+
+            $fields = array_flip($fields);
+            foreach (array_keys($fields) as $name) {
+
+                $content = null;
+                if (isset($data->$name)) {
+                    if ($name=='schedule_event') {
+                        foreach (array_keys($this->$name) as $activityname) {
+                            if (array_key_exists($data->$name, $this->$name[$activityname])) {
+                                $content = $this->$name[$activityname][$data->$name];
+                                $params = array('id' => $data->$name);
+                                $recordid = $DB->get_field('data_content', 'recordid', $params);
+                            }
+                        }
+                    } else if (array_key_exists($data->$name, $this->$name)) {
+                        $content = $this->$name[$data->$name];
+                    }
+                }
+
+                if ($content===null) {
+                    unset($fields[$name]);
+                } else {
+                    $fields[$name] = $content;
+                }
+            }
+
+            if ($recordid) {
+
+                $params = array('id' => $recordid);
+                $dataid = $DB->get_field('data_records', 'dataid', $params);
+
+                foreach ($fields as $name => $content) {
+
+                    if ($name=='schedule_event') {
+                        // format feedback message and link to db record
+                        $params = array('d' => $dataid, 'rid' => $recordid);
+                        $link = new moodle_url('/mod/data/view.php', $params);
+                        $params = array('href' => $link, 'target' => '_blank');
+                        $link = html_writer::tag('a', $content, $params);
+                        $msg[] = get_string('scheduleupdated', $this->plugin, $link);
+                    } else {
+                        // update field $content for this $recordid
+                        $params = array('dataid' => $dataid, 'name' => $name);
+                        if ($fieldid = $DB->get_field('data_fields', 'id', $params)) {
+
+                            $params = array('fieldid' => $fieldid, 'recordid' => $recordid);
+                            $DB->set_field('data_content', 'content', $content, $params);
+                        }
+                    }
+                }
+            }
+        }
+
+        return $this->form_postprocessing_msg($msg);
     }
 }
