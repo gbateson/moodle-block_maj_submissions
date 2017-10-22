@@ -1,0 +1,393 @@
+.schedule * {
+    box-sizing: border-box;
+}
+
+.schedule {
+    background-color: #fff;
+    border-spacing: 2px;
+    border-collapse: separate;
+    line-height: initial;
+}
+
+.schedule caption,
+.schedule th,
+.schedule td {
+    background-color: #fff;
+}
+
+.schedule, /* table */
+.schedule caption,
+.schedule tr,
+.schedule th,
+.schedule td {
+    display: block;
+}
+
+.schedule .scheduletitle {
+    font-size: xx-large;
+    font-weight: 400;
+    text-align: left;
+    padding-bottom: 12px;
+}
+
+.schedule .schedulechooser {
+    background-color: #f8f8f8;
+    border: 2px solid #999;
+    border-radius: 3px;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2),
+                0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    font-size: initial;
+    margin: 4px 0px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    width: max-content;
+}
+
+.schedule .schedulechooser span {
+    margin: 0px;
+    padding: 4px 8px;
+}
+
+.schedule .schedulechooser span.active {
+    background-color: #fc9;
+    /* f99 pale red */
+    /* fc9 pale orange */
+}
+
+.schedule.myschedule .session:not(.attending) {
+    display: none;
+}
+
+.schedule .tabs,
+.schedule .roomheadings,
+.schedule .timeheading {
+    display: none;
+}
+
+.schedule .date {
+    color: purple;
+    font-size: xx-large;
+    text-align: left;
+}
+
+.schedule .session {
+    background-color: #fff;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    padding: 3px 6px;
+    margin: 6px 0px;
+    overflow: auto;
+}
+
+.schedule .emptysession {
+    display: none;
+}
+
+.schedule .session.attending {
+    border: 1px solid #3c3;
+    background-color: #f8fff8;
+}
+
+.schedule .time,
+.schedule .room,
+.schedule .title,
+.schedule .authors {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.schedule .time,
+.schedule .room,
+.schedule .summary {
+    color: #999;
+}
+
+.schedule .title,
+.schedule .authors {
+    color: #333;
+}
+
+.schedule .time {
+    float: left;
+    text-align: left;
+    white-space: nowrap;
+    width: 40%;
+}
+
+.schedule .room {
+    float: right;
+    padding-right: 6px;
+    text-align: right;
+    white-space: nowrap;
+    width: 40%;
+}
+
+.schedule .totalseats:before,
+.schedule .duration:before {
+    content: " (";
+}
+
+.schedule .totalseats:after,
+.schedule .duration:after {
+    content: ")";
+}
+
+.schedule .roomtopic {
+    font-size: 0.9em;
+    font-style: italic;
+}
+
+.schedule .totalseats:empty,
+.schedule .roomtopic:empty {
+   display: none;
+}
+
+.schedule .title {
+    clear: left;
+    font-size: 1.6em;
+    white-space: nowrap;
+}
+
+.schedule .authors {
+    font-size: small;
+}
+
+.schedule .schedulenumber {
+    font-style: normal;
+}
+
+.schedule .schedulenumber:before {
+    content: "[";
+}
+
+.schedule .schedulenumber:after {
+    content: "] ";
+}
+
+.schedule .summary {
+    float: left;
+    font-style: italic;
+    max-height: 3.5em;
+    padding-top: 3px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: calc(100% - 8em);
+}
+
+.schedule .capacity {
+    float: right;
+    font-size: 0.9em;
+    height: 3em;
+    text-align: right;
+    width: 8em;
+}
+
+.schedule .attendance {
+    color: #888;
+    display: inline;
+}
+
+.schedule .session.attending .attendance {
+    color: #1a1;
+}
+
+.schedule .emptyseats {
+    color: purple;
+}
+
+@media print, screen and (min-width: 768px) {
+
+    table.schedule {
+        display: table;
+    }
+
+    .schedule caption {
+        display: table-caption;
+    }
+
+    .schedule tr,
+    .schedule .roomheadings {
+        display: table-row;
+    }
+
+    .schedule th,
+    .schedule td,
+    .schedule .timeheading,
+    .schedule .emptysession {
+        display: table-cell;
+    }
+
+    .schedule .schedulechooser {
+        float: right;
+        margin: 4px 8px;
+        padding: 0px;
+    }
+
+    .schedule .schedulechooser span {
+        display: inline-block;
+    }
+
+    .schedule .date td {
+        padding-bottom: 4px;
+        padding-top: 12px;
+    }
+
+    .schedule .timeheading {
+        font-size: 0.9em;
+        font-weight: normal;
+        min-width: 80px;
+        padding-top: 6px;
+        text-align: center;
+        vertical-align: top;
+    }
+
+    .schedule .emptysession {
+        text-align: center;
+        /** visibility: hidden; */
+
+    }
+
+    .schedule .emptysession:before {
+        color: #999;
+        content: "No event scheduled here";
+        font-size: small;
+    }
+
+    .schedule .session {
+        margin: 4px 3px;
+        overflow: visible;
+        width: 180px;
+        vertical-align: top;
+    }
+
+    .schedule.myschedule .session:not(.attending) {
+        display: table-cell;
+        visibility: hidden;
+    }
+
+    .schedule .time,
+    .schedule .room,
+    .schedule .summary {
+        display: none;
+    }
+
+    .schedule .allrooms .summary {
+        display: inline-block;
+        max-height: 24px;
+        max-width: 540px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .schedule .allrooms .room {
+        background-color: #ede;
+        border: 1px solid #cac;
+        border-radius: 4px;
+        color: #000;
+        display: block;
+        float: right;
+        padding: 3px 6px;
+        text-align: center;
+        width: initial;
+    }
+
+    .schedule .roomheading {
+        background-color: #ede;
+        border: 1px solid #cac;
+        border-radius: 4px;
+        color: black;
+        font-weight: normal;
+        padding: 4px 6px;
+        text-align: center;
+    }
+
+    .schedule .duration:before {
+        content: "\A(";
+        white-space: pre;
+    }
+
+    .schedule .duration:after {
+        content: ")";
+    }
+
+    .schedule .title {
+        font-size: initial;
+        font-weight: bold;
+        padding-top: 0px;
+    }
+
+    .schedule .authors {
+        font-style: italic;
+    }
+
+    .schedule .capacity {
+        padding-top: 3px;
+        text-align: left;
+        height: auto;
+        width: 100%;
+    }
+
+    .schedule .emptyseats {
+        display: none;
+    }
+}
+
+@media only screen and (min-width: 768px) and (max-height: 800px) {
+
+    .schedule {
+        position: relative;
+    }
+
+    .schedule .day,
+    .schedule .date {
+        display: none;
+    }
+
+    .schedule .day.active {
+        display: initial;
+    }
+
+    .schedule .tabs {
+        display: table-row;
+        height: 60px;
+    }
+
+    .schedule .tabs td {
+        position: relative;
+    }
+
+    .schedule .tab {
+        display: inline-block;
+        background-color: #eee;
+        border: 2px dotted #999;
+        border-bottom: none;
+        border-radius: 8px 8px 0px 0px;
+        color: #999;
+        font-size: x-large;
+        position: absolute;
+        text-align: center;
+        top: 2px;
+        /* left margin is 92px, right gap is 12px */
+        width: calc(calc(100% - 104px) * 30 / 100);
+    }
+
+    .schedule .tab.active {
+        background-color: #fff;
+        border: 2px solid #999;
+        border-bottom: none;
+        color: purple;
+    }
+
+    .schedule .tab.day1 {
+        left: 92px;
+    }
+
+    .schedule .tab.day2 {
+        left: calc(92px + calc(100% - 104px) * 35 / 100);
+    }
+
+    .schedule .tab.day3 {
+        left: calc(92px + calc(100% - 104px) * 70 / 100);
+    }
+}
