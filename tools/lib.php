@@ -46,6 +46,12 @@ abstract class block_maj_submissions_tool_base extends moodleform {
     const TEXT_FIELD_SIZE = 20;
     const TEMPLATE_COUNT = 8;
 
+    const TEMPLATE_NONE     = 0;
+    const TEMPLATE_ACTIVITY = 1;
+    const TEMPLATE_FILENAME = 2;
+    const TEMPLATE_UPLOAD   = 3;
+    const TEMPLATE_GENERATE = 4;
+
     /** values passed from tool creating this form */
     protected $plugin = '';
     protected $course = null;
@@ -335,13 +341,36 @@ abstract class block_maj_submissions_tool_base extends moodleform {
     }
 
     /**
-     * get_defaultvalues
+     * form_postprocessing
      *
+     * @uses $DB
+     * @param object $data
+     * @return not sure ...
      * @todo Finish documenting this function
      */
-    protected function get_defaultvalues() {
-        $this->defaultvalues['intro'] = $this->get_defaultintro();
-        return $this->defaultvalues;
+    public function form_postprocessing() {
+    }
+
+    /**
+     * get_defaultvalues
+     *
+     * @param object $data from newly submitted form
+     * @param integer $time
+     */
+    protected function get_defaultvalues($data, $time) {
+        $defaultvalues = $this->defaultvalues;
+
+        $defaultvalues['intro'] = $this->get_defaultintro();
+
+        foreach ($this->timefields['timestart'] as $name) {
+            $defaultvalues[$name] = $time;
+        }
+
+        foreach ($this->timefields['timefinish'] as $name) {
+            $defaultvalues[$name] = 0;
+        }
+
+        return $defaultvalues;
     }
 
     /**
@@ -380,6 +409,69 @@ abstract class block_maj_submissions_tool_base extends moodleform {
             }
         }
         return $restrictions;
+    }
+
+    /**
+     * get_cm
+     *
+     * @param array   $msg
+     * @param object  $data
+     * @param integer $time
+     * @param string  $name
+     * @return object newly added $cm object; otherwise false
+     */
+    public function get_cm(&$msg, $data, $time, $name) {
+
+        $cm = false;
+
+        $activitynum  = $name.'num';
+        $activitynum  = $data->$activitynum;
+
+        $activityname = $name.'name';
+        $activityname = $data->$activityname;
+
+        $sectionnum   = $data->coursesectionnum;
+        $sectionname  = $data->coursesectionname;
+
+        if ($activitynum) {
+            if ($activitynum==self::CREATE_NEW) {
+
+                if ($sectionnum==self::CREATE_NEW) {
+                    $section = self::get_section($this->course, $sectionname);
+                } else {
+                    $section = get_fast_modinfo($this->course)->get_section_info($sectionnum);
+                }
+
+                if ($section) {
+                    $defaultvalues = $this->get_defaultvalues($data, $time);
+                    $cm = self::get_coursemodule($this->course, $section, $this->modulename,  $activityname, $defaultvalues);
+
+                    if ($cm) {
+                        $permissions = $this->get_permissions($data);
+                        self::set_cm_permissions($cm, $permissions);
+
+                        $restrictions = $this->get_restrictions($data);
+                        self::set_cm_restrictions($cm, $restrictions);
+
+                        if ($this->type) {
+                            if ($this->cmid==0) {
+                                $this->cmid = $cm->id;
+                                $cmid = $this->type.'cmid';
+                                $this->instance->config->$cmid = $cm->id;
+                                $this->instance->instance_config_save($this->instance->config);
+                            }
+                        }
+                        $msg[] = get_string('newactivitycreated', $this->plugin, $activityname);
+                    } else {
+                        $msg[] = get_string('newactivityskipped', $this->plugin, $activityname);
+                    }
+                }
+            } else {
+                $cm = get_fast_modinfo($this->course)->get_cm($activitynum);
+            }
+        }
+
+        return $cm;
     }
 
     /**
@@ -470,7 +562,9 @@ abstract class block_maj_submissions_tool_base extends moodleform {
      */
     static public function bilingual_string() {
         $ascii = self::low_ascii_substring();
-        return '/^([^'.$ascii.']+) *(['.$ascii.']+?)$/u';
+        // ascii chars excluding numbers: 0-9 (=hex 30-39)
+        $chars = '\\x{0000}-\\x{0029}\\x{0040}-\\x{007F}';
+        return '/^([^'.$chars.']*[^'.$ascii.']) *(['.$ascii.']+?)$/u';
     }
 
     /**
@@ -879,68 +973,13 @@ abstract class block_maj_submissions_tool_base extends moodleform {
         $options = array();
         $sections = get_fast_modinfo($course)->get_section_info_all();
         foreach ($sections as $sectionnum => $section) {
-            if ($name = self::get_sectionname($section)) {
+            if ($name = block_maj_submissions::get_sectionname($section)) {
                 $options[$sectionnum] = $name;
             } else {
-                $options[$sectionnum] = self::get_sectionname_default($course, $sectionnum);
+                $options[$sectionnum] = block_maj_submissions::get_sectionname_default($course, $sectionnum);
             }
         }
         return self::format_select_options($plugin, $options, 'section');
-    }
-
-    /**
-     * get_sectionname_default
-     *
-     * @param object   $course
-     * @param object   $section
-     * @param string   $dateformat (optional, default='%b %d')
-     * @return string  name of $section
-     */
-    static public function get_sectionname_default($course, $sectionnum, $dateformat='%b %d') {
-
-        // set course section type
-        if ($course->format=='weeks') {
-            $sectiontype = 'week';
-        } else if ($course->format=='topics') {
-            $sectiontype = 'topic';
-        } else {
-            $sectiontype = 'section';
-        }
-
-        // "weeks" format
-        if ($sectiontype=='week' && $sectionnum > 0) {
-            if ($dateformat=='') {
-                $dateformat = get_string('strftimedateshort');
-            }
-            // 604800 : number of seconds in 7 days i.e. WEEKSECS
-            // 518400 : number of seconds in 6 days i.e. WEEKSECS - DAYSECS
-            $date = $course->startdate + 7200 + (($sectionnum - 1) * 604800);
-            return userdate($date, $dateformat).' - '.userdate($date + 518400, $dateformat);
-        }
-
-        // get string manager object
-        $strman = get_string_manager();
-
-        // specify course format plugin name
-        $courseformat = 'format_'.$course->format;
-
-        if ($strman->string_exists('section'.$sectionnum.'name', $courseformat)) {
-            return get_string('section'.$sectionnum.'name', $courseformat);
-        }
-
-        if ($strman->string_exists('sectionname', $courseformat)) {
-            return get_string('sectionname', $courseformat).' '.$sectionnum;
-        }
-
-        if ($strman->string_exists($sectiontype, 'moodle')) {
-            return get_string($sectiontype).' '.$sectionnum;
-        }
-
-        if ($strman->string_exists('sectionname', 'moodle')) {
-            return get_string('sectionname').' '.$sectionnum;
-        }
-
-        return $sectiontype.' '.$sectionnum;
     }
 
     /**
@@ -978,7 +1017,10 @@ abstract class block_maj_submissions_tool_base extends moodleform {
                         $cm = $modinfo->get_cm($cmid);
                         if ($modcount==0 || in_array($cm->modname, $modnames)) {
                             if ($sectionname=='' && $simplelist==false) {
-                                $sectionname = self::get_sectionname($section, 0);
+                                $sectionname = block_maj_submissions::get_sectionname($section, 0);
+                                if ($sectionname=='') {
+                                    $sectionname = block_maj_submissions::get_sectionname_default($course, $sectionnum);
+                                }
                                 $options[$sectionname] = array();
                             }
                             $name = $cm->name;
@@ -1048,57 +1090,6 @@ abstract class block_maj_submissions_tool_base extends moodleform {
             $options += array(self::CREATE_NEW => $label);
         }
         return $options;
-    }
-
-    /**
-     * get_sectionname
-     *
-     * names longer than $namelength will be trancated to to HEAD ... TAIL
-     * where the number of characters in HEAD is $headlength
-     * and the number of characters in TIAL is $taillength
-     *
-     * @param object   $section
-     * @param integer  $namelength of section name (optional, default=28)
-     * @param integer  $headlength of head of section name (optional, default=10)
-     * @param integer  $taillength of tail of section name (optional, default=10)
-     * @return string  name of $section
-     */
-    static public function get_sectionname($section, $namelength=28, $headlength=10, $taillength=10) {
-
-        // extract section title from section name
-        if ($name = block_maj_submissions::filter_text($section->name)) {
-            return block_maj_submissions::trim_text($name, $namelength, $headlength, $taillength);
-        }
-
-        // extract section title from section summary
-        if ($name = block_maj_submissions::filter_text($section->summary)) {
-
-            // remove script and style blocks
-            $select = '/\s*<(script|style)[^>]*>.*?<\/\1>\s*/is';
-            $name = preg_replace($select, '', $name);
-
-            // look for HTML H1-5 tags or the first line of text
-            $tags = 'h1|h2|h3|h4|h5|h6';
-            if (preg_match('/<('.$tags.')\b[^>]*>(.*?)<\/\1>/is', $name, $matches)) {
-                $name = $matches[2];
-            } else {
-                // otherwise, get first line of text
-                $name = preg_split('/<br[^>]*>/', $name);
-                $name = array_map('strip_tags', $name);
-                $name = array_map('trim', $name);
-                $name = array_filter($name);
-                if (empty($name)) {
-                    $name = '';
-                } else {
-                    $name = reset($name);
-                }
-            }
-            $name = trim(strip_tags($name));
-            $name = block_maj_submissions::trim_text($name, $namelength, $headlength, $taillength);
-            return $name;
-        }
-
-        return ''; // section name and summary are empty
     }
 
     /**
@@ -1370,44 +1361,13 @@ class block_maj_submissions_tool_setupdatabase extends block_maj_submissions_too
         global $CFG, $DB, $OUTPUT, $PAGE;
         require_once($CFG->dirroot.'/lib/xmlize.php');
 
-        // get/create the $cm record and associated $section
         $cm = false;
+        $msg = array();
+        $time = time();
+
+        // get/create the $cm record and associated $section
         if ($data = $this->get_data()) {
-
-            $databasenum  = $data->databaseactivitynum;
-            $databasename = $data->databaseactivityname;
-            $sectionnum   = $data->coursesectionnum;
-            $sectionname  = $data->coursesectionname;
-
-            if ($databasenum) {
-                if ($databasenum==self::CREATE_NEW) {
-                    if ($sectionnum==self::CREATE_NEW) {
-                        $section = self::get_section($this->course, $sectionname);
-                    } else {
-                        $section = get_fast_modinfo($this->course)->get_section_info($sectionnum);
-                    }
-                    if ($section) {
-                        $defaultvalues = $this->get_defaultvalues();
-                        $cm = self::get_coursemodule($this->course, $section, $this->modulename,  $databasename, $defaultvalues);
-                    }
-                    if ($cm) {
-                        $permissions = $this->get_permissions($data);
-                        self::set_cm_permissions($cm, $permissions);
-
-                        $restrictions = $this->get_restrictions($data);
-                        self::set_cm_restrictions($cm, $restrictions);
-
-                        if ($this->cmid==0) {
-                            $this->cmid = $cm->id;
-                            $cmid = $this->type.'cmid';
-                            $this->instance->config->$cmid = $cm->id;
-                            $this->instance->instance_config_save($this->instance->config);
-                        }
-                    }
-                } else {
-                    $cm = get_fast_modinfo($this->course)->get_cm($databasenum);
-                }
-            }
+            $cm = $this->get_cm($msg, $data, $time, 'databaseactivity');
         }
 
         if ($cm) {
@@ -2029,6 +1989,36 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
     }
 
     /**
+     * get_defaultvalues
+     *
+     * @param object $data from newly submitted form
+     * @param integer $time
+     */
+    protected function get_defaultvalues($data, $time) {
+        $defaultvalues = parent::get_defaultvalues($data, $time);
+
+        if ($data->templateactivity) {
+            $cm = $DB->get_record('course_modules', array('id' => $data->templateactivity));
+            $instance = $DB->get_record($this->modulename, array('id' => $cm->instance));
+            $course = $DB->get_record('course', array('id' => $instance->course));
+            $template = new workshop($instance, $cm, $course);
+        }
+
+        if ($template) {
+            foreach ($template as $name => $value) {
+                if ($name=='id' || $name=='name') {
+                    continue; // skip these fields
+                }
+                if (is_scalar($value)) {
+                    $defaultvalues[$name] = $value;
+                }
+            }
+        }
+
+        return $defaultvalues;
+    }
+
+    /**
      * form_postprocessing
      *
      * @uses $DB
@@ -2043,69 +2033,17 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
         $cm = false;
         $time = time();
         $msg = array();
-        $template = null;
         $config = $this->instance->config;
 
         // get/create the $cm record and associated $section
         if ($data = $this->get_data()) {
-
-            $databasenum = $data->sourcedatabase;
-
-            $workshopnum  = $data->targetworkshopnum;
-            $workshopname = $data->targetworkshopname;
-
-            $sectionnum   = $data->coursesectionnum;
-            $sectionname  = $data->coursesectionname;
-
-            if ($workshopnum) {
-                if ($workshopnum==self::CREATE_NEW) {
-                    if ($sectionnum==self::CREATE_NEW) {
-                        $section = self::get_section($this->course, $sectionname);
-                        $msg[] = get_string('newsectioncreated', $this->plugin, $section->name);
-                    } else {
-                        $section = get_fast_modinfo($this->course)->get_section_info($sectionnum);
-                    }
-                    if ($data->templateactivity) {
-                        $cm = $DB->get_record('course_modules', array('id' => $data->templateactivity));
-                        $instance = $DB->get_record($this->modulename, array('id' => $cm->instance));
-                        $course = $DB->get_record('course', array('id' => $instance->course));
-                        $template = new workshop($instance, $cm, $course);
-                    }
-                    $defaultvalues = $this->get_defaultvalues();
-                    if ($template) {
-                        foreach ($template as $name => $value) {
-                            if ($name=='id' || $name=='name') {
-                                continue; // skip these fields
-                            }
-                            if (is_scalar($value)) {
-                                $defaultvalues[$name] = $value;
-                            }
-                        }
-                    }
-                    foreach ($this->timefields['timestart'] as $name) {
-                        $defaultvalues[$name] = $time;
-                    }
-                    foreach ($this->timefields['timefinish'] as $name) {
-                        $defaultvalues[$name] = 0;
-                    }
-                    $cm = self::get_coursemodule($this->course, $section, $this->modulename, $workshopname, $defaultvalues);
-
-                    $permissions = $this->get_permissions($data);
-                    self::set_cm_permissions($cm, $permissions);
-
-                    $msg[] = get_string('newactivitycreated', $this->plugin, $workshopname);
-                } else {
-                    $cm = get_fast_modinfo($this->course)->get_cm($workshopnum);
-                }
-
-                $restrictions = $this->get_restrictions($data);
-                self::set_cm_restrictions($cm, $restrictions);
-            }
+            $cm = $this->get_cm($msg, $data, $time, 'targetworkshop');
         }
 
         if ($cm) {
 
             // cache the database id
+            $databasenum = $data->sourcedatabase;
             $dataid = get_fast_modinfo($this->course)->get_cm($databasenum)->instance;
 
             // initialize counters
@@ -2682,35 +2620,13 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
         global $CFG, $DB;
         require_once($CFG->dirroot.'/mod/workshop/locallib.php');
 
+        $cm = false;
         $msg = array();
+        $time = time();
 
         // get/create the $cm record and associated $section
-        $cm = false;
         if ($data = $this->get_data()) {
-
-            $databasenum    = $data->targetdatabasenum;
-            $databasename   = $data->targetdatabasename;
-            $sectionnum     = $data->coursesectionnum;
-            $sectionname    = $data->coursesectionname;
-
-            if ($databasenum) {
-                if ($databasenum==self::CREATE_NEW) {
-                    if ($sectionnum==self::CREATE_NEW) {
-                        $section = self::get_section($this->course, $sectionname);
-                    } else {
-                        $section = get_fast_modinfo($this->course)->get_section_info($sectionnum);
-                    }
-                    $cm = self::get_coursemodule($this->course, $section, $this->modulename, $databasename, $this->defaultvalues);
-
-                    $permissions = $this->get_permissions($data);
-                    self::set_cm_permissions($cm, $permissions);
-
-                    $restrictions = $this->get_restrictions($data);
-                    self::set_cm_restrictions($cm, $restrictions);
-                } else {
-                    $cm = get_fast_modinfo($this->course)->get_cm($databasenum);
-                }
-            }
+            $cm = $this->get_cm($msg, $data, $time, 'targetdatabase');
         }
 
         if ($cm) {
@@ -3325,6 +3241,20 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
  */
 class block_maj_submissions_tool_setupschedule extends block_maj_submissions_tool_base {
 
+    protected $type = 'publish';
+    protected $modulename = 'page';
+
+    // default values for a new "page" resource
+    protected $defaultvalues = array(
+        'intro' => '',
+        'introformat' => FORMAT_HTML, // =1
+        'content' => '',
+        'contentformat' => FORMAT_HTML, // =1,
+        'display' => 0, // = RESOURCELIB_DISPLAY_AUTO
+        'displayoptions' => array('printheading' => 0, 'printintro' => 0)
+    );
+
+    // caches for the menu items
     protected $schedule_day      = null;
     protected $schedule_time     = null;
     protected $schedule_duration = null;
@@ -3348,27 +3278,133 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
 
         $mform = $this->_form;
 
-        $this->set_schedule_menus();
+        // extract the module context and course section, if possible
+        if ($this->cmid) {
+            $context = block_maj_submissions::context(CONTEXT_MODULE, $this->cmid);
+            $sectionnum = get_fast_modinfo($this->course)->get_cm($this->cmid)->sectionnum;
+        } else {
+            $context = $this->course->context;
+            $sectionnum = 0;
+        }
 
-        $name = 'schedule_event';
-        $this->add_field($mform, $this->plugin, $name, 'selectgroups', PARAM_INT, $this->$name);
+        if (empty($this->cmid)) {
+            $name = 'publishcmid';
+            $this->add_field_cm($mform, $this->course, $this->plugin, $name, $this->cmid);
+            $this->add_field_section($mform, $this->course, $this->plugin, 'coursesection', $name, $sectionnum);
 
-        $name = 'schedule_day';
-        $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
+            // --------------------------------------------------------
+            $name = 'template';
+            $label = get_string($name, $this->plugin);
+            $mform->addElement('header', $name, $label);
+            // --------------------------------------------------------
 
-        $name = 'schedule_time';
-        $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
+            $name = 'templatetype';
+            $options = array(self::TEMPLATE_NONE     => '',
+                             self::TEMPLATE_ACTIVITY => get_string('selecttemplateactivity', $this->plugin),
+                             self::TEMPLATE_FILENAME => get_string('selecttemplatefilename', $this->plugin),
+                             self::TEMPLATE_UPLOAD   => get_string('uploadtemplatefile',     $this->plugin),
+                             self::TEMPLATE_GENERATE => get_string('generatesampletemplate', $this->plugin));
+            $this->add_field($mform, $this->plugin, $name, 'select', PARAM_FILE, $options);
+            $mform->disabledIf($name, 'publishcmidnum', 'neq', self::CREATE_NEW);
 
-        $name = 'schedule_duration';
-        $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
+            $name = 'templateactivity';
+            $this->add_field_template($mform, $this->plugin, $name, $this->modulename, 'publishcmid');
+            $mform->disabledIf($name, 'templatetype', 'neq', self::TEMPLATE_ACTIVITY);
 
-        $name = 'schedule_room';
-        $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
+            $name = 'templatefilename';
+            $this->add_field_templatefilename($mform, $this->plugin, $name);
+            $mform->disabledIf($name, 'templatetype', 'neq', self::TEMPLATE_FILENAME);
 
-        $name = 'schedule_audience';
-        $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
+            $name = 'templateupload';
+            $label = get_string($name, $this->plugin);
+            $mform->addElement('filepicker', $name, $label);
+            $mform->addHelpButton($name, $name, $this->plugin);
+            $mform->disabledIf($name, 'templatetype', 'neq', self::TEMPLATE_UPLOAD);
+
+        } else {
+
+            // --------------------------------------------------------
+            $name = 'sessioninfo';
+            $label = get_string($name, $this->plugin);
+            $mform->addElement('header', $name, $label);
+            // --------------------------------------------------------
+
+            $this->set_schedule_menus();
+
+            $name = 'schedule_event';
+            $this->add_field($mform, $this->plugin, $name, 'selectgroups', PARAM_INT, $this->$name);
+
+            $name = 'schedule_day';
+            $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
+
+            $name = 'schedule_time';
+            $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
+
+            $name = 'schedule_duration';
+            $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
+
+            $name = 'schedule_room';
+            $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
+
+            $name = 'schedule_audience';
+            $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
+        }
 
         $this->add_action_buttons();
+    }
+
+    /**
+     * add_field_templatefilename
+     *
+     * @param object $mform
+     * @param string $plugin
+     * @param string $name
+     */
+    static public function add_field_templatefilename($mform, $plugin, $name) {
+        global $CFG;
+
+        $elements = array();
+        $default = '';
+        $strman = get_string_manager();
+
+        $dirpath = $CFG->dirroot.'/blocks/maj_submissions/templates';
+        if (is_dir($dirpath)) {
+
+            $filenames = scandir($dirpath);
+            foreach ($filenames as $filename) {
+                if (substr($filename, 0, 1)=='.') {
+                    continue; // skip hidden shortnames
+                }
+                if (substr($filename, -5)=='.html') {
+                    $label = substr($filename, 0, -5);
+                } else if (substr($filename, -4)=='.htm') {
+                    $label = substr($filename, 0, -4);
+                } else {
+                    $label = '';
+                }
+                if ($label) {
+                    $label = 'template'.$label;
+                    if ($strman->string_exists($label, $plugin)) {
+                        $label = get_string($label, $plugin);
+                    } else {
+                        $label = $filename;
+                    }
+                    $elements[] = $mform->createElement('radio', $name, null, $label, $filename);
+                    if ($default=='') {
+                        $default = $filename;
+                    }
+                }
+            }
+        }
+
+        if (count($elements)) {
+            $group_name = 'group_'.$name;
+            $label = get_string($name, $plugin);
+            $mform->addGroup($elements, $group_name, $label, html_writer::empty_tag('br'), false);
+            $mform->addHelpButton($group_name, $name, $plugin);
+            $mform->setType($name, PARAM_TEXT);
+            $mform->setDefault($name, $default);
+        }
     }
 
     /**
@@ -3383,11 +3419,13 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
         $config = $this->instance->config;
         $modinfo = get_fast_modinfo($this->course);
 
+        // the database types
         $types = array('presentation',
                        'workshop',
                        'sponsored',
                        'event');
 
+        // database field types
         $names = array('schedule_day',
                        'schedule_time',
                        'schedule_duration',
@@ -3424,8 +3462,16 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                     continue;
                 }
                 if (self::is_menu_field($field)) {
-                    $this->$name = preg_split('/[\\r\\n]+/', $field->param1);
-                    $this->$name = array_filter($this->$name);
+                    $array = preg_split('/[\\r\\n]+/', $field->param1);
+                    $array = array_filter($array);
+                    $array = array_combine($array, $array);
+                    foreach ($array as $key => $value) {
+                        $value = self::convert_to_multilang($value, $config);
+                        $value = block_maj_submissions::filter_text($value);
+                        $array[$key] = $value;
+                    }
+                    array_unshift($array, '');
+                    $this->$name = $array;
                 }
             }
 
@@ -3465,63 +3511,69 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
     public function form_postprocessing() {
         global $DB;
 
+        $cm = false;
+        $time = time();
         $msg = array();
 
         // check we have some form data
         if ($data = $this->get_data()) {
 
-            $this->set_schedule_menus();
+            $cm = $this->get_cm($msg, $data, $time, 'publishcmid');
 
-            $recordid = 0;
-            $fields = array('schedule_event',    'schedule_day',  'schedule_time',
-                            'schedule_duration', 'schedule_room', 'schedule_audience');
+            if ($cm) {
+                $this->set_schedule_menus();
 
-            $fields = array_flip($fields);
-            foreach (array_keys($fields) as $name) {
+                $recordid = 0;
+                $fields = array('schedule_event',    'schedule_day',  'schedule_time',
+                                'schedule_duration', 'schedule_room', 'schedule_audience');
 
-                $content = null;
-                if (isset($data->$name)) {
-                    if ($name=='schedule_event') {
-                        foreach (array_keys($this->$name) as $activityname) {
-                            if (array_key_exists($data->$name, $this->$name[$activityname])) {
-                                $content = $this->$name[$activityname][$data->$name];
-                                $params = array('id' => $data->$name);
-                                $recordid = $DB->get_field('data_content', 'recordid', $params);
+                $fields = array_flip($fields);
+                foreach (array_keys($fields) as $name) {
+
+                    $content = null;
+                    if (isset($data->$name)) {
+                        if ($name=='schedule_event') {
+                            foreach (array_keys($this->$name) as $activityname) {
+                                if (array_key_exists($data->$name, $this->$name[$activityname])) {
+                                    $content = $this->$name[$activityname][$data->$name];
+                                    $params = array('id' => $data->$name);
+                                    $recordid = $DB->get_field('data_content', 'recordid', $params);
+                                }
                             }
+                        } else if (array_key_exists($data->$name, $this->$name)) {
+                            $content = $this->$name[$data->$name];
                         }
-                    } else if (array_key_exists($data->$name, $this->$name)) {
-                        $content = $this->$name[$data->$name];
+                    }
+
+                    if ($content===null) {
+                        unset($fields[$name]);
+                    } else {
+                        $fields[$name] = $content;
                     }
                 }
 
-                if ($content===null) {
-                    unset($fields[$name]);
-                } else {
-                    $fields[$name] = $content;
-                }
-            }
+                if ($recordid) {
 
-            if ($recordid) {
+                    $params = array('id' => $recordid);
+                    $dataid = $DB->get_field('data_records', 'dataid', $params);
 
-                $params = array('id' => $recordid);
-                $dataid = $DB->get_field('data_records', 'dataid', $params);
+                    foreach ($fields as $name => $content) {
 
-                foreach ($fields as $name => $content) {
+                        if ($name=='schedule_event') {
+                            // format feedback message and link to db record
+                            $params = array('d' => $dataid, 'rid' => $recordid);
+                            $link = new moodle_url('/mod/data/view.php', $params);
+                            $params = array('href' => $link, 'target' => '_blank');
+                            $link = html_writer::tag('a', $content, $params);
+                            $msg[] = get_string('scheduleupdated', $this->plugin, $link);
+                        } else {
+                            // update field $content for this $recordid
+                            $params = array('dataid' => $dataid, 'name' => $name);
+                            if ($fieldid = $DB->get_field('data_fields', 'id', $params)) {
 
-                    if ($name=='schedule_event') {
-                        // format feedback message and link to db record
-                        $params = array('d' => $dataid, 'rid' => $recordid);
-                        $link = new moodle_url('/mod/data/view.php', $params);
-                        $params = array('href' => $link, 'target' => '_blank');
-                        $link = html_writer::tag('a', $content, $params);
-                        $msg[] = get_string('scheduleupdated', $this->plugin, $link);
-                    } else {
-                        // update field $content for this $recordid
-                        $params = array('dataid' => $dataid, 'name' => $name);
-                        if ($fieldid = $DB->get_field('data_fields', 'id', $params)) {
-
-                            $params = array('fieldid' => $fieldid, 'recordid' => $recordid);
-                            $DB->set_field('data_content', 'content', $content, $params);
+                                $params = array('fieldid' => $fieldid, 'recordid' => $recordid);
+                                $DB->set_field('data_content', 'content', $content, $params);
+                            }
                         }
                     }
                 }
@@ -3529,5 +3581,340 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
         }
 
         return $this->form_postprocessing_msg($msg);
+    }
+
+    /**
+     * get_defaultvalues
+     *
+     * @param object $data from newly submitted form
+     * @param integer $time
+     */
+    protected function get_defaultvalues($data, $time) {
+        global $CFG;
+
+        $defaultvalues = parent::get_defaultvalues($data, $time);
+
+        $name = 'displayoptions';
+        if (is_array($defaultvalues[$name])) {
+            $defaultvalues[$name] = serialize($defaultvalues[$name]);
+        }
+
+        // search string to detect leading and trailing <body> tags in HTML file/snippet
+        $search = '/(^.*?<body[^>]*>\s*)|(\s*<\/body>.*?)$/su';
+
+        switch ($data->templatetype) {
+
+            case self::TEMPLATE_ACTIVITY:
+                $template = $DB->get_record('course_modules', array('id' => $data->templateactivity));
+                $template = $DB->get_record($this->modulename, array('id' => $template->instance));
+                break;
+
+            case self::TEMPLATE_FILENAME:
+                $filename = $CFG->dirroot.'/blocks/maj_submissions/templates/'.$data->templatefilename;
+                if (is_file($filename)) {
+                    $template = new stdClass();
+                    $template->content = file_get_contents($filename);
+                    $template->content = preg_replace($search, '', $template->content);
+                }
+                break;
+
+            case self::TEMPLATE_UPLOAD:
+                $file = $this->save_temp_file('templateupload');
+                if (is_file($file)) {
+                    $template = new stdClass();
+                    $template->content = file_get_contents($file);
+                    $template->content = preg_replace($search, '', $template->content);
+                    fulldelete($file);
+                }
+                break;
+
+            case self::TEMPLATE_GENERATE:
+                $template = new stdClass();
+                $template->content = $this->get_defaulttemplate();
+                break;
+        }
+
+        if ($template) {
+            foreach ($template as $name => $value) {
+                if ($name=='id' || $name=='name') {
+                    continue; // skip these fields
+                }
+                if (is_scalar($value)) {
+                    $defaultvalues[$name] = $value;
+                }
+            }
+        }
+
+        return $defaultvalues;
+    }
+
+    /**
+     * get_defaultcontent
+     *
+     * @todo Finish documenting this function
+     */
+    protected function get_defaulttemplate() {
+        $config = $this->instance->config;
+
+        $title = $config->conferencenameen;
+
+        $authors = 'Tom, Dick, Harry';
+        $letters = range(97, 122); // ascii a-z
+        $letters = array_map('chr', $letters);
+
+        $rooms = array(
+            0 => (object)array(
+                    'name' =>  'Foyer',
+                    'seats' => '100 seats',
+                    'topic' => '',
+                 ),
+            1 => (object)array(
+                    'name' =>  'Room 1',
+                    'seats' => '50 seats',
+                    'topic' => 'Show and Tell',
+                 ),
+            2 => (object)array(
+                    'name' =>  'Room 2',
+                    'seats' => '40 seats',
+                    'topic' => 'Moodle admin',
+                 ),
+            3 => (object)array(
+                    'name' =>  'Room 3',
+                    'seats' => '35 seats',
+                    'topic' => 'Developers',
+                 ),
+            4 => (object)array(
+                    'name' =>  'Room 3',
+                    'seats' => '30 seats',
+                    'topic' => 'Posters',
+                 ),
+            5 => (object)array(
+                    'name' =>  'Room 4',
+                    'seats' => '25 seats',
+                    'topic' => 'Courseware',
+                 ),
+            6 => (object)array(
+                    'name' =>  'Room 5',
+                    'seats' => '20 seats',
+                    'topic' => 'Sponsors',
+                 ),
+        );
+
+        $days  = array(
+            1 => (object)array(
+                    'tabtext' =>  'Feb 21st<br />(Wed)',
+                    'fulltext' => 'Feb 21st (Wed)'
+                 ),
+            2 => (object)array(
+                    'tabtext' =>  'Feb 22nd<br />(Thu)',
+                    'fulltext' => 'Feb 22nd (Thu)'
+                 ),
+            3 => (object)array(
+                    'tabtext' =>  'Feb 23rd<br />(Fri)',
+                    'fulltext' => 'Feb 23rd (Fri)'
+                 ),
+        );
+
+        $slots = array(
+            0 => (object)array(
+                    'time' =>  '8:30 - 9:00',
+                    'duration' => '30 mins',
+                    'allrooms' => true
+                 ),
+            1 => (object)array(
+                    'time' =>  '9:00 - 9:40',
+                    'duration' => '40 mins'
+                 ),
+            2 => (object)array(
+                    'time' =>  '9:50 - 10:30',
+                    'duration' => '40 mins'
+                 ),
+            3 => (object)array(
+                    'time' =>  '10:40 - 10:50',
+                    'duration' => '10 mins'
+                 ),
+            4 => (object)array(
+                    'time' =>  '11:00 - 12:00',
+                    'duration' => '60 mins'
+                 ),
+        );
+
+        $countrooms = max(array_keys($rooms));
+        $countcols = ($countrooms + 1);
+
+        $content = '';
+        $content .= html_writer::start_tag('table', array('class' => 'schedule'));
+
+        // COLGROUP (after CAPTION, before THEAD)
+        $content .= html_writer::start_tag('colgroup');
+        $content .= html_writer::start_tag('col', array('class' => 'room0 timeheading'));
+        foreach ($rooms as $r => $room) {
+            if ($r==0) {
+                continue;
+            }
+            $content .= html_writer::start_tag('col', array('class' => "room$r"));
+        }
+        $content .= html_writer::end_tag('colgroup');
+
+        // THEAD
+        $content .= html_writer::start_tag('thead');
+
+        // title
+        $content .= html_writer::start_tag('tr', array('class' => 'scheduletitle'));
+        $content .= html_writer::tag('td', $title, array('colspan' => $countcols));
+        $content .= html_writer::end_tag('tr');
+
+        // tabs (one DIV for each day)
+        $content .= html_writer::start_tag('tr', array('class' => 'tabs'));
+        $content .= html_writer::start_tag('td', array('colspan' => $countcols));
+        foreach ($days as $d => $day) {
+            $content .= html_writer::tag('div', $day->tabtext, array('class' => "tab day$d".($d==2 ? ' active' : '')));
+        }
+        $content .= html_writer::end_tag('td');
+        $content .= html_writer::end_tag('tr');
+
+        $content .= html_writer::end_tag('thead');
+
+        // TBODY (one TBODY for each day)
+        foreach ($days as $d => $day) {
+            $content .= html_writer::start_tag('tbody', array('class' => "day day$d".($d==2 ? ' active' : '')));
+
+            // date (one full-width cell)
+            $content .= html_writer::start_tag('tr', array('class' => 'date'));
+            $content .= html_writer::tag('td', $day->fulltext, array('colspan' => $countcols));
+            $content .= html_writer::end_tag('tr');
+
+            // room headings
+            $content .= html_writer::start_tag('tr', array('class' => 'roomheadings'));
+            $content .= html_writer::tag('th', '', array('class' => 'timeheading'));
+            foreach ($rooms as $r => $room) {
+                if ($r==0) {
+                    continue;
+                }
+                $text = html_writer::tag('span', $room->name,  array('class' => 'roomname')).
+                        html_writer::tag('span', $room->seats, array('class' => 'totalseats')).
+                        html_writer::tag('div',  $room->topic, array('class' => 'roomtopic'));
+                $content .= html_writer::tag('th', $text, array('class' => "roomheading room$r"));
+            }
+            $content .= html_writer::end_tag('tr');
+
+            // slots
+            foreach ($slots as $s => $slot) {
+                $content .= html_writer::start_tag('tr', array('class' => 'slot'));
+
+                $time = $slot->time.
+                        html_writer::tag('span', $slot->duration, array('class' => 'duration'));
+                $content .= html_writer::tag('td', $time, array('class' => 'timeheading'));
+
+                $attending = rand(1, $countrooms);
+                foreach ($rooms as $r => $room) {
+                    $session = '';
+
+                    if (empty($slot->allrooms)) {
+                        $slot->allrooms = false;
+                    }
+
+                    if ($r==0 && $slot->allrooms==false) {
+                        continue;
+                    }
+                    if ($r && $slot->allrooms==true) {
+                        continue;
+                    }
+                    if ($r==0) {
+                        $attending = $r;
+                    }
+
+                    // randomly skip some sessions
+                    if ($attending==$r || rand(0, 2)) {
+
+                        // time
+                        $session .= html_writer::tag('div', $time, array('class' => 'time'));
+
+                        // room
+                        $text = html_writer::tag('span', $room->name,  array('class' => 'roomname')).
+                                html_writer::tag('span', $room->seats, array('class' => 'totalseats')).
+                                html_writer::tag('div',  $room->topic, array('class' => 'roomtopic'));
+                        $session .= html_writer::tag('div',  $text, array('class' => 'room'));
+
+                        // title
+                        $session .= html_writer::tag('div',  "Presentation $d.$s.$r", array('class' => 'title'));
+
+                        // authors
+                        $number = html_writer::tag('span', "$d$s$r-P", array('class' => 'schedulenumber'));
+                        $session .= html_writer::tag('div', $number.$authors, array('class' => 'authors'));
+
+                        //  summary
+                        $summary = array();
+                        for ($i=0; $i<40; $i++) {
+                            $keys = array_rand($letters, rand(3, 7));
+                            sort($keys);
+                            $word = '';
+                            foreach ($keys as $key) {
+                                $word .= $letters[$key];
+                            }
+                            $summary[] = $word;
+                        }
+                        $summary = implode(' ', $summary);
+                        $session .= html_writer::tag('div', $summary, array('class' => 'summary'));
+
+                        // capacity
+                        if ($r==$attending) {
+                            $capacity = html_writer::empty_tag('input', array('type' => 'checkbox', 'value' => 1, 'checked' => 'checked')).
+                                        html_writer::tag('span', 'Attending', array('class' => 'text'));
+                        } else {
+                            $capacity = html_writer::empty_tag('input', array('type' => 'checkbox', 'value' => 1)).
+                                        html_writer::tag('span', 'Not attending', array('class' => 'text'));
+                        }
+                        $capacity = html_writer::tag('div', "$room->seats left", array('class' => 'emptyseats')).
+                                    html_writer::tag('div', $capacity, array('class' => 'attendance'));
+                        $session .= html_writer::tag('div', $capacity, array('class' => 'capacity'));
+                    }
+
+                    $class = 'session';
+                    if ($slot->allrooms) {
+                        $class .= ' allrooms';
+                    }
+                    if ($r==$attending) {
+                        $class .= ' attending';
+                    }
+                    if ($session=='') {
+                        $class .= ' emptysession';
+                    }
+                    $params = array('class' => $class);
+                    if ($slot->allrooms) {
+                        $params['colspan'] = $countrooms;
+                    }
+                    $content .= html_writer::tag('td', $session, $params);
+                }
+
+                $content .= html_writer::end_tag('tr');
+            }
+
+            $content .= html_writer::end_tag('tbody');
+        }
+        $content .= html_writer::end_tag('table');
+
+        // we use JS to add the CSS file because <style> tags are removed by Moodle
+        $src = new moodle_url('/blocks/maj_submissions/templates/template');
+        $content .= html_writer::start_tag('script', array('type' => 'text/javascript'))."\n";
+        $content .= "//<![CDATA[\n";
+        $content .= '(function(){'."\n";
+        $content .= '    var wwwroot = location.href.replace(new RegExp("^(.*?)/mod/.*$"), "$1");'."\n";
+        $content .= '    var src = "'.$src->out_as_local_url().'";'."\n";
+        $content .= '    var css = "@import url(" + wwwroot + src + ".css);";'."\n";
+        $content .= '    var style = document.createElement("style");'."\n";
+        $content .= '    style.setAttribute("type","text/css");'."\n";
+        $content .= '    style.appendChild(document.createTextNode(css));'."\n";
+        $content .= '    var script = document.createElement("script");'."\n";
+        $content .= '    script.setAttribute("type","text/javascript");'."\n";
+        $content .= '    script.setAttribute("src", wwwroot + src + ".js");'."\n";
+        $content .= '    var head = document.getElementsByTagName("head");'."\n";
+        $content .= '    head[0].appendChild(style);'."\n";
+        $content .= '    head[0].appendChild(script);'."\n";
+        $content .= '})();'."\n";
+        $content .= "//]]>\n";
+        $content .= html_writer::end_tag('script');
+
+        return $content;
     }
 }

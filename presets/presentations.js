@@ -80,7 +80,7 @@ MAJ.reduce_lang_string = function(s) {
         if (MAJ.lang=="en") {
             chars = " *([" + chars + "]+)$";
         } else {
-            chars = "^(.*[^" + chars + "]) *";
+            chars = "^([^\\x00-\\x29\\x40-\\x7F]*[^" + chars + "]) *";
         }
         chars = new RegExp(chars);
         var m = s.match(chars);

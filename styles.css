@@ -241,3 +241,7 @@ div.block_maj_submissions p.toollink {
     margin-bottom:        6px;
     margin-top:           6px;
 }
+
+.path-blocks-maj_submissions-tools .ffilepicker {
+    max-width:          420px;
+}

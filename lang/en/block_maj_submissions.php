@@ -38,6 +38,7 @@ $string['addevents'] = 'Add a conference event';
 $string['addfilterconditions'] = 'Add a filter condition';
 $string['addreviewcmids'] = 'Add a review activity';
 $string['addrevisecmids'] = 'Add a revision activity';
+$string['addstatusfilter'] = 'Add a status filter';
 $string['anonymousauthors_help'] = 'Select the group or anonymous users who will be registered as the authors of submissions in the target workshop. The number of users in the group should greater than, or equal to, the number of submissions, so that each submission is assigned a unique owner.';
 $string['anonymousauthors'] = 'Anonymous authors';
 $string['anonymousreviewers_help'] = 'Select the group of anonymous users who will review and assess the submissions in the target workshop activity.';
@@ -253,7 +254,7 @@ $string['resetsubmissions_help']= 'This setting specifies whether or not to rese
 $string['resetsubmissions']= 'Reset submissions';
 $string['reviewcmids_help'] = 'A workshop activity that is used to peer review submissions.';
 $string['reviewcmids'] = 'Review activity [{no}]';
-$string['reviewers_help'] = 'Select the group of real users who will review and assess the submisions in the target workshop. Each real user will be mapped to an anonymous reviewer. The system will not assign anonymous reviewers to submission by the real users they represent.';
+$string['reviewers_help'] = 'Select the group of real users who will review and assess the submisions in the target workshop. Each real user will be mapped to an anonymous reviewer. The system will not assign anonymous reviewers to submissions by the real users they represent.';
 $string['reviewers'] = 'Group of reviewers';
 $string['reviewersadded'] = '<b>{$a->count} reviewers were added</b> to workshop submission (id={$a->sid}).<br/ >Reviewer id list: <i>{$a->ids}</i>';
 $string['reviewsectionnum_help'] = 'The course section where the activities for reviewing submissions are located.';
@@ -282,6 +283,8 @@ $string['schedule_room_help'] = 'The room in which the selected presentation wil
 $string['schedule_room'] = 'Schedule room';
 $string['schedule_time_help'] = 'The time at which the selected presentation will take place.';
 $string['schedule_time'] = 'Schedule time';
+$string['scheduleupdated'] = 'Schedule data for "{$a}" was updated';
+$string['sessioninfo'] = "Session information";
 $string['shortentimes_help'] = 'If this setting is enabled, then times will not be shown if the start time is 00:00 and the end time is 23:55';
 $string['shortentimes'] = 'Shorten time stamps';
 $string['sourcedatabase_help'] = 'Select the database which contains the submissions to be vetted.';
@@ -289,6 +292,11 @@ $string['sourcedatabase'] = 'Source database';
 $string['sourceworkshop_help'] = 'Select the workshop activity which contains the submissions that have been vetted.';
 $string['sourceworkshop'] = 'Source workshop';
 $string['state'] = 'State';
+$string['statusfilter_help'] = 'Select a minimum grade for submissions in the source workshop and the corresponding status for proposals in the target database.';
+$string['statusfilter'] = 'Status filter [{no}]';
+$string['statusfilter1'] = 'If grade is';
+$string['statusfilter2'] = ', set status to';
+$string['statusfilter3'] = '.';
 $string['submissiongradesreset'] = '<b>Grade and assessment data was reset</b> for {$a->count} workshop submission(s).<br />Submission id list: <i>{$a->ids}</i>';
 $string['submissionsdeleted'] = 'Workshop was reset and {$a} old submission(s) were removed.';
 $string['submissionstranferred'] = 'Transferred {$a->transferred} of {$a->selected} submissions selected from {$a->total} database records.';
@@ -352,8 +360,6 @@ $string['workshopsrecord'] = 'a workshop proposal';
 $string['workshopstime_help'] = 'The start and finish dates of the conference workshops.';
 $string['workshopstime'] = 'Conference workshops';
 
-$string['reviewspersubmission_help'] = 'The number of reviews required for each submission. The system will try to assign this number of reviewers to each submission, and try to assign the same number of submissions to each anonymous reviewer.';
-$string['reviewspersubmission'] = 'Reviews per submission';
 
 $string['peerreviewgreeting'] = 'Thanks for your submission!';
 
@@ -370,11 +376,17 @@ $string['pleaseregistercopresenters'] = 'Please be sure to have any co-presenter
 
 $string['acceptedfarewell'] = 'We look forward to seeing you at the conference in {$a}.';
 
-$string['addstatusfilter'] = 'Add a status filter';
-$string['statusfilter_help'] = 'Select a minimum grade for submissions in the source workshop and the corresponding status for proposals in the target database.';
-$string['statusfilter'] = 'Status filter [{no}]';
-$string['statusfilter1'] = 'If grade is';
-$string['statusfilter2'] = ', set status to';
-$string['statusfilter3'] = '.';
+$string['conferenceschedule'] = 'Conference schedule';
 
-$string['scheduleupdated'] = 'Schedule data for "{$a}" was updated';
+$string['template'] = 'Template';
+$string['templatetype_help'] = 'When you create a new activity, you can select a template on which to base the new activity.';
+$string['templatetype'] = 'Template type';
+$string['selecttemplateactivity'] = 'Select a template activity';
+$string['selecttemplatefilename'] = 'Select a template file';
+$string['uploadtemplatefile'] = 'Upload a template file';
+$string['generatesampletemplate'] = 'Generate a sample template';
+
+$string['templateupload_help'] = 'Upload a custom template file for the new activity.';
+$string['templateupload'] = 'Template upload';
+$string['templatefilename_help'] = 'Choose a standard template file for the new activity.';
+$string['templatefilename'] = 'Template file';

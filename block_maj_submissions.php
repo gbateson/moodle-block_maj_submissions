@@ -1384,7 +1384,7 @@ class block_maj_submissions extends block_base {
     }
 
     /**
-     * get_sectionname
+     * get_sectionlink
      *
      * names longer than $namelength will be trancated to to HEAD ... TAIL
      * where the number of characters in HEAD is $headlength
@@ -1451,9 +1451,10 @@ class block_maj_submissions extends block_base {
                     $name = reset($name);
                 }
             }
-            $name = trim(strip_tags($name));
-            $name = self::trim_text($name, $namelength, $headlength, $taillength);
-            return $name;
+            if ($name = trim(strip_tags($name))) {
+                $name = self::trim_text($name, $namelength, $headlength, $taillength);
+                return $name;
+            }
         }
 
         return ''; // section name and summary are empty

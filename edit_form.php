@@ -635,7 +635,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
 
         $modinfo = $this->get_course_modinfo();
         $sections = $modinfo->get_section_info_all();
-        foreach ($sections as $section) {
+        foreach ($sections as $sectionnum => $section) {
 
             $sectionname = '';
             if ($sectionnum==0 || $sectionnum==$section->section) {
@@ -648,6 +648,10 @@ class block_maj_submissions_edit_form extends block_edit_form {
                         if ($count==0 || in_array($cm->modname, $modnames)) {
                             if ($sectionname=='') {
                                 $sectionname = block_maj_submissions::get_sectionname($section, 0);
+                                if ($sectionname=='') {
+                                    $course = $this->get_course();
+                                    $sectionname = block_maj_submissions::get_sectionname_default($course, $sectionnum);
+                                }
                                 $options[$sectionname] = array();
                             }
                             $name = $cm->name;
