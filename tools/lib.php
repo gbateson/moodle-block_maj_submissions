@@ -43,14 +43,8 @@ require_once($CFG->dirroot.'/mod/data/lib.php');
 abstract class block_maj_submissions_tool_base extends moodleform {
 
     const CREATE_NEW = -1;
-    const TEXT_FIELD_SIZE = 20;
     const TEMPLATE_COUNT = 8;
-
-    const TEMPLATE_NONE     = 0;
-    const TEMPLATE_ACTIVITY = 1;
-    const TEMPLATE_FILENAME = 2;
-    const TEMPLATE_UPLOAD   = 3;
-    const TEMPLATE_GENERATE = 4;
+    const TEXT_FIELD_SIZE = 20;
 
     /** values passed from tool creating this form */
     protected $plugin = '';
@@ -3289,6 +3283,12 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
     protected $schedule_audience = null;
     protected $schedule_event    = array();
 
+    const TEMPLATE_NONE     = 0;
+    const TEMPLATE_ACTIVITY = 1;
+    const TEMPLATE_FILENAME = 2;
+    const TEMPLATE_UPLOAD   = 3;
+    const TEMPLATE_GENERATE = 4;
+
     /**
      * definition
      */
@@ -3689,7 +3689,6 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
     protected function get_defaulttemplate() {
 
         $config = $this->instance->config;
-        $this->instance->set_multilang(true);
 
         // get multilang title from config settings, if possible
         $title = array();
@@ -3721,7 +3720,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
         $authors = array('Chan',   'Doe',    'Garcia',
                          'Honda',  'Jones',  'Khan',
                          'Lee',    'Mensah', 'Nguyen',
-                         'Nomo',   'Novak',  'Patel', 
+                         'Nomo',   'Novak',  'Patel',
                          'Petrov', 'Rossi',  'Singh',
                          'Suzuki', 'Smith',  'Wang');
 
