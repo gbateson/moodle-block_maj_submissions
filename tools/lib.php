@@ -83,6 +83,7 @@ abstract class block_maj_submissions_tool_base extends moodleform {
      * settings used by forms that create a new activity
      */
     protected $modulename = '';
+    protected $defaultname = '';
     protected $defaultvalues = array();
     protected $timefields = array(
         'timestart' => array(),
@@ -430,6 +431,14 @@ abstract class block_maj_submissions_tool_base extends moodleform {
         $activityname = $name.'name';
         $activityname = $data->$activityname;
 
+        if ($activityname=='') {
+            if ($this->defaultname) {
+                $activityname = get_string($this->defaultname, $this->plugin);
+            } else {
+                $activityname = get_string('pluginname', $this->modulename);
+            }
+        }
+
         $sectionnum   = $data->coursesectionnum;
         $sectionname  = $data->coursesectionname;
 
@@ -444,7 +453,7 @@ abstract class block_maj_submissions_tool_base extends moodleform {
 
                 if ($section) {
                     $defaultvalues = $this->get_defaultvalues($data, $time);
-                    $cm = self::get_coursemodule($this->course, $section, $this->modulename,  $activityname, $defaultvalues);
+                    $cm = self::get_coursemodule($this->course, $section, $this->modulename, $activityname, $defaultvalues);
 
                     if ($cm) {
                         $permissions = $this->get_permissions($data);
@@ -461,7 +470,13 @@ abstract class block_maj_submissions_tool_base extends moodleform {
                                 $this->instance->instance_config_save($this->instance->config);
                             }
                         }
-                        $msg[] = get_string('newactivitycreated', $this->plugin, $activityname);
+
+                        // create link to new module
+                        $link = "/mod/$this->modulename/view.php";
+                        $link = new moodle_url($link, array('id' => $cm->id));
+                        $link = html_writer::tag('a', $activityname, array('href' => "$link"));
+
+                        $msg[] = get_string('newactivitycreated', $this->plugin, $link);
                     } else {
                         $msg[] = get_string('newactivityskipped', $this->plugin, $activityname);
                     }
@@ -817,7 +832,7 @@ abstract class block_maj_submissions_tool_base extends moodleform {
             // Moodle >= 2.7
 
             if ($cm instanceof stdClass) {
-                $cm = course_modinfo::instance($cm->course)->get_cm($cm->id);
+                $cm = cm_info::create($cm);
             }
 
             // get current availability structure for this $cm
@@ -1688,6 +1703,12 @@ class block_maj_submissions_tool_setupdatabase extends block_maj_submissions_too
             $exclude = array($exclude);
         }
 
+        if (method_exists($OUTPUT, 'image_url')) {
+            $image_url = 'image_url'; // Moodle >= 3.3
+        } else {
+            $image_url = 'pix_url'; // Moodle <= 3.2
+        }
+
         foreach ($presets as $i => $preset) {
 
             if (in_array($preset->shortname, $exclude)) {
@@ -1724,7 +1745,7 @@ class block_maj_submissions_tool_setupdatabase extends block_maj_submissions_too
                                 'sesskey'  => sesskey());
                 $url->params($params);
 
-                $icon = $OUTPUT->pix_url('t/delete');
+                $icon = $OUTPUT->$image_url('t/delete');
                 $params = array('src'   => $icon,
                                 'class' => 'iconsmall',
                                 'alt'   => "$strdelete $preset->description");
@@ -1743,18 +1764,22 @@ class block_maj_submissions_tool_setupdatabase extends block_maj_submissions_too
 class block_maj_submissions_tool_setupregistrations extends block_maj_submissions_tool_setupdatabase {
     protected $type = 'registerdelegates';
     protected $defaultpreset = 'registrations';
+    protected $defaultname = 'registerdelegatesname';
 }
 class block_maj_submissions_tool_setuppresentations extends block_maj_submissions_tool_setupdatabase {
     protected $type = 'collectpresentations';
     protected $defaultpreset = 'presentations';
+    protected $defaultname = 'collectpresentationsname';
 }
 class block_maj_submissions_tool_setupworkshops extends block_maj_submissions_tool_setupdatabase {
     protected $type = 'collectworkshops';
     protected $defaultpreset = 'workshops';
+    protected $defaultname = 'collectworkshopsname';
 }
 class block_maj_submissions_tool_setupevents extends block_maj_submissions_tool_setupdatabase {
     protected $type = 'registerevents';
     protected $defaultpreset = 'events';
+    protected $defaultname = 'conferenceevents';
     protected $permissions = array();
 
     /**
@@ -1826,6 +1851,7 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
 
     protected $type = '';
     protected $modulename = 'workshop';
+    protected $defaultname = 'reviewsubmissions';
 
     protected $defaultvalues = array(
         'visible'         => 1,
@@ -3243,6 +3269,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
 
     protected $type = 'publish';
     protected $modulename = 'page';
+    protected $defaultname = 'conferenceschedule';
 
     // default values for a new "page" resource
     protected $defaultvalues = array(
@@ -3287,7 +3314,9 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $sectionnum = 0;
         }
 
+
         if (empty($this->cmid)) {
+
             $name = 'publishcmid';
             $this->add_field_cm($mform, $this->course, $this->plugin, $name, $this->cmid);
             $this->add_field_section($mform, $this->course, $this->plugin, 'coursesection', $name, $sectionnum);
@@ -3322,6 +3351,10 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $mform->disabledIf($name, 'templatetype', 'neq', self::TEMPLATE_UPLOAD);
 
         } else {
+
+            $name = 'publishcmid';
+            $options = self::get_cmids($mform, $this->course, $this->plugin, $this->modulename, 'activity', 0, true);
+            $this->add_field($mform, $this->plugin, $name, 'selectgroups', PARAM_INT, $options, $this->cmid);
 
             // --------------------------------------------------------
             $name = 'sessioninfo';
@@ -3654,49 +3687,83 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
      * @todo Finish documenting this function
      */
     protected function get_defaulttemplate() {
+
         $config = $this->instance->config;
+        $this->instance->set_multilang(true);
 
-        $title = $config->conferencenameen;
+        // get multilang title from config settings, if possible
+        $title = array();
+        $config = $this->instance->config;
+        if (empty($config->displaylangs)) {
+            $langs = '';
+        } else {
+            $langs = $config->displaylangs;
+        }
+        $langs = block_maj_submissions::get_languages($langs);
+        foreach ($langs as $lang) {
+            $name = 'conferencename'.$lang;
+            if (isset($config->$name) && $config->$name) {
+                $title[] = html_writer::tag('span', $config->$name, array('class' => 'multilang', 'lang' => $lang));
+            }
+        }
+        if (count($title)) {
+            $title = implode('', $title);
+        } else if (isset($config->conferencename)) {
+            $title = $config->conferencename;
+        } else {
+            $title = '';
+        }
+        if ($title=='') {
+            $title = $this->instance->get_string('conferenceschedule', $this->plugin);
+        }
 
-        $authors = 'Tom, Dick, Harry';
+        // set array of common surnames to use as authors
+        $authors = array('Chan',   'Doe',    'Garcia',
+                         'Honda',  'Jones',  'Khan',
+                         'Lee',    'Mensah', 'Nguyen',
+                         'Nomo',   'Novak',  'Patel', 
+                         'Petrov', 'Rossi',  'Singh',
+                         'Suzuki', 'Smith',  'Wang');
+
+        // set array of letters from which to generate random words
         $letters = range(97, 122); // ascii a-z
         $letters = array_map('chr', $letters);
 
         $rooms = array(
             0 => (object)array(
-                    'name' =>  'Foyer',
-                    'seats' => '100 seats',
+                    'name' => $this->instance->get_string('roomname0', $this->plugin),
+                    'seats' => $this->instance->get_string('totalseatsx', $this->plugin, 100),
                     'topic' => '',
                  ),
             1 => (object)array(
-                    'name' =>  'Room 1',
-                    'seats' => '50 seats',
-                    'topic' => 'Show and Tell',
+                    'name' => $this->instance->get_string('roomnamex', $this->plugin, 1),
+                    'seats' => $this->instance->get_string('totalseatsx', $this->plugin, 50),
+                    'topic' => $this->instance->get_string('roomtopic1', $this->plugin),
                  ),
             2 => (object)array(
-                    'name' =>  'Room 2',
-                    'seats' => '40 seats',
-                    'topic' => 'Moodle admin',
+                    'name' => $this->instance->get_string('roomnamex', $this->plugin, 2),
+                    'seats' => $this->instance->get_string('totalseatsx', $this->plugin, 40),
+                    'topic' => $this->instance->get_string('roomtopic2', $this->plugin),
                  ),
             3 => (object)array(
-                    'name' =>  'Room 3',
-                    'seats' => '35 seats',
-                    'topic' => 'Developers',
+                    'name' => $this->instance->get_string('roomnamex', $this->plugin, 3),
+                    'seats' => $this->instance->get_string('totalseatsx', $this->plugin, 35),
+                    'topic' => $this->instance->get_string('roomtopic3', $this->plugin),
                  ),
             4 => (object)array(
-                    'name' =>  'Room 3',
-                    'seats' => '30 seats',
-                    'topic' => 'Posters',
+                    'name' => $this->instance->get_string('roomnamex', $this->plugin, 4),
+                    'seats' => $this->instance->get_string('totalseatsx', $this->plugin, 30),
+                    'topic' => $this->instance->get_string('roomtopic4', $this->plugin),
                  ),
             5 => (object)array(
-                    'name' =>  'Room 4',
-                    'seats' => '25 seats',
-                    'topic' => 'Courseware',
+                    'name' => $this->instance->get_string('roomnamex', $this->plugin, 5),
+                    'seats' => $this->instance->get_string('totalseatsx', $this->plugin, 25),
+                    'topic' => $this->instance->get_string('roomtopic5', $this->plugin),
                  ),
             6 => (object)array(
-                    'name' =>  'Room 5',
-                    'seats' => '20 seats',
-                    'topic' => 'Sponsors',
+                    'name' => $this->instance->get_string('roomnamex', $this->plugin, 6),
+                    'seats' => $this->instance->get_string('totalseatsx', $this->plugin, 20),
+                    'topic' => $this->instance->get_string('roomtopic6', $this->plugin),
                  ),
         );
 
@@ -3837,11 +3904,23 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                         $session .= html_writer::tag('div',  $text, array('class' => 'room'));
 
                         // title
-                        $session .= html_writer::tag('div',  "Presentation $d.$s.$r", array('class' => 'title'));
+                        $text = $this->instance->get_string('sessiontitlex', $this->plugin, "$d.$s.$r");
+                        $session .= html_writer::tag('div', $text, array('class' => 'title'));
 
-                        // authors
-                        $number = html_writer::tag('span', "$d$s$r-P", array('class' => 'schedulenumber'));
-                        $session .= html_writer::tag('div', $number.$authors, array('class' => 'authors'));
+                        // [schedulenumber]  + list of authors
+                        $keys = array_rand($authors, rand(1, 2));
+                        if (is_array($keys)) {
+                            sort($keys);
+                            $text = array();
+                            foreach ($keys as $key) {
+                                $text[] = $authors[$key];
+                            }
+                            $text = implode(', ', $text);
+                        } else {
+                            $text = $authors[$keys];
+                        }
+                        $text = html_writer::tag('span', "$d$s$r-P", array('class' => 'schedulenumber')).$text;
+                        $session .= html_writer::tag('div', $text, array('class' => 'authors'));
 
                         //  summary
                         $summary = array();

@@ -313,3 +313,13 @@ $string['workshopsrecord'] = 'ワークショップ提案';
 $string['workshopstime_help'] = 'ワークショップの開始と終了日時';
 $string['workshopstime'] = 'ワークショップ';
 
+$string['roomname0'] = 'ロビー';
+$string['roomnamex'] = '第{$a}室';
+$string['roomtopic1'] = '事例発表';
+$string['roomtopic2'] = 'ムードル管理';
+$string['roomtopic3'] = '開発者';
+$string['roomtopic4'] = 'ポスター';
+$string['roomtopic5'] = 'コースウェアー';
+$string['roomtopic6'] = 'スポンサー';
+$string['sessiontitlex'] = '発表 {$a}';
+$string['totalseatsx'] = '定員{$a}人';

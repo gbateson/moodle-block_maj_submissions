@@ -77,6 +77,7 @@ $string['conferencedates'] = 'Conference dates';
 $string['conferenceevents'] = 'Conference events';
 $string['conferencename_help'] = 'The conference name that appears on the documents and webpages for this conference.';
 $string['conferencename'] = 'Conference name';
+$string['conferenceschedule'] = 'Conference schedule';
 $string['conferencestrings_help'] = 'These strings and values are used in the databases, documents and webpages for registration, presentations, and workshops.';
 $string['conferencestrings'] = 'Conference strings';
 $string['conferencetime_help'] = 'The start and finish dates of the main conference.';
@@ -142,6 +143,7 @@ $string['filterconditions_help'] = 'This filter is used to decide which submissi
 $string['filterconditions'] = 'Filter condition [{no}]';
 $string['fixdates_help'] = 'These settings control whether or not the leading zero on months, days and hours less than 10 are removed.';
 $string['fixdates'] = 'Remove leading zeros';
+$string['generatesampletemplate'] = 'Generate a sample template';
 $string['groupnamecount'] = '{$a->name} [{$a->count} users]';
 $string['howtoadd'] = 'To add {$a->record}, please click the "Add entry" link below, and fill out the form on the next page.';
 $string['howtobegin'] = 'In order to add, edit or delete {$a->record} for this conference, you need to log in to this website and enrol in this Moodle course.';
@@ -284,6 +286,8 @@ $string['schedule_room'] = 'Schedule room';
 $string['schedule_time_help'] = 'The time at which the selected presentation will take place.';
 $string['schedule_time'] = 'Schedule time';
 $string['scheduleupdated'] = 'Schedule data for "{$a}" was updated';
+$string['selecttemplateactivity'] = 'Select a template activity';
+$string['selecttemplatefilename'] = 'Select a template file';
 $string['sessioninfo'] = "Session information";
 $string['shortentimes_help'] = 'If this setting is enabled, then times will not be shown if the start time is 00:00 and the end time is 23:55';
 $string['shortentimes'] = 'Shorten time stamps';
@@ -304,8 +308,15 @@ $string['targetdatabase_help'] = 'Select the database to which the vetted submis
 $string['targetdatabase'] = 'Target database';
 $string['targetworkshop_help'] = 'Select the workshop to which the submissions matching the above conditions are to be copied for vetting.';
 $string['targetworkshop'] = 'Target workshop';
+$string['template'] = 'Template';
 $string['templateactivity_help'] = 'Select an activity to use as a template when creating a new activity. Settings from the template activity will be copied across to the new activity.';
 $string['templateactivity'] = 'Template activity';
+$string['templatefilename_help'] = 'Choose a standard template file for the new activity.';
+$string['templatefilename'] = 'Template file';
+$string['templatetype_help'] = 'When you create a new activity, you can select a template on which to base the new activity.';
+$string['templatetype'] = 'Template type';
+$string['templateupload_help'] = 'Upload a custom template file for the new activity.';
+$string['templateupload'] = 'Template upload';
 $string['timefinish'] = 'Finish';
 $string['timestart'] = 'Start';
 $string['title_help'] = 'This is the string that will be displayed as the title of this block. If this field is blank, no title will be displayed for this block.';
@@ -349,6 +360,7 @@ $string['toolworkshop2data_help'] = 'On this page you can copy reviewers\' feedb
 **To create a new database**, give a name for the new database activity and specify the section in which it should be created. This can be an existing section, or a new section. If you specify a new section you will need to give a name for the new section.';
 $string['toolworkshop2data'] = 'Publish vetting results';
 $string['unknownlanguage'] = 'Unknown language';
+$string['uploadtemplatefile'] = 'Upload a template file';
 $string['uploadpreset'] = 'Upload preset zip file';
 $string['validimportfile'] = 'Configuration settings were successfully imported';
 $string['wordcount'] = 'Number of words';
@@ -360,6 +372,20 @@ $string['workshopsrecord'] = 'a workshop proposal';
 $string['workshopstime_help'] = 'The start and finish dates of the conference workshops.';
 $string['workshopstime'] = 'Conference workshops';
 
+$string['roomname0'] = 'Foyer';
+$string['roomnamex'] = 'Room {$a}';
+$string['roomtopic1'] = 'Show and Tell';
+$string['roomtopic2'] = 'Moodle admin';
+$string['roomtopic3'] = 'Developers';
+$string['roomtopic4'] = 'Posters';
+$string['roomtopic5'] = 'Courseware';
+$string['roomtopic6'] = 'Sponsors';
+$string['sessiontitlex'] = 'Presentation {$a}';
+$string['totalseatsx'] = 'Seats {$a}';
+
+// =============================================
+// strings for acceptance messages to presenters
+// =============================================
 
 $string['peerreviewgreeting'] = 'Thanks for your submission!';
 
@@ -376,17 +402,3 @@ $string['pleaseregistercopresenters'] = 'Please be sure to have any co-presenter
 
 $string['acceptedfarewell'] = 'We look forward to seeing you at the conference in {$a}.';
 
-$string['conferenceschedule'] = 'Conference schedule';
-
-$string['template'] = 'Template';
-$string['templatetype_help'] = 'When you create a new activity, you can select a template on which to base the new activity.';
-$string['templatetype'] = 'Template type';
-$string['selecttemplateactivity'] = 'Select a template activity';
-$string['selecttemplatefilename'] = 'Select a template file';
-$string['uploadtemplatefile'] = 'Upload a template file';
-$string['generatesampletemplate'] = 'Generate a sample template';
-
-$string['templateupload_help'] = 'Upload a custom template file for the new activity.';
-$string['templateupload'] = 'Template upload';
-$string['templatefilename_help'] = 'Choose a standard template file for the new activity.';
-$string['templatefilename'] = 'Template file';

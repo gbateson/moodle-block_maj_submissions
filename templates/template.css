@@ -191,6 +191,11 @@
     color: #1a1;
 }
 
+.schedule .attendance input[type="checkbox"] {
+    margin-top: 0px;
+    margin-right: 6px;
+}
+
 .schedule .emptyseats {
     color: purple;
 }
@@ -256,8 +261,10 @@
     .schedule .session {
         margin: 4px 3px;
         overflow: visible;
-        width: 180px;
+        padding-bottom: 1.4em;
+        position: relative;
         vertical-align: top;
+        width: 180px;
     }
 
     .schedule.myschedule .session:not(.attending) {
@@ -322,9 +329,13 @@
     }
 
     .schedule .capacity {
-        padding-top: 3px;
-        text-align: left;
+        bottom: 4px;
+        float: none;
         height: auto;
+        left: 6px;
+        padding-top: 3px;
+        position: absolute;
+        text-align: left;
         width: 100%;
     }
 
