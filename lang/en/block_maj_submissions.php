@@ -238,14 +238,16 @@ $string['registrationsprocess'] = 'the conference registration process';
 $string['registrationsrecord'] = 'your registration details';
 $string['removeyear_help'] = 'If this option is enabled, then the current year will be removed from dates.';
 $string['removeyear'] = 'Remove current year';
-$string['resetassessments_help']= 'This setting specifies whether or not to remove old data about reviewers and their reviews before setting up new reviewrs.
+$string['resetassessments_help']= 'This setting specifies whether or not to remove previous data from reviewers, including feedback and assessment scores, before setting up new reviewers.
 
 **No**
 : Current data about reviewers and their reviews will be left untouched and new reviewers will only be assigned if necessary.
 
 **Yes**
-: Current data about reviewers and their reviews will be removed from the target workshop before the new reviewers are assigned. In addition, review results will be removed from the submissions database related to the target workshop.';
+: Current data about reviewers and their reviews will be removed from the target workshop before the new reviewers are assigned. In addition, review feedback and scores will be removed from the submissions database related to the target workshop.';
 $string['resetassessments']= 'Reset review data';
+$string['resetpasswords_help']= 'If this setting is enabled, the passwords for the anonymous users will be regenerated and included in the report of which real reviewer was assigned as which anonymous reviewer.';
+$string['resetpasswords']= 'Regenerate passwords';
 $string['resetsubmissions_help']= 'This setting specifies whether or not to reset the target workshop before transferring submissions from the source database.
 
 **No**
@@ -321,8 +323,9 @@ $string['timefinish'] = 'Finish';
 $string['timestart'] = 'Start';
 $string['title_help'] = 'This is the string that will be displayed as the title of this block. If this field is blank, no title will be displayed for this block.';
 $string['title'] = 'Title';
+$string['toofewmembers'] = 'There are not enough members in the selected group.';
 $string['toofewauthors'] = 'No records were transferred because the number of anonymous users, {$a->countanonymous}, is less than the number of records selected from the database, {$a->countselected}.';
-$string['toofewreviewers'] = 'No reviewers were assigned to the submissions, because the number of anonymous reviewers, {$a->countanonymous}, is less than the number of real reviewers, {$a->countreviewers}.';
+$string['toofewreviewers'] = 'There are too few anonymous reviewers, {$a->countanonymous}, for the number of real reviewers, {$a->countreviewers}.';
 $string['toolcreateusers_desc'] = 'Setup groups of anonymous users';
 $string['toolcreateusers'] = 'Create vetting users and groups';
 $string['tooldata2workshop_desc'] = 'Convert Database -> Workshops';
@@ -402,3 +405,9 @@ $string['pleaseregistercopresenters'] = 'Please be sure to have any co-presenter
 
 $string['acceptedfarewell'] = 'We look forward to seeing you at the conference in {$a}.';
 
+$string['realuser'] = 'Real user <span style="white-space: nowrap;">Full name</span>';
+$string['anonymoususername'] = 'Anonymous username';
+$string['anonymouspassword'] = 'Anonymous password';
+$string['submissionscount'] = 'Number of submissions';
+$string['submissionslist'] = 'List of submissions';
+$string['reviewersloginpage'] = 'Login details for anonymous reviewers';

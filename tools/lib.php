@@ -315,10 +315,9 @@ abstract class block_maj_submissions_tool_base extends moodleform {
         $groups = groups_list_to_menu(groups_get_all_groups($this->course->id));
         $sql = 'SELECT COUNT(*) FROM {groups_members} WHERE groupid = ?';
         foreach ($groups as $id => $name) {
-            if ($count = $DB->get_field_sql($sql, array('groupid' => $id))) {
-                $a = (object)array('name' => $name, 'count' => $count);
-                $groups[$id] = get_string('groupnamecount', $this->plugin, $a);
-            }
+            $count = $DB->get_field_sql($sql, array('groupid' => $id));
+            $a = (object)array('name' => $name, 'count' => $count);
+            $groups[$id] = get_string('groupnamecount', $this->plugin, $a);
         }
         return $groups;
     }
@@ -1847,6 +1846,8 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
     protected $modulename = 'workshop';
     protected $defaultname = 'reviewsubmissions';
 
+    protected $template = null;
+
     protected $defaultvalues = array(
         'visible'         => 1,
         'submissionstart' => 0,
@@ -2017,14 +2018,7 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
     protected function get_defaultvalues($data, $time) {
         $defaultvalues = parent::get_defaultvalues($data, $time);
 
-        if ($data->templateactivity) {
-            $cm = $DB->get_record('course_modules', array('id' => $data->templateactivity));
-            $instance = $DB->get_record($this->modulename, array('id' => $cm->instance));
-            $course = $DB->get_record('course', array('id' => $instance->course));
-            $template = new workshop($instance, $cm, $course);
-        }
-
-        if ($template) {
+        if ($template = $this->get_template($data)) {
             foreach ($template as $name => $value) {
                 if ($name=='id' || $name=='name') {
                     continue; // skip these fields
@@ -2036,6 +2030,30 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
         }
 
         return $defaultvalues;
+    }
+
+    /**
+     * get_template
+     */
+    protected function get_template($data, $name='templateactivity') {
+        global $DB;
+        if ($this->template===null) {
+            $this->template = false;
+            if (empty($data->$name)) {
+                return $this->template;
+            }
+            if (! $cm = $DB->get_record('course_modules', array('id' => $data->$name))) {
+                return $this->template;
+            }
+            if (! $instance = $DB->get_record($this->modulename, array('id' => $cm->instance))) {
+                return $this->template;
+            }
+            if (! $course = $DB->get_record('course', array('id' => $instance->course))) {
+                return $this->template;
+            }
+            $this->template = new workshop($instance, $cm, $course);
+        }
+        return $this->template;
     }
 
     /**
@@ -2065,6 +2083,9 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
             // cache the database id
             $databasenum = $data->sourcedatabase;
             $dataid = get_fast_modinfo($this->course)->get_cm($databasenum)->instance;
+
+            // cache the workshop cmid
+            $workshopnum  = $data->targetworkshopnum;
 
             // initialize counters
             $counttotal = $DB->get_field('data_records', 'COUNT(*)', array('dataid' => $dataid));
@@ -2134,7 +2155,7 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
                     }
 
                     // transfer settings from $template to $workshop
-                    if ($template) {
+                    if ($template = $this->get_template($data)) {
                         // transfer grading strategy (e.g. rubric)
                         $strategy = $template->grading_strategy_instance();
                         $formdata = $this->get_strategy_formdata($strategy);
@@ -2928,6 +2949,17 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
     //    'show'  => false
     //);
 
+    protected $modulename = 'page';
+    protected $defaultname = 'reviewersloginpage';
+    protected $defaultvalues = array(
+        'intro' => '',
+        'introformat' => FORMAT_HTML, // =1
+        'content' => '',
+        'contentformat' => FORMAT_HTML, // =1,
+        'display' => 0, // = RESOURCELIB_DISPLAY_AUTO
+        'displayoptions' => array('printheading' => 0, 'printintro' => 0)
+    );
+
     /**
      * The name of the form field containing
      * the id of a group of anonymous assessors
@@ -2954,8 +2986,12 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
         $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options);
         $mform->disabledIf($name, 'targetworkshop', 'eq', 0);
 
+        $name = 'resetpasswords';
+        $this->add_field($mform, $this->plugin, $name, 'selectyesno', PARAM_INT);
+        $mform->disabledIf($name, 'targetworkshop', 'eq', 0);
+
         $name = 'reviewspersubmission';
-        $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, range(0, 10));
+        $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, range(0, 10), 3);
         $mform->disabledIf($name, 'targetworkshop', 'eq', 0);
 
         $name = 'resetassessments';
@@ -2963,6 +2999,60 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
         $mform->disabledIf($name, 'targetworkshop', 'eq', 0);
 
         $this->add_action_buttons();
+    }
+
+    /**
+     * Perform extra validation on form values.
+     *
+     * @param array $data array of ("fieldname"=>value) of submitted data
+     * @param array $files array of uploaded files "element_name"=>tmp_file_path
+     * @return array of "element_name"=>"error_description" if there are errors,
+     *         or an empty array if everything is OK (true allowed for backwards compatibility too).
+     */
+    public function validation($data, $files) {
+        global $DB;
+        $errors = array();
+
+        $countreviewers = null;
+        $countanonymous = null;
+
+        $name = 'targetworkshop';
+        if (empty($data[$name])) {
+            $errors[$name] = get_string('requiredelement', 'form');
+        } else {
+            $name = 'reviewers';
+            if (array_key_exists($name, $data)) {
+                $params = array('groupid' => $data[$name]);
+                $countreviewers = $DB->get_field('groups_members', 'COUNT(*)', $params);
+            }
+            if ($countreviewers===null) {
+                $errors[$name] = get_string('requiredelement', 'form');
+            } else if ($countreviewers===false || $countreviewers===0 || $countreviewers==='0') {
+                $errors[$name] = get_string('toofewmembers', $this->plugin);
+            }
+
+            $name = 'anonymousreviewers';
+            if (array_key_exists($name, $data)) {
+                $params = array('groupid' => $data[$name]);
+                $countanonymous = $DB->get_field('groups_members', 'COUNT(*)', $params);
+            }
+            if ($countanonymous===null) {
+                $errors[$name] = get_string('requiredelement', 'form');
+            } else if ($countanonymous===false || $countanonymous===0 || $countanonymous==='0') {
+                $errors[$name] = get_string('toofewmembers', $this->plugin);
+            }
+
+            if ($countanonymous && $countreviewers && $countanonymous < $countreviewers) {
+                // number of anonymous reviewers is less than the number of real reviewers
+                $a = (object)array(
+                    'countanonymous' => $countanonymous,
+                    'countreviewers' => $countreviewers,
+                );
+                $errors[$name] = get_string('toofewreviewers', $this->plugin, $a);
+            }
+        }
+
+        return $errors;
     }
 
     /**
@@ -2977,8 +3067,9 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
         global $CFG, $DB;
         require_once($CFG->dirroot.'/mod/workshop/locallib.php');
 
-        $cm = false;
+        $cm = null;
         $msg = array();
+        $time = time();
 
         // get/create the $cm record and associated $section
         if ($data = $this->get_data()) {
@@ -2993,189 +3084,266 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                 $params = array('groupid' => $anonymous);
                 $anonymous = $DB->get_records_menu('groups_members', $params, null, 'id,userid');
             }
+            $resetpasswords = $data->resetpasswords;
+            $resetassessments = $data->resetassessments;
             $reviewspersubmission = $data->reviewspersubmission;
         } else {
-            $reviewers = false;
-            $anonymous = false;
+            $reviewers = null;
+            $anonymous = null;
+            $resetpasswords = false;
+            $resetassessments = false;
             $reviewspersubmission = 0;
         }
-        if ($reviewers===false) {
-            $reviewers = array();
-        }
-        if ($anonymous===false) {
-            $anonymous = array();
-        }
 
-        $countreviewers = count($reviewers);
-        $countanonymous = count($anonymous);
-        if ($cm && $countreviewers && $countanonymous) {
+        $countreviewers = (empty($reviewers) ? 0 : count($reviewers));
+        $countanonymous = (empty($anonymous) ? 0 : count($anonymous));
 
-            if ($countreviewers > $countanonymous) {
-                $a = (object)array(
-                    'countanonymous' => $countanonymous,
-                    'countreviewers' => $countreviewers
-                );
-                $msg[] = get_string('toofewreviewers', $this->plugin);
-            } else {
-                // get workshop object
-                $workshop = $DB->get_record('workshop', array('id' => $cm->instance));
-                $workshop = new workshop($workshop, $cm, $this->course);
+        if ($cm && $countreviewers && ($countanonymous >= $countreviewers)) {
 
-                // select only the required number of anonymous reviewers
-                $anonymous = array_slice($anonymous, 0, $countreviewers);
-                $countanonymous = $countreviewers;
+            // get workshop object for this $cm
+            $workshop = $DB->get_record('workshop', array('id' => $cm->instance));
+            $workshop = new workshop($workshop, $cm, $this->course);
 
-                if ($anonymous===false) {
-                    $anonymous = array(); // shouldn't happen !!
-                }
+            // select only the required number of anonymous reviewers
+            $anonymous = array_slice($anonymous, 0, $countreviewers);
+            $countanonymous = $countreviewers;
 
-                // shuffle reviewerids so that they are mapped randomly to anonymous users
-                shuffle($reviewers);
+            if ($anonymous===false) {
+                $anonymous = array(); // shouldn't happen !!
+            }
 
-                // map $anonymous reviewers onto real $reviewers
-                $reviewers = array_combine($anonymous, $reviewers);
+            // shuffle reviewerids so that they are mapped randomly to anonymous users
+            shuffle($reviewers);
 
-                // map anonymous reviewers to simple object
-                // (realuserid, review and reviewcount)
-                foreach ($reviewers as $userid => $realuserid) {
-                    $reviewers[$userid] = (object)array(
-                        'realuserid'   => $realuserid,
-                        'reviews'      => array(),
-                        'countreviews' => 0,
-                    );
-                }
+            // map $anonymous reviewers onto real $reviewers
+            $reviewers = array_combine($anonymous, $reviewers);
 
-                $submissions = $DB->get_records('workshop_submissions', array('workshopid' => $workshop->id), null, 'id,authorid');
-                if ($submissions===false) {
-                    $submissions = array();
-                }
-
-                $reviewfields = array();
-
-                $reset = (object)array(
-                    'submissionids' => array(),
-                    'datarecordids' => array()
-                );
-
-                foreach ($submissions as $sid => $submission) {
-                    $submissions[$sid]->countreviews = 0;
-                    $submissions[$sid]->reviews = array();
-
-                    $assessments = $DB->get_records('workshop_assessments', array('submissionid' => $sid));
-                    if ($assessments===false) {
-                        $assessments = array();
-                    }
-
-                    if ($data->resetassessments) {
-                        // reset workshop (=remove previous assessments and grades), if necessary
-                        foreach (array_keys($assessments) as $aid) {
-                            $DB->delete_records('workshop_grades', array('assessmentid' => $aid));
-                        }
-                        $DB->delete_records('workshop_assessments', array('submissionid' => $sid));
-                        $DB->set_field('workshop_submissions', 'grade', null, array('id' => $sid));
-                        $reset->submissionids[] = $sid;
-
-                    } else {
-                        foreach ($assessments as $aid => $assessment) {
-                            $rid = $assessment->reviewerid;
-                            if (empty($reviewers[$rid])) {
-                                // user is not in the anonymous reviewer group
-                                // probably left over from a previous vetting
-                            } else {
-                                $reviewers[$rid]->countreviews++;
-                                $reviewers[$rid]->reviews[$sid] = $aid;
-                            }
-                            $submissions[$sid]->countreviews++;
-                            $submissions[$sid]->reviews[$rid] = $aid;
-                        }
-                    }
-                    unset($assessments);
-
-                    // initialize real authorid for this submission
-                    $submissions[$sid]->realauthorid = 0;
-
-                    // get database records that link to this submission
-                    if ($records = self::get_database_records($workshop, $sid)) {
-
-                        // cache real authorid if record user is also a reviewer
-                        $record = reset($records);
-                        if (self::is_reviewer($record->userid, $reviewers)) {
-                            $submissions[$sid]->realauthorid = $record->userid;
-                        }
-
-                        if ($data->resetassessments) {
-                            foreach ($records as $record) {
-
-                                // get peer_review fields for this dataid
-                                if (! array_key_exists($record->dataid, $reviewfields)) {
-                                    $select = 'dataid = ? AND name IN (?, ?, ?)';
-                                    $params = array($record->dataid, 'peer_review_score',
-                                                                     'peer_review_details',
-                                                                     'peer_review_notes');
-                                    if ($reviewfields[$record->dataid] = $DB->get_records_select_menu('data_fields', $select, $params, null, 'name,id')) {
-                                        $reviewfields[$record->dataid] = $DB->get_in_or_equal($reviewfields[$record->dataid]);
-                                    }
-                                }
-
-                                // reset content for peer_review fields with this recordid
-                                if ($reviewfields[$record->dataid]) {
-                                    list($select, $params) = $reviewfields[$record->dataid];
-                                    $select = "fieldid $select AND recordid = ?";
-                                    $params[] = $record->recordid;
-                                    $DB->set_field_select('data_content', 'content', '', $select, $params);
-                                    $reset->datarecordids[] = $record->recordid;
-                                }
-                            }
-                        }
-                    }
-                    unset($records, $record);
-                }
-
-                if ($count = count($reset->submissionids)) {
-                    sort($reset->submissionids);
-                    $a = (object)array(
-                        'count' => $count,
-                        'ids' => implode(', ', $reset->submissionids)
-                    );
-                    $msg[] = get_string('submissiongradesreset', $this->plugin, $a);
-                }
-
-                if ($count = count($reset->datarecordids)) {
-                    sort($reset->datarecordids);
-                    $a = (object)array(
-                        'count' => $count,
-                        'ids' => implode(', ', $reset->datarecordids)
-                    );
-                    $msg[] = get_string('datarecordsreset', $this->plugin, $a);
-                }
-
-                // switch workshop to EVALUATION phase
-                $workshop->switch_phase(workshop::PHASE_EVALUATION);
-
-                if (empty($data->reviewspersubmission)) {
-                    $countreviews = $countreviewers;
+            // map anonymous reviewers to simple object
+            // (realuserid, review and reviewcount)
+            foreach ($reviewers as $userid => $realuserid) {
+                if ($resetpasswords) {
+                    // random string generator in "lib/moodlelib.php"
+                    $password = random_string(8);
                 } else {
-                    $countreviews = $data->reviewspersubmission;
+                    $password = '';
+                }
+                $reviewers[$userid] = (object)array(
+                    'realuserid'   => $realuserid,
+                    'password'     => $password,
+                    'reviews'      => array(),
+                    'countreviews' => 0
+                );
+            }
+
+            $submissions = $DB->get_records('workshop_submissions', array('workshopid' => $workshop->id), null, 'id,authorid');
+            if ($submissions===false) {
+                $submissions = array();
+            }
+
+            $reviewfields = array();
+
+            $reset = (object)array(
+                'submissionids' => array(),
+                'datarecordids' => array()
+            );
+
+            foreach ($submissions as $sid => $submission) {
+                $submissions[$sid]->countreviews = 0;
+                $submissions[$sid]->reviews = array();
+
+                $assessments = $DB->get_records('workshop_assessments', array('submissionid' => $sid));
+                if ($assessments===false) {
+                    $assessments = array();
                 }
 
-                // Allocate reviewers to submission as necessary.
-                foreach (array_keys($submissions) as $sid) {
-                    $new = array();
-                    while ($submissions[$sid]->countreviews < $countreviews) {
-                        if (! $this->add_reviewer($workshop, $sid, $submissions, $reviewers, $new)) {
-                            break; // could not add reviewer for some reason
-                        }
+                if ($resetassessments) {
+                    // reset workshop (=remove previous assessments and grades), if necessary
+                    foreach (array_keys($assessments) as $aid) {
+                        $DB->delete_records('workshop_grades', array('assessmentid' => $aid));
                     }
-                    if ($count = count($new)) {
-                        sort($new);
-                        $a = (object)array(
-                            'sid'   => $sid,
-                            'count' => $count,
-                            'ids'   => implode(', ', $new)
-                        );
-                        $msg[] = get_string('reviewersadded', $this->plugin, $a);
+                    $DB->delete_records('workshop_assessments', array('submissionid' => $sid));
+                    $DB->set_field('workshop_submissions', 'grade', null, array('id' => $sid));
+                    $reset->submissionids[] = $sid;
+
+                } else {
+                    foreach ($assessments as $aid => $assessment) {
+                        $rid = $assessment->reviewerid;
+                        if (empty($reviewers[$rid])) {
+                            // user is not in the anonymous reviewer group
+                            // probably left over from a previous vetting
+                        } else {
+                            $reviewers[$rid]->countreviews++;
+                            $reviewers[$rid]->reviews[$sid] = $aid;
+                        }
+                        $submissions[$sid]->countreviews++;
+                        $submissions[$sid]->reviews[$rid] = $aid;
                     }
                 }
+                unset($assessments);
+
+                // initialize real authorid for this submission
+                $submissions[$sid]->realauthorid = 0;
+
+                // get database records that link to this submission
+                if ($records = self::get_database_records($workshop, $sid)) {
+
+                    // cache real authorid if record user is also a reviewer
+                    $record = reset($records);
+                    if (self::is_reviewer($record->userid, $reviewers)) {
+                        $submissions[$sid]->realauthorid = $record->userid;
+                    }
+
+                    if ($resetassessments) {
+                        foreach ($records as $record) {
+
+                            // get peer_review fields for this dataid
+                            if (! array_key_exists($record->dataid, $reviewfields)) {
+                                $select = 'dataid = ? AND name IN (?, ?, ?)';
+                                $params = array($record->dataid, 'peer_review_score',
+                                                                 'peer_review_details',
+                                                                 'peer_review_notes');
+                                if ($reviewfields[$record->dataid] = $DB->get_records_select_menu('data_fields', $select, $params, null, 'name,id')) {
+                                    $reviewfields[$record->dataid] = $DB->get_in_or_equal($reviewfields[$record->dataid]);
+                                }
+                            }
+
+                            // reset content for peer_review fields with this recordid
+                            if ($reviewfields[$record->dataid]) {
+                                list($select, $params) = $reviewfields[$record->dataid];
+                                $select = "fieldid $select AND recordid = ?";
+                                $params[] = $record->recordid;
+                                $DB->set_field_select('data_content', 'content', '', $select, $params);
+                                $reset->datarecordids[] = $record->recordid;
+                            }
+                        }
+                    }
+                }
+                unset($records, $record);
+            }
+
+            if ($count = count($reset->submissionids)) {
+                sort($reset->submissionids);
+                $a = (object)array(
+                    'count' => $count,
+                    'ids' => implode(', ', $reset->submissionids)
+                );
+                $msg[] = get_string('submissiongradesreset', $this->plugin, $a);
+            }
+
+            if ($count = count($reset->datarecordids)) {
+                sort($reset->datarecordids);
+                $a = (object)array(
+                    'count' => $count,
+                    'ids' => implode(', ', $reset->datarecordids)
+                );
+                $msg[] = get_string('datarecordsreset', $this->plugin, $a);
+            }
+
+            // switch workshop to EVALUATION phase
+            $workshop->switch_phase(workshop::PHASE_EVALUATION);
+
+            if (empty($data->reviewspersubmission)) {
+                $countreviews = $countreviewers;
+            } else {
+                $countreviews = $data->reviewspersubmission;
+            }
+
+            // Allocate reviewers to submission as necessary.
+            foreach (array_keys($submissions) as $sid) {
+                $new = array();
+                while ($submissions[$sid]->countreviews < $countreviews) {
+                    if (! $this->add_reviewer($workshop, $sid, $submissions, $reviewers, $new)) {
+                        break; // could not add reviewer for some reason
+                    }
+                }
+                if ($count = count($new)) {
+                    sort($new);
+                    $a = (object)array(
+                        'sid'   => $sid,
+                        'count' => $count,
+                        'ids'   => implode(', ', $new)
+                    );
+                    $msg[] = get_string('reviewersadded', $this->plugin, $a);
+                }
+            }
+
+            // create new resource showing real/anon users and login passwords if available
+            $table = new html_table();
+            $table->cellpadding = 4;
+            $table->cellspacing = 4;
+
+            $cells = array('realuser',
+                           'anonymoususername',
+                           'anonymouspassword',
+                           'submissionscount',
+                           'submissionslist');
+
+            if (empty($resetpasswords)) {
+                $i = array_search('anonymouspassword', $cells);
+                $cells = array_splice($cells, $i, 1);
+            }
+
+            // add headers
+            foreach ($cells as $cell) {
+                $cell = get_string($cell, $this->plugin);
+                $cell = new html_table_cell($cell);
+                $table->head[] = $cell;
+            }
+
+            foreach ($reviewers as $userid => $reviewer) {
+                $row = new html_table_row();
+
+                // the real user
+                $user = $DB->get_record('user', array('id' => $reviewer->realuserid));
+
+                $link = '/user/view.php';
+                $link = new moodle_url($link, array('id' => $user->id, 'course' => $cm->course));
+                $link = html_writer::link($link, fullname($user), array('target' => '_blank'));
+                $row->cells[] = new html_table_cell($link);
+
+                // the anonymmous user
+                $user = $DB->get_record('user', array('id' => $userid));
+                $row->cells[] = new html_table_cell($user->username);
+
+                // the anonymmous password (if required)
+                if ($resetpasswords) {
+                    $row->cells[] = new html_table_cell($reviewer->password);
+                }
+
+                // the number of submissions to review
+                $row->cells[] = new html_table_cell($reviewer->countreviews);
+
+                // links to the submissions
+                $cell = array();
+                foreach ($reviewer->reviews as $sid => $aid) {
+                    $link = '/mod/workshop/assessment.php';
+                    $link = new moodle_url($link, array('asid' => $aid));
+                    $link = html_writer::link($link, $aid, array('target' => '_blank'));
+                    $cell[] = $link.': '.$DB->get_field('workshop_submissions', 'title', array('id' => $sid));
+                }
+                $cell = html_writer::alist($cell, null, 'ol');
+                $row->cells[] = new html_table_cell($cell);
+
+                $table->data[] = $row;
+            }
+
+            if (count($table->data)) {
+                // eventually we want to put this in a new resource
+                // but for now we'll just add it to the onscreen messages
+                // $msg[] = html_writer::table($table);
+                // see "add_login_resource()" method
+                // in "/admin/tool/createusers/classes/form.php"
+
+                $resourcedata = (object)array(
+                    'resourcenum' => self::CREATE_NEW,
+                    'resourcename' => '',
+                    'coursesectionnum' => $cm->sectionnum,
+                    'coursesectionname' => '',
+                    'content' => html_writer::table($table)
+                );
+
+                // hack the module name
+                $this->get_cm($msg, $resourcedata, $time, 'resource');
             }
         }
 
@@ -3249,6 +3417,28 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
             }
         }
         return false;
+    }
+
+    /**
+     * get_defaultvalues
+     *
+     * @param object $data from newly submitted form
+     * @param integer $time
+     */
+    protected function get_defaultvalues($data, $time) {
+        $defaultvalues = parent::get_defaultvalues($data, $time);
+
+        $name = 'displayoptions';
+        if (is_array($defaultvalues[$name])) {
+            $defaultvalues[$name] = serialize($defaultvalues[$name]);
+        }
+
+        $name = 'content';
+        if (isset($data->$name)) {
+            $defaultvalues[$name] = $data->$name;
+        }
+
+        return $defaultvalues;
     }
 }
 
@@ -3682,7 +3872,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
     }
 
     /**
-     * get_defaultcontent
+     * get_defaulttemplate
      *
      * @todo Finish documenting this function
      */
