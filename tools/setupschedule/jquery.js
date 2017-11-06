@@ -40,7 +40,7 @@ $(document).ready(function(){
 
     // fetch styles.css
     var style = $("<style></style>", {"type" : "text/css"});
-    style.text("@import url(" + toolroot + "/styles.css);\n" + 
+    style.text("@import url(" + toolroot + "/styles.css);\n" +
                "@import url(" + blockroot + "/templates/template.css)");
     style.insertAfter("head");
 
@@ -81,12 +81,12 @@ $(document).ready(function(){
         }
     });
 
-    // create Sessions area
-    var transit = $("<div></div>", {"id" : "sessions"}).insertAfter("#schedule");
+    // create Events area
+    var items = $("<div></div>", {"id" : "items", "class" : "schedule"}).insertAfter("#schedule");
 
-    // populate Sessions area
-    var p = {"id" : id, "action" : "loadsessions"};
-    transit.load(toolroot + "/action.php", p, function(r, s, x){
+    //populate Events area
+    var p = {"id" : id, "action" : "loaditems"};
+    items.load(toolroot + "/action.php", p, function(r, s, x){
         // r : response text
         // s : status text ("success" or "error")
         // x : XMLHttpRequest object

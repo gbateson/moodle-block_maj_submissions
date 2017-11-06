@@ -472,3 +472,4 @@ $string['start'] = 'Start';
 $string['end'] = 'End';
 $string['left'] = 'Left';
 $string['right'] = 'Right';
+$string['notattending'] = 'Not attending';

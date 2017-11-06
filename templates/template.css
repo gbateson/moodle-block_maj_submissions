@@ -348,6 +348,7 @@
 
     .schedule {
         position: relative;
+        z-index: 10;
     }
 
     .schedule .day,

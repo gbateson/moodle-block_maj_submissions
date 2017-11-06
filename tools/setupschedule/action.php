@@ -74,10 +74,13 @@ switch ($action) {
         $params = array('class' => 'commands');
         $html .= html_writer::start_tag('div', $params);
 
+        $zindex = 100;
         foreach ($commands as $command => $subcommands) {
 
+            $zindex -= 10;
             $params = array('id' => $command,
-                            'class' => 'command');
+                            'class' => 'command',
+                            'style' => "z-index: $zindex;");
             $html .= html_writer::start_tag('div', $params);
             $html .= get_string($command, $plugin);
 
@@ -100,6 +103,7 @@ switch ($action) {
         break;
 
     case 'loadschedule':
+
         $instance = block_instance($blockname, $block_instance);
         if ($cmid = $instance->config->publishcmid) {
             $cm = get_fast_modinfo($course)->get_cm($cmid);
@@ -110,34 +114,122 @@ switch ($action) {
         }
         break;
 
-    case 'loadsessions':
-        echo 'Sessions goes here';
-/*
-<div class="session">
-    <div class="time">
-        09:00 - 09:30
-        <span class="duration">30 mins</span>
-    </div>
-    <div class="room">
-        <span class="roomname">Room 2</span>
-        <span class="totalseats">Seats 40</span>
-        <div class="roomtopic">Developers</div>
-    </div>
-    <div class="title">Presentation 1.1.2</div>
-    <div class="authors">
-        <span class="schedulenumber">112-P</span>
-        Honda, Nguyen
-    </div>
-    <div class="summary">aegnp bcmtz ekmxy cjn adltuwy prz knsvy dkm bhimpsx atx adgjls acfgjl befnry etu efjkoxy rsy gimqtw dmz nox ejtw muvwx bdp biklqsv gjksw bjmq efgqw abjoy flnsux gknprvx lrsz bcdghow fhkpuy fmnqr agksuv bhwx acmrvz aegx cdiowy imr dpqw</div>
-    <div class="capacity">
-        <div class="emptyseats">Seats 40 left</div>
-        <div class="attendance">
-            <input type="checkbox" value="1" />
-            <span class="text">Not attending</span>
-        </div>
-    </div>
-</div>
-*/
+    case 'loaditems':
+
+        $instance = block_instance($blockname, $block_instance);
+        $config = $instance->config;
+        $modinfo = get_fast_modinfo($course);
+
+        // the database types
+        $types = array('presentation',
+                       'workshop',
+                       'sponsored',
+                       'event');
+
+        // ignore these fieldtypes
+        $fieldtypes = array('action', 'constant', 'file', 'picture', 'template', 'url');
+        list($fieldwhere, $fieldparams) = $DB->get_in_or_equal($fieldtypes, SQL_PARAMS_QM, '', false);
+
+        // cache certain strings
+        $strnotattending = get_string('notattending', $plugin);
+
+        $items = array();
+        foreach ($types as $type) {
+            if ($type=='event') {
+                $types_cmid = $type.'scmid';
+            } else {
+                $types_cmid = 'collect'.$type.'scmid';
+            }
+            if (empty($config->$types_cmid)) {
+                continue;
+            }
+            $cmid = $config->$types_cmid;
+            if (! array_key_exists($cmid, $modinfo->cms)) {
+                continue;
+            }
+            $cm = $modinfo->get_cm($cmid);
+            if ($cm->modname != 'data') {
+                continue;
+            }
+
+            // get all records in this DB
+            $select = 'dc.id, dc.fieldid, dc.recordid, df.name AS fieldname, dc.content';
+            $from   = '{data_content} dc '.
+                      'JOIN {data_fields} df ON df.id = dc.fieldid';
+            $where  = 'df.dataid = ? AND df.type '.$fieldwhere;
+            $order  = 'dc.recordid';
+            $params = array_merge(array($cm->instance), $fieldparams);
+
+            $contents = "SELECT $select FROM $from WHERE $where ORDER BY $order";
+            if ($contents = $DB->get_records_sql($contents, $params)) {
+                foreach ($contents as $content) {
+                    $recordid = $content->recordid;
+                    $fieldname = $content->fieldname;
+                    if (! array_key_exists($recordid, $items)) {
+                        $items[$recordid] = array();
+                    }
+                    $items[$recordid][$fieldname] = $content->content;
+                }
+            }
+            unset($contents, $content);
+        }
+
+        // add a "session" for each $item
+        foreach ($items as $recordid => $item) {
+
+            // start session DIV
+            $html .= html_writer::start_tag('div', array('class' => 'session',
+                                                         'id' => 'rid'.$recordid,
+                                                         'style' => 'display: inline-block;'));
+
+            // time and duration
+            $html .= html_writer::start_tag('div', array('class' => 'time'));
+            $html .= $item['schedule_time'];
+            $html .= html_writer::tag('span', $item['schedule_duration'], array('class' => 'duration'));
+            $html .= html_writer::end_tag('div');
+
+            // get room info
+            $room = (object)array(
+                'roomname'   => 'Room 123',
+                'totalseats' => '100 seats',
+                'roomtopic'  => 'Topic XYZ',
+                'emptyseats' => '40 seats left'
+            );
+
+            // room
+            $html .= html_writer::start_tag('div', array('class' => 'room'));
+            $html .= html_writer::tag('span', $room->roomname, array('class' => 'roomname'));
+            $html .= html_writer::tag('span', $room->totalseats, array('class' => 'totalseats'));
+            $html .= html_writer::tag('span', $room->roomtopic, array('class' => 'roomtopic'));
+            $html .= html_writer::end_tag('div');
+
+            // title
+            $html .= html_writer::tag('div', $item['presentation_title'], array('class' => 'title'));
+
+            // format authors
+            $authors = 'Tom, Dick, Harry';
+
+            // schedule number and authors
+            $html .= html_writer::start_tag('div', array('class' => 'authors'));
+            $html .= html_writer::tag('span', $item['schedule_number'], array('class' => 'schedulenumber'));
+            $html .= $authors;
+            $html .= html_writer::end_tag('div');
+
+            // summary
+            $html .= html_writer::tag('div', $item['presentation_abstract'], array('class' => 'summary'));
+
+            // capacity
+            $html .= html_writer::start_tag('div', array('class' => 'capacity'));
+            $html .= html_writer::tag('div', $room->emptyseats, array('class' => 'emptyseats'));
+            $html .= html_writer::start_tag('div', array('class' => 'attendance'));
+            $html .= html_writer::empty_tag('input', array('type' => 'checkbox', 'id' => 'attend'.$recordid, 'value' => '1'));
+            $html .= html_writer::tag('span', $strnotattending, array('class' => 'text'));
+            $html .= html_writer::end_tag('div');
+            $html .= html_writer::end_tag('div');
+
+            // finish session DIV
+            $html .= html_writer::end_tag('div');
+        }
         break;
 
     default:
