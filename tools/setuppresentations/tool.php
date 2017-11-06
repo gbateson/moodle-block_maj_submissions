@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * blocks/maj_submissions/tools/setupworkshops.php
+ * blocks/maj_submissions/tools/setuppresentations.php
  *
  * @package    blocks
  * @subpackage maj_submissions
@@ -25,12 +25,12 @@
  */
 
 /** Include required files */
-require_once('../../../config.php');
-require_once($CFG->dirroot.'/blocks/maj_submissions/tools/lib.php');
+require_once('../../../../config.php');
+require_once($CFG->dirroot.'/blocks/maj_submissions/tools/setuppresentations/form.php');
 
 $blockname = 'maj_submissions';
 $plugin = "block_$blockname";
-$tool = 'toolsetupworkshops';
+$tool = 'toolsetuppresentations';
 
 $id = required_param('id', PARAM_INT); // block_instance id
 
@@ -74,7 +74,7 @@ $PAGE->navbar->add($strpagetitle, $url);
 $customdata = array('course'   => $course,
                     'plugin'   => $plugin,
                     'instance' => $block_instance);
-$mform = 'block_maj_submissions_tool_setupworkshops';
+$mform = 'block_maj_submissions_tool_setuppresentations';
 $mform = new $mform($url->out(false), $customdata);
 
 if ($mform->is_cancelled()) {

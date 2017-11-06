@@ -15,20 +15,22 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Search and createusers strings throughout all texts in the whole database
+ * blocks/maj_submissions/tools/setupworkshops.php
  *
- * @package    tool_createusers
- * @copyright  1999 onwards Martin Dougiamas (http://dougiamas.com)
+ * @package    blocks
+ * @subpackage maj_submissions
+ * @copyright  2016 Gordon Bateson (gordon.bateson@gmail.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.3
  */
 
 /** Include required files */
-require_once('../../../config.php');
-require_once($CFG->dirroot.'/blocks/maj_submissions/tools/lib.php');
+require_once('../../../../config.php');
+require_once($CFG->dirroot.'/blocks/maj_submissions/tools/setupworkshops/form.php');
 
 $blockname = 'maj_submissions';
 $plugin = "block_$blockname";
-$tool = 'toolcreateusers';
+$tool = 'toolsetupworkshops';
 
 $id = required_param('id', PARAM_INT); // block_instance id
 
@@ -52,7 +54,7 @@ if (! $course = $DB->get_record('course', array('id' => $context->instanceid))) 
 $course->context = $context;
 
 require_login($course->id);
-require_capability('moodle/user:create', $context);
+require_capability('moodle/course:manageactivities', $context);
 
 // $SCRIPT is set by initialise_fullme() in 'lib/setuplib.php'
 // It is the path below $CFG->wwwroot of this script
@@ -68,26 +70,31 @@ $PAGE->set_pagelayout('incourse');
 $PAGE->navbar->add($strblockname);
 $PAGE->navbar->add($strpagetitle, $url);
 
+// initialize the form
 $customdata = array('course'   => $course,
                     'plugin'   => $plugin,
                     'instance' => $block_instance);
-$form = 'block_maj_submissions_tool_createusers';
-$form = new $form($url->out(false), $customdata);
+$mform = 'block_maj_submissions_tool_setupworkshops';
+$mform = new $mform($url->out(false), $customdata);
 
-if ($form->is_cancelled()) {
+if ($mform->is_cancelled()) {
     $url = new moodle_url('/course/view.php', array('id' => $course->id));
     redirect($url);
+}
+
+if ($mform->is_submitted()) {
+    $mform->form_postprocessing();
 }
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading($strpagetitle);
 
-if ($form->is_submitted() && $form->is_validated()) {
-    echo $OUTPUT->box_start();
-    $form->create_users();
-    echo $OUTPUT->box_end();
+if ($message = $mform->process_action()) {
+    echo $message;
+} else {
+    echo html_writer::tag('p', get_string($tool.'_desc', $plugin).
+                               $OUTPUT->help_icon('toolsetup', $plugin));
+    $mform->display();
 }
 
-$form->display();
-
-echo $OUTPUT->footer();
+echo $OUTPUT->footer($course);

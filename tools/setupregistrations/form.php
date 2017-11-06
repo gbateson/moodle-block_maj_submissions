@@ -1,3 +1,4 @@
+<?php
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -14,19 +15,23 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * blocks/maj_submissions/tools/setupschedule.js
+ * blocks/maj_submissions/block_maj_submissions.php
  *
  * @package    blocks
  * @subpackage maj_submissions
  * @copyright  2016 Gordon Bateson (gordon.bateson@gmail.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @since      Moodle 2.3
+ * @since      Moodle 2.0
  */
 
-// set hide all sections when document has loaded
-$(document).ready(function(){
+// disable direct access to this script
+defined('MOODLE_INTERNAL') || die();
 
-    // set wwwroot from page URL
-    var wwwroot = location.href.replace(new RegExp("^(.*?)/blocks/maj_submissions.*$"), "$1");
+// get required files
+require_once($CFG->dirroot.'/blocks/maj_submissions/tools/form.setupdatabase.php');
 
-});
+class block_maj_submissions_tool_setupregistrations extends block_maj_submissions_tool_setupdatabase {
+    protected $type = 'registerdelegates';
+    protected $defaultpreset = 'registrations';
+    protected $defaultname = 'registerdelegatesname';
+}

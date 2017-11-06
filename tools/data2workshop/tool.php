@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * blocks/maj_submissions/tools/setupregistrations.php
+ * blocks/maj_submissions/tools/data2workshop.php
  *
  * @package    blocks
  * @subpackage maj_submissions
@@ -25,12 +25,12 @@
  */
 
 /** Include required files */
-require_once('../../../config.php');
-require_once($CFG->dirroot.'/blocks/maj_submissions/tools/lib.php');
+require_once('../../../../config.php');
+require_once($CFG->dirroot.'/blocks/maj_submissions/tools/data2workshop/form.php');
 
 $blockname = 'maj_submissions';
 $plugin = "block_$blockname";
-$tool = 'toolsetupregistrations';
+$tool = 'tooldata2workshop';
 
 $id = required_param('id', PARAM_INT); // block_instance id
 
@@ -74,7 +74,7 @@ $PAGE->navbar->add($strpagetitle, $url);
 $customdata = array('course'   => $course,
                     'plugin'   => $plugin,
                     'instance' => $block_instance);
-$mform = 'block_maj_submissions_tool_setupregistrations';
+$mform = 'block_maj_submissions_tool_data2workshop';
 $mform = new $mform($url->out(false), $customdata);
 
 if ($mform->is_cancelled()) {
@@ -83,18 +83,21 @@ if ($mform->is_cancelled()) {
 }
 
 if ($mform->is_submitted()) {
-    $mform->form_postprocessing();
+    $message = $mform->form_postprocessing();
+} else {
+    $message = '';
 }
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading($strpagetitle);
 
-if ($message = $mform->process_action()) {
-    echo $message;
-} else {
-    echo html_writer::tag('p', get_string($tool.'_desc', $plugin).
-                               $OUTPUT->help_icon('toolsetup', $plugin));
-    $mform->display();
+echo html_writer::tag('p', get_string($tool.'_desc', $plugin).
+                           $OUTPUT->help_icon($tool, $plugin));
+
+if ($message) {
+    echo $OUTPUT->notification($message, 'notifysuccess');
 }
+
+$mform->display();
 
 echo $OUTPUT->footer($course);

@@ -1,0 +1,76 @@
+/**
+ * This file is part of Moodle - http://moodle.org/
+ *
+ * Moodle is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Moodle is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * blocks/maj_submissions/tools/setupschedule/styles.css
+ *
+ * @package    blocks
+ * @subpackage maj_submissions
+ * @copyright  2016 Gordon Bateson (gordon.bateson@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.0
+ */
+
+/**
+ * styles for schedule edit form
+ */
+
+#page-blocks-maj_submissions-tools-setupschedule-tool .command {
+    background-color: #f8f8f8;
+    border:    2px solid #666;
+    border-radius:        4px;
+    display:     inline-block;
+    font-size:        x-small;
+    line-height:        1.2em;
+    margin:           2px 4px;
+    padding:          2px 4px;
+    position:        relative;
+    text-align:        center;
+    min-width:           60px;
+}
+
+#page-blocks-maj_submissions-tools-setupschedule-tool .command:hover {
+    background-color:    #666;
+    color:            #f8f8f8;
+}
+
+#page-blocks-maj_submissions-tools-setupschedule-tool .subcommands {
+    background-color: #f8f8f8;
+    border:    2px solid #999;
+    border-radius:        4px;
+    color:               #000;
+    display:             none;
+    min-width:           40px;
+    position:        absolute;
+    right:                8px;
+}
+
+#page-blocks-maj_submissions-tools-setupschedule-tool .command:hover .subcommands {
+    display:            block;
+}
+
+#page-blocks-maj_submissions-tools-setupschedule-tool .subcommand {
+    border-radius:        4px;
+    margin:           2px 4px;
+    padding:          2px 6px;
+    text-align:          left;
+}
+
+#page-blocks-maj_submissions-tools-setupschedule-tool .subcommand:hover {
+    background-color:    #666;
+    color:            #f8f8f8;
+}

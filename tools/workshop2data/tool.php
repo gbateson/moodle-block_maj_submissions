@@ -25,8 +25,8 @@
  */
 
 /** Include required files */
-require_once('../../../config.php');
-require_once($CFG->dirroot.'/blocks/maj_submissions/tools/lib.php');
+require_once('../../../../config.php');
+require_once($CFG->dirroot.'/blocks/maj_submissions/tools/workshop2data/form.php');
 
 $blockname = 'maj_submissions';
 $plugin = "block_$blockname";
