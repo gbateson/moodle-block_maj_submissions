@@ -411,3 +411,64 @@ $string['anonymouspassword'] = 'Anonymous password';
 $string['submissionscount'] = 'Number of submissions';
 $string['submissionslist'] = 'List of submissions';
 $string['reviewersloginpage'] = 'Login details for anonymous reviewers';
+$string['reviewersubject'] = 'Review proposals for {$a}';
+$string['reviewerinstructions'] = 'Dear {$a->reviewer},
+
+Thank you so much for offering to be a part of the presentation vetting process. {$a->organization} is grateful for your assistance. We are happy to report that from today, you can begin vetting the presentations that have been assigned to you.
+
+Please access this URL to connect to the vetting process Workshop module:
+URL: {$a->workshopurl}
+
+In order to have access to the submission review activity, please login with the following credentials:
+
+Username: {$a->username}
+Password: {$a->password}
+
+Please use the associated rubric for each presentation you are assigned to check. Also, be sure to write some detailed comments if you wish the presentation abstract to be corrected in any way. We will notify those presenters about your comments which will remain completely anonymous.
+
+Please complete the vetting process before {$a->deadline}. We wish to inform the presenters of necessary changes as soon as possible.
+
+Thank you in advance for your helpful participation. Please contact with me if you have any difficulties or need further instructions.
+
+Best regards,
+{$a->senderfullname}
+
+{$a->conferencename}
+{$a->reviewteamname}';
+
+$string['numberofdays_help'] = 'The number of days to appear on the schedule';
+$string['numberofdays'] = 'Number of days';
+$string['numberofrooms_help'] = 'The number of rooms to appear on the schedule';
+$string['numberofrooms'] = 'Number of rooms';
+$string['firstslottime_help'] = 'The time at which the first time slot starts';
+$string['firstslottime'] = 'Time of first slot';
+$string['numberofslots_help'] = 'The number of a time slots in each day';
+$string['numberofslots'] = 'Number of time slots';
+$string['slotduration_help'] = 'The duration of each time slot';
+$string['slotduration'] = 'Duration of each slot';
+$string['slotinterval_help'] = 'The interval between time slots';
+$string['slotinterval'] = 'Interval between slots';
+$string['registrationtime_help'] = 'The start and end times of registration';
+$string['registrationtime'] = 'Registration';
+$string['lunchtime_help'] = 'The start and end times of lunch';
+$string['lunchtime'] = 'Lunch time';
+$string['dinnertime_help'] = 'The start and end times of dinner';
+$string['dinnertime'] = 'Dinner time';
+
+$string['scheduledatetabtext'] = '%b %d<br />(%a)';
+$string['scheduledatefulltext'] = '%b %d (%a)';
+$string['schedulesessiontime'] = '%H:%M';
+
+$string['initializeschedule'] = 'Initialize<br />schedule';
+$string['resetschedule'] = 'Reset<br />schedule';
+$string['renumberschedule'] = 'Renumber<br />schedule';
+$string['addday'] = 'Add<br />day';
+$string['addslot'] = 'Add<br />slot';
+$string['addroom'] = 'Add<br />room';
+$string['editcss'] = 'Edit<br />CSS';
+$string['above'] = 'Above';
+$string['below'] = 'Below';
+$string['start'] = 'Start';
+$string['end'] = 'End';
+$string['left'] = 'Left';
+$string['right'] = 'Right';

@@ -885,7 +885,7 @@ class block_maj_submissions extends block_base {
         $desc = $this->get_string('tool'.$type.'_desc', $plugin);
 
         $params = array('id' => $this->instance->id);
-        $link = new moodle_url("/blocks/maj_submissions/tools/$type.php", $params);
+        $link = new moodle_url("/blocks/maj_submissions/tools/$type/tool.php", $params);
 
         $link = html_writer::tag('a', $text, array('href' => $link)).
                 html_writer::empty_tag('br').
@@ -948,17 +948,88 @@ class block_maj_submissions extends block_base {
     }
 
     /**
+     * multilang_userdate
+     *
+     * @param integer $date
+     * @param string  $format
+     * @param boolean $removetime (optional, default = false)
+     * @param boolean $removedate (optional, default = REMOVE_NONE)
+     * @return string representation of $date
+     */
+    public function multilang_userdate($date, $formatstring, $plugin='', $removetime=false, $removedate=self::REMOVE_NONE) {
+
+        if ($this->multilang==false) {
+            $format = get_string($formatstring, $plugin);
+            return $this->userdate($date, $format, $removetime, $removedate);
+        }
+
+        $currentlanguage = current_language();
+
+        // get all langs and locales on this Moodle site
+        $locales = $this->get_string('locale', 'langconfig', null, true);
+
+        $dates = array();
+        foreach ($locales as $lang => $locale) {
+            moodle_setlocale($locale);
+            force_current_language($lang);
+            $format = get_string($formatstring, $plugin);
+            $dates[$lang] = $this->userdate($date, $format, $removetime, $removedate);
+        }
+
+        if ($lang = $currentlanguage) {
+            $locale = $locales[$lang];
+            moodle_setlocale($locale);
+            force_current_language($lang);
+        }
+
+        return $this->multilang_string($dates);
+    }
+
+    /**
+     * multilang_userdate
+     *
+     * @param integer $secs
+     * @return string representation of $date
+     */
+    public function multilang_format_time($secs) {
+
+        if ($this->multilang==false) {
+            return format_time($secs);
+        }
+
+        $currentlanguage = current_language();
+
+        // get all langs and locales on this Moodle site
+        $locales = $this->get_string('locale', 'langconfig', null, true);
+
+        $times = array();
+        foreach ($locales as $lang => $locale) {
+            moodle_setlocale($locale);
+            force_current_language($lang);
+            $times[$lang] = format_time($secs);
+        }
+
+        if ($lang = $currentlanguage) {
+            $locale = $locales[$lang];
+            moodle_setlocale($locale);
+            force_current_language($lang);
+        }
+
+        return $this->multilang_string($times);
+    }
+
+    /**
      * userdate
      *
      * @param integer $date
      * @param string  $format
      * @param boolean $removetime
-     * @param boolean $removedate (optional, default = false)
+     * @param boolean $removedate (optional, default = REMOVE_NONE)
      * @return string representation of $date
      */
     protected function userdate($date, $format, $removetime, $removedate=self::REMOVE_NONE) {
 
-        $current_language = substr(current_language(), 0, 2);
+        $currentlanguage = substr(current_language(), 0, 2);
 
         if ($removetime) {
             // http://php.net/manual/en/function.strftime.php
@@ -1023,7 +1094,7 @@ class block_maj_submissions extends block_base {
                 $replace['MM'] = ltrim($month);
             }
             if ($fixday) {
-                if ($current_language=='en') {
+                if ($currentlanguage=='en') {
                     $day = date(' jS', $date);
                 } else {
                     $day = strftime(' %d', $date);
@@ -1163,23 +1234,34 @@ class block_maj_submissions extends block_base {
             return $texts;
         }
 
-        // this string does not exist - should not happen !!
-        if (empty($texts)) {
+        return $this->multilang_string($texts);
+    }
+
+    /**
+     * multilang_string
+     *
+     * @param array $items
+     * @return multilang string version of $items
+     */
+    public function multilang_string($items) {
+
+        // no items - should not happen !!
+        if (empty($items)) {
             return '';
         }
 
-        // special case - this string occurs in only one language pack
-        if (count($texts)==1) {
-            return reset($texts);
+        // special case - this item occurs in only one language pack
+        if (count($items)==1) {
+            return reset($items);
         }
 
-        // format strings as multilang $texts
-        foreach ($texts as $lang => $text) {
+        // format items as multilang $items
+        foreach ($items as $lang => $item) {
             $params = array('lang' => $lang, 'class' => 'multilang');
-            $texts[$lang] = html_writer::tag('span', $text, $params);
+            $items[$lang] = html_writer::tag('span', $item, $params);
         }
 
-        return implode('', $texts);
+        return implode('', $items);
     }
 
     /**
