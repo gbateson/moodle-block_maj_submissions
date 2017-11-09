@@ -1250,7 +1250,19 @@ class block_maj_submissions extends block_base {
             return '';
         }
 
-        // special case - this item occurs in only one language pack
+        // remove items that are the same as the default 'en' item
+        if (array_key_exists('en', $items)) {
+            foreach ($items as $lang => $item) {
+                if ($lang=='en') {
+                    continue;
+                }
+                if ($items['en']==$item) {
+                    unset($items[$lang]);
+                }
+            }
+        }
+
+        // special case - this item is unique in only one language pack
         if (count($items)==1) {
             return reset($items);
         }

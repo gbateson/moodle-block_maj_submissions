@@ -473,3 +473,6 @@ $string['end'] = 'End';
 $string['left'] = 'Left';
 $string['right'] = 'Right';
 $string['notattending'] = 'Not attending';
+
+$string['generatecontent_help'] = 'If this setting is enabled, then sample presentations will be added to the schedule. Otherwise, all sessions will be left empty.';
+$string['generatecontent'] = 'Generate content';

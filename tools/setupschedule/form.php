@@ -197,6 +197,10 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $mform->disabledIf($name.'timefinishhour',   'templatetype', 'neq', self::TEMPLATE_GENERATE);
             $mform->disabledIf($name.'timefinishminute', 'templatetype', 'neq', self::TEMPLATE_GENERATE);
 
+            $name = 'generatecontent';
+            $this->add_field($mform, $this->plugin, $name, 'selectyesno', PARAM_INT, null, 0);
+            $mform->disabledIf($name, 'templatetype', 'neq', self::TEMPLATE_GENERATE);
+
         } else {
 
             $name = 'publishcmid';
@@ -547,9 +551,12 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
         $slotduration  = $data->slotduration;
         $slotinterval  = $data->slotinterval;
 
+        $generatecontent = (empty($data->generatecontent) ? false : true);
+
         $times = array('registration' => new stdClass(),
                        'lunch'        => new stdClass(),
                        'dinner'       => new stdClass());
+
         foreach (array_keys($times) as $time) {
             $times[$time]->start = mktime($data->{$time.'timestarthour'},
                                           $data->{$time.'timestartminute'});
@@ -761,7 +768,11 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                         html_writer::tag('span', $slot->duration, array('class' => 'duration'));
                 $content .= html_writer::tag('td', $time, array('class' => 'timeheading'));
 
-                $attending = rand(1, $countrooms);
+                if ($generatecontent) {
+                    $attending = rand(1, $countrooms);
+                } else {
+                    $attending = -1; // i.e. NOT attending
+                }
                 foreach ($rooms as $r => $room) {
                     $session = '';
 
@@ -779,8 +790,14 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                         $attending = $r;
                     }
 
-                    // randomly skip some sessions
-                    if ($attending==$r || rand(0, 2)) {
+                    // Do we need to generatecontent?
+                    // If NO, we leave all sessions empty.
+                    // If YES, we randomly skip some sessions.
+
+                    if ($generatecontent==false) {
+                        // do nothing
+
+                    } else if ($attending==$r || rand(0, 2)) {
 
                         // time
                         $session .= html_writer::tag('div', $time, array('class' => 'time'));

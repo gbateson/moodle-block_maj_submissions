@@ -178,8 +178,8 @@ switch ($action) {
         foreach ($items as $recordid => $item) {
 
             // start session DIV
-            $html .= html_writer::start_tag('div', array('class' => 'session',
-                                                         'id' => 'rid'.$recordid,
+            $html .= html_writer::start_tag('div', array('id' => 'rid'.$recordid,
+                                                         'class' => 'session',
                                                          'style' => 'display: inline-block;'));
 
             // time and duration
@@ -222,7 +222,9 @@ switch ($action) {
             $html .= html_writer::start_tag('div', array('class' => 'capacity'));
             $html .= html_writer::tag('div', $room->emptyseats, array('class' => 'emptyseats'));
             $html .= html_writer::start_tag('div', array('class' => 'attendance'));
-            $html .= html_writer::empty_tag('input', array('type' => 'checkbox', 'id' => 'attend'.$recordid, 'value' => '1'));
+            $html .= html_writer::empty_tag('input', array('id' => 'attend'.$recordid,
+                                                           'type' => 'checkbox',
+                                                           'value' => '1'));
             $html .= html_writer::tag('span', $strnotattending, array('class' => 'text'));
             $html .= html_writer::end_tag('div');
             $html .= html_writer::end_tag('div');

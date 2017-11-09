@@ -467,10 +467,18 @@ abstract class block_maj_submissions_tool_form extends moodleform {
         $cm = false;
 
         $activitynum  = $name.'num';
-        $activitynum  = $data->$activitynum;
+        if (empty($data->$activitynum)) {
+            $activitynum = 0;
+        } else {
+            $activitynum  = $data->$activitynum;
+        }
 
         $activityname = $name.'name';
-        $activityname = $data->$activityname;
+        if (empty($data->$activityname)) {
+            $activityname = '';
+        } else {
+            $activityname = $data->$activityname;
+        }
 
         if ($activityname=='') {
             if ($this->defaultname) {

@@ -29,9 +29,19 @@
  * styles for schedule edit form
  */
 
+#page-blocks-maj_submissions-tools-setupschedule-tool #tools {
+    background-color: #fff5e6;
+    border-radius:        6px;
+    border:    1px solid #f90;
+    margin-bottom:       12px;
+    margin-top:          12px;
+    padding:         8px 12px;
+    max-width:    max-content;
+}
+
 #page-blocks-maj_submissions-tools-setupschedule-tool .command {
-    background-color: #f8f8f8;
-    border:    2px solid #666;
+    background-color: #ffebcc;
+    border:    2px solid #f90;
     border-radius:        6px;
     display:     inline-block;
     font-size:          small;
@@ -44,17 +54,15 @@
 }
 
 #page-blocks-maj_submissions-tools-setupschedule-tool .command:hover {
-    background-color:    #666;
-    color:            #f8f8f8;
+    background-color: #ffdaa3;
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2),
                 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
 #page-blocks-maj_submissions-tools-setupschedule-tool .subcommands {
-    background-color: #f8f8f8;
-    border:    2px solid #999;
+    background-color: #ffebcc;
+    border:    2px solid #f90;
     border-radius:        6px;
-    color:               #000;
     display:             none;
     min-width:           60px;
     position:        absolute;
@@ -69,19 +77,42 @@
 }
 
 #page-blocks-maj_submissions-tools-setupschedule-tool .subcommand {
+    border-color:     #ffebcc;
     border-radius:        4px;
+    border-style:       solid;
+    border-width:         1px;
     margin:           2px 4px;
     padding:          2px 6px;
     text-align:          left;
 }
 
 #page-blocks-maj_submissions-tools-setupschedule-tool .subcommand:hover {
-    background-color:    #666;
-    color:            #f8f8f8;
+    background-color: #ffdaa3;
+    border-color:        #f90;
 }
 
 @media print, screen and (min-width: 768px) {
     #items.schedule .session {
         display:     inline-block;
     }
+}
+
+#page-blocks-maj_submissions-tools-setupschedule-tool #items {
+    background-color: #e6f2ff;
+    border-radius:        6px;
+    border:    1px solid #9cf;
+    margin-top:          36px;
+    padding:        12px 18px;
+}
+
+#page-blocks-maj_submissions-tools-setupschedule-tool .ui-dragging,
+#page-blocks-maj_submissions-tools-setupschedule-tool .ui-selected {
+    background-color: #e6f2ff;
+    border:    1px solid #9cf;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2),
+                0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+#page-blocks-maj_submissions-tools-setupschedule-tool .ui-dropping {
+    background-color:  #ffffcc;
 }
