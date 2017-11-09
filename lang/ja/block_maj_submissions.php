@@ -346,6 +346,7 @@ URL: {$a->workshopurl}
 改めましてお力添えに感謝いたします。ご不明な点やご質問等ございましたら、私までご一報ください。
 
 {$a->senderfullname}
+{$a->senderemail}
 
 {$a->conferencename}
 {$a->reviewteamname}';

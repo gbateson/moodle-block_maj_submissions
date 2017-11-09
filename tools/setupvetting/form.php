@@ -231,6 +231,7 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                 if ($resetpasswords) {
                     // random string generator in "lib/moodlelib.php"
                     $password = random_string(8);
+                    $DB->set_field('user', 'password', md5($password), array('id' => $userid));
                 } else {
                     $password = '';
                 }
