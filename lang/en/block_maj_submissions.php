@@ -432,6 +432,7 @@ Thank you in advance for your helpful participation. Please contact with me if y
 
 Best regards,
 {$a->senderfullname}
+($a->senderemail)
 
 {$a->conferencename}
 {$a->reviewteamname}';
@@ -476,3 +477,8 @@ $string['notattending'] = 'Not attending';
 
 $string['generatecontent_help'] = 'If this setting is enabled, then sample presentations will be added to the schedule. Otherwise, all sessions will be left empty.';
 $string['generatecontent'] = 'Generate content';
+
+$string['senderemail_help'] = 'Optional email address to use in email messages to reviewers.';
+$string['senderemail'] = 'Sender email';
+$string['sendername_help'] = 'Optional name to use as the sender email messages to reviewers.';
+$string['sendername'] = 'Sender name';

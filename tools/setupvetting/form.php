@@ -95,6 +95,14 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
         $this->add_field($mform, $this->plugin, $name, 'selectyesno', PARAM_INT);
         $mform->disabledIf($name, 'targetworkshop', 'eq', 0);
 
+        $name = 'sendername';
+        $this->add_field($mform, $this->plugin, $name, 'text', PARAM_TEXT);
+        $mform->disabledIf($name, 'targetworkshop', 'eq', 0);
+
+        $name = 'senderemail';
+        $this->add_field($mform, $this->plugin, $name, 'text', PARAM_TEXT);
+        $mform->disabledIf($name, 'targetworkshop', 'eq', 0);
+
         $this->add_action_buttons();
     }
 
@@ -161,7 +169,7 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
      * @todo Finish documenting this function
      */
     public function form_postprocessing() {
-        global $CFG, $DB;
+        global $CFG, $DB, $USER;
         require_once($CFG->dirroot.'/mod/workshop/locallib.php');
 
         $cm = null;
@@ -378,15 +386,29 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                 $noreply = generate_email_supportuser();
             }
 
+            if (empty($data->sendername)) {
+                $data->sendername = fullname($USER);
+            }
+            if (empty($data->senderemail)) {
+                $data->senderemail = $USER->email;
+            }
+            if (empty($config->reviewteamname)) {
+                $config->reviewteamname = '提出審査委員 Submission review team';
+            }
+            if (empty($config->conferencename)) {
+                $config->conferencename = $config->conferencenameen;
+            }
+
             // initialize values for email message
             $a = (object)array(
                 'reviewer'       => '', // added later
-                'organization'   => $CFG->fullname,
-                'workshopurl'    => $workshop->view_url(),
+                'organization'   => $DB->get_field('course', 'fullname', array('id' => SITEID)),
+                'workshopurl'    => $workshop->view_url()->out(),
                 'username'       => '', // added later
                 'password'       => '', // added later
-                'deadline'       => $config->reviewtimefinish,
-                'senderfullname' => fullname($USER),
+                'deadline'       => userdate($config->reviewtimefinish),
+                'senderfullname' => $data->sendername,
+                'senderemail'    => $data->senderemail,
                 'conferencename' => $config->conferencename,
                 'reviewteamname' => $config->reviewteamname
             );
@@ -454,8 +476,9 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                 $a->username = $anonuser->username;
                 $a->password = $reviewer->password;
                 $message = get_string('reviewerinstructions', $this->plugin, $a);
+
                 $message = format_text($message, FORMAT_MOODLE);
-                email_to_user($realuser, $USER, $subject, $message);
+                email_to_user($realuser, $noreply, $subject, $message);
             }
 
             // create a page resource
