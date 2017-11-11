@@ -410,7 +410,7 @@ $string['anonymoususername'] = 'Anonymous username';
 $string['anonymouspassword'] = 'Anonymous password';
 $string['submissionscount'] = 'Number of submissions';
 $string['submissionslist'] = 'List of submissions';
-$string['reviewersloginpage'] = 'Login details for anonymous reviewers';
+$string['reviewersloginpage'] = 'Login details for anonymous reviewers ({$a})';
 $string['reviewersubject'] = 'Review proposals for {$a}';
 $string['reviewerinstructions'] = 'Dear {$a->reviewer},
 
@@ -432,7 +432,7 @@ Thank you in advance for your helpful participation. Please contact with me if y
 
 Best regards,
 {$a->senderfullname}
-($a->senderemail)
+{$a->senderemail}
 
 {$a->conferencename}
 {$a->reviewteamname}';

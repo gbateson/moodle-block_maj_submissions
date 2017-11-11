@@ -476,22 +476,43 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                 $a->reviewer = fullname($realuser);
                 $a->username = $anonuser->username;
                 $a->password = $reviewer->password;
-                $message = get_string('reviewerinstructions', $this->plugin, $a);
-
-                $message = format_text($message, FORMAT_MOODLE);
-                email_to_user($realuser, $noreply, $subject, $message);
+                $messagetext = get_string('reviewerinstructions', $this->plugin, $a);
+                $messagehtml = format_text($messagetext, FORMAT_MOODLE);
+                email_to_user($realuser, $noreply, $subject, $messagetext, $messagehtml);
             }
 
             // create a page resource
             if (count($table->data)) {
+                $a = array();
+                $search = '/<span\b[^>]*lang="([^"]+)"[^>]*>(.*?)<\/span>/';
+                if (preg_match_all($search, $workshop->name, $spans)) {
+                    // generate multilang params for "reviewersloginpage"
+                    $search = array('/^.*\((.*?)\)$/', // 1-byte trailing "()"
+                                    '/^.*\[(.*?)\]$/', // 1-byte trailing "[]"
+                                    '/^.*\{(.*?)\}$/', // 1-byte trailing "{}"
+                                    '/^.*（(.*?)）$/',  // 2-byte trailing "（）"
+                                    '/^.*『(.*?)』$/',  // 2-byte trailing "『』"
+                                    '/^.*「(.*?)」$/'); // 2-byte trailing "「」"
+                    $i_max = count($spans[0]);
+                    for ($i=0; $i<$i_max; $i++) {
+                        $lang = $spans[1][$i];
+                        $span = $spans[2][$i];
+                        $count = 0;
+                        $span = preg_replace($search, '$1', $span, -1, $count);
+                        if ($count) {
+                            $a[$lang] = $span;
+                        }
+                    }
+                }
                 $resourcedata = (object)array(
                     'resourcenum' => self::CREATE_NEW,
                     'resourcename' => '',
                     'coursesectionnum' => $cm->sectionnum,
                     'coursesectionname' => '',
-                    'content' => html_writer::table($table)
+                    'content' => html_writer::table($table),
+                    'visible' => 0
                 );
-                $this->get_cm($msg, $resourcedata, $time, 'resource');
+                $this->get_cm($msg, $resourcedata, $time, 'resource', $a);
             }
         }
 

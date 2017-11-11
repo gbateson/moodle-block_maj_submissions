@@ -460,33 +460,28 @@ abstract class block_maj_submissions_tool_form extends moodleform {
      * @param object  $data
      * @param integer $time
      * @param string  $name
+     * @param mixed  $a, arguments for get_string(), if needed
      * @return object newly added $cm object; otherwise false
      */
-    public function get_cm(&$msg, $data, $time, $name) {
+    public function get_cm(&$msg, $data, $time, $name, $a=null) {
 
         $cm = false;
-
         $activitynum  = $name.'num';
-        if (empty($data->$activitynum)) {
-            $activitynum = 0;
-        } else {
-            $activitynum  = $data->$activitynum;
-        }
+        $activitynum = (empty($data->$activitynum) ? 0 : $data->$activitynum);
 
         $activityname = $name.'name';
-        if (empty($data->$activityname)) {
-            $activityname = '';
-        } else {
-            $activityname = $data->$activityname;
-        }
+        $activityname = (empty($data->$activityname) ? '' : $data->$activityname);
 
         if ($activityname=='') {
-            if ($this->defaultname) {
-                $activityname = get_string($this->defaultname, $this->plugin);
+            if ($this->defaultname=='') {
+                $activityname = $this->instance->get_string('pluginname', $this->modulename);
             } else {
-                $activityname = get_string('pluginname', $this->modulename);
+                $activityname = $this->instance->get_string($this->defaultname, $this->plugin, $a);
             }
         }
+
+        $activitynametext = block_maj_submissions::filter_text($activityname);
+        $activitynametext = strip_tags($activitynametext);
 
         $sectionnum   = $data->coursesectionnum;
         $sectionname  = $data->coursesectionname;
@@ -519,15 +514,14 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                                 $this->instance->instance_config_save($this->instance->config);
                             }
                         }
-
                         // create link to new module
                         $link = "/mod/$this->modulename/view.php";
                         $link = new moodle_url($link, array('id' => $cm->id));
-                        $link = html_writer::tag('a', $activityname, array('href' => "$link"));
+                        $link = html_writer::tag('a', $activitynametext, array('href' => "$link"));
 
                         $msg[] = get_string('newactivitycreated', $this->plugin, $link);
                     } else {
-                        $msg[] = get_string('newactivityskipped', $this->plugin, $activityname);
+                        $msg[] = get_string('newactivityskipped', $this->plugin, $activitynametext);
                     }
                 }
             } else {

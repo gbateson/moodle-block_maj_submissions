@@ -350,3 +350,4 @@ URL: {$a->workshopurl}
 
 {$a->conferencename}
 {$a->reviewteamname}';
+$string['reviewersloginpage'] = '無記名審査委員ログイン情報（{$a}）';

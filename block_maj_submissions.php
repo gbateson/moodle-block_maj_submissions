@@ -1210,7 +1210,7 @@ class block_maj_submissions extends block_base {
 
         // initialize $params for get_string
         if ($a_is_multilang = is_array($a)) {
-            $params = reset($a);
+            $params = null; // will be set later
         } else {
             $params = $a; // either scaler or object
         }
@@ -1220,8 +1220,12 @@ class block_maj_submissions extends block_base {
         foreach ($langs as $lang) {
             $strings = $strman->load_component_strings($component, $lang);
             if (array_key_exists($identifier, $strings)) {
-                if ($a_is_multilang && array_key_exists($lang, $a)) {
-                    $params = $a[$lang];
+                if ($a_is_multilang) {
+                    if (array_key_exists($lang, $a)) {
+                        $params = $a[$lang];
+                    } else {
+                        $params = reset($a);
+                    }
                 }
                 $text = $strman->get_string($identifier, $component, $params, $lang);
                 if (array_search($text, $texts)===false) {
