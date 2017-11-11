@@ -236,7 +236,7 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                     $password = '';
                 }
                 $reviewers[$userid] = (object)array(
-                    'realuserid'   => $realuserid,
+                    'realuser'     => $DB->get_record('user', array('id' => $realuserid)),
                     'password'     => $password,
                     'reviews'      => array(),
                     'countreviews' => 0
@@ -289,17 +289,15 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                 }
                 unset($assessments);
 
-                // initialize real authorid for this submission
-                $submissions[$sid]->realauthorid = 0;
+                // initialize reviewerauthorids for this submission
+                $submissions[$sid]->reviewerauthorids = array();
 
                 // get database records that link to this submission
                 if ($records = self::get_database_records($workshop, $sid)) {
 
-                    // cache real authorid if record user is also a reviewer
+                    // cache real authorids if for authors who are also reviewers
                     $record = reset($records);
-                    if (self::is_reviewer($record->userid, $reviewers)) {
-                        $submissions[$sid]->realauthorid = $record->userid;
-                    }
+                    $submissions[$sid]->reviewerauthorids = self::get_reviewerauthorids($record, $reviewers);
 
                     if ($resetassessments) {
                         foreach ($records as $record) {
@@ -440,12 +438,10 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
             foreach ($reviewers as $userid => $reviewer) {
                 $row = new html_table_row();
 
-                // the real user
-                $realuser = $DB->get_record('user', array('id' => $reviewer->realuserid));
-
+                // link to the real user
                 $link = '/user/view.php';
-                $link = new moodle_url($link, array('id' => $realuser->id, 'course' => $cm->course));
-                $link = html_writer::link($link, fullname($realuser), array('target' => '_blank'));
+                $link = new moodle_url($link, array('id' => $reviewer->realuser->id, 'course' => $cm->course));
+                $link = html_writer::link($link, fullname($reviewer->realuser), array('target' => '_blank'));
                 $row->cells[] = new html_table_cell($link);
 
                 // the anonymmous user
@@ -473,12 +469,15 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
 
                 $table->data[] = $row;
 
-                $a->reviewer = fullname($realuser);
-                $a->username = $anonuser->username;
-                $a->password = $reviewer->password;
-                $messagetext = get_string('reviewerinstructions', $this->plugin, $a);
-                $messagehtml = format_text($messagetext, FORMAT_MOODLE);
-                email_to_user($realuser, $noreply, $subject, $messagetext, $messagehtml);
+                // send email to reviewer, if this Moodle site sends email
+                if (empty($CFG->noemailever)) {
+                    $a->reviewer = fullname($reviewer->realuser);
+                    $a->username = $anonuser->username;
+                    $a->password = $reviewer->password;
+                    $messagetext = get_string('reviewerinstructions', $this->plugin, $a);
+                    $messagehtml = format_text($messagetext, FORMAT_MOODLE);
+                    email_to_user($reviewer->realuser, $noreply, $subject, $messagetext, $messagehtml);
+                }
             }
 
             // create a page resource
@@ -524,6 +523,7 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
      * (1) reviewers should be assigned an equal number of submissions
      * (2) reviewers should not be assigned more than once to the same submission
      * (3) real reviewers should not be not assigned to their own submissions
+     *     i.e. they can be neither the main presenter nor a co-presenter
      *
      * @param integer submission id
      * @param object  (passed by reference) $submission
@@ -538,7 +538,7 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
             if (array_key_exists($rid, $submissions[$sid]->reviews)) {
                 continue; // reviewer is already reviewing this submission
             }
-            if ($submissions[$sid]->realauthorid==$reviewer->realuserid) {
+            if (in_array($reviewer->realuser->id, $submissions[$sid]->reviewerauthorids)) {
                 continue; // reviewers cannot review their own submissions
             }
             $aid = $workshop->add_allocation($submissions[$sid], $rid);
@@ -573,16 +573,57 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
     }
 
     /**
-     * is_reviewer
+     * is_reviewer_userid
      *
      * @param integer $userid
      * @param array   $reviewers
      * @return boolean TRUE if $authorid is a
      */
-    static public function is_reviewer($userid, $reviewers) {
+    static public function is_reviewer_userid($userid, $reviewers) {
         foreach ($reviewers as $reviewer) {
-            if ($reviewer->realuserid==$userid) {
-                return true;
+            if ($reviewer->realuser->id==$userid) {
+                return $reviewer->realuser->id;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * is_reviewer_name
+     *
+     * @param object  $name
+     * @param array   $reviewers
+     * @return boolean TRUE if $authorid is a
+     */
+    static public function is_reviewer_name($name, $reviewers, $mainauthorid) {
+        foreach ($reviewers as $reviewer) {
+            // skip main author
+            if ($reviewer->realuser->id==$mainauthorid) {
+                continue;
+            }
+            // compare first/last name
+            if ($firstname = trim($reviewer->realuser->firstname)) {
+                $firstname = block_maj_submissions::textlib('strtoupper', $firstname);
+            }
+            if ($firstname==$name->firstname) {
+                if ($lastname = trim($reviewer->realuser->lastname)) {
+                    $lastname = block_maj_submissions::textlib('strtoupper', $lastname);
+                }
+                if ($lastname==$name->lastname) {
+                    return $reviewer->realuser->id;
+                }
+            }
+            // compare phonetic first/last name
+            if ($firstname = trim($reviewer->realuser->firstnamephonetic)) {
+                $firstname = block_maj_submissions::textlib('strtoupper', $firstname);
+            }
+            if ($firstname==$name->firstname) {
+                if ($lastname = trim($reviewer->realuser->lastnamephonetic)) {
+                    $lastname = block_maj_submissions::textlib('strtoupper', $lastname);
+                }
+                if ($lastname==$name->lastname) {
+                    return $reviewer->realuser->id;
+                }
             }
         }
         return false;
@@ -608,5 +649,86 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
         }
 
         return $defaultvalues;
+    }
+
+    /**
+     * get_database_records
+     *
+     * get records from database activites that link to
+     * the specified submission in the specified workshop
+     *
+     * @uses $DB
+     * @param object $record from a submissions database
+     * @return array $userids of co-authors (may be empty)
+     */
+    static public function get_reviewerauthorids($record, $reviewers) {
+        global $DB;
+        $reviewerauthors = array();
+
+        // add main author, if (s)he is a reviewer
+        if ($userid = self::is_reviewer_userid($record->userid, $reviewers)) {
+            $reviewerauthors[$userid] = true;
+        }
+
+        $select = 'dc.id, dc.content AS content, df.name AS fieldname';
+        $from   = '{data_content} dc JOIN {data_fields} df ON dc.fieldid = df.id';
+
+        $where = 'dc.recordid = :recordid'.
+                 ' AND dc.content IS NOT NULL'.
+                 ' AND dc.content != :emptystring'.
+                 ' AND ('.$DB->sql_like('df.name', ':firstname').
+                        ' OR '.$DB->sql_like('df.name', ':lastname').')';
+
+        $params = array('recordid' => $record->recordid,
+                        'emptystring' => '',
+                        'firstname' => 'name_given_%',
+                        'lastname' => 'name_surname_%');
+
+        $contents = "SELECT $select FROM $from WHERE $where";
+        if ($contents = $DB->get_records_sql($contents, $params)) {
+            $names = array();
+            foreach ($contents as $content) {
+                $i = 0;
+                $name = '';
+                $type = '';
+                $lang = 'xx';
+                $parts = explode('_', $content->fieldname);
+                switch (count($parts)) {
+                    case 2:
+                        list($name, $type) = $parts;
+                        break;
+                    case 3:
+                        if (is_numeric($parts[2])) {
+                            list($name, $type, $i) = $parts;
+                        } else {
+                            list($name, $type, $lang) = $parts;
+                        }
+                        break;
+                    case 4:
+                        if (is_numeric($parts[2])) {
+                            list($name, $type, $i, $lang) = $parts;
+                        } else {
+                            list($name, $type, $lang, $i) = $parts;
+                        }
+                        break;
+                }
+                switch ($type) {
+                    case 'given': $type = 'firstname'; break;
+                    case 'surname': $type = 'lastname'; break;
+                }
+                if (empty($names[$i.'_'.$lang])) {
+                    $names[$i.'_'.$lang] = new stdClass();
+                }
+                $names[$i.'_'.$lang]->$type = block_maj_submissions::textlib('strtoupper', $content->content);
+            }
+
+            // add any co-authors, excluding main author, who are also reviewers
+            foreach ($names as $name) {
+                if ($userid = self::is_reviewer_name($name, $reviewers, $record->userid)) {
+                    $reviewerauthors[$userid] = true;
+                }
+            }
+        }
+        return array_keys($reviewerauthors);
     }
 }

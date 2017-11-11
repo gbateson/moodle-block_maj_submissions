@@ -416,15 +416,15 @@ $string['reviewerinstructions'] = 'Dear {$a->reviewer},
 
 Thank you so much for offering to be a part of the presentation vetting process. {$a->organization} is grateful for your assistance. We are happy to report that from today, you can begin vetting the presentations that have been assigned to you.
 
-Please access this URL to connect to the vetting process Workshop module:
-URL: {$a->workshopurl}
-
-In order to have access to the submission review activity, please login with the following credentials:
+To begin the review process, please login with the following credentials:
 
 Username: {$a->username}
 Password: {$a->password}
 
-Please use the associated rubric for each presentation you are assigned to check. Also, be sure to write some detailed comments if you wish the presentation abstract to be corrected in any way. We will notify those presenters about your comments which will remain completely anonymous.
+After you have logged in, you can review submissions via the following link:
+URL: {$a->workshopurl}
+
+Please use the associated rubric for each submission you are assigned to review. Also, be sure to write some detailed comments if you think the submission abstract could be improved in any way. We will notify those presenters about your comments which will remain completely anonymous.
 
 Please complete the vetting process before {$a->deadline}. We wish to inform the presenters of necessary changes as soon as possible.
 
