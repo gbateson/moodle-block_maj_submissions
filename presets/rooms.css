@@ -1,0 +1,34 @@
+.path-mod-data th.c0 {
+    text-align: right;
+    vertical-align: top;
+}
+.path-mod-data td.c1,
+.path-mod-data td.c2 {
+    text-align: left;
+    vertical-align: top;
+}
+.path-mod-data th.c0:not(:empty):after {
+    content: " : ";
+}
+.path-mod-data th.c1,
+.path-mod-data th.c2 {
+    text-align: center;
+}
+#path-mod-data-edit .room th.c0,
+#path-mod-data-edit .building th.c0,
+#path-mod-data-edit .floor th.c0,
+#path-mod-data-edit .capacity th.c0 {
+    padding-top: 4px;
+}
+#page-mod-data-edit .basefieldinput {
+    width: 120px;
+}
+#page-mod-data-edit .notes textarea[cols] {
+    max-width: 280px;
+}
+#page-mod-data-edit .photo .mod-data-input {
+    max-width: 290px;
+}
+.path-mod-data .photo img {
+    border-radius: 4px;
+}

@@ -1,0 +1,116 @@
+<preset>
+
+<settings>
+<intro></intro>
+<comments>0</comments>
+<requiredentries>0</requiredentries>
+<requiredentriestoview>0</requiredentriestoview>
+<maxentries>0</maxentries>
+<rssarticles>0</rssarticles>
+<approval>0</approval>
+<manageapproved>1</manageapproved>
+<defaultsortdir>0</defaultsortdir>
+<defaultsort>0</defaultsort>
+</settings>
+
+<field>
+<type>text</type>
+<name>room_name_en</name>
+<description>室名（英語） Room name (en)</description>
+<required>0</required>
+<param1>1</param1>
+</field>
+
+<field>
+<type>text</type>
+<name>room_name_ja</name>
+<description>室名（日本語） Room name (ja)</description>
+<required>0</required>
+<param1>1</param1>
+</field>
+
+<field>
+<type>text</type>
+<name>building_en</name>
+<description>ビル名（英語） Building (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>building_ja</name>
+<description>ビル名（日本語） Building (ja)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>floor_en</name>
+<description>階名（英語） Floor (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>floor_ja</name>
+<description>階名（日本語） Floor (ja)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>capacity_en</name>
+<description>定員（英語） Capacity (en)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>text</type>
+<name>capacity_ja</name>
+<description>定員（日本語） Capacity (ja)</description>
+<required>0</required>
+</field>
+
+<field>
+<type>menu</type>
+<name>room_type</name>
+<description>用途 Room type</description>
+<required>0</required>
+<param1>講義室 Lecture hall
+ゼミ室 Seminar room
+コンピュータ室 Computer lab
+玄関・ロビー Hall / Foyer</param1>
+</field>
+
+<field>
+<type>checkbox</type>
+<name>equipment</name>
+<description>設備 Equipment</description>
+<required>0</required>
+<param1>プロジェクター Projector
+DVD
+VHS
+OHC
+LAN</param1>
+</field>
+
+<field>
+<type>textarea</type>
+<name>notes</name>
+<description>備考 Notes</description>
+<required>0</required>
+<param2>40</param2>
+<param3>2</param3>
+<param4>1</param4>
+<param5>0</param5>
+</field>
+
+<field>
+<type>picture</type>
+<name>photo</name>
+<description>写真 Photo</description>
+<required>0</required>
+<param3>0</param3>
+</field>
+
+</preset>

@@ -430,3 +430,96 @@ MAJ.remove_empty_section = function(sectionselector, subheading) {
     }
 }
 
+/*
+ * reduce lang strings in specified elements
+ */
+MAJ.reduce_lang_strings = function(elements) {
+    var newline = new RegExp("[\\r\\n]+");
+    $(elements).each(function(){
+        var text = $(this).text();
+        text = text.split(newline);
+        for (var i in text) {
+            text[i] = MAJ.reduce_lang_string(text[i]);
+        }
+        $(this).html(text.join("<br />"));
+    });
+}
+
+/*
+ * reduce specified lang string
+ */
+MAJ.reduce_lang_string = function(s) {
+    // assume Japanese chars followed by English chars
+    // e.g. 日本語の文字 English chars
+    if (MAJ.lang) {
+        var chars = "\\x00-\\x7F";
+        if (MAJ.lang=="en") {
+            chars = " *([" + chars + "]+)$";
+        } else {
+            chars = "^([^\\x00-\\x29\\x40-\\x7F]*[^" + chars + "]) *";
+        }
+        chars = new RegExp(chars);
+        var m = s.match(chars);
+        if (m && m[1]) {
+            s = m[1];
+        }
+    }
+    return s;
+}
+
+/*
+ * determine whether or not the specified string is a multilang string
+ */
+MAJ.is_multilang = function(s) {
+    return (s.match(MAJ.en) && s.match(MAJ.ja));
+}
+
+/*
+ * reduce multilang string in select element texts
+ */
+MAJ.reduce_multilang_select = function(rows) {
+    $(rows).find("option").each(function(){
+        var value = $(this).val();
+        if (MAJ.is_multilang(value)) {
+            if (MAJ.reduce_currency_string) {
+                // registrations
+                value = MAJ.reduce_currency_string(value);
+            } else {
+                // presentations, rooms, events
+                value = MAJ.reduce_lang_string(value);
+            }
+            $(this).text(value);
+            // Note: we don't change the "value" of this element
+            // because that would confuse the database module
+            // when the modified value is sent back to the server
+        }
+    });
+}
+
+/*
+ * reduce multilang string in radio element texts
+ */
+MAJ.reduce_multilang_radio = function(rows) {
+    $(rows).find("label").each(function(){
+        var value = $(this).text();
+        if (MAJ.is_multilang(value)) {
+            if (MAJ.reduce_currency_string) {
+                // registrations
+                value = MAJ.reduce_currency_string(value);
+            } else {
+                // presentations, rooms, events
+                value = MAJ.reduce_lang_string(value);
+            }
+            $(this).text(value);
+        }
+    });
+}
+
+/*
+ * change position of "required" image elements
+ */
+MAJ.position_img_tags = function() {
+    $("img.req").each(function (){
+        $(this).parent().css("display", "block");
+    });
+}

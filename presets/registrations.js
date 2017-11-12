@@ -145,33 +145,6 @@ MAJ.reduce_multilang_edit = function() {
     MAJ.reduce_multilang_spans();
 }
 
-MAJ.reduce_lang_strings = function(elements) {
-    $(elements).each(function(){
-        var text = $(this).text();
-        text = MAJ.reduce_lang_string(text);
-        $(this).text(text);
-    });
-}
-
-MAJ.reduce_lang_string = function(s) {
-    // assume Japanese chars followed by English chars
-    // e.g. 日本語の文字 English chars
-    if (MAJ.lang) {
-        var chars = "\\x00-\\x7F";
-        if (MAJ.lang=="en") {
-            chars = " *([" + chars + "]+)$";
-        } else {
-            chars = "^(.*[^" + chars + "]) *";
-        }
-        chars = new RegExp(chars);
-        var m = s.match(chars);
-        if (m && m[1]) {
-            s = m[1];
-        }
-    }
-    return s;
-}
-
 MAJ.reduce_currency_rows = function(rows) {
     $(rows).find("td").each(function(){
         var text = $(this).text();
@@ -216,39 +189,6 @@ MAJ.reduce_currency_string = function(s) {
         s = MAJ.trim(ss);
     }
     return s;
-}
-
-MAJ.is_multilang = function(s) {
-    return (s.match(MAJ.en) && s.match(MAJ.ja));
-}
-
-MAJ.reduce_multilang_select = function(rows) {
-    $(rows).find("option").each(function(){
-        var value = $(this).val();
-        if (MAJ.is_multilang(value)) {
-            value = MAJ.reduce_currency_string(value);
-            $(this).text(value);
-            // Note: we don't change the "value" of this element
-            // because that would confuse the database module
-            // when the modified value is sent back to the server
-        }
-    });
-}
-
-MAJ.reduce_multilang_radio = function(rows) {
-    $(rows).find("label").each(function(){
-        var value = $(this).text();
-        if (MAJ.is_multilang(value)) {
-            value = MAJ.reduce_currency_string(value);
-            $(this).text(value);
-        }
-    });
-}
-
-MAJ.position_img_tags = function() {
-    $("img.req").each(function (){
-        $(this).parent().css("display", "block");
-    });
 }
 
 MAJ.setup_name_title = function() {
