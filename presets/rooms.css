@@ -26,6 +26,7 @@
 #page-mod-data-edit .notes textarea[cols] {
     max-width: 280px;
 }
+#page-mod-data-edit .notes .mod-data-input,
 #page-mod-data-edit .photo .mod-data-input {
     max-width: 290px;
 }
