@@ -435,8 +435,16 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                 $table->head[] = $cell;
             }
 
-            foreach ($reviewers as $userid => $reviewer) {
+            // fetch and sort anonymous reviewers' usernames
+            list($select, $params) = $DB->get_in_or_equal(array_keys($reviewers));
+            $usernames = $DB->get_records_select_menu('user', "id $select", $params, null, 'id,username');
+            asort($usernames);
+
+            foreach ($usernames as $userid => $username) {
                 $row = new html_table_row();
+
+                // shortcut to $reviewer
+                $reviewer = $reviewers[$userid];
 
                 // link to the real user
                 $link = '/user/view.php';
@@ -444,9 +452,8 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                 $link = html_writer::link($link, fullname($reviewer->realuser), array('target' => '_blank'));
                 $row->cells[] = new html_table_cell($link);
 
-                // the anonymmous user
-                $anonuser = $DB->get_record('user', array('id' => $userid));
-                $row->cells[] = new html_table_cell($anonuser->username);
+                // the anonymmous username
+                $row->cells[] = new html_table_cell($username);
 
                 // the anonymmous password (if required)
                 if ($resetpasswords) {
@@ -472,7 +479,7 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                 // send email to reviewer, if this Moodle site sends email
                 if (empty($CFG->noemailever)) {
                     $a->reviewer = fullname($reviewer->realuser);
-                    $a->username = $anonuser->username;
+                    $a->username = $username;
                     $a->password = $reviewer->password;
                     $messagetext = get_string('reviewerinstructions', $this->plugin, $a);
                     $messagehtml = format_text($messagetext, FORMAT_MOODLE);
