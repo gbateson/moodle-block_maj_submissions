@@ -1,12 +1,17 @@
 MAJ.onload_edit = function() {
-    MAJ.reduce_lang_strings(".defaulttemplate th");
-    MAJ.reduce_multilang_select(".defaulttemplate .room_type")
-    MAJ.reduce_multilang_radio(".defaulttemplate .equipment");
+    MAJ.reduce_lang_strings(".addtemplate th");
+    MAJ.reduce_multilang_select(".addtemplate .room_type")
+    MAJ.reduce_multilang_radio(".addtemplate .equipment");
 }
 MAJ.onload_view = function() {
-    MAJ.reduce_lang_strings(".defaulttemplate th:not(.actions)," +
-                            ".defaulttemplate tr:not(.photo) td");
-    MAJ.reduce_multiline_list(".defaulttemplate .equipment td");
+    MAJ.reduce_multilang_spans();
+    MAJ.reduce_lang_strings(".listtemplate th:not(.actions), " +
+                            ".listtemplate .room_type, " +
+                            ".listtemplate .equipment, " + 
+                            ".singletemplate th:not(.actions), " +
+                            ".singletemplate tr:not(.photo) td");
+    MAJ.reduce_multiline_list(".listtemplate .equipment, " + 
+                              ".singletemplate .equipment td");
 }
 
 MAJ.reduce_multiline_list = function(elements) {

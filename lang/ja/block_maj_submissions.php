@@ -331,7 +331,7 @@ $string['reviewerinstructions'] = '{$a->reviewer}様,
 審査を開始するため、本サイトにアクセスしてください。ログインの際、通常ログインする情報ではなくて、下記のユーザ名やパスワードでログインしてください：
 
 ユーザ名　： {$a->username}
-パスワード： {$a->username}
+パスワード： {$a->password}
 
 ログインしてから、下記のURLにて提出物の審査を願いいたします：
 URL: {$a->workshopurl}

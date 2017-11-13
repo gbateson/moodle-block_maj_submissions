@@ -30,6 +30,9 @@
 #page-mod-data-edit .photo .mod-data-input {
     max-width: 290px;
 }
-.path-mod-data .photo img {
+#page-mod-data-view .photo img {
     border-radius: 4px;
+}
+#page-mod-data-view .listtemplate {
+    max-width: 580px;
 }
