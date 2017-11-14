@@ -295,7 +295,10 @@ MAJ.reduce_multilang_spans = function() {
 
     // remove all multilang spans that do NOT use current lang
     if (MAJ.lang) {
-        $("span.multilang[lang!='" + MAJ.lang + "']").remove();
+        $("span.multilang[lang='" + MAJ.lang + "']").each(function(){
+            $(this).replaceWith($(this).html());
+        });
+        $("span.multilang").remove();
     }
 
     // locate links for switching language

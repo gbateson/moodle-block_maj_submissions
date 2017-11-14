@@ -192,10 +192,10 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
 
             // get ids of peer_review_fields
             $reviewfields = array(
-                'submission_status'   => $DB->get_field('data_fields', 'id', array('dataid' => $database->id, 'name' => 'submission_status')),
-                'peer_review_score'   => $DB->get_field('data_fields', 'id', array('dataid' => $database->id, 'name' => 'peer_review_score')),
                 'peer_review_details' => $DB->get_field('data_fields', 'id', array('dataid' => $database->id, 'name' => 'peer_review_details')),
+                'peer_review_score'   => $DB->get_field('data_fields', 'id', array('dataid' => $database->id, 'name' => 'peer_review_score')),
                 'peer_review_notes'   => $DB->get_field('data_fields', 'id', array('dataid' => $database->id, 'name' => 'peer_review_notes')),
+                'submission_status'   => $DB->get_field('data_fields', 'id', array('dataid' => $database->id, 'name' => 'submission_status')),
             );
 
             // get formatted deadline for revisions
@@ -296,7 +296,7 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                     // we only expect one record
                     $record = reset($records);
 
-                    // initialie the status - it should be reset from $statusfilters
+                    // initialize the status - it should be reset from $statusfilters
                     $status = '';
 
                     // format and transfer each of the peer review fields
@@ -306,31 +306,14 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                         }
                         $content = '';
                         switch ($name) {
-                            case 'submission_status';
-                                if (is_numeric($submission->grade)) {
-                                    $content = round($submission->grade, 0);
-                                    foreach ($statusfilters as $grade => $status) {
-                                        if ($content >= $grade) {
-                                            $content = $status;
-                                            break;
-                                        }
-                                    }
-                                } else {
-                                    $content = $statusfilters[self::NOT_GRADED];
-                                }
-                                break;
-
-                            case 'peer_review_score';
-                                if (is_numeric($submission->grade)) {
-                                    $content = round($submission->grade, 0);
-                                }
-                                break;
 
                             case 'peer_review_details';
                                 $assessments = $DB->get_records('workshop_assessments', array('submissionid' => $sid));
                                 if ($assessments===false) {
                                     $assessments = array();
                                 }
+                                $assessmentgrades = array();
+
                                 $i = 1; // peer review number
                                 foreach ($assessments as $aid => $assessment) {
                                     if ($grades = $DB->get_records('workshop_grades', array('assessmentid' => $aid))) {
@@ -348,20 +331,24 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                                         // CSS class for criteria grades
                                         $params = array('class' => 'criteriagrade');
 
+                                        // the assessment grade is the sum of the criteria $grades
+                                        $assessmentgrade = 0;
                                         foreach ($grades as $grade) {
                                             $id = $grade->dimensionid;
                                             $content .= html_writer::start_tag('tr');
                                             $content .= html_writer::tag('td', $criteria[$id]->description);
                                             $content .= html_writer::tag('td', intval($grade->grade).' / '.$criteria[$id]->maxgrade, $params);
                                             $content .= html_writer::end_tag('tr')."\n";
+                                            $assessmentgrade += intval($grade->grade);
                                         }
+                                        $assessmentgrades[] = $assessmentgrade;
 
                                         // CSS class for submission grade
                                         $params = array('class' => 'submissiongrade');
 
                                         $content .= html_writer::start_tag('tr');
                                         $content .= html_writer::tag('td', ' ');
-                                        $content .= html_writer::tag('td', intval($submission->grade).' / '.$maxgrade, $params);
+                                        $content .= html_writer::tag('td', $assessmentgrade.' / '.$maxgrade, $params);
                                         $content .= html_writer::end_tag('tr')."\n";
 
                                         $content .= html_writer::end_tag('tbody');
@@ -375,6 +362,24 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                                         $feedback = html_writer::tag('p', $feedback, $params);
                                         $content .= $feedback;
                                     }
+                                }
+
+                                // set submission grade, if necessary
+                                // only be required if the workshop is not in "grading" phase
+                                if (is_numeric($submission->grade)) {
+                                    // do nothing
+                                } else if (empty($assessmentgrades)) {
+                                    $submission->grade = 0;
+                                } else {
+                                    $submission->grade = array_sum($assessmentgrades);
+                                    $submission->grade /= count($assessmentgrades);
+                                    $submission->grade = intval($submission->grade);
+                                }
+                                break;
+
+                            case 'peer_review_score';
+                                if (is_numeric($submission->grade)) {
+                                    $content = round($submission->grade, 0);
                                 }
                                 break;
 
@@ -412,6 +417,21 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                                         $content .= html_writer::tag('p', get_string('waitingforreview', $this->plugin), array('class' => 'status'))."\n";
                                         break;
                                 }
+
+                            case 'submission_status';
+                                if (is_numeric($submission->grade)) {
+                                    $content = round($submission->grade, 0);
+                                    foreach ($statusfilters as $grade => $status) {
+                                        if ($content >= $grade) {
+                                            $content = $status;
+                                            break;
+                                        }
+                                    }
+                                } else {
+                                    $content = $statusfilters[self::NOT_GRADED];
+                                }
+                                break;
+
                         }
 
                         $params = array('fieldid'  => $fieldid,

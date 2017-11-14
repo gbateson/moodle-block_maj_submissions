@@ -973,7 +973,8 @@ class block_maj_submissions extends block_base {
             moodle_setlocale($locale);
             force_current_language($lang);
             $format = get_string($formatstring, $plugin);
-            $dates[$lang] = $this->userdate($date, $format, $removetime, $removedate);
+            $dates[$lang] = userdate($date, $format);
+            //$dates[$lang] = $this->userdate($date, $format, $removetime, $removedate);
         }
 
         if ($lang = $currentlanguage) {

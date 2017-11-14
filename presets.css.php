@@ -63,6 +63,12 @@ if (($d || $id) && $preset) {
 
     $css = '';
 
+    // hide all multilang spans that are not for the current language
+    $langs = block_maj_submissions::get_languages();
+    foreach ($langs as $lang) {
+        $css .= '.lang-'.$lang.' .multilang:not([lang="'.$lang.'"]) { display: none; }'."\n";
+    }
+
     $file = $CFG->dirroot.'/blocks/maj_submissions/presets.css';
     if (file_exists($file)) {
         $css .= trim(file_get_contents($file))."\n";
