@@ -251,7 +251,7 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
             $maxgrade = 0;
             $countselected = 0;
             $counttransferred = 0;
-            $datarecordids = array();
+            $datarecords = array();
 
             // get info about criteria (=dimensions) and levels
             $params = array('workshopid' => $workshop->id);
@@ -365,7 +365,8 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                                 }
 
                                 // set submission grade, if necessary
-                                // only be required if the workshop is not in "grading" phase
+                                // only required if $submission has no grade
+                                // e.g. if the workshop is not in "grading" phase yet
                                 if (is_numeric($submission->grade)) {
                                     // do nothing
                                 } else if (empty($assessmentgrades)) {
@@ -447,12 +448,30 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                             );
                             $content->id = $DB->insert_record('data_content', $content);
                         }
-
-                        $counttransferred++;
-                        $datarecordids[] = $record->recordid;
                     }
+
+                    // URL to this data record
+                    $params = array('d' => $database->id, 'rid' => $record->recordid);
+                    $datarecord = new moodle_url('/mod/data/view.php', $params);
+
+                    // link to this data record
+                    $params = array('target' => '_blank');
+                    $datarecord = html_writer::link($datarecord, $record->recordid, $params);
+
+                    // message text for this data record
+                    $datarecord = "[$datarecord] ($submission->grade%) ".$submission->title;
+
+                    // cache the message text and index by grade for sorting later 
+                    $datarecords[$submission->grade] = $datarecord;
+                    $counttransferred++;
                 }
                 unset($records, $record);
+            }
+
+            if ($counttransferred) {
+                ksort($datarecords); // sort by grade (low -> high)
+                $msg[] = html_writer::tag('p', get_string('reviewstransferred', $this->plugin)).
+                         html_writer::alist($datarecords, null, 'ol');
             }
         }
 

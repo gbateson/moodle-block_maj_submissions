@@ -83,7 +83,7 @@ CSS for the View All/Single/Search pages
     font-weight: bold;
     margin-bottom: 6px;
     margin-top: 6px;
-    padding: 6px 12px 0px;
+    padding: 6px 12px;
 }
 
 #page-mod-data-view tr.peer_review p.thanks {

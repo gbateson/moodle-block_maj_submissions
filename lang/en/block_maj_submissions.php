@@ -482,3 +482,6 @@ $string['senderemail_help'] = 'Optional email address to use in email messages t
 $string['senderemail'] = 'Sender email';
 $string['sendername_help'] = 'Optional name to use as the sender email messages to reviewers.';
 $string['sendername'] = 'Sender name';
+
+$string['reviewstransferred'] = 'Reviews for the following submissions were transfered to the target database.';
+
