@@ -127,7 +127,7 @@
         }
 
         var schedule = document.querySelector("table.schedule");
-        if (schedule.style.width=="") {
+        if (schedule && schedule.style.width=="") {
             schedule.style.width = schedule.offsetWidth + "px";
         }
 
@@ -137,7 +137,7 @@
     var resizeschedule = function(){
         // remove fixed schedule width on resize
         var schedule = document.querySelector("table.schedule");
-        if (schedule.style.width) {
+        if (schedule && schedule.style.width) {
             schedule.style.width = "";
         }
         return true;

@@ -248,7 +248,7 @@ MAJ.setupitems = function() {
     }
 }
 
-MAJ.initializeschedule = function() {
+MAJ.emptyschedule = function() {
     $("table.schedule .session").each(function(){
         if ($(this).hasClass("emptysession")) {
             // do nothing
@@ -258,8 +258,10 @@ MAJ.initializeschedule = function() {
             $(this).find(".capacity").remove();
 
             if ($(this).prop("id")=="") {
+                // sessions without an "id" are dummy sessions are removed
                 $(this).find(".title, .authors, .summary").remove();
             } else {
+                // sessions with an "id" are moved to the "#items" DIV
                 var div = $("<div></div>", {
                     "id" : $(this).prop("id"),
                     "style" : "inline-block",
@@ -304,7 +306,7 @@ $(document).ready(function(){
     $("#id_sessioninfo").css("display", "none");
 
     // fetch CSS and JS files
-    $("head")
+    $("head").first()
         .append(
             $("<style></style>", {
                 "type" : "text/css"

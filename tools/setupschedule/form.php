@@ -104,6 +104,8 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $sectionnum = 0;
         }
 
+        $this->set_schedule_menus();
+
         if (empty($this->cmid)) {
 
             $name = 'publishcmid';
@@ -146,19 +148,34 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             // --------------------------------------------------------
 
             $name = 'numberofdays';
-            $default = max(0, $finish - $start);
-            $default = ceil($default / DAYSECS);
-            $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, range(0, 10), $default);
+            if (count($this->schedule_day) <= 1) {
+                $default = max(0, $finish - $start);
+                $default = ceil($default / DAYSECS);
+            } else {
+                $default = count($this->schedule_day);
+                $default--;
+            }
+            $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, range(0, max(3, $default)), $default);
             $mform->disabledIf($name, 'templatetype', 'neq', self::TEMPLATE_GENERATE);
 
             $name = 'numberofrooms';
-            $default = 6; // calculate from data available in DB ?
-            $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, range(0, 10), $default);
+            if (count($this->schedule_room) <= 1) {
+                $default = 6;
+            } else {
+                $default = count($this->schedule_room);
+                $default--;
+            }
+            $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, range(0, max(10, $default)), $default);
             $mform->disabledIf($name, 'templatetype', 'neq', self::TEMPLATE_GENERATE);
 
             $name = 'numberofslots';
-            $default = 6; // calculate from data available in DB ?
-            $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, range(0, 10), $default);
+            if (count($this->schedule_time) <= 1) {
+                $default = 6;
+            } else {
+                $default = count($this->schedule_time);
+                $default--;
+            }
+            $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, range(0, max(10, $default)), $default);
             $mform->disabledIf($name, 'templatetype', 'neq', self::TEMPLATE_GENERATE);
 
             $name = 'firstslottime';
@@ -212,8 +229,6 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $label = get_string($name, $this->plugin);
             $mform->addElement('header', $name, $label);
             // --------------------------------------------------------
-
-            $this->set_schedule_menus();
 
             $name = 'schedule_event';
             $this->add_field($mform, $this->plugin, $name, 'selectgroups', PARAM_INT, $this->$name);
@@ -336,7 +351,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $dataid = $cm->instance;
             foreach ($names as $name) {
                 if ($this->$name) {
-                    continue;
+                    continue; // this menu has already been set up
                 }
                 $params = array('dataid' => $dataid, 'name' => $name);
                 if (! $field = $DB->get_record('data_fields', $params)) {
@@ -646,7 +661,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $duration = $times[$time]->duration;
             $duration = $instance->multilang_format_time($duration);
 
-            $slots[] = (object)array('time' => "$start - $finish",
+            $slots[] = (object)array('startfinish' => "$start - $finish",
                                      'duration' => $duration,
                                      'allrooms' => true);
         }
@@ -682,7 +697,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             // add this slot
             $start = $instance->multilang_userdate($start, 'schedulesessiontime', $this->plugin);
             $finish = $instance->multilang_userdate($finish, 'schedulesessiontime', $this->plugin);
-            $slots[] = (object)array('time' => "$start - $finish",
+            $slots[] = (object)array('startfinish' => "$start - $finish",
                                      'duration' => $duration,
                                      'allrooms' => false);
 
@@ -764,7 +779,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
 
                 $content .= html_writer::start_tag('tr', array('class' => 'slot'));
 
-                $time = $slot->time.
+                $time = html_writer::tag('span', $slot->startfinish, array('class' => 'startfinish')).
                         html_writer::tag('span', $slot->duration, array('class' => 'duration'));
                 $content .= html_writer::tag('td', $time, array('class' => 'timeheading'));
 
@@ -812,7 +827,13 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                         $text = $instance->get_string('sessiontitlex', $this->plugin, "$d.$s.$r");
                         $session .= html_writer::tag('div', $text, array('class' => 'title'));
 
-                        // [schedulenumber]  + list of authors
+                        // start authors = [schedulenumber]  + list, of, author, names
+                        $session .= html_writer::start_tag('span', array('class' => 'authors'));
+
+                        // schedulenumber
+                        $session .= html_writer::tag('span', "$d$s$r-P", array('class' => 'schedulenumber'));
+
+                        // list, of, author, names
                         $keys = array_rand($authors, rand(1, 2));
                         if (is_array($keys)) {
                             sort($keys);
@@ -824,8 +845,10 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                         } else {
                             $text = $authors[$keys];
                         }
-                        $text = html_writer::tag('span', "$d$s$r-P", array('class' => 'schedulenumber')).$text;
-                        $session .= html_writer::tag('div', $text, array('class' => 'authors'));
+                        $session .= html_writer::tag('span', $text, array('class' => 'authornames'));
+
+                        // finish authors
+                        $session .= html_writer::end_tag('div');
 
                         //  summary
                         $summary = array();
@@ -843,18 +866,25 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
 
                         // capacity
                         if ($r==$attending) {
-                            $capacity = html_writer::empty_tag('input', array('type' => 'checkbox', 'value' => 1, 'checked' => 'checked')).
-                                        html_writer::tag('span', 'Attending', array('class' => 'text'));
+                            $capacity = html_writer::empty_tag('input', array('type' => 'checkbox',
+                                                                              'value' => 1,
+                                                                              'checked' => 'checked',
+                                                                              'name' => "demo[$r]",
+                                                                              'id' => "id_demo_$d$s$r")).
+                                        html_writer::tag('label', 'Attending', array('for' => "id_demo_$d$s$r"));
                         } else {
-                            $capacity = html_writer::empty_tag('input', array('type' => 'checkbox', 'value' => 1)).
-                                        html_writer::tag('span', 'Not attending', array('class' => 'text'));
+                            $capacity = html_writer::empty_tag('input', array('type' => 'checkbox',
+                                                                              'value' => 1,
+                                                                              'name' => "demo[$r]",
+                                                                              'id' => "id_demo_$r")).
+                                        html_writer::tag('label', 'Not attending', array('for' => "id_demo_$d$s$r"));
                         }
                         $capacity = html_writer::tag('div', "$room->seats left", array('class' => 'emptyseats')).
                                     html_writer::tag('div', $capacity, array('class' => 'attendance'));
                         $session .= html_writer::tag('div', $capacity, array('class' => 'capacity'));
                     }
 
-                    $class = 'session';
+                    $class = 'session demo';
                     if ($slot->allrooms) {
                         $class .= ' allrooms';
                     }
@@ -910,11 +940,10 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
      * @return integer if ($a < $b) -1; if ($a > $b) 1; Otherwise, 0.
      */
     static public function sort_slots($a, $b) {
-
-        $atime = explode(' - ', $a->time);
+        $atime = explode(' - ', $a->startfinish);
         $atime = explode(':', $atime[0]);
 
-        $btime = explode(' - ', $b->time);
+        $btime = explode(' - ', $b->startfinish);
         $btime = explode(':', $btime[0]);
 
         if ($atime[0] < $btime[0]) {

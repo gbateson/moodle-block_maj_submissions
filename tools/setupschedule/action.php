@@ -63,7 +63,8 @@ switch ($action) {
 
         $commands = array(
             'initializeschedule' => array(),
-            'resetschedule'      => array(),
+            'emptyschedule'      => array(),
+            'populateschedule'   => array(),
             'renumberschedule'   => array(),
             'addday'  => array('above', 'below', 'start', 'end'),
             'addslot' => array('above', 'below', 'start', 'end'),
@@ -153,7 +154,9 @@ switch ($action) {
             }
 
             // get all records in this DB
-            $select = 'dc.id, dc.fieldid, dc.recordid, df.name AS fieldname, dc.content';
+            $select = 'dc.id, dc.fieldid, dc.recordid, '.
+
+                      'df.name AS fieldname, dc.content';
             $from   = '{data_content} dc '.
                       'JOIN {data_fields} df ON df.id = dc.fieldid';
             $where  = 'df.dataid = ? AND df.type '.$fieldwhere;
@@ -174,63 +177,134 @@ switch ($action) {
             unset($contents, $content);
         }
 
+        // search and replace strings for HTML tags with attributes
+        $tagsearch = '/<(\/?\w+)\b[^>]+>/u';
+        $tagreplace = '<$1>';
+
         // add a "session" for each $item
         foreach ($items as $recordid => $item) {
 
             // start session DIV
-            $html .= html_writer::start_tag('div', array('id' => 'rid'.$recordid,
+            $html .= html_writer::start_tag('div', array('id' => 'id_recordid_'.$recordid,
                                                          'class' => 'session',
                                                          'style' => 'display: inline-block;'));
 
             // time and duration
             $html .= html_writer::start_tag('div', array('class' => 'time'));
-            $html .= $item['schedule_time'];
+            $html .= html_writer::tag('span', $item['schedule_time'], array('class' => 'startfinish'));
             $html .= html_writer::tag('span', $item['schedule_duration'], array('class' => 'duration'));
             $html .= html_writer::end_tag('div');
 
-            // get room info
-            $room = (object)array(
-                'roomname'   => 'Room 123',
-                'totalseats' => '100 seats',
-                'roomtopic'  => 'Topic XYZ',
-                'emptyseats' => '40 seats left'
-            );
-
             // room
             $html .= html_writer::start_tag('div', array('class' => 'room'));
-            $html .= html_writer::tag('span', $room->roomname, array('class' => 'roomname'));
-            $html .= html_writer::tag('span', $room->totalseats, array('class' => 'totalseats'));
-            $html .= html_writer::tag('span', $room->roomtopic, array('class' => 'roomtopic'));
+            $html .= html_writer::tag('span', $item['schedule_room'], array('class' => 'roomname'));
+            $html .= html_writer::tag('span', '', array('class' => 'totalseats'));
+            $html .= html_writer::tag('span', '', array('class' => 'roomtopic'));
             $html .= html_writer::end_tag('div');
 
             // title
             $html .= html_writer::tag('div', $item['presentation_title'], array('class' => 'title'));
 
             // format authors
-            $authors = 'Tom, Dick, Harry';
+            $authornames = array();
+            $namefields = preg_grep('/^name_(surname)(.*)$/', array_keys($item));
+            foreach ($namefields as $namefield) {
+                if (empty($item[$namefield])) {
+                    continue;
+                }
+                if (trim($item[$namefield])=='') {
+                    continue;
+                }
+                $i = 0;
+                $name = '';
+                $type = '';
+                $lang = 'xx';
+                $parts = explode('_', $namefield);
+                switch (count($parts)) {
+                    case 2:
+                        list($name, $type) = $parts;
+                        break;
+                    case 3:
+                        if (is_numeric($parts[2])) {
+                            list($name, $type, $i) = $parts;
+                        } else {
+                            list($name, $type, $lang) = $parts;
+                        }
+                        break;
+                    case 4:
+                        if (is_numeric($parts[2])) {
+                            list($name, $type, $i, $lang) = $parts;
+                        } else {
+                            list($name, $type, $lang, $i) = $parts;
+                        }
+                        break;
+                }
+                if (empty($authornames[$i])) {
+                    $authornames[$i] = array();
+                }
+                if (empty($authornames[$i][$lang])) {
+                    $authornames[$i][$lang] = array();
+                }
+                $authornames[$i][$lang][$type] = block_maj_submissions::textlib('strtotitle', $item[$namefield]);
+            }
+
+            ksort($authornames);
+            foreach ($authornames as $i => $langs) {
+                // remove names with no surname
+                foreach ($langs as $lang => $name) {
+                    if (empty($name['surname'])) {
+                        unset($langs[$lang]);
+                    }
+                }
+                // format names as multilang if necessary
+                $count = count($langs);
+                if ($count==0) {
+                    $authornames[$i] = '';
+                    continue;
+                }
+                if ($count==1) {
+                    $authornames[$i] = reset($langs);
+                    $authornames[$i] = $authornames[$i]['surname'];
+                    continue;
+                }
+                foreach ($langs as $lang => $name) {
+                    $name = $name['surname'];
+                    $params = array('class' => 'multilang', 'lang' => $lang);
+                    $authornames[$i][$lang] = html_writer::tag('span', $name, $params);
+                }
+                $authornames[$i] = implode('', $authornames[$i]);
+            }
+            $authornames = array_filter($authornames);
+            $authornames = implode(', ', $authornames);
+
+            if ($authornames=='') {
+                $authornames = 'Tom, Dick, Harry';
+            }
 
             // schedule number and authors
             $html .= html_writer::start_tag('div', array('class' => 'authors'));
             $html .= html_writer::tag('span', $item['schedule_number'], array('class' => 'schedulenumber'));
-            $html .= $authors;
+            $html .= html_writer::tag('span', $authornames, array('class' => 'authornames'));
             $html .= html_writer::end_tag('div');
 
-            // summary
-            $html .= html_writer::tag('div', $item['presentation_abstract'], array('class' => 'summary'));
+            // summary (remove all tag attributes)
+            $text = $item['presentation_abstract'];
+            $text = preg_replace($tagsearch, $tagreplace, $text);
+            $html .= html_writer::tag('div', $text, array('class' => 'summary'));
 
             // capacity
             $html .= html_writer::start_tag('div', array('class' => 'capacity'));
-            $html .= html_writer::tag('div', $room->emptyseats, array('class' => 'emptyseats'));
+            $html .= html_writer::tag('div', '', array('class' => 'emptyseats'));
             $html .= html_writer::start_tag('div', array('class' => 'attendance'));
-            $html .= html_writer::empty_tag('input', array('id' => 'attend'.$recordid,
+            $html .= html_writer::empty_tag('input', array('id' => 'id_attend_'.$recordid,
+                                                           'name' => 'attend['.$recordid.']',
                                                            'type' => 'checkbox',
                                                            'value' => '1'));
-            $html .= html_writer::tag('span', $strnotattending, array('class' => 'text'));
-            $html .= html_writer::end_tag('div');
-            $html .= html_writer::end_tag('div');
+            $html .= html_writer::tag('label', $strnotattending, array('for' => 'id_attend_'.$recordid));
+            $html .= html_writer::end_tag('div'); // end attendance DIV
+            $html .= html_writer::end_tag('div'); // end capacity DIV
 
-            // finish session DIV
-            $html .= html_writer::end_tag('div');
+            $html .= html_writer::end_tag('div'); // end session DIV
         }
         break;
 

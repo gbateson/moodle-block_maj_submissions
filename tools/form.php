@@ -517,7 +517,7 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                         // create link to new module
                         $link = "/mod/$this->modulename/view.php";
                         $link = new moodle_url($link, array('id' => $cm->id));
-                        $link = html_writer::tag('a', $activitynametext, array('href' => "$link"));
+                        $link = html_writer::link($link, $activitynametext, array('target' => '_blank'));
 
                         $msg[] = get_string('newactivitycreated', $this->plugin, $link);
                     } else {

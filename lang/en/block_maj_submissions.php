@@ -461,7 +461,8 @@ $string['scheduledatefulltext'] = '%b %d (%a)';
 $string['schedulesessiontime'] = '%H:%M';
 
 $string['initializeschedule'] = 'Initialize<br />schedule';
-$string['resetschedule'] = 'Reset<br />schedule';
+$string['emptyschedule'] = 'Empty<br />schedule';
+$string['populateschedule'] = 'Populate<br />schedule';
 $string['renumberschedule'] = 'Renumber<br />schedule';
 $string['addday'] = 'Add<br />day';
 $string['addslot'] = 'Add<br />slot';

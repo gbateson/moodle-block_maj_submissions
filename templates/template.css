@@ -1,3 +1,11 @@
+.lang-en .multilang:not([lang="en"]) {
+    display: none;
+}
+
+.lang-ja .multilang:not([lang="ja"]) {
+    display: none;
+}
+
 .schedule * {
     box-sizing: border-box;
 }

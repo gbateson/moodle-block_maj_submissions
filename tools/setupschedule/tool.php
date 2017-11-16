@@ -83,9 +83,9 @@ if ($mform->is_cancelled()) {
 }
 
 if ($mform->is_submitted()) {
-    $message = $mform->form_postprocessing();
-} else {
-    $message = '';
+    // Redirect to current page, i.e. reload in order to get new cm info
+    // The message will be displayed as a notification on the NEXT page.
+    redirect($url, $mform->form_postprocessing());
 }
 
 echo $OUTPUT->header();
@@ -93,10 +93,6 @@ echo $OUTPUT->heading($strpagetitle);
 
 echo html_writer::tag('p', get_string($tool.'_desc', $plugin).
                            $OUTPUT->help_icon($tool, $plugin));
-
-if ($message) {
-    echo $OUTPUT->notification($message, 'notifysuccess');
-}
 
 $mform->display();
 
