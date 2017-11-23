@@ -116,3 +116,11 @@
 #page-blocks-maj_submissions-tools-setupschedule-tool .ui-dropping {
     background-color:  #ffffcc;
 }
+
+#page-blocks-maj_submissions-tools-setupschedule-tool .schedule .session {
+	padding-bottom: 6px;
+}
+
+#page-blocks-maj_submissions-tools-setupschedule-tool .capacity {
+    display:  none;
+}

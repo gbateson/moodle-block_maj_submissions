@@ -322,7 +322,7 @@ $string['roomtopic4'] = 'ポスター';
 $string['roomtopic5'] = 'コースウェアー';
 $string['roomtopic6'] = 'スポンサー';
 $string['sessiontitlex'] = '発表 {$a}';
-$string['totalseatsx'] = '定員{$a}人';
+$string['roomseatsx'] = '定員{$a}人';
 
 $string['reviewerinstructions'] = '{$a->reviewer}様,
 
@@ -370,3 +370,5 @@ $string['pleaseregisteryourself'] = '忘れずに登録して下さい。 ({$a})
 $string['pleaseregistercopresenters'] = '共同発表者の登録も必ず行って下さい';
 
 $string['acceptedfarewell'] = '{$a}にお会い出来るのを楽しみにしています！';
+
+$string['emptyseatsx'] = '残り{$a}席';

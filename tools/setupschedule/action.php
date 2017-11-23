@@ -117,6 +117,9 @@ switch ($action) {
 
     case 'loaditems':
 
+        // the following line will not be necessary when DB fields use multilang SPANs
+        require_once("$CFG->dirroot/blocks/$blockname/tools/form.php");
+
         $instance = block_instance($blockname, $block_instance);
         $config = $instance->config;
         $modinfo = get_fast_modinfo($course);
@@ -181,6 +184,10 @@ switch ($action) {
         $tagsearch = '/<(\/?\w+)\b[^>]+>/u';
         $tagreplace = '<$1>';
 
+        // regex to detect tags and non-breaking spaces in summary
+        $tagsearch = array('/<[^>]*>/u', '/(?:(?:&nbsp;)| )+/');
+        $tagreplace = ' ';
+
         // add a "session" for each $item
         foreach ($items as $recordid => $item) {
 
@@ -198,14 +205,14 @@ switch ($action) {
             // room
             $html .= html_writer::start_tag('div', array('class' => 'room'));
             $html .= html_writer::tag('span', $item['schedule_room'], array('class' => 'roomname'));
-            $html .= html_writer::tag('span', '', array('class' => 'totalseats'));
+            $html .= html_writer::tag('span', '', array('class' => 'roomseats'));
             $html .= html_writer::tag('span', '', array('class' => 'roomtopic'));
             $html .= html_writer::end_tag('div');
 
             // title
             $html .= html_writer::tag('div', $item['presentation_title'], array('class' => 'title'));
 
-            // format authors
+            // format authornames
             $authornames = array();
             $namefields = preg_grep('/^name_(surname)(.*)$/', array_keys($item));
             foreach ($namefields as $namefield) {
@@ -281,13 +288,26 @@ switch ($action) {
                 $authornames = 'Tom, Dick, Harry';
             }
 
-            // schedule number and authors
+            // schedule number and authornames
             $html .= html_writer::start_tag('div', array('class' => 'authors'));
             $html .= html_writer::tag('span', $item['schedule_number'], array('class' => 'schedulenumber'));
             $html .= html_writer::tag('span', $authornames, array('class' => 'authornames'));
             $html .= html_writer::end_tag('div');
 
-            // summary (remove all tag attributes)
+            // category and type
+            $html .= html_writer::start_tag('div', array('class' => 'typecategory'));
+
+            $type = $item['presentation_type'];
+            $type = block_maj_submissions_tool_form::convert_to_multilang($type, $config);
+            $html .= html_writer::tag('span', $type, array('class' => 'type'));
+
+            $category = $item['presentation_category'];
+            $category = block_maj_submissions_tool_form::convert_to_multilang($category, $config);
+            $html .= html_writer::tag('span', $category, array('class' => 'category'));
+
+            $html .= html_writer::end_tag('div'); // end categorytype DIV
+
+            // summary (remove all tags and nbsp)
             $text = $item['presentation_abstract'];
             $text = preg_replace($tagsearch, $tagreplace, $text);
             $html .= html_writer::tag('div', $text, array('class' => 'summary'));
