@@ -191,15 +191,53 @@ switch ($action) {
         // add a "session" for each $item
         foreach ($items as $recordid => $item) {
 
+            $sessionclass = 'session';
+
+            // extract category
+            //     個人の発表 Individual presentation
+            //     スポンサー提供の発表 Sponsored presentation
+            //     日本ムードル協会の補助金報告 MAJ R&D grant report
+            if (empty($item['presentation_category'])) {
+                $category = '';
+            } else {
+                $category = $item['presentation_category'];
+                $category = block_maj_submissions_tool_form::convert_to_multilang($category, $config);
+            }
+
+            // extract type
+            //     ライトニング・トーク（１０分） Lightning talk (10 mins)
+            //     ケース・スタディー（２０分） Case study (20 mins)
+            //     プレゼンテーション（２０分） Presentation (20 mins)
+            //     プレゼンテーション（４０分） Presentation (40 mins)
+            //     プレゼンテーション（９０分） Presentation (90 mins)
+            //     ショーケース（９０分） Showcase (90 mins)
+            //     商用ライトニング・トーク（１０分） Commercial lightning talk (10 mins)
+            //     商用プレゼンテーション（４０分） Commercial presentation (40 mins)
+            //     商用プレゼンテーション（９０分） Commercial presentation (90 mins)
+            if (empty($item['presentation_type'])) {
+                $type = '';
+            } else {
+                $type = $item['presentation_type'];
+                $type = block_maj_submissions_tool_form::convert_to_multilang($type, $config);
+            }
+
+            // extract duration
+            if (empty($item['schedule_duration'])) {
+                $duration = $item['presentation_type'];
+                $duration = preg_match('/[^0-9]/', '', $duration);
+                $duration = $instance->multilang_format_time($duration);
+            } else {
+                $duration = $item['schedule_duration'];
+            }
+
             // start session DIV
             $html .= html_writer::start_tag('div', array('id' => 'id_recordid_'.$recordid,
-                                                         'class' => 'session',
+                                                         'class' => $sessionclass,
                                                          'style' => 'display: inline-block;'));
-
             // time and duration
             $html .= html_writer::start_tag('div', array('class' => 'time'));
             $html .= html_writer::tag('span', $item['schedule_time'], array('class' => 'startfinish'));
-            $html .= html_writer::tag('span', $item['schedule_duration'], array('class' => 'duration'));
+            $html .= html_writer::tag('span', $duration, array('class' => 'duration'));
             $html .= html_writer::end_tag('div');
 
             // room
@@ -296,13 +334,7 @@ switch ($action) {
 
             // category and type
             $html .= html_writer::start_tag('div', array('class' => 'typecategory'));
-
-            $type = $item['presentation_type'];
-            $type = block_maj_submissions_tool_form::convert_to_multilang($type, $config);
             $html .= html_writer::tag('span', $type, array('class' => 'type'));
-
-            $category = $item['presentation_category'];
-            $category = block_maj_submissions_tool_form::convert_to_multilang($category, $config);
             $html .= html_writer::tag('span', $category, array('class' => 'category'));
 
             $html .= html_writer::end_tag('div'); // end categorytype DIV

@@ -6,6 +6,12 @@ MAJ.onload_view = function() {
     MAJ.remove_empty_rows("tr.comments_questions");
     MAJ.remove_empty_rows("tr.peer_review");
     MAJ.remove_empty_rows("tr.schedule");
+    var a_old = $("tr#id_presentation_abstract_original td.c1 p:last-child").text();
+    var a_new = $("tr#id_presentation_abstract td.c1").text();
+    if (a_old && a_new && MAJ.diffString) {
+        var d = MAJ.diffString(a_old, a_new);
+        $("tr#id_presentation_abstract td.c1").html(d);
+    }
 }
 
 MAJ.onload_edit = function() {
