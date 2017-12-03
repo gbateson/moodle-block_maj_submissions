@@ -140,7 +140,7 @@ if (($d || $id) && $preset) {
         readfile($file);
     }
 
-    $file = $CFG->dirroot."/blocks/maj_submissions/presets/diff.johnresig.js";
+    $file = $CFG->dirroot."/blocks/maj_submissions/presets/diff.js";
     if (file_exists($file)) {
         readfile($file);
     }

@@ -152,14 +152,14 @@ MAJ.diff = function(o, n) {
 
     for (var i = 0; i < n.length; i++) {
         if (ns[n[i]] == null)
-            ns[n[i]] = {"rows": new Array(),
+            ns[n[i]] = {"rows": [],
                         "o":    null};
         ns[n[i]].rows.push(i);
     }
 
     for (var i = 0; i < o.length; i++) {
         if (os[o[i]] == null)
-            os[o[i]] = {"rows": new Array(),
+            os[o[i]] = {"rows": [],
                         "n":    null};
         os[o[i]].rows.push(i);
     }
