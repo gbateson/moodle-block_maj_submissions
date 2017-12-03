@@ -1,5 +1,5 @@
 /*
- * Javascript Diff Algorithm
+ * Based on Javascript Diff Algorithm
  *    By John Resig (http://ejohn.org/)
  *    Modified by Chu Alan "sprite"
  *
@@ -23,79 +23,100 @@ MAJ.escape = function(s) {
 }
 
 MAJ.diffString = function(o, n) {
-    o = o.replace(/\s+$/, '');
-    n = n.replace(/\s+$/, '');
 
-    var out = MAJ.diff(o == "" ? [] : o.split(/\s+/),
-                       n == "" ? [] : n.split(/\s+/));
+    // remove HTML tags
+    var s = new RegExp("<[^>]*>", "g");
+    o = o.replace(s, " ");
+    n = n.replace(s, " ");
+
+    // remove leading/trailing whitespace
+    var s = new RegExp("(^\\s+)|(\\s+$)", "g");
+    o = o.replace(s, "");
+    n = n.replace(s, "");
+
+    // standardize inner whitespace
+    var s = new RegExp("\\s+", "g");
+    o = o.replace(s, " ");
+    n = n.replace(s, " ");
+
+    // set s(plit) char depending space ratio
+    // normal English has a space ratio of about 15%
+    // a low space ratio indicates that spaces are not used as separators
+    if (MAJ.spaceratio(o) <= 5) {
+        var s = ""; // i.e. compare individual characters
+    } else {
+        var s = " "; // i.e. compare space-delimited words
+    }
+
+    var d = MAJ.diff(o == "" ? [] : o.split(s),
+                     n == "" ? [] : n.split(s));
+
     var str = "";
-
-    var oSpace = o.match(/\s+/g);
-    if (oSpace == null) {
-        oSpace = ["\n"];
-    } else {
-        oSpace.push("\n");
-    }
-    var nSpace = n.match(/\s+/g);
-    if (nSpace == null) {
-        nSpace = ["\n"];
-    } else {
-        nSpace.push("\n");
-    }
-
-    if (out.n.length == 0) {
-        if (out.o.length) {
-            str += "<del>";
-            for (var i = 0; i < out.o.length; i++) {
-                str += MAJ.escape(out.o[i]) + oSpace[i];
+    if (d.n.length == 0) {
+        if (d.o.length) {
+            var txt = "";
+            for (var i = 0; i < d.o.length; i++) {
+                txt += (txt=="" ? "" : s);
+                txt += MAJ.escape(d.o[i]);
             }
-            str += "</del>";
+            str += (str=="" ? "" : s);
+            str += "<del>" + txt + "</del>";
         }
     } else {
-        if (out.n[0].text == null && out.o.length) {
-            str += "<del>";
-            for (n = 0; n < out.o.length && out.o[n].text == null; n++) {
-                str += MAJ.escape(out.o[n]) + oSpace[n];
+        if (d.n[0].text == null && d.o.length) {
+            var txt = "";
+            for (n = 0; n < d.o.length && d.o[n].text == null; n++) {
+                txt += (txt=="" ? "" : s);
+                txt += MAJ.escape(d.o[n]);
             }
-            str += "</del>";
+            str += (str=="" ? "" : s);
+            str += "<del>" + txt + "</del>";
         }
 
         var currenttag = "";
-        for (var i = 0; i < out.n.length; i++) {
-            var bg = "";
+        for (var i = 0; i < d.n.length; i++) {
             var tag = "";
             var txt = "";
-            if (out.n[i].text == null) {
+            if (d.n[i].text == null) {
                 tag = "ins";
-                bg = "#eeffee";
-                border = "1px solid #99cc99";
-                txt = MAJ.escape(out.n[i]) + nSpace[i];
+                txt = MAJ.escape(d.n[i]);
             } else {
                 tag = "del";
-                bg = "#ffeeee";
-                border = "1px solid #cc9999";
-                for (n = out.n[i].row + 1; n < out.o.length && out.o[n].text == null; n++) {
-                    txt += MAJ.escape(out.o[n]) + oSpace[n];
+                for (n = d.n[i].row + 1; n < d.o.length && d.o[n].text == null; n++) {
+                    txt += (txt=="" ? "" : s);
+                    txt += MAJ.escape(d.o[n]);
                 }
-                if (out.n[i].text) {
+                if (d.n[i].text) {
                     if (currenttag) {
                         str += "</" + currenttag + ">";
                         currenttag = "";
                     }
-                    str += out.n[i].text + nSpace[i];
+                    str += (str=="" ? "" : s);
+                    str += d.n[i].text;
                 }
             }
             if (txt) {
                 if (currenttag==tag) {
-                    // do nothing
+                    str += (str=="" ? "" : s);
                 } else {
                     if (currenttag) {
                         str += "</" + currenttag + ">";
                     }
+                    str += (str=="" ? "" : s);
                     if (tag) {
-                        str += "<" + tag + ' style="background-color: ' + bg + '; ' +
-                                                   'border: ' + border + '; ' +
-                                                   'padding: 2px;">';
+                        var style = "";
+                        switch (tag) {
+                            case "ins": style = "background-color: #eeffee; " +
+                                                "border: 1px solid #99cc99; " +
+                                                "text-decoration: none; " +
+                                                "border-radius: 3px; " +
+                                                "padding: 0px 2px;"; break;
+                            case "del": style = "background-color: #ffeeee; " +
+                                                "border: 1px solid #cc9999; " +
+                                                "border-radius: 3px; " +
+                                                "padding: 0px 2px;"; break;
+                        }
+                        str += "<" + tag + ' style="' + style + '">';
                     }
                     currenttag = tag;
                 }
@@ -110,79 +131,48 @@ MAJ.diffString = function(o, n) {
     return str;
 }
 
-MAJ.randomColor = function() {
-    return "rgb(" + (Math.random() * 100) + "%, " +
-                    (Math.random() * 100) + "%, " +
-                    (Math.random() * 100) + "%)";
-}
-
-MAJ.diffString2 = function(o, n) {
-    o = o.replace(/\s+$/, '');
-    n = n.replace(/\s+$/, '');
-
-    var out = MAJ.diff(o == "" ? [] : o.split(/\s+/), n == "" ? [] : n.split(/\s+/));
-
-    var oSpace = o.match(/\s+/g);
-    if (oSpace == null) {
-        oSpace = ["\n"];
-    } else {
-        oSpace.push("\n");
-    }
-
-    var nSpace = n.match(/\s+/g);
-    if (nSpace == null) {
-        nSpace = ["\n"];
-    } else {
-        nSpace.push("\n");
-    }
-
-    var os = "";
-    var colors = [];
-    for (var i = 0; i < out.o.length; i++) {
-        colors[i] = MAJ.randomColor();
-
-        if (out.o[i].text != null) {
-            os += '<span style="background-color: ' +colors[i]+ '">' +
-                        escape(out.o[i].text) + oSpace[i] + "</span>";
-        } else {
-            os += "<del>" + escape(out.o[i]) + oSpace[i] + "</del>";
+MAJ.spaceratio = function(s) {
+    var count = 0;
+    var total = s.length;
+    for (var i=0; i<total; i++) {
+        if (s.charAt(i)==" ") {
+            count++;
         }
     }
-
-    var ns = "";
-    for (var i = 0; i < out.n.length; i++) {
-        if (out.n[i].text != null) {
-            ns += '<span style="background-color: ' +colors[out.n[i].row]+ '">' +
-                        escape(out.n[i].text) + nSpace[i] + "</span>";
-        } else {
-            ns += "<ins>" + escape(out.n[i]) + nSpace[i] + "</ins>";
-        }
+    if (count==0 || total==0) {
+        return 0;
+    } else {
+        return Math.round(100 * count / total);
     }
-
-    return {o : os, n : ns};
 }
 
 MAJ.diff = function(o, n) {
-    var ns = new Object();
-    var os = new Object();
+    var ns = {};
+    var os = {};
 
     for (var i = 0; i < n.length; i++) {
         if (ns[n[i]] == null)
             ns[n[i]] = {"rows": new Array(),
-                          "o"   : null};
+                        "o":    null};
         ns[n[i]].rows.push(i);
     }
 
     for (var i = 0; i < o.length; i++) {
         if (os[o[i]] == null)
-            os[o[i]] = {rows: new Array(), n: null};
+            os[o[i]] = {"rows": new Array(),
+                        "n":    null};
         os[o[i]].rows.push(i);
     }
 
     for (var i in ns) {
-        if (ns[i].rows.length == 1 && typeof(os[i]) != "undefined" && os[i].rows.length == 1) {
-            n[ns[i].rows[0]] = {"text": n[ns[i].rows[0]], "row": os[i].rows[0]};
-            o[os[i].rows[0]] = {"text": o[os[i].rows[0]], "row": ns[i].rows[0]};
+        if (typeof(os[i]) == "undefined") {
+            continue;
+        }
+        if (ns[i].rows.length == 1 && os[i].rows.length == 1) {
+            n[ns[i].rows[0]] = {"text": n[ns[i].rows[0]],
+                                "row":  os[i].rows[0]};
+            o[os[i].rows[0]] = {"text": o[os[i].rows[0]],
+                                "row":  ns[i].rows[0]};
         }
     }
 
