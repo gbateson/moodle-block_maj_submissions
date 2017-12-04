@@ -384,7 +384,7 @@ $string['roomtopic4'] = 'Posters';
 $string['roomtopic5'] = 'Courseware';
 $string['roomtopic6'] = 'Sponsors';
 $string['sessiontitlex'] = 'Presentation {$a}';
-$string['totalseatsx'] = 'Seats {$a}';
+$string['roomseatsx'] = '{$a} seats';
 
 // =============================================
 // strings for acceptance messages to presenters
@@ -486,3 +486,4 @@ $string['sendername'] = 'Sender name';
 
 $string['reviewstransferred'] = 'Reviews for the following submissions were transfered to the target database.';
 
+$string['emptyseatsx'] = '{$a} seats left';

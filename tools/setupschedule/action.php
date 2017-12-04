@@ -117,6 +117,9 @@ switch ($action) {
 
     case 'loaditems':
 
+        // the following line will not be necessary when DB fields use multilang SPANs
+        require_once("$CFG->dirroot/blocks/$blockname/tools/form.php");
+
         $instance = block_instance($blockname, $block_instance);
         $config = $instance->config;
         $modinfo = get_fast_modinfo($course);
@@ -133,6 +136,11 @@ switch ($action) {
 
         // cache certain strings
         $strnotattending = get_string('notattending', $plugin);
+
+        // cache for CSS classes derived from
+        // presentation "type" and "category"
+        $classes = array('type' => array(),
+                         'category' => array());
 
         $items = array();
         foreach ($types as $type) {
@@ -181,31 +189,85 @@ switch ($action) {
         $tagsearch = '/<(\/?\w+)\b[^>]+>/u';
         $tagreplace = '<$1>';
 
+        // regex to detect tags and non-breaking spaces in summary
+        $tagsearch = array('/<[^>]*>/u', '/(?:(?:&nbsp;)| )+/');
+        $tagreplace = ' ';
+
         // add a "session" for each $item
         foreach ($items as $recordid => $item) {
 
+            $sessionclass = 'session';
+
+            // extract category
+            //     個人の発表 Individual presentation
+            //     スポンサー提供の発表 Sponsored presentation
+            //     日本ムードル協会の補助金報告 MAJ R&D grant report
+            if (empty($item['presentation_category'])) {
+                $presentationcategory = '';
+            } else {
+                $presentationcategory = $item['presentation_category'];
+                if (empty($classes['category'][$presentationcategory])) {
+                    $class = preg_replace('/[^a-zA-Z0-9 ]/u', '', $presentationcategory);
+                    $class = preg_replace('/ .*$/u', '', trim($class));
+                    $classes['category'][$presentationcategory] = strtolower($class);
+                }
+                $sessionclass .= ' '.$classes['category'][$presentationcategory];
+                $presentationcategory = block_maj_submissions_tool_form::convert_to_multilang($presentationcategory, $config);
+            }
+
+            // extract type
+            //     ライトニング・トーク（１０分） Lightning talk (10 mins)
+            //     ケース・スタディー（２０分） Case study (20 mins)
+            //     プレゼンテーション（２０分） Presentation (20 mins)
+            //     プレゼンテーション（４０分） Presentation (40 mins)
+            //     プレゼンテーション（９０分） Presentation (90 mins)
+            //     ショーケース（９０分） Showcase (90 mins)
+            //     商用ライトニング・トーク（１０分） Commercial lightning talk (10 mins)
+            //     商用プレゼンテーション（４０分） Commercial presentation (40 mins)
+            //     商用プレゼンテーション（９０分） Commercial presentation (90 mins)
+            if (empty($item['presentation_type'])) {
+                $presentationtype = '';
+            } else {
+                $presentationtype = $item['presentation_type'];
+                if (empty($classes['type'][$presentationtype])) {
+                    $class = preg_replace('/[^a-zA-Z0-9 ]/u', '', $presentationtype);
+                    $class = preg_replace('/\s+(?=[^0-9])/', '', $class);
+                    $classes['type'][$presentationtype] = strtolower($class);
+                }
+                $sessionclass .= ' '.$classes['type'][$presentationtype];
+                $presentationtype = block_maj_submissions_tool_form::convert_to_multilang($presentationtype, $config);
+            }
+
+            // extract duration
+            if (empty($item['schedule_duration'])) {
+                $duration = $item['presentation_type'];
+                $duration = preg_match('/[^0-9]/', '', $duration);
+                $duration = $instance->multilang_format_time($duration);
+            } else {
+                $duration = $item['schedule_duration'];
+            }
+
             // start session DIV
             $html .= html_writer::start_tag('div', array('id' => 'id_recordid_'.$recordid,
-                                                         'class' => 'session',
+                                                         'class' => $sessionclass,
                                                          'style' => 'display: inline-block;'));
-
             // time and duration
             $html .= html_writer::start_tag('div', array('class' => 'time'));
             $html .= html_writer::tag('span', $item['schedule_time'], array('class' => 'startfinish'));
-            $html .= html_writer::tag('span', $item['schedule_duration'], array('class' => 'duration'));
+            $html .= html_writer::tag('span', $duration, array('class' => 'duration'));
             $html .= html_writer::end_tag('div');
 
             // room
             $html .= html_writer::start_tag('div', array('class' => 'room'));
             $html .= html_writer::tag('span', $item['schedule_room'], array('class' => 'roomname'));
-            $html .= html_writer::tag('span', '', array('class' => 'totalseats'));
+            $html .= html_writer::tag('span', '', array('class' => 'roomseats'));
             $html .= html_writer::tag('span', '', array('class' => 'roomtopic'));
             $html .= html_writer::end_tag('div');
 
             // title
             $html .= html_writer::tag('div', $item['presentation_title'], array('class' => 'title'));
 
-            // format authors
+            // format authornames
             $authornames = array();
             $namefields = preg_grep('/^name_(surname)(.*)$/', array_keys($item));
             foreach ($namefields as $namefield) {
@@ -281,13 +343,20 @@ switch ($action) {
                 $authornames = 'Tom, Dick, Harry';
             }
 
-            // schedule number and authors
+            // schedule number and authornames
             $html .= html_writer::start_tag('div', array('class' => 'authors'));
             $html .= html_writer::tag('span', $item['schedule_number'], array('class' => 'schedulenumber'));
             $html .= html_writer::tag('span', $authornames, array('class' => 'authornames'));
             $html .= html_writer::end_tag('div');
 
-            // summary (remove all tag attributes)
+            // category and type
+            $html .= html_writer::start_tag('div', array('class' => 'typecategory'));
+            $html .= html_writer::tag('span', $presentationtype, array('class' => 'type'));
+            $html .= html_writer::tag('span', $presentationcategory, array('class' => 'category'));
+
+            $html .= html_writer::end_tag('div'); // end categorytype DIV
+
+            // summary (remove all tags and nbsp)
             $text = $item['presentation_abstract'];
             $text = preg_replace($tagsearch, $tagreplace, $text);
             $html .= html_writer::tag('div', $text, array('class' => 'summary'));

@@ -14,12 +14,14 @@ if (window.MAJ == null) {
 }
 
 MAJ.escape = function(s) {
-    var n = s;
-    n = n.replace(/&/g, "&amp;");
-    n = n.replace(/</g, "&lt;");
-    n = n.replace(/>/g, "&gt;");
-    n = n.replace(/"/g, "&quot;");
-    return n;
+    var entities = {"&" : "&amp;",
+    				"<" : "&lt;",
+    				">" : "&gt;",
+    				'"' : "&quot;"};
+    for (var x in entities) {
+    	s = s.replace(new RegExp(x, "g"), entities[x])
+    }
+    return s;
 }
 
 MAJ.diffString = function(o, n) {
