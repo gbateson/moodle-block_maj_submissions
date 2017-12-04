@@ -147,11 +147,12 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
      * @return array of database fieldnames
      */
     protected function get_statuslimit_options() {
-        $options = array();
-        for ($i=100; $i>=0; $i--) {
+        $options = array(
+            self::NOT_GRADED => get_string('notgraded', 'question')
+        );
+        foreach (range(0, 100) as $i) {
             $options[$i] = ">= $i%";
         }
-        $options[self::NOT_GRADED] = get_string('notgraded', 'question');
         return $options;
     }
 
@@ -189,21 +190,13 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
             $course = $DB->get_record('course', array('id' => $instance->course));
             $workshop = new workshop($instance, $cm, $course);
 
-            // get ids of fields to transfer to, or set in, the submissions DB
-            // NOTE: the order of these items is important
+            // get ids of peer_review_fields
             $reviewfields = array(
-                'peer_review_details', // set $submission->grade (must come 1st)
-                'submission_status',   // set $status from $submission->grade
-                'peer_review_score',   // requires $submission->grade
-                'peer_review_notes',   // requires $status
-                'presentation_title_original',
-                'presentation_abstract_original'
+                'peer_review_details' => $DB->get_field('data_fields', 'id', array('dataid' => $database->id, 'name' => 'peer_review_details')),
+                'peer_review_score'   => $DB->get_field('data_fields', 'id', array('dataid' => $database->id, 'name' => 'peer_review_score')),
+                'peer_review_notes'   => $DB->get_field('data_fields', 'id', array('dataid' => $database->id, 'name' => 'peer_review_notes')),
+                'submission_status'   => $DB->get_field('data_fields', 'id', array('dataid' => $database->id, 'name' => 'submission_status')),
             );
-            $reviewfields = array_flip($reviewfields);
-            foreach (array_keys($reviewfields) as $name) {
-                $params = array('dataid' => $database->id, 'name' => $name);
-                $reviewfields[$name] = $DB->get_field('data_fields', 'id', $params);
-            }
 
             // get formatted deadline for revisions
             if (! $dateformat = $this->instance->config->customdatefmt) {
@@ -312,7 +305,6 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                             continue; // shouldn't happen !!
                         }
                         $content = '';
-                        $format = null; // textareas set this to FORMAT_HTML
                         switch ($name) {
 
                             case 'peer_review_details';
@@ -372,35 +364,17 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                                     }
                                 }
 
-                                if ($content) {
-                                    $format = FORMAT_HTML;
-                                }
-
                                 // set submission grade, if necessary
                                 // only required if $submission has no grade
                                 // e.g. if the workshop is not in "grading" phase yet
                                 if (is_numeric($submission->grade)) {
-                                    $submission->grade = intval($submission->grade);
+                                    // do nothing
                                 } else if (empty($assessmentgrades)) {
                                     $submission->grade = 0;
                                 } else {
                                     $submission->grade = array_sum($assessmentgrades);
                                     $submission->grade /= count($assessmentgrades);
                                     $submission->grade = intval($submission->grade);
-                                }
-                                break;
-
-                            case 'submission_status';
-                                if (is_numeric($submission->grade)) {
-                                    $content = round($submission->grade, 0);
-                                    foreach ($statusfilters as $grade => $status) {
-                                        if ($content >= $grade) {
-                                            $content = $status;
-                                            break;
-                                        }
-                                    }
-                                } else {
-                                    $content = $statusfilters[self::NOT_GRADED];
                                 }
                                 break;
 
@@ -444,18 +418,19 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                                         $content .= html_writer::tag('p', get_string('waitingforreview', $this->plugin), array('class' => 'status'))."\n";
                                         break;
                                 }
-                                if ($content) {
-                                    $format = FORMAT_HTML;
+
+                            case 'submission_status';
+                                if (is_numeric($submission->grade)) {
+                                    $content = round($submission->grade, 0);
+                                    foreach ($statusfilters as $grade => $status) {
+                                        if ($content >= $grade) {
+                                            $content = $status;
+                                            break;
+                                        }
+                                    }
+                                } else {
+                                    $content = $statusfilters[self::NOT_GRADED];
                                 }
-                                break;
-
-                            case 'presentation_title_original':
-                                $content = $submission->title;
-                                break;
-
-                            case 'presentation_abstract_original':
-                                $content = $submission->content;
-                                $format = FORMAT_HTML;
                                 break;
 
                         }
@@ -469,7 +444,7 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                                 'fieldid'  => $fieldid,
                                 'recordid' => $record->recordid,
                                 'content'  => $content,
-                                'content1'  => $format
+                                'content1' => ($name=='peer_review_score' ? null : FORMAT_HTML)
                             );
                             $content->id = $DB->insert_record('data_content', $content);
                         }

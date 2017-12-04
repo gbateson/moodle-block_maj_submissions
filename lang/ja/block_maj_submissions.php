@@ -322,7 +322,7 @@ $string['roomtopic4'] = 'ポスター';
 $string['roomtopic5'] = 'コースウェアー';
 $string['roomtopic6'] = 'スポンサー';
 $string['sessiontitlex'] = '発表 {$a}';
-$string['roomseatsx'] = '定員{$a}人';
+$string['totalseatsx'] = '定員{$a}人';
 
 $string['reviewerinstructions'] = '{$a->reviewer}様,
 
@@ -351,24 +351,3 @@ URL: {$a->workshopurl}
 {$a->conferencename}
 {$a->reviewteamname}';
 $string['reviewersloginpage'] = '無記名審査委員ログイン情報（{$a}）';
-
-// =============================================
-// strings for acceptance messages to presenters
-// =============================================
-
-$string['peerreviewgreeting'] = 'ご提出ありがとうございます！';
-
-$string['accepted'] = 'あなたの提案は<u>承認されました</u>。';
-$string['notaccepted'] = '残念ながら、あなたの提案は<u>却下されました</u>。';
-$string['waitingforreview'] = 'あなたの提案は<u>審査待ち</u>です。';
-$string['conditionallyaccepted'] = 'あなたの提案は<u>条件付き承認されました</u>。';
-
-$string['pleasemakechanges'] = '完全に認められるように、<u>{$a}</u>までに要求された変更を行って下さい。';
-$string['youwillbenotified'] = '変更が完了したら、再度通知をいたします。';
-
-$string['pleaseregisteryourself'] = '忘れずに登録して下さい。 ({$a})';
-$string['pleaseregistercopresenters'] = '共同発表者の登録も必ず行って下さい';
-
-$string['acceptedfarewell'] = '{$a}にお会い出来るのを楽しみにしています！';
-
-$string['emptyseatsx'] = '残り{$a}席';

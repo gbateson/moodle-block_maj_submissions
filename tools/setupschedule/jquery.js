@@ -30,9 +30,6 @@ if (window.MAJ==null) {
 MAJ.sourcesession = null;
 MAJ.targetsession = null;
 
-MAJ.updaterecord = function(session) {
-}
-
 MAJ.clicksession = function(target) {
 
     // select source
@@ -62,7 +59,7 @@ MAJ.clicksession = function(target) {
                            .html());
         $(div).appendTo(target);
 
-        // room (roomname, roomseats, roomtopic)
+        // room (roomname, totalseats, roomtopic)
         var div = $("<div></div>", {"class" : "room"});
         $(div).html($(target).parent(".slot")
                            .prevAll(".roomheadings")
@@ -72,8 +69,8 @@ MAJ.clicksession = function(target) {
                            .html());
         $(div).appendTo(target);
 
-        // transfer title, authors, typecategory and abstract summary
-        $(MAJ.sourcesession).children(".title, .authors, .typecategory, .summary").appendTo(target);
+        // transfer title, authors, and abstract summary
+        $(MAJ.sourcesession).children(".title, .authors, .summary").appendTo(target);
 
         // transfer "id"
         $(target).prop("id", $(MAJ.sourcesession).prop("id"));
@@ -101,7 +98,7 @@ MAJ.clicksession = function(target) {
     if ($(target).hasClass("session")) {
         $(target).addClass("ui-selected");
 
-        // create temp elements to store id and child nodes
+        // create temp elements to store id and ".title, .authors, .summary" nodes
         var temptarget = document.createElement("DIV");
         var tempsource = document.createElement("DIV");
 
@@ -116,14 +113,14 @@ MAJ.clicksession = function(target) {
         $(MAJ.sourcesession).prop("id", $(target).prop("id"));
         $(target).prop("id", sourceid);
 
-        // move children to temp source
+        // move children nodes to temp source
         $(MAJ.sourcesession).children(".time, .room").appendTo(tempsource);
-        $(target).children(".title, .authors, .typecategory, .summary").appendTo(tempsource);
+        $(target).children(".title, .authors, .summary").appendTo(tempsource);
         $(MAJ.sourcesession).children(".capacity").appendTo(tempsource);
 
-        // move children to temp target
+        // move children nodes to temp target
         $(target).children(".time, .room").appendTo(temptarget);
-        $(MAJ.sourcesession).children(".title, .authors, .typecategory, .summary").appendTo(temptarget);
+        $(MAJ.sourcesession).children(".title, .authors, .summary").appendTo(temptarget);
         $(target).children(".capacity").appendTo(temptarget);
 
         // move children to real source and target
@@ -262,7 +259,7 @@ MAJ.emptyschedule = function() {
 
             if ($(this).prop("id")=="") {
                 // sessions without an "id" are dummy sessions are removed
-                $(this).find(".title, .authors, .typecategory, .summary").remove();
+                $(this).find(".title, .authors, .summary").remove();
             } else {
                 // sessions with an "id" are moved to the "#items" DIV
                 var div = $("<div></div>", {
@@ -270,7 +267,7 @@ MAJ.emptyschedule = function() {
                     "style" : "inline-block",
                 }).addClass("session");
                 $(this).prop("id", "");
-                $(this).children(".title, .authors, .typecategory, .summary").appendTo(div);
+                $(this).children(".title, .authors, .summary").appendTo(div);
                 MAJ.draggable(null, div);
                 MAJ.selectable(null, div);
                 $("#items").append(div);
@@ -382,4 +379,9 @@ $(document).ready(function(){
             $(this).html("Error " + x.status + ": " + x.statusText)
         }
     });
+
+    // fetch current session info from DB
+
+    // make sesisons draggable
+
 });

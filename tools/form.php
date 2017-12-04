@@ -412,10 +412,6 @@ abstract class block_maj_submissions_tool_form extends moodleform {
             $defaultvalues[$name] = 0;
         }
 
-		// "timemodified" is required by most mod types
-		// including "data", "page" and "workshop"
-        $defaultvalues['timemodified'] = $time;
-
         return $defaultvalues;
     }
 

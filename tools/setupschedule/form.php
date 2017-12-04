@@ -535,7 +535,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
 
         if ($template) {
             foreach ($template as $name => $value) {
-                if ($name=='id' || $name=='name' || $name=='timemodified') {
+                if ($name=='id' || $name=='name') {
                     continue; // skip these fields
                 }
                 if (is_scalar($value)) {
@@ -621,23 +621,20 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
         for ($i=0; $i<=$numberofrooms; $i++) {
             if ($i==0) {
                 $name = $instance->get_string('roomname0', $this->plugin);
-                $seats = $instance->get_string('roomseatsx', $this->plugin, 100);
-                $emptyseats = rand(0, 100);
+                $seats = $instance->get_string('totalseatsx', $this->plugin, 100);
                 $topic = '';
             } else {
                 $name = $instance->get_string('roomnamex', $this->plugin, $i);
                 $seats = 20 + (5 * ($numberofrooms - $i));
-                $emptyseats = rand(0, $seats);
-                $seats = $instance->get_string('roomseatsx', $this->plugin, $seats);
+                $seats = $instance->get_string('totalseatsx', $this->plugin, $seats);
                 $topic = 'roomtopic'.(($i % 6) + 1);
                 $topic = $instance->get_string($topic, $this->plugin);
             }
-            $emptyseats = $instance->get_string('emptyseatsx', $this->plugin, $emptyseats);
             $rooms[$i] = (object)array('name' => $name,
                                        'seats' => $seats,
-                                       'topic' => $topic,
-                                       'emptyseats' => $emptyseats);
+                                       'topic' => $topic);
         }
+
 
         $days  = array();
         for ($i=1; $i<=$numberofdays; $i++) {
@@ -668,20 +665,6 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                                      'duration' => $duration,
                                      'allrooms' => true);
         }
-
-        $types = array('ライトニング・トーク Lightning talk',
-                       'ケース・スタディー Case study',
-                       'プレゼンテーション Presentation',
-                       'ショーケース Showcase',
-                       '商用ライトニング・トーク Commercial lightning talk',
-                       '商用プレゼンテーション Commercial presentation');
-
-        $categories = array('個人の発表 Individual session',
-                            'スポンサー提供の発表 Sponsored session',
-                            'ＭＡＪ補助金計画の報告 MAJ R&D grant report');
-
-        $counttypes = (count($types) - 1);
-        $countcategories = (count($categories) - 1);
 
         // cache the formatted slot duration (e.g. 20 mins)
         $duration = $instance->multilang_format_time($slotduration);
@@ -783,7 +766,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                                 continue;
                             }
                             $text = html_writer::tag('span', $room->name,  array('class' => 'roomname')).
-                                    html_writer::tag('span', $room->seats, array('class' => 'roomseats')).
+                                    html_writer::tag('span', $room->seats, array('class' => 'totalseats')).
                                     html_writer::tag('div',  $room->topic, array('class' => 'roomtopic'));
                             $content .= html_writer::tag('th', $text, array('class' => "roomheading room$r"));
                         }
@@ -836,7 +819,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
 
                         // room
                         $text = html_writer::tag('span', $room->name,  array('class' => 'roomname')).
-                                html_writer::tag('span', $room->seats, array('class' => 'roomseats')).
+                                html_writer::tag('span', $room->seats, array('class' => 'totalseats')).
                                 html_writer::tag('div',  $room->topic, array('class' => 'roomtopic'));
                         $session .= html_writer::tag('div',  $text, array('class' => 'room'));
 
@@ -844,8 +827,8 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                         $text = $instance->get_string('sessiontitlex', $this->plugin, "$d.$s.$r");
                         $session .= html_writer::tag('div', $text, array('class' => 'title'));
 
-                        // start authors DIV
-                        $session .= html_writer::start_tag('div', array('class' => 'authors'));
+                        // start authors = [schedulenumber]  + list, of, author, names
+                        $session .= html_writer::start_tag('span', array('class' => 'authors'));
 
                         // schedulenumber
                         $session .= html_writer::tag('span', "$d$s$r-P", array('class' => 'schedulenumber'));
@@ -864,23 +847,10 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                         }
                         $session .= html_writer::tag('span', $text, array('class' => 'authornames'));
 
-                        // finish authors DIV
+                        // finish authors
                         $session .= html_writer::end_tag('div');
 
-                        // type and category
-                        $session .= html_writer::start_tag('div', array('class' => 'typecategory'));
-
-                        $type = $types[rand(0, $counttypes)];
-                        $type = self::convert_to_multilang($type, $config);
-                        $session .= html_writer::tag('span', $type, array('class' => 'type'));
-
-                        $category = $categories[rand(0, $countcategories)];
-                        $category = self::convert_to_multilang($category, $config);
-                        $session .= html_writer::tag('span', $category, array('class' => 'category'));
-
-                        $session .= html_writer::end_tag('div'); // end categorytype DIV
-
-                        // summary
+                        //  summary
                         $summary = array();
                         for ($i=0; $i<40; $i++) {
                             $keys = array_rand($letters, rand(3, 7));
@@ -909,7 +879,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                                                                               'id' => "id_demo_$r")).
                                         html_writer::tag('label', 'Not attending', array('for' => "id_demo_$d$s$r"));
                         }
-                        $capacity = html_writer::tag('div', $room->emptyseats, array('class' => 'emptyseats')).
+                        $capacity = html_writer::tag('div', "$room->seats left", array('class' => 'emptyseats')).
                                     html_writer::tag('div', $capacity, array('class' => 'attendance'));
                         $session .= html_writer::tag('div', $capacity, array('class' => 'capacity'));
                     }
