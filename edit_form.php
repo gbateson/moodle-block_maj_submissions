@@ -152,6 +152,9 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $this->add_time_startfinish($mform, $plugin, 'registerpresenters');
         $this->add_cmid($mform, $plugin, 'data,page,resource', 'registerpresenterscmid');
 
+        $this->add_cmid($mform, $plugin, 'page,resource', 'membershipinfocmid');
+        $this->add_cmid($mform, $plugin, 'page,resource', 'paymentinfocmid');
+
         //-----------------------------------------------------------------------------
         $this->add_header($mform, $plugin, 'dateformats');
         //-----------------------------------------------------------------------------

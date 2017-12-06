@@ -405,9 +405,7 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
                         $content = '';
                         foreach ($fields as $name => $field) {
                             if (isset($record->$name)) {
-                                if ($name=='title') {
-                                    // skip this field
-                                } else if ($name=='abstract') {
+                                if ($name=='abstract') {
                                     $params = array('style' => 'text-align: justify; '.
                                                                'text-indent: 20px;');
                                     $content .= html_writer::tag('p', $record->$name, $params);

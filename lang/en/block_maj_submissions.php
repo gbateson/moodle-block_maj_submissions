@@ -487,3 +487,8 @@ $string['sendername'] = 'Sender name';
 $string['reviewstransferred'] = 'Reviews for the following submissions were transfered to the target database.';
 
 $string['emptyseatsx'] = '{$a} seats left';
+
+$string['paymentinfocmid_help'] = 'The page resource that displays information on how to pay for this conference.';
+$string['paymentinfocmid'] = 'Payment information';
+$string['membershipinfocmid_help'] = 'The page resource that displays information on membership';
+$string['membershipinfocmid'] = 'Membership information';

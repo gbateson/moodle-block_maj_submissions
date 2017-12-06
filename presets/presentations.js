@@ -6,11 +6,29 @@ MAJ.onload_view = function() {
     MAJ.remove_empty_rows("tr.comments_questions");
     MAJ.remove_empty_rows("tr.peer_review");
     MAJ.remove_empty_rows("tr.schedule");
-    var a_old = $("tr#id_presentation_abstract_original td.c1 p:last-child").text();
-    var a_new = $("tr#id_presentation_abstract td.c1").text();
-    if (a_old && a_new && MAJ.diffString) {
-        var d = MAJ.diffString(a_old, a_new);
-        $("tr#id_presentation_abstract_original td.c1 p:last-child").html(d);
+    if (MAJ.diffString) {
+        var fields = {"title" : "first", "abstract" : "last"};
+        for (var field in fields) {
+            var p = "p:" + fields[field] + "-child";
+            var oldnode = $("tr#id_presentation_original td.c1 " + p);
+            var newnode = $("tr#id_presentation_" + field + " td.c1");
+            if (oldnode.length && newnode.length) {
+                if (field=="title") {
+                    // get last text node within this <p> node
+                    oldnode = oldnode.contents().filter(function(){
+                        return (this.nodeType==3);
+                    });
+                }
+                var oldtext = oldnode.last().text();
+                var newtext = newnode.last().text();
+                var d = MAJ.diffString(oldtext, newtext);
+                if (field=="title") {
+                    oldnode.replaceWith(d);
+                } else {
+                    oldnode.html(d);
+                }
+            }
+        }
     }
 }
 

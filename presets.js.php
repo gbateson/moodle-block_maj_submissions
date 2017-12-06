@@ -78,11 +78,9 @@ if (($d || $id) && $preset) {
         }
     }
 
-    // can we somehow find the "payment" and "membership" pages?
-    // perhaps from a maj_submissions setting?
-    // or from $course->modinfo?
-    $payment_cm = '/mod/page/view.php?id=0';
-    $membership_cm = '/mod/page/view.php?id=0';
+    // initialize "payment" and "membership" pages
+    $payment_cm = '';
+    $membership_cm = '';
 
     $time = time();
     $lifetime = 600; // Seconds to cache this content
@@ -114,6 +112,10 @@ if (($d || $id) && $preset) {
             if ($type=='admin') {
                 $type = $field->param10;
             }
+            switch ($name) {
+                case 'payment_info_url': $payment_cm = $field->param1; break;
+                case 'membership_info_url': $membership_cm = $field->param1; break;
+            }
             if ($type=='action' || $type=='constant' || $type=='file' || $type=='multimenu' || $type=='picture' || $type=='template' || $type=='textarea' || $type=='url') {
                 // unsortable field types
             } else if ($name=='setdefaultvalues' || $name=='fixdisabledfields' || $name=='unapprove') {
@@ -131,7 +133,7 @@ if (($d || $id) && $preset) {
     }
     echo 'MAJ.sortablefields = ['.$sortable.'];'."\n";
 
-    // maybe we should get these URLs from MAJ block
+    // these URLs may be blank
     echo 'MAJ.payment_link_cm = "'.$payment_cm.'";'."\n";
     echo 'MAJ.membership_link_cm = "'.$membership_cm.'";'."\n";
 

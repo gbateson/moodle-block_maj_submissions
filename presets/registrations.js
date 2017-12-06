@@ -40,6 +40,10 @@ MAJ.add_membership_link = function() {
 
 MAJ.add_help_link = function(en, ja, href, rows) {
 
+    if (href=="") {
+        return false;
+    }
+
     // locate required rows in table
     $(rows).each(function(){
 

@@ -239,14 +239,18 @@ class block_maj_submissions extends block_base {
         $dataids = array_unique($dataids);
 
         if (count($dataids)) {
+
+            // cache langs
+            if (empty($config->displaylangs)) {
+                $langs = self::get_languages();
+            } else {
+                $langs = self::get_languages($config->displaylangs);
+            }
+
+            // constant values (type = 0)
             $constanttype = 0; // constant fields
             $fieldnames = self::get_constant_fieldnames($constanttype);
             foreach ($fieldnames as $fieldname => $name) {
-                if (empty($config->displaylangs)) {
-                    $langs = self::get_languages();
-                } else {
-                    $langs = self::get_languages($config->displaylangs);
-                }
                 foreach ($langs as $lang) {
                     if ($lang=='en') {
                         // update fields which have no separate "_$lang" values
@@ -256,7 +260,8 @@ class block_maj_submissions extends block_base {
                 }
             }
 
-            $constanttype = 1; // autoincrement fields
+            // autoincrement values (type = 1)
+            $constanttype = 1;
             $fieldnames = self::get_constant_fieldnames($constanttype);
             foreach ($fieldnames as $fieldname => $name) {
                 $this->update_constant_field($plugin, $dataids, $config, $name, $name, $fieldname, $constanttype);
@@ -394,7 +399,16 @@ class block_maj_submissions extends block_base {
             $param1 = $config->$configname;
             $param2 = $constanttype;
             $param3 = ($constanttype==1 ? $config->{$configname.'format'} : '');
+            if (substr($configname, -4)=='cmid' && substr($fieldname)=='_url') {
+                $is_url = true;
+            } else {
+                $is_url = false;
+            }
             foreach ($dataids as $dataid) {
+                if ($is_url) {
+                    $param1 = array('id' => $config->$configname);
+                    $param1 = new moodle_url('mod/page/view.php', $param1);
+                }
                 $params = array('dataid' => $dataid,
                                 'type' => 'constant',
                                 'name' => $fieldname);
@@ -1409,7 +1423,9 @@ class block_maj_submissions extends block_base {
                          'dinner_venue'     => 'dinnervenue',
                          'dinner_date'      => 'dinnerdate',
                          'dinner_time'      => 'dinnertime',
-                         'certificate_date' => 'certificatedate');
+                         'certificate_date' => 'certificatedate',
+                         'payment_info_url' => 'paymentinfocmid',
+                         'membership_info_url' => 'membershipinfocmid');
         }
         if ($constanttype==1) { // autoincrement
             return array('badge_number'          => 'badgenumber',

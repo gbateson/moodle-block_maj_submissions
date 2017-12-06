@@ -196,8 +196,7 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                 'submission_status',   // set $status from $submission->grade
                 'peer_review_score',   // requires $submission->grade
                 'peer_review_notes',   // requires $status
-                'presentation_title_original',
-                'presentation_abstract_original'
+                'presentation_original'
             );
             $reviewfields = array_flip($reviewfields);
             foreach (array_keys($reviewfields) as $name) {
@@ -449,11 +448,7 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                                 }
                                 break;
 
-                            case 'presentation_title_original':
-                                $content = $submission->title;
-                                break;
-
-                            case 'presentation_abstract_original':
+                            case 'presentation_original':
                                 $content = $submission->content;
                                 $format = FORMAT_HTML;
                                 break;

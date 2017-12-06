@@ -46,8 +46,16 @@ MAJ.onload = function() {
     $("div.logo").css("width", "auto");
 
     // set URL of payment and membership details
-    MAJ.payment_link_url = MAJ.wwwroot + MAJ.payment_link_cm;
-    MAJ.membership_link_url = MAJ.wwwroot + MAJ.membership_link_cm;
+    if (MAJ.payment_link_cm=="") {
+        MAJ.payment_link_url = "";
+    } else {
+        MAJ.payment_link_url = MAJ.wwwroot + MAJ.payment_link_cm;
+    }
+    if (MAJ.membership_link_cm=="") {
+        MAJ.membership_link_url = "";
+    } else {
+        MAJ.membership_link_url = MAJ.wwwroot + MAJ.membership_link_cm;
+    }
 
     switch (MAJ.script) {
 
