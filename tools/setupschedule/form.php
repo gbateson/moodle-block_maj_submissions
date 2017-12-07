@@ -942,7 +942,8 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
 
         // we use JS to add the CSS file because <style> tags are removed by Moodle
         $src = new moodle_url('/blocks/maj_submissions/templates/template');
-        $content .= html_writer::start_tag('script', array('type' => 'text/javascript'))."\n";
+        $content .= html_writer::start_tag('script', array('type' => 'text/javascript',
+                                                           'defer' => 'defer'))."\n";
         $content .= "//<![CDATA[\n";
         $content .= '(function(){'."\n";
         $content .= '    var wwwroot = location.href.replace(new RegExp("^(.*?)/mod/.*$"), "$1");'."\n";

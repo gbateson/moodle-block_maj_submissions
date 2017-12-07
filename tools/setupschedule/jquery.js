@@ -149,14 +149,14 @@ MAJ.droppable = function(container, item) {
     }
     target.droppable({
         "accept" : ".session",
-        "drop" : function(event, ui) {
+        "drop" : function(evt, ui) {
             $(this).removeClass("ui-dropping");
             MAJ.clicksession(this);
         },
-        "out" : function(event, ui) {
+        "out" : function(evt, ui) {
             $(this).removeClass("ui-dropping");
         },
-        "over" : function(event, ui) {
+        "over" : function(evt, ui) {
             $(this).addClass("ui-dropping");
         },
         "tolerance" : "pointer"
@@ -173,7 +173,7 @@ MAJ.draggable = function(container, item) {
         "cursor" : "move",
         "scroll" : true,
         "stack" : ".session",
-        "start" : function(event, ui) {
+        "start" : function(evt, ui) {
             MAJ.sourcesession = this;
             $(this).addClass("ui-dragging");
             $(this).removeClass("ui-selected");
@@ -182,7 +182,7 @@ MAJ.draggable = function(container, item) {
                 "left" : $(this).css("left")
             });
         },
-        "stop" : function(event, ui) {
+        "stop" : function(evt, ui) {
             $(this).removeClass("ui-dragging");
             var p = $(this).data("startposition");
             if (p) {
@@ -225,16 +225,20 @@ MAJ.setuptools = function() {
         $(this).find(".subcommand").each(function(){
             // extract c(ommand) and s(ubcommand)
             // from id, e.g. addslot-above
-            var id = $(this).prop("id");
-            var i = id.indexOf("-");
-            var c = id.substring(0, i);
-            var s = id.substring(i + 1);
-            $(this).click(new Function("s", "MAJ." + c + "(s)"));
+            $(this).click(function(evt){
+                var id = $(this).prop("id");
+                var i = id.indexOf("-");
+                var c = id.substring(0, i);
+                var s = id.substring(i + 1);
+                MAJ[c](evt, s);
+            });
             activecommand = false;
         });
         if (activecommand) {
-            var c = $(this).prop("id");
-            $(this).click(new Function("MAJ." + c + "()"));
+            $(this).click(function(evt){
+                var c = $(this).prop("id");
+                MAJ[c](evt);
+            });
         }
     });
 }
@@ -251,50 +255,107 @@ MAJ.setupitems = function() {
     }
 }
 
-MAJ.emptyschedule = function() {
-    $("table.schedule .session").each(function(){
-        if ($(this).hasClass("emptysession")) {
-            // do nothing
-        } else {
-            $(this).addClass("emptysession");
-            $(this).removeClass("attending");
-            $(this).find(".capacity").remove();
+MAJ.initializeschedule = function() {
+}
 
-            if ($(this).prop("id")=="") {
-                // sessions without an "id" are dummy sessions are removed
-                $(this).find(".title, .authors, .typecategory, .summary").remove();
-            } else {
-                // sessions with an "id" are moved to the "#items" DIV
-                var div = $("<div></div>", {
-                    "id" : $(this).prop("id"),
-                    "style" : "inline-block",
-                }).addClass("session");
-                $(this).prop("id", "");
-                $(this).children(".title, .authors, .typecategory, .summary").appendTo(div);
-                MAJ.draggable(null, div);
-                MAJ.selectable(null, div);
-                $("#items").append(div);
-            }
-        }
+MAJ.emptyschedule = function(evt) {
+    $("table.schedule .session").not(".emptysession").each(function(){
+
+		// empty this session cell
+		$(this).addClass("emptysession");
+		$(this).removeClass("attending");
+		$(this).find(".capacity").remove();
+
+		// move session details to #items container
+		var id = $(this).prop("id");
+		if (id=="" || id.indexOf("id_recordid_") < 0) {
+			// sessions without an "id" are dummy sessions are removed
+			$(this).find(".title, .authors, .typecategory, .summary").remove();
+		} else {
+			// sessions with an "id" are moved to the "#items" DIV
+			var div = $("<div></div>", {
+				"id" : id,
+				"style" : "display: inline-block",
+			}).addClass("session");
+			$(this).prop("id", "");
+			$(this).children(".title, .authors, .typecategory, .summary").appendTo(div);
+			MAJ.draggable(null, div);
+			MAJ.selectable(null, div);
+			$("#items").append(div);
+		}
+    });
+
+	// remove demo sessions from #items container
+    $("#items .session").not("div[id^=id_record]").each(function(){
+		$(this).remove();
     });
 }
 
-MAJ.resetschedule = function() {
+MAJ.populateschedule = function(evt, confirm) {
+
+    // add initial dialog to select days
+    var dialog = $("#dialog");
+
+    if (confirm) {
+        // close dialog box
+        dialog.dialog("close");
+
+        // cancel previous session clicks, if any
+        if (MAJ.sourcesession) {
+            MAJ.clicksession(MAJ.sourcesession);
+        }
+
+        // select all empty sessions
+        var empty = $(".session.emptysession");
+
+        // select all unassigned sessions
+        var items = $("#items .session");
+
+        // mimic clicks to assign sessions
+        var i_max = Math.min(items.length,
+                             empty.length);
+        for (var i=(i_max-1); i>=0; i--) {
+            MAJ.clicksession(items.get(i));
+            MAJ.clicksession(empty.get(i));
+        }
+        return true;
+    }
+
+    // add dialog box content
+    var i = 0;
+    var html = "";
+    $("tbody.day tr.date td:first-child").each(function(){
+        var checkbox = '<input type="checkbox" name="day' + (++i) + '" value="1" />';
+        html += "<tr><th>" + $(this).html() + "</th><td>" + checkbox + "</td></tr>";
+    });
+    html = '<table cellpadding="4" cellspacing="4"><tbody>' + html + "</tbody></table>";
+    dialog.html(html);
+
+    // set up dialog box button
+    var buttons = {
+        "Populate" : function(){MAJ.populateschedule(evt, true);},
+        "Cancel"   : function(){$(this).dialog("close");}
+    };
+    dialog.dialog({"buttons" : buttons});
+
+    // open dialog box
+    dialog.dialog("open");
 }
 
-MAJ.renumberschedule = function() {
+
+MAJ.renumberschedule = function(evt) {
 }
 
-MAJ.addday = function(pos) {
+MAJ.addday = function(evt, pos) {
 }
 
-MAJ.addslot = function(pos) {
+MAJ.addslot = function(evt, pos) {
 }
 
-MAJ.addroom = function(pos) {
+MAJ.addroom = function(evt, pos) {
 }
 
-MAJ.editcss = function(pos) {
+MAJ.editcss = function(evt) {
 }
 
 // set hide all sections when document has loaded
@@ -309,23 +370,17 @@ $(document).ready(function(){
     $("#id_sessioninfo").css("display", "none");
 
     // fetch CSS and JS files
-    $("head").first()
-        .append(
-            $("<style></style>", {
-                "type" : "text/css"
-            }).text(
-                "@import url(" + toolroot + "/styles.css);\n" +
-                "@import url(" + blockroot + "/templates/template.css)"
-            )
-        )
-        .append(
-            $("<script></script>", {
-                "type" : "text/javascript",
-                "src" : blockroot + "/templates/template.js"
-            }
-        )
-    );
+    $("<link/>", {
+        rel: "stylesheet", type: "text/css",
+        href: toolroot + "/styles.css"
+    }).appendTo("head");
 
+    $("<link/>", {
+        rel: "stylesheet", type: "text/css",
+        href: blockroot + "/templates/template.css"
+    }).appendTo("head");
+
+    $.getScript(blockroot + "/templates/template.js")
 
     // create Tools area
     var tools = $("<div></div>", {"id" : "tools"}).insertAfter("#id_sessioninfo");
@@ -382,4 +437,12 @@ $(document).ready(function(){
             $(this).html("Error " + x.status + ": " + x.statusText)
         }
     });
+
+    var dialog = $("<div></div>", {"id" : "dialog"})
+                    .css({"background-color" : "white",
+                          "border"           : "solid 4px #999",
+                          "border-radius"    : "8px",
+                          "display"          : "none",
+                          "padding"          : "6px 12px"})
+                    .insertAfter("#items");
 });

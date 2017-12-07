@@ -1008,6 +1008,10 @@ class block_maj_submissions extends block_base {
      */
     public function multilang_format_time($secs) {
 
+		if (empty($secs) || $secs==='0') {
+			return '';
+		}
+
         if ($this->multilang==false) {
             return format_time($secs);
         }
