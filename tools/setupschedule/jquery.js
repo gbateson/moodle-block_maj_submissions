@@ -305,11 +305,32 @@ MAJ.populateschedule = function(evt, confirm) {
             MAJ.clicksession(MAJ.sourcesession);
         }
 
+        var empty = "";
+        dialog.find("input[type=checkbox][name^=day]:checked").each(function(){
+            var d = $(this).val(); // the day number
+            empty += ".day" + d + " .session.emptysession";
+        });
+
+        if (empty=="") {
+            // no days selected
+            return true;
+        }
+
         // select all empty sessions
-        var empty = $(".session.emptysession");
+        var empty = $(empty);
+
+        if (empty.length==0) {
+            // no empty sessions in selected days
+            return true;
+        }
 
         // select all unassigned sessions
         var items = $("#items .session");
+
+        if (items.length==0) {
+            // no unassigned sessions
+            return true;
+        }
 
         // mimic clicks to assign sessions
         var i_max = Math.min(items.length,
@@ -322,23 +343,47 @@ MAJ.populateschedule = function(evt, confirm) {
     }
 
     // add dialog box content
-    var i = 0;
+    var d = 0;
     var html = "";
-    $("tbody.day tr.date td:first-child").each(function(){
-        var checkbox = '<input type="checkbox" name="day' + (++i) + '" value="1" />';
-        html += "<tr><th>" + $(this).html() + "</th><td>" + checkbox + "</td></tr>";
+    // tbody.day tr.date td.first-child
+    $(".day .date td:first-child").each(function(){
+        d++; // increment day number
+        var checkbox = '<input type="checkbox" name="day' + d + '" value="' + d + '" />';
+        html += '<tr><td align="right" width="40">' + checkbox + '</td><th align="left" width="*">' + $(this).html() + "</th></tr>";
     });
-    html = '<table cellpadding="4" cellspacing="4"><tbody>' + html + "</tbody></table>";
+    html = '<table cellpadding="4" cellspacing="4" width="170"><tbody>' + html + "</tbody></table>";
     dialog.html(html);
 
-    // set up dialog box button
-    var buttons = {
+    // position the dialog at top left of user tile
+    dialog.dialog("option", "position", {"my" : "left+8px top+8px",
+                                         "at" : "left top",
+                                         "of" : evt.target});
+
+    // set up dialog box buttons
+    dialog.dialog("option", "buttons", {
         "Populate" : function(){MAJ.populateschedule(evt, true);},
         "Cancel"   : function(){$(this).dialog("close");}
-    };
-    dialog.dialog({"buttons" : buttons});
+    });
 
-    // open dialog box
+    dialog.css({
+        "background-color" : "#ffebcc",
+        "border" : "solid 2px #f90",
+        "border-bottom-style" : "none",
+        "border-radius" : "8px 8px 0px 0px",
+        "box-shadow" : "0 4px 8px 0 rgba(0, 0, 0, 0.2)," 
+                     + "0 6px 20px 0 rgba(0, 0, 0, 0.19)"
+    });
+
+    dialog.siblings(".ui-dialog-buttonpane").css({
+        "background-color" : "#ffebcc",
+        "border" : "solid 2px #f90",
+        "border-top-style" : "none",
+        "border-radius" : "0px 0px 8px 8px",
+        "box-shadow" : "0 4px 8px 0 rgba(0, 0, 0, 0.2)," 
+                     + "0 6px 20px 0 rgba(0, 0, 0, 0.19)"
+    });
+
+    // reveal dialog box
     dialog.dialog("open");
 }
 
@@ -438,11 +483,7 @@ $(document).ready(function(){
         }
     });
 
-    var dialog = $("<div></div>", {"id" : "dialog"})
-                    .css({"background-color" : "white",
-                          "border"           : "solid 4px #999",
-                          "border-radius"    : "8px",
-                          "display"          : "none",
-                          "padding"          : "6px 12px"})
-                    .insertAfter("#items");
+    // create initialie the dialog box
+    var dialog = $("<div></div>", {"id" : "dialog"}).insertAfter("#items");
+    dialog.dialog({"autoOpen" : false, "width" : "180px"});
 });
