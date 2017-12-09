@@ -669,6 +669,11 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                                      'allrooms' => true);
         }
 
+		// TODO: get presentation categories from the DB
+        $categories = array('個人の発表 Individual session',
+                            'スポンサー提供の発表 Sponsored session',
+                            'ＭＡＪ補助金計画の報告 MAJ R&D grant report');
+
 		// TODO: get presentation types from the DB
         $types = array('ライトニング・トーク Lightning talk',
                        'ケース・スタディー Case study',
@@ -677,13 +682,8 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                        '商用ライトニング・トーク Commercial lightning talk',
                        '商用プレゼンテーション Commercial presentation');
 
-		// TODO: get presentation categories from the DB
-        $categories = array('個人の発表 Individual session',
-                            'スポンサー提供の発表 Sponsored session',
-                            'ＭＡＪ補助金計画の報告 MAJ R&D grant report');
-
-        $counttypes = (count($types) - 1);
         $countcategories = (count($categories) - 1);
+        $counttypes = (count($types) - 1);
 
         // cache the formatted slot duration (e.g. 20 mins)
         $duration = $instance->multilang_format_time($slotduration);
@@ -796,7 +796,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                     $addroomheadings = true;
                 }
 
-                $content .= html_writer::start_tag('tr', array('class' => 'slot'));
+                $content .= html_writer::start_tag('tr', array('class' => 'slot slot'.$s));
 
                 $time = html_writer::tag('span', $slot->startfinish, array('class' => 'startfinish')).
                         html_writer::tag('span', $slot->duration, array('class' => 'duration'));
@@ -869,16 +869,16 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                         // finish authors DIV
                         $session .= html_writer::end_tag('div');
 
-                        // type and category
-                        $session .= html_writer::start_tag('div', array('class' => 'typecategory'));
-
-                        $type = $types[rand(0, $counttypes)];
-                        $type = self::convert_to_multilang($type, $config);
-                        $session .= html_writer::tag('span', $type, array('class' => 'type'));
+                        // category and type
+                        $session .= html_writer::start_tag('div', array('class' => 'categorytype'));
 
                         $category = $categories[rand(0, $countcategories)];
                         $category = self::convert_to_multilang($category, $config);
                         $session .= html_writer::tag('span', $category, array('class' => 'category'));
+
+                        $type = $types[rand(0, $counttypes)];
+                        $type = self::convert_to_multilang($type, $config);
+                        $session .= html_writer::tag('span', $type, array('class' => 'type'));
 
                         $session .= html_writer::end_tag('div'); // end categorytype DIV
 

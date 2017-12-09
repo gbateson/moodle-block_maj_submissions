@@ -156,13 +156,8 @@
     white-space: nowrap;
 }
 
-.schedule .authors,
-.schedule .typecategory {
+.schedule .authors {
     font-size: small;
-}
-
-.schedule .type:not(:empty) + .category:not(:empty):before {
-    content: " ";
 }
 
 .schedule .schedulenumber {
@@ -175,6 +170,22 @@
 
 .schedule .schedulenumber:not(:empty):after {
     content: "] ";
+}
+
+.schedule .categorytype {
+    font-size: small;
+}
+
+.schedule .category:not(:empty) + .type:not(:empty):before {
+    content: " ";
+}
+
+/**
+    there's no need to mark "individual" sessions,
+    because most sessions will be "individual"
+ */
+.schedule .individual .category {
+    display: none;
 }
 
 .schedule .summary {
@@ -333,9 +344,10 @@
     }
 
     .schedule .title {
-        font-size: initial;
-        font-weight: bold;
+        font-size: 0.8em;
+        font-weight: initial;
         padding-top: 0px;
+        white-space: normal;
     }
 
     .schedule .authors {

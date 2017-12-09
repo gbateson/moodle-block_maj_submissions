@@ -30,113 +30,161 @@ if (window.MAJ==null) {
 MAJ.sourcesession = null;
 MAJ.targetsession = null;
 
+// TODO: initialize this array from the PHP script on the server
+//       blocks/maj_submissions/tools/setupschedule/action.php
+MAJ.sessiontypes = "casestudy|lightningtalk|presentation|showcase|workshop";
+
+// define selectors for session child nodes
+MAJ.sessiontimeroom = ".time, .room";
+MAJ.sessioncontent = ".title, .authors, .categorytype, .summary";
+
 MAJ.updaterecord = function(session) {
 }
 
-MAJ.clicksession = function(target) {
+MAJ.clicksession = function(targetsession) {
 
     // select source
     if (MAJ.sourcesession==null) {
-        MAJ.sourcesession = target;
-        $(target).addClass("ui-selected");
+        MAJ.sourcesession = targetsession;
+        $(targetsession).addClass("ui-selected");
         return true;
     }
+
+    // cache flags if target/source is empty
+    var targetIsEmpty = $(targetsession).hasClass("emptysession");
+    var sourceIsEmpty = $(MAJ.sourcesession).hasClass("emptysession");
 
     // deselect source
-    if (MAJ.sourcesession==target) {
+    if (MAJ.sourcesession==targetsession || (sourceIsEmpty && targetIsEmpty)) {
+        $(MAJ.sourcesession).removeClass("ui-selected");
+        $(targetsession).removeClass("ui-selected");
         MAJ.sourcesession = null;
-        $(target).removeClass("ui-selected");
         return true;
     }
 
-    // target is an empty session
-    if ($(target).hasClass("emptysession")) {
-        $(target).removeClass("emptysession");
-
-        $(target).addClass("ui-selected");
-
-        // time (and duration)
-        var div = $("<div></div>", {"class" : "time"});
-        $(div).html($(target).parent(".slot")
-                           .find(".timeheading")
-                           .html());
-        $(div).appendTo(target);
-
-        // room (roomname, roomseats, roomtopic)
-        var div = $("<div></div>", {"class" : "room"});
-        $(div).html($(target).parent(".slot")
-                           .prevAll(".roomheadings")
-                           .first() // most recent TR
-                           .find("th, td")
-                           .eq(target.cellIndex)
-                           .html());
-        $(div).appendTo(target);
-
-        // transfer title, authors, typecategory and abstract summary
-        $(MAJ.sourcesession).children(".title, .authors, .typecategory, .summary").appendTo(target);
-
-        // transfer "id"
-        $(target).prop("id", $(MAJ.sourcesession).prop("id"));
-
-        // empty/remove source session content
-        switch (MAJ.sourcesession.tagName) {
-            case "DIV":
-                $(MAJ.sourcesession).remove();
-                break;
-            case "TD":
-                $(MAJ.sourcesession).empty()
-                                    .prop("id", "")
-                                    .addClass("emptysession")
-                                    .removeClass("ui-selected");
-                break;
-        }
-        MAJ.sourcesession = null;
-
-        $(target).removeClass("ui-selected");
-
-        return true;
+    // we need to swap these two sessions
+    // if (a), both sessions are non-empty
+    // or (b), the sessions have the same tagName
+    // i.e. they are both TD cells in the schedule TABLE
+    // or they are both DIVs in the #items area of the form
+    var swap = (targetIsEmpty==false && sourceIsEmpty==false);
+    if (targetsession.tagName==MAJ.sourcesession.tagName) {
+        swap = true;
     }
+    if (swap) {
+        $(targetsession).addClass("ui-selected");
 
-    // source and target are both non-empty session
-    if ($(target).hasClass("session")) {
-        $(target).addClass("ui-selected");
-
-        // create temp elements to store id and child nodes
+        // create temp elements to store child nodes
         var temptarget = document.createElement("DIV");
         var tempsource = document.createElement("DIV");
 
-        // transfer "emptysession" CSS class
-        if ($(MAJ.sourcesession).hasClass("emptysession")) {
-            $(MAJ.sourcesession).removeClass("emptysession");
-            $(target).addClass("emptysession");
-        }
-
-        // transfer ids
+        // transfer DOM ids
         var sourceid = $(MAJ.sourcesession).prop("id");
-        $(MAJ.sourcesession).prop("id", $(target).prop("id"));
-        $(target).prop("id", sourceid);
+        var targetid = $(targetsession).prop("id");
+        $(MAJ.sourcesession).prop("id", targetid);
+        $(targetsession).prop("id", sourceid);
+
+        // transfer CSS classes
+        var sourceclasses = MAJ.get_non_jquery_classes(MAJ.sourcesession);
+        var targetclasses = MAJ.get_non_jquery_classes(targetsession);
+        $(MAJ.sourcesession).removeClass(sourceclasses).addClass(targetclasses);
+        $(targetsession).removeClass(targetclasses).addClass(sourceclasses);
 
         // move children to temp source
-        $(MAJ.sourcesession).children(".time, .room").appendTo(tempsource);
-        $(target).children(".title, .authors, .typecategory, .summary").appendTo(tempsource);
+        $(MAJ.sourcesession).children(MAJ.sessiontimeroom).appendTo(tempsource);
+        $(targetsession).children(MAJ.sessioncontent).appendTo(tempsource);
         $(MAJ.sourcesession).children(".capacity").appendTo(tempsource);
 
         // move children to temp target
-        $(target).children(".time, .room").appendTo(temptarget);
-        $(MAJ.sourcesession).children(".title, .authors, .typecategory, .summary").appendTo(temptarget);
-        $(target).children(".capacity").appendTo(temptarget);
+        $(targetsession).children(MAJ.sessiontimeroom).appendTo(temptarget);
+        $(MAJ.sourcesession).children(MAJ.sessioncontent).appendTo(temptarget);
+        $(targetsession).children(".capacity").appendTo(temptarget);
 
         // move children to real source and target
-        $(temptarget).children().appendTo(target);
+        $(temptarget).children().appendTo(targetsession);
         $(tempsource).children().appendTo(MAJ.sourcesession);
 
         tempsource = null;
         temptarget = null;
 
+        // deselect MAJ.sourcesession
         $(MAJ.sourcesession).removeClass("ui-selected");
         MAJ.sourcesession = null;
 
-        $(target).removeClass("ui-selected");
+        // deselect targetsession
+        $(targetsession).removeClass("ui-selected");
+
+        // finish here
+        return true;
+    }
+
+	// otherwise, one session is empty
+	// whereas the other is not empty
+
+    var empty = null;
+    var nonempty = null;
+
+	// if source is empty and target is not, then
+    // move target to source, then delete target
+    if (sourceIsEmpty && targetIsEmpty==false) {
+        empty = MAJ.sourcesession;
+        nonempty = targetsession;
+    }
+
+	// if target is empty and source is not, then
+    // move source to target, then delete source
+    if (sourceIsEmpty==false && targetIsEmpty) {
+        empty = targetsession;
+        nonempty = MAJ.sourcesession;
+    }
+
+    if (empty && nonempty) {
+
+        $(empty).addClass("ui-selected");
+
+        // remove "time" and "room" DIVs
+        $(empty).find(MAJ.sessiontimeroom).remove();
+
+        // set time DIV (includes duration)
+        var div = $("<div></div>", {"class" : "time"});
+        $(div).html($(empty).parent(".slot")
+                            .find(".timeheading")
+                            .html());
+        $(div).appendTo(empty);
+
+        // set room DIV (includes roomname, roomseats, roomtopic)
+        var div = $("<div></div>", {"class" : "room"});
+        $(div).html($(empty).parent(".slot")
+                           .prevAll(".roomheadings")
+                           .first() // most recent TR
+                           .find("th, td")
+                           .eq(empty.cellIndex)
+                           .html());
+        $(div).appendTo(empty);
+
+        // transfer DOM "id"
+        var id = $(nonempty).prop("id");
+        $(empty).prop("id", id);
+
+        // transfer CSS classes
+        var emptyclasses = MAJ.get_non_jquery_classes(empty);
+        var nonemptyclasses = MAJ.get_non_jquery_classes(nonempty);
+        $(empty).removeClass(emptyclasses).addClass(nonemptyclasses);
+
+        // transfer content elements
+        $(nonempty).children(MAJ.sessioncontent).appendTo(empty);
+
+        // deselect empty session
+        $(empty).removeClass("ui-selected");
+
+        // the nonempty session is now empty
+        // and can be removed from the DOM
+        $(nonempty).remove();
+        nonempty = null;
+
+        // release MAJ.sourcesession
+        MAJ.sourcesession = null;
+
         return true;
     }
 }
@@ -255,140 +303,147 @@ MAJ.setupitems = function() {
     }
 }
 
-MAJ.initializeschedule = function() {
+MAJ.get_non_jquery_classes = function(elm) {
+    var classes = $(elm).prop('class').split(new RegExp("\\s+"));
+    var i_max = (classes.length - 1);
+    for (var i=i_max; i>=0; i--) {
+        if (classes[i].indexOf("ui-")==0) {
+            classes.splice(i, 1);
+        }
+    }
+    return classes.join(" ");
 }
 
-MAJ.emptyschedule = function(evt) {
-    $("table.schedule .session").not(".emptysession").each(function(){
+MAJ.initializeschedule = function(evt, day) {
+    // select all non-empty sessions on the selected day
+    if (day=="alldays") {
+        var dayselector = ".day";
+    } else {
+        var dayselector = "." + day;
+    }
+}
 
-		// empty this session cell
-		$(this).addClass("emptysession");
-		$(this).removeClass("attending");
+MAJ.emptyschedule = function(evt, day) {
+
+    // select all non-empty sessions on the selected day
+    if (day=="alldays") {
+        var dayselector = ".day";
+    } else {
+        var dayselector = "." + day;
+    }
+    $(dayselector + " .session").not(".emptysession").each(function(){
+
+        // remove classes used on templates
+		$(this).removeClass("demo attending");
+
+		// remove capacity info
 		$(this).find(".capacity").remove();
 
 		// move session details to #items container
 		var id = $(this).prop("id");
-		if (id=="" || id.indexOf("id_recordid_") < 0) {
-			// sessions without an "id" are dummy sessions are removed
-			$(this).find(".title, .authors, .typecategory, .summary").remove();
-		} else {
-			// sessions with an "id" are moved to the "#items" DIV
+		if (id.indexOf("id_recordid_")==0) {
+			// sessions with a recognized "id" are moved to the "#items" DIV
 			var div = $("<div></div>", {
 				"id" : id,
-				"style" : "display: inline-block",
-			}).addClass("session");
+				"style" : "display: inline-block;",
+				"class" : MAJ.get_non_jquery_classes(this)
+			});
 			$(this).prop("id", "");
-			$(this).children(".title, .authors, .typecategory, .summary").appendTo(div);
+			$(this).children(MAJ.sessioncontent).appendTo(div);
 			MAJ.draggable(null, div);
 			MAJ.selectable(null, div);
 			$("#items").append(div);
+		} else {
+			// remove sessions without a recognized "id"
+			// i.e. "demo" sessions in schedule templates
+			$(this).find(MAJ.sessioncontent).remove();
 		}
+
+        // mark this session as empty
+		$(this).addClass("emptysession");
     });
 
-	// remove demo sessions from #items container
+	// remove any "demo" sessions in the #items container
     $("#items .session").not("div[id^=id_record]").each(function(){
 		$(this).remove();
     });
 }
 
-MAJ.populateschedule = function(evt, confirm) {
+MAJ.populateschedule = function(evt, day) {
 
-    // add initial dialog to select days
-    var dialog = $("#dialog");
+    // cancel previous clicks on sessions, if any
+    if (MAJ.sourcesession) {
+        MAJ.clicksession(MAJ.sourcesession);
+    }
 
-    if (confirm) {
-        // close dialog box
-        dialog.dialog("close");
+    // select empty sessions on the selected day
+    if (day=="alldays") {
+        var dayselector = ".day";
+    } else {
+        var dayselector = "." + day;
+    }
+    var empty = $(dayselector + " .session.emptysession");
 
-        // cancel previous session clicks, if any
-        if (MAJ.sourcesession) {
-            MAJ.clicksession(MAJ.sourcesession);
-        }
-
-        var empty = "";
-        dialog.find("input[type=checkbox][name^=day]:checked").each(function(){
-            var d = $(this).val(); // the day number
-            empty += ".day" + d + " .session.emptysession";
-        });
-
-        if (empty=="") {
-            // no days selected
-            return true;
-        }
-
-        // select all empty sessions
-        var empty = $(empty);
-
-        if (empty.length==0) {
-            // no empty sessions in selected days
-            return true;
-        }
-
-        // select all unassigned sessions
-        var items = $("#items .session");
-
-        if (items.length==0) {
-            // no unassigned sessions
-            return true;
-        }
-
-        // mimic clicks to assign sessions
-        var i_max = Math.min(items.length,
-                             empty.length);
-        for (var i=(i_max-1); i>=0; i--) {
-            MAJ.clicksession(items.get(i));
-            MAJ.clicksession(empty.get(i));
-        }
+    if (empty.length==0) {
+        // no empty sessions on the selected days
         return true;
     }
 
-    // add dialog box content
-    var d = 0;
-    var html = "";
-    // tbody.day tr.date td.first-child
-    $(".day .date td:first-child").each(function(){
-        d++; // increment day number
-        var checkbox = '<input type="checkbox" name="day' + d + '" value="' + d + '" />';
-        html += '<tr><td align="right" width="40">' + checkbox + '</td><th align="left" width="*">' + $(this).html() + "</th></tr>";
-    });
-    html = '<table cellpadding="4" cellspacing="4" width="170"><tbody>' + html + "</tbody></table>";
-    dialog.html(html);
+    // select all unassigned sessions
+    var items = $("#items .session");
 
-    // position the dialog at top left of user tile
-    dialog.dialog("option", "position", {"my" : "left+8px top+8px",
-                                         "at" : "left top",
-                                         "of" : evt.target});
+    if (items.length==0) {
+        // no unassigned sessions
+        return true;
+    }
 
-    // set up dialog box buttons
-    dialog.dialog("option", "buttons", {
-        "Populate" : function(){MAJ.populateschedule(evt, true);},
-        "Cancel"   : function(){$(this).dialog("close");}
-    });
-
-    dialog.css({
-        "background-color" : "#ffebcc",
-        "border" : "solid 2px #f90",
-        "border-bottom-style" : "none",
-        "border-radius" : "8px 8px 0px 0px",
-        "box-shadow" : "0 4px 8px 0 rgba(0, 0, 0, 0.2)," 
-                     + "0 6px 20px 0 rgba(0, 0, 0, 0.19)"
-    });
-
-    dialog.siblings(".ui-dialog-buttonpane").css({
-        "background-color" : "#ffebcc",
-        "border" : "solid 2px #f90",
-        "border-top-style" : "none",
-        "border-radius" : "0px 0px 8px 8px",
-        "box-shadow" : "0 4px 8px 0 rgba(0, 0, 0, 0.2)," 
-                     + "0 6px 20px 0 rgba(0, 0, 0, 0.19)"
-    });
-
-    // reveal dialog box
-    dialog.dialog("open");
+    // mimic clicks to assign sessions
+    var i_max = Math.min(items.length,
+                         empty.length);
+    for (var i=(i_max-1); i>=0; i--) {
+        MAJ.clicksession(items.get(i));
+        MAJ.clicksession(empty.get(i));
+    }
+    return true;
 }
 
 
-MAJ.renumberschedule = function(evt) {
+MAJ.renumberschedule = function(evt, day) {
+
+    // select all non-empty sessions on the selected day
+    if (day=="alldays") {
+        var dayselector = ".day";
+    } else {
+        var dayselector = "." + day;
+    }
+
+	// initialize RegExp's to extract info from CSS class
+    var dayregexp = new RegExp("^.*day(\\d+).*$");
+    var slotregexp = new RegExp("^.*slot(\\d+).*$");
+    var roomregexp = new RegExp("^.*room(\\d+).*$");
+    var typeregexp = new RegExp("^.*(" + MAJ.sessiontypes + ").*$");
+
+    $(dayselector + " .session").not(".emptysession").not(".demo").each(function(){
+
+        var day = $(this).closest(".day");
+        day = day.prop("class").replace(dayregexp, "$1");
+
+        var slot = $(this).closest(".slot");
+        slot = slot.prop("class").replace(slotregexp, "$1");
+
+        var room = $(this).closest(".slot").prevAll(".roomheadings");
+        if (room.length==0 || $(this).hasClass("allrooms")) {
+			var room = 0;
+        } else {
+			room = room.first().find("th, td").eq(this.cellIndex);
+			room = room.prop("class").replace(roomregexp, "$1");
+        }
+
+        var type = $(this).prop("class").replace(typeregexp, "$1").charAt(0).toUpperCase();
+
+        var schedulenumber = (day + slot + room + "-" + type);
+        $(this).find(".schedulenumber").text(schedulenumber);
+    });
 }
 
 MAJ.addday = function(evt, pos) {
@@ -482,8 +537,4 @@ $(document).ready(function(){
             $(this).html("Error " + x.status + ": " + x.statusText)
         }
     });
-
-    // create initialie the dialog box
-    var dialog = $("<div></div>", {"id" : "dialog"}).insertAfter("#items");
-    dialog.dialog({"autoOpen" : false, "width" : "180px"});
 });

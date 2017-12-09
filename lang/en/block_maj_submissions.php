@@ -492,3 +492,5 @@ $string['paymentinfocmid_help'] = 'The page resource that displays information o
 $string['paymentinfocmid'] = 'Payment information';
 $string['membershipinfocmid_help'] = 'The page resource that displays information on membership';
 $string['membershipinfocmid'] = 'Membership information';
+
+$string['alldays'] = 'All days';

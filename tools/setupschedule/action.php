@@ -56,19 +56,63 @@ $course->context = $context;
 require_login($course->id);
 require_capability('moodle/course:manageactivities', $context);
 
+// get the block instance object
+$instance = block_instance($blockname, $block_instance);
+$config = $instance->config;
+
 $html = '';
 switch ($action) {
 
     case 'loadtools':
 
+        // determine earliest start time
+        $start = array(
+            $config->workshopstimestart,
+            $config->conferencetimestart,
+        );
+        $start = min(array_filter($start));
+
+        // determine latest start time
+        $finish = array(
+            $config->workshopstimefinish,
+            $config->conferencetimefinish,
+        );
+        $finish = max(array_filter($finish));
+
+        // determine number of days
+        $numdays = max(0, $finish - $start);
+        $numdays = ceil($numdays / DAYSECS);
+
+        // cache schedule date format
+        $dateformat = get_string('scheduledatetabtext', $plugin);
+
+        // cache day strings
+        $days = array();
+        if ($numdays) {
+            $days['alldays'] = get_string('alldays', $plugin);
+            for ($i=1; $i<=$numdays; $i++) {
+                $text = ($start + (($i - 1) * DAYSECS));
+                $text = userdate($text, $dateformat);
+                $days["day$i"] = $text;
+            }
+        }
+
+        // cache position strings
+        $str = (object)array('above' => get_string('above', $plugin),
+                             'below' => get_string('below', $plugin),
+                             'left'  => get_string('left',  $plugin),
+                             'right' => get_string('right', $plugin),
+                             'start' => get_string('start', $plugin),
+                             'end'   => get_string('end',   $plugin));
+
         $commands = array(
-            'initializeschedule' => array(),
-            'emptyschedule'      => array(),
-            'populateschedule'   => array(),
-            'renumberschedule'   => array(),
-            'addday'  => array('above', 'below', 'start', 'end'),
-            'addslot' => array('above', 'below', 'start', 'end'),
-            'addroom' => array('left',  'right', 'start', 'end'),
+            'initializeschedule' => $days,
+            'emptyschedule'      => $days,
+            'populateschedule'   => $days,
+            'renumberschedule'   => $days,
+            'addday'  => array('above' => $str->above, 'below' => $str->below, 'start' => $str->start, 'end' => $str->end),
+            'addslot' => array('above' => $str->above, 'below' => $str->below, 'start' => $str->start, 'end' => $str->end),
+            'addroom' => array('left'  => $str->left,  'right' => $str->right, 'start' => $str->start, 'end' => $str->end),
             'editcss' => array()
         );
 
@@ -90,10 +134,9 @@ switch ($action) {
                 $params = array('class' => 'subcommands');
                 $html .= html_writer::start_tag('div', $params);
 
-                foreach ($subcommands as $subcommand) {
+                foreach ($subcommands as $subcommand => $text) {
                     $params = array('id' => "$command-$subcommand",
                                     'class' => 'subcommand');
-                    $text = get_string($subcommand, $plugin);
                     $html .= html_writer::tag('div', $text, $params);
                 }
                 $html .= html_writer::end_tag('div');
@@ -105,8 +148,7 @@ switch ($action) {
 
     case 'loadschedule':
 
-        $instance = block_instance($blockname, $block_instance);
-        if ($cmid = $instance->config->publishcmid) {
+        if ($cmid = $config->publishcmid) {
             $cm = get_fast_modinfo($course)->get_cm($cmid);
             if ($cm->modname=='page') {
                 $html = $DB->get_field('page', 'content', array('id' => $cm->instance));
@@ -120,8 +162,6 @@ switch ($action) {
         // the following line will not be necessary when DB fields use multilang SPANs
         require_once("$CFG->dirroot/blocks/$blockname/tools/form.php");
 
-        $instance = block_instance($blockname, $block_instance);
-        $config = $instance->config;
         $modinfo = get_fast_modinfo($course);
 
         // the database types
@@ -139,8 +179,8 @@ switch ($action) {
 
         // cache for CSS classes derived from
         // presentation "type" and "category"
-        $classes = array('type' => array(),
-                         'category' => array());
+        $classes = array('category' => array(),
+                         'type' => array());
 
         $items = array();
         foreach ($types as $type) {
@@ -184,14 +224,6 @@ switch ($action) {
             }
             unset($contents, $content);
         }
-
-        // search and replace strings for HTML tags with attributes
-        $tagsearch = '/<(\/?\w+)\b[^>]+>/u';
-        $tagreplace = '<$1>';
-
-        // regex to detect tags and non-breaking spaces in summary
-        $tagsearch = array('/<[^>]*>/u', '/(?:(?:&nbsp;)| )+/');
-        $tagreplace = ' ';
 
         // add a "session" for each $item
         foreach ($items as $recordid => $item) {
@@ -350,15 +382,15 @@ switch ($action) {
             $html .= html_writer::end_tag('div');
 
             // category and type
-            $html .= html_writer::start_tag('div', array('class' => 'typecategory'));
-            $html .= html_writer::tag('span', $presentationtype, array('class' => 'type'));
+            $html .= html_writer::start_tag('div', array('class' => 'categorytype'));
             $html .= html_writer::tag('span', $presentationcategory, array('class' => 'category'));
+            $html .= html_writer::tag('span', $presentationtype, array('class' => 'type'));
 
             $html .= html_writer::end_tag('div'); // end categorytype DIV
 
             // summary (remove all tags and nbsp)
             $text = $item['presentation_abstract'];
-            $text = preg_replace($tagsearch, $tagreplace, $text);
+            $text = block_maj_submissions_tool_form::plain_text($text);
             $html .= html_writer::tag('div', $text, array('class' => 'summary'));
 
             // capacity

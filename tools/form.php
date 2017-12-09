@@ -589,7 +589,10 @@ abstract class block_maj_submissions_tool_form extends moodleform {
      */
     static public function plain_text($text) {
         $search = '/(?: |\t|\r|\n|\x{00A0}|\x{3000}|&nbsp;|(?:<[^>]*>))+/us';
-        return preg_replace($search, ' ', $text);
+        $text = preg_replace($search, ' ', $text);
+        $search = '/(?<=[\x{3001}-\x{3002},\x{FF01}-\x{FF1F}]) +/u';
+        $text = preg_replace($search, '', $text);
+        return trim($text);
     }
 
     /**
