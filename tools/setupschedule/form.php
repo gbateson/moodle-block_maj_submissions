@@ -247,6 +247,10 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
 
             $name = 'schedule_audience';
             $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
+
+            $name = 'schedule_html';
+            $mform->addElement('hidden', $name, '');
+            $mform->setType($name, PARAM_RAW);
         }
 
         $this->add_action_buttons();
@@ -420,61 +424,72 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $cm = $this->get_cm($msg, $data, $time, 'publishcmid');
 
             if ($cm) {
-                $this->set_schedule_menus();
 
-                $recordid = 0;
-                $fields = array('schedule_event',    'schedule_day',  'schedule_time',
-                                'schedule_duration', 'schedule_room', 'schedule_audience');
+                if (empty($data->schedule_html)) {
+                    $this->set_schedule_menus();
 
-                $fields = array_flip($fields);
-                foreach (array_keys($fields) as $name) {
+                    $recordid = 0;
+                    $fields = array('schedule_event',    'schedule_day',  'schedule_time',
+                                    'schedule_duration', 'schedule_room', 'schedule_audience');
 
-                    $content = null;
-                    if (isset($data->$name)) {
-                        if ($name=='schedule_event') {
-                            foreach (array_keys($this->$name) as $activityname) {
-                                if (array_key_exists($data->$name, $this->$name[$activityname])) {
-                                    $content = $this->$name[$activityname][$data->$name];
-                                    $params = array('id' => $data->$name);
-                                    $recordid = $DB->get_field('data_content', 'recordid', $params);
+                    $fields = array_flip($fields);
+                    foreach (array_keys($fields) as $name) {
+
+                        $content = null;
+                        if (isset($data->$name)) {
+                            if ($name=='schedule_event') {
+                                foreach (array_keys($this->$name) as $activityname) {
+                                    if (array_key_exists($data->$name, $this->$name[$activityname])) {
+                                        $content = $this->$name[$activityname][$data->$name];
+                                        $params = array('id' => $data->$name);
+                                        $recordid = $DB->get_field('data_content', 'recordid', $params);
+                                    }
+                                }
+                            } else if (array_key_exists($data->$name, $this->$name)) {
+                                $content = $this->$name[$data->$name];
+                            }
+                        }
+
+                        if ($content===null) {
+                            unset($fields[$name]);
+                        } else {
+                            $fields[$name] = $content;
+                        }
+                    }
+
+                    if ($recordid) {
+
+                        $params = array('id' => $recordid);
+                        $dataid = $DB->get_field('data_records', 'dataid', $params);
+
+                        foreach ($fields as $name => $content) {
+
+                            if ($name=='schedule_event') {
+                                // format feedback message and link to db record
+                                $params = array('d' => $dataid, 'rid' => $recordid);
+                                $link = new moodle_url('/mod/data/view.php', $params);
+                                $params = array('href' => $link, 'target' => '_blank');
+                                $link = html_writer::tag('a', $content, $params);
+                                $msg[] = get_string('scheduleeventupdated', $this->plugin, $link);
+                            } else {
+                                // update field $content for this $recordid
+                                $params = array('dataid' => $dataid, 'name' => $name);
+                                if ($fieldid = $DB->get_field('data_fields', 'id', $params)) {
+                                    $params = array('fieldid' => $fieldid, 'recordid' => $recordid);
+                                    $DB->set_field('data_content', 'content', $content, $params);
                                 }
                             }
-                        } else if (array_key_exists($data->$name, $this->$name)) {
-                            $content = $this->$name[$data->$name];
                         }
                     }
-
-                    if ($content===null) {
-                        unset($fields[$name]);
-                    } else {
-                        $fields[$name] = $content;
-                    }
-                }
-
-                if ($recordid) {
-
-                    $params = array('id' => $recordid);
-                    $dataid = $DB->get_field('data_records', 'dataid', $params);
-
-                    foreach ($fields as $name => $content) {
-
-                        if ($name=='schedule_event') {
-                            // format feedback message and link to db record
-                            $params = array('d' => $dataid, 'rid' => $recordid);
-                            $link = new moodle_url('/mod/data/view.php', $params);
-                            $params = array('href' => $link, 'target' => '_blank');
-                            $link = html_writer::tag('a', $content, $params);
-                            $msg[] = get_string('scheduleupdated', $this->plugin, $link);
-                        } else {
-                            // update field $content for this $recordid
-                            $params = array('dataid' => $dataid, 'name' => $name);
-                            if ($fieldid = $DB->get_field('data_fields', 'id', $params)) {
-
-                                $params = array('fieldid' => $fieldid, 'recordid' => $recordid);
-                                $DB->set_field('data_content', 'content', $content, $params);
-                            }
-                        }
-                    }
+                } else {
+                	// save the modified HTML for the schedule
+                    $html = $DB->get_field($cm->modname, 'content', array('id' => $cm->instance));
+                    $html = preg_replace('/<table[^>]*>.*<\/table>/us', $data->schedule_html, $html);
+                    $DB->set_field($cm->modname, 'content', $html, array('id' => $cm->instance));
+                    $link = "/mod/$cm->modname/view.php";
+                    $link = new moodle_url($link, array('id' => $cm->id));
+                    $link = html_writer::link($link, $cm->name, array('target' => '_blank'));
+                    $msg[] = get_string('scheduleupdated', $this->plugin, $link);
                 }
             }
         }

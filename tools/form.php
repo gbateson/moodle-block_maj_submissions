@@ -470,25 +470,30 @@ abstract class block_maj_submissions_tool_form extends moodleform {
     public function get_cm(&$msg, $data, $time, $name, $a=null) {
 
         $cm = false;
-        $activitynum  = $name.'num';
-        $activitynum = (empty($data->$activitynum) ? 0 : $data->$activitynum);
+        if (empty($data->$name)) {
 
-        $activityname = $name.'name';
-        $activityname = (empty($data->$activityname) ? '' : $data->$activityname);
+            $activitynum  = $name.'num';
+            $activitynum = (empty($data->$activitynum) ? 0 : $data->$activitynum);
 
-        if ($activityname=='') {
-            if ($this->defaultname=='') {
-                $activityname = $this->instance->get_string('pluginname', $this->modulename);
-            } else {
-                $activityname = $this->instance->get_string($this->defaultname, $this->plugin, $a);
+            $activityname = $name.'name';
+            $activityname = (empty($data->$activityname) ? '' : $data->$activityname);
+
+            if ($activityname=='') {
+                if ($this->defaultname=='') {
+                    $activityname = $this->instance->get_string('pluginname', $this->modulename);
+                } else {
+                    $activityname = $this->instance->get_string($this->defaultname, $this->plugin, $a);
+                }
             }
+
+            $activitynametext = block_maj_submissions::filter_text($activityname);
+            $activitynametext = strip_tags($activitynametext);
+
+            $sectionnum   = $data->coursesectionnum;
+            $sectionname  = $data->coursesectionname;
+        } else {
+            $activitynum = $data->$name;
         }
-
-        $activitynametext = block_maj_submissions::filter_text($activityname);
-        $activitynametext = strip_tags($activitynametext);
-
-        $sectionnum   = $data->coursesectionnum;
-        $sectionname  = $data->coursesectionname;
 
         if ($activitynum) {
             if ($activitynum==self::CREATE_NEW) {

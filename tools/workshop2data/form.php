@@ -107,6 +107,16 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
         $this->add_field_cm($mform, $this->course, $this->plugin, $name, $this->cmid);
         $this->add_field_section($mform, $this->course, $this->plugin, 'coursesection', $name, $sectionnum);
 
+        $name = 'sendername';
+        $this->add_field($mform, $this->plugin, $name, 'text', PARAM_TEXT);
+        $mform->disabledIf($name, 'sourceworkshop', 'eq', 0);
+        $mform->disabledIf($name, 'targetdatabasenum', 'eq', 0);
+
+        $name = 'senderemail';
+        $this->add_field($mform, $this->plugin, $name, 'text', PARAM_TEXT);
+        $mform->disabledIf($name, 'sourceworkshop', 'eq', 0);
+        $mform->disabledIf($name, 'targetdatabasenum', 'eq', 0);
+
         $this->add_action_buttons();
     }
 
@@ -164,12 +174,15 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
      * @todo Finish documenting this function
      */
     public function form_postprocessing() {
-        global $CFG, $DB;
+        global $CFG, $DB, $USER;
         require_once($CFG->dirroot.'/mod/workshop/locallib.php');
 
         $cm = false;
         $msg = array();
         $time = time();
+
+        // cache shortcut to block config settings
+        $config = $this->instance->config;
 
         // get/create the $cm record and associated $section
         if ($data = $this->get_data()) {
@@ -205,33 +218,33 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
             }
 
             // get formatted deadline for revisions
-            if (! $dateformat = $this->instance->config->customdatefmt) {
-                if (! $dateformat = $this->instance->config->moodledatefmt) {
+            if (! $dateformat = $config->customdatefmt) {
+                if (! $dateformat = $config->moodledatefmt) {
                     $dateformat = 'strftimerecent'; // default: 11 Nov, 10:12
                 }
                 $dateformat = get_string($dateformat);
             }
-            $revisetimefinish = $this->instance->config->revisetimefinish;
+            $revisetimefinish = $config->revisetimefinish;
             $revisetimefinish = userdate($revisetimefinish, $dateformat);
 
             $registrationlink = '';
-            if (! empty($this->instance->config->registerdelegatescmid)) {
+            if (! empty($config->registerdelegatescmid)) {
                 $registrationlink = 'registerdelegatescmid';
             }
-            if (! empty($this->instance->config->registerpresenterscmid)) {
+            if (! empty($config->registerpresenterscmid)) {
                 $registrationlink = 'registerpresenterscmid';
             }
             if ($registrationlink) {
-                $params = array('id' => $this->instance->config->$registrationlink);
+                $params = array('id' => $config->$registrationlink);
                 $registrationlink = html_writer::link(new moodle_url('/mod/data/view.php', $params),
                                                       get_string($registrationlink, $this->plugin),
                                                       array('target' => '_blank'));
             }
 
-            if (empty($this->instance->config->conferencetimestart)) {
+            if (empty($config->conferencetimestart)) {
                 $conferencemonth = '';
             } else {
-                $conferencemonth = $this->instance->config->conferencetimestart;
+                $conferencemonth = $config->conferencetimestart;
                 $conferencemonth = userdate($conferencemonth, '%B');
             }
 
@@ -294,13 +307,70 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                 $criteria = array();
             }
 
+            // get reply address for email message
+            if (class_exists('core_user')) {
+                // Moodle >= 2.6
+                $noreply = core_user::get_noreply_user();
+            } else {
+                // Moodle <= 2.5
+                $noreply = generate_email_supportuser();
+            }
+
+            // initialize parameters for email message
+            $a = new stdClass();
+
+            if (empty($config->conferencename)) {
+                $a->conferencename = $config->conferencenameen;
+            } else {
+                $a->conferencename = $config->conferencename;
+            }
+
+            if (empty($config->reviewteamname)) {
+                $a->reviewteamname = '提出審査委員 Submission review team';
+            } else {
+                $a->reviewteamname = $config->reviewteamname;
+            }
+
+            if (empty($data->sendername)) {
+                $a->sendername = fullname($USER);
+            } else {
+                $a->sendername = $data->sendername;
+            }
+
+            if (empty($data->senderemail)) {
+                $a->senderemail = $USER->email;
+            } else {
+                $a->senderemail = $data->senderemail;
+            }
+
             foreach ($submissions as $sid => $submission) {
+
+                // add submission title to email parameters
+                $a->title = $submission->title;
 
                 // get database records that link to this submission
                 if ($records = self::get_database_records($workshop, $sid, $database->id)) {
 
                     // we only expect one record
                     $record = reset($records);
+
+                    // fetch information about $author
+                    // i.e. the creator of the original database record
+                    $author = $DB->get_record('user', array('id' => $record->userid));
+
+                    $databaseurl = array('id' => $cm->id, 'rid' => $record->recordid);
+                    $databaseurl = new moodle_url('/mod/data/view.php', $databaseurl);
+
+                    // add author info to email parameters
+                    $a->author = $author->lastname;
+                    $a->recordid = $record->recordid;
+                    $a->fullname = fullname($author);
+                    $a->databaseurl = $databaseurl->out(false);
+
+                    // initialize review details for email message
+                    $a->submission_status = '';
+                    $a->peer_review_score = '';
+                    $a->peer_review_notes = '';
 
                     // initialize the status - it should be reset from $statusfilters
                     $status = '';
@@ -401,12 +471,14 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                                 } else {
                                     $content = $statusfilters[self::NOT_GRADED];
                                 }
+                                $a->$name = $content;
                                 break;
 
                             case 'peer_review_score';
                                 if (is_numeric($submission->grade)) {
                                     $content = round($submission->grade, 0);
                                 }
+                                $a->$name = $content;
                                 break;
 
                             case 'peer_review_notes';
@@ -446,6 +518,10 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                                 if ($content) {
                                     $format = FORMAT_HTML;
                                 }
+                                $a->$name = html_to_text($content, 0, false);
+                                $a->$name = preg_replace('/[\r\n]+/', "\n", $a->$name);
+                                $a->$name = preg_replace('/[ \t]+(?=\*)/', '', $a->$name);
+                                $a->$name = trim($a->$name);
                                 break;
 
                             case 'presentation_original':
@@ -484,6 +560,22 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                     // cache the message text and index by grade for sorting later 
                     $datarecords[$submission->grade] = $datarecord;
                     $counttransferred++;
+
+                    // send email to the author regarding review results
+                    if (empty($CFG->noemailever) && $status) {
+                        $subject = get_string('reviewresultsubject', $this->plugin, $a);
+                        $messagetext = get_string('reviewresultmessage', $this->plugin, $a);
+                        $messagehtml = format_text($messagetext, FORMAT_MOODLE);
+                        email_to_user($author, $noreply, $subject, $messagetext, $messagehtml);
+                    }
+
+                    // TODO: allow $USER to select a presenters group in the form
+                    // TODO: mention the presenters group in the email message
+                    // TODO: add the $author to the presenters group
+                    // TODO: add the co-authors to the presenters group
+
+                    // TODO: setup a presenters forum
+                    // TODO: subscribe all presenters to the forum
                 }
                 unset($records, $record);
             }

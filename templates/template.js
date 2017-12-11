@@ -143,11 +143,17 @@
         return true;
     };
 
-    if (window.addEventListener) {
+    if (document.readyState=="complete") {
+        if (confirm("Set up schedule tabs?"))
+        setupschedule();
+    } else if (window.addEventListener) {
         window.addEventListener("load", setupschedule, false);
-        window.addEventListener("resize", resizeschedule, false);
     } else if (window.attachEvent) {
         window.attachEvent("onload", setupschedule);
+    }
+    if (window.addEventListener) {
+        window.addEventListener("resize", resizeschedule, false);
+    } else if (window.attachEvent) {
         window.attachEvent("onresize", resizeschedule);
     }
 })();

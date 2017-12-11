@@ -145,6 +145,7 @@
     font-style: italic;
 }
 
+#items.schedule:empty,
 .schedule .roomseats:empty,
 .schedule .roomtopic:empty {
    display: none;

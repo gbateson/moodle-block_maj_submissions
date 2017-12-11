@@ -287,7 +287,7 @@ $string['schedule_room_help'] = 'The room in which the selected presentation wil
 $string['schedule_room'] = 'Schedule room';
 $string['schedule_time_help'] = 'The time at which the selected presentation will take place.';
 $string['schedule_time'] = 'Schedule time';
-$string['scheduleupdated'] = 'Schedule data for "{$a}" was updated';
+$string['scheduleeventupdated'] = 'Schedule data for event "{$a}" was updated';
 $string['selecttemplateactivity'] = 'Select a template activity';
 $string['selecttemplatefilename'] = 'Select a template file';
 $string['sessioninfo'] = "Session information";
@@ -479,9 +479,13 @@ $string['notattending'] = 'Not attending';
 $string['generatecontent_help'] = 'If this setting is enabled, then sample presentations will be added to the schedule. Otherwise, all sessions will be left empty.';
 $string['generatecontent'] = 'Generate content';
 
-$string['senderemail_help'] = 'Optional email address to use in email messages to reviewers.';
+$string['senderemail_help'] = 'Optional email address to use as the sender address in confirmation email messages.
+
+If this field is left blank, then the email of the current user, i.e. YOUR email address, will be used as the sender\'s email address.';
 $string['senderemail'] = 'Sender email';
-$string['sendername_help'] = 'Optional name to use as the sender email messages to reviewers.';
+$string['sendername_help'] = 'Optional name to use as the sender name in confirmation email messages.
+
+If this field is left blank, then the name of the current user, i.e. YOUR name, will be used as the sender\'s name.';
 $string['sendername'] = 'Sender name';
 
 $string['reviewstransferred'] = 'Reviews for the following submissions were transfered to the target database.';
@@ -494,3 +498,31 @@ $string['membershipinfocmid_help'] = 'The page resource that displays informatio
 $string['membershipinfocmid'] = 'Membership information';
 
 $string['alldays'] = 'All days';
+$string['scheduleupdated'] = 'Schedule was updated: {$a}';
+
+$string['reviewresultsubject'] = '{$a->conferencename}: Submission Review Results [{$a->author}, #{$a->recordid}]';
+$string['reviewresultmessage'] = 'Dear {$a->fullname},
+
+Greetings from the organizers of {$a->conferencename}.
+
+We are pleased to announce that your submission for this conference has been peer reviewed. The results of the review are as follows:
+
+Submission ID: {$a->recordid}
+Submission title: {$a->title}
+Submission status: {$a->submission_status}
+Peer review score: {$a->peer_review_score}
+
+Message from the program comittee:
+==================================
+{$a->peer_review_notes}
+==================================
+
+After logging in, you can view feedback from the reviewers of your submission via the following link:
+URL: {$a->databaseurl}
+
+Best regards,
+{$a->senderfullname}
+{$a->senderemail}
+
+{$a->conferencename}
+{$a->reviewteamname}';

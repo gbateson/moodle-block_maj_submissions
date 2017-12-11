@@ -162,25 +162,49 @@ switch ($action) {
         // the following line will not be necessary when DB fields use multilang SPANs
         require_once("$CFG->dirroot/blocks/$blockname/tools/form.php");
 
-        $modinfo = get_fast_modinfo($course);
-
-        // the database types
-        $types = array('presentation',
-                       'workshop',
-                       'sponsored',
-                       'event');
-
-        // ignore these fieldtypes
-        $fieldtypes = array('action', 'constant', 'file', 'picture', 'template', 'url');
-        list($fieldwhere, $fieldparams) = $DB->get_in_or_equal($fieldtypes, SQL_PARAMS_QM, '', false);
-
         // cache certain strings
         $strnotattending = get_string('notattending', $plugin);
+
+		// cache the modinfo for this $course
+        $modinfo = get_fast_modinfo($course);
+
+        // ignore these fieldtypes
+        $fieldtypes = array('action',
+        					'constant',
+        					'file',
+        					'picture',
+        					'template',
+        					'url');
+        list($fieldignore, $fieldparams) = $DB->get_in_or_equal($fieldtypes, SQL_PARAMS_QM, '', false);
+        $fieldignore = ' AND df.type '.$fieldignore;
+        unset($fieldtypes);
+
+		// ignore record ids that are already in the schedule
+		$ridignore = '';
+        $ridparams = array();
+        if ($cmid = $config->publishcmid) {
+            $cm = $modinfo->get_cm($cmid);
+            if ($cm->modname=='page') {
+                $content = $DB->get_field('page', 'content', array('id' => $cm->instance));
+                if (preg_match_all('/(?<=id_recordid_)\d+/', $content, $recordids)) {
+                	$recordids = array_unique($recordids[0]);
+                	list($ridignore, $ridparams) = $DB->get_in_or_equal($recordids, SQL_PARAMS_QM, '', false);
+					$ridignore = ' AND dc.recordid '.$ridignore;
+                }
+                unset($content, $recordids);
+            }
+        }
 
         // cache for CSS classes derived from
         // presentation "type" and "category"
         $classes = array('category' => array(),
                          'type' => array());
+
+        // check these database types
+        $types = array('presentation',
+                       'workshop',
+                       'sponsored',
+                       'event');
 
         $items = array();
         foreach ($types as $type) {
@@ -203,13 +227,12 @@ switch ($action) {
 
             // get all records in this DB
             $select = 'dc.id, dc.fieldid, dc.recordid, '.
-
                       'df.name AS fieldname, dc.content';
             $from   = '{data_content} dc '.
                       'JOIN {data_fields} df ON df.id = dc.fieldid';
-            $where  = 'df.dataid = ? AND df.type '.$fieldwhere;
+            $where  = 'df.dataid = ?'.$ridignore.$fieldignore;
             $order  = 'dc.recordid';
-            $params = array_merge(array($cm->instance), $fieldparams);
+            $params = array_merge(array($cm->instance), $ridparams, $fieldparams);
 
             $contents = "SELECT $select FROM $from WHERE $where ORDER BY $order";
             if ($contents = $DB->get_records_sql($contents, $params)) {

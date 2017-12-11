@@ -485,6 +485,9 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                     $messagehtml = format_text($messagetext, FORMAT_MOODLE);
                     email_to_user($reviewer->realuser, $noreply, $subject, $messagetext, $messagehtml);
                 }
+
+				// TODO: setup a reviewers forum
+				// TODO: subscribe all reviewers to the forum
             }
 
             // create a page resource
