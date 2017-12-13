@@ -28,7 +28,6 @@ if (window.MAJ==null) {
 }
 
 MAJ.sourcesession = null;
-MAJ.targetsession = null;
 
 // TODO: initialize this array from the PHP script on the server
 //       blocks/maj_submissions/tools/setupschedule/action.php
@@ -38,15 +37,18 @@ MAJ.sessiontypes = "casestudy|lightningtalk|presentation|showcase|workshop";
 MAJ.sessiontimeroom = ".time, .room";
 MAJ.sessioncontent = ".title, .authors, .categorytype, .summary";
 
-MAJ.updaterecord = function(session) {
+// the DOM id of the dialog box
+MAJ.dialogid = "dialog";
+
+MAJ.update_record = function(session) {
 }
 
-MAJ.setschedulehtml = function() {
+MAJ.set_schedule_html = function() {
     var html = $("#schedule").html();
 
     // remove YUI ids
     html = html.replace(new RegExp(' *\\bid="yui_[^"]*"', "g"), "");
- 
+
     // remove jQuery CSS classes
     html = html.replace(new RegExp(' *\\bui-[a-z0-9_-]*', "g"), "");
 
@@ -63,10 +65,13 @@ MAJ.setschedulehtml = function() {
     html = html.replace(new RegExp('(lang="[^"]*") (class="multilang")', "g"), "$2 $1");
 
     // remove info about xml namespaces
-    html = html.replace(new RegExp(' *\\bxml:lang="[^"]*"', "g"), "");
+    html = html.replace(new RegExp(' *\\bxml:\\w+="[^"]*"', "g"), "");
+
+    // remove "icons" elements
+    html = html.replace(new RegExp('<span\\b[^>]*class="icons"[^>]*>.*?</span>', "g"), "");
 
     // remove the "schedulechooser" element
-    html = html.replace(new RegExp('<div\\b[^>]*class="schedulechooser"[^>]*>.*?<\\/div>'), "");
+    html = html.replace(new RegExp('<div\\b[^>]*class="schedulechooser"[^>]*>.*?</div>', "g"), "");
 
     $("input[name=schedule_html]").val(html);
 }
@@ -82,14 +87,272 @@ MAJ.get_non_jquery_classes = function(elm) {
     return classes.join(" ");
 }
 
-MAJ.dayselector = function(day) {
-    if (day=="alldays") {
-        return ".day";
-    }
-    return "." + day;
+MAJ.get_day_selector = function(day, details) {
+    return "." + (day=="alldays" ? "day" : day) + (details ? details : "");
 }
 
-MAJ.clicksession = function(targetsession) {
+MAJ.get_items = function(container, item, selector) {
+    if (item) {
+        return $(item);
+    }
+    return $(container).find(selector);
+}
+
+MAJ.close_dialog = function() {
+    $("#" + MAJ.dialogid).dialog("close");
+}
+
+MAJ.open_dialog = function(evt, title, html, actiontext, actionicon, actionfunction, showcancelbutton) {
+    var showactionbutton = true;
+
+    // locate dialog box in DOM
+    // (create it, if necessary)
+    var dialogbox = document.getElementById(MAJ.dialogid);
+    if (dialogbox==null) {
+        dialogbox = document.createElement("DIV");
+        dialogbox.setAttribute("id", MAJ.dialogid);
+        $("body").append(dialogbox);
+    }
+
+    // cache jQuery object for dialog
+    var dialog = $(dialogbox);
+    
+    // create/close the dialog element
+    if (dialog.dialog("instance")==null) {
+        dialog.dialog({"autoOpen": false, "modal": true, "close": MAJ.select_session});
+    } else {
+        if (dialog.dialog("isOpen")) {
+            dialog.dialog("close");
+        }
+    }
+
+    // update the dialog title
+    dialog.dialog("option", "title", title);
+
+    // update the dialog HTML
+    dialog.html(html);
+
+    // set default button text/icon/function
+
+    // update the dialog buttons
+    var buttons = [];
+    if (showactionbutton) {
+        if (actiontext==null) {
+            actiontext = "OK";
+        }
+        if (actionicon==null) {
+            actionicon = "ui-icon-check";
+        }
+        if (actionfunction==null) {
+            actionfunction = function(){
+                $(this).dialog("close");
+            };
+        }
+        buttons.push({"text": actiontext, "icon": actionicon,"click": actionfunction});
+    }
+    if (showcancelbutton) {
+        var canceltext = "Cancel";
+        var cancelicon = "ui-icon-cancel";
+        var cancelfunction = function(){
+            $(this).dialog("close");
+        };
+        buttons.push({"text": canceltext, "icon": cancelicon, "click": cancelfunction});
+    }
+    dialog.dialog("option", "buttons", buttons);
+
+    // update the dialog position
+    var position = {"my": "left top",
+                    "at": "right bottom",
+                    "of": evt.target};
+    dialog.dialog("option", "position", position);
+
+    // open the dialog box
+    dialog.dialog("open");
+
+    // prevent the current click causing
+    // the parent element to be selected
+    evt.stopPropagation();
+}
+
+MAJ.show_edit_dialog = function(evt, title, html, actionfunction) {
+    MAJ.open_dialog(evt, title, html, "Update", null, actionfunction, true);
+}
+
+MAJ.show_remove_dialog = function(evt, title, html, actionfunction) {
+    MAJ.open_dialog(evt, title, html, "Remove", null, actionfunction, true);
+}
+
+MAJ.select_session = function(id) {
+    if (MAJ.sourcesession) {
+        MAJ.click_session(MAJ.sourcesession);
+    }
+    if (id) {
+        MAJ.click_session(document.getElementById(id));
+    }
+}
+
+MAJ.edit_session = function(evt) {
+    var id = $(this).closest(".session").prop("id");
+    var recordid = id.replace(new RegExp("^id_recordid_(\\d+)$"), "$1");
+
+    var title = "Session settings (rid=" + recordid + ")";
+    var html = "<p>A form to edit a session</p>";
+    var actionfunction = function(){
+        var html = "<p>Session (rid=" + recordid + ") was updated</p>";
+        MAJ.open_dialog(evt, title, html, "OK");
+    };
+
+    MAJ.select_session(id);
+    MAJ.show_edit_dialog(evt, title, html, actionfunction);
+}
+
+MAJ.delete_session = function(evt) {
+    var id = $(this).closest(".session").prop("id");
+    var recordid = id.replace(new RegExp("^id_recordid_(\\d+)$"), "$1");
+
+    var title = "Remove session (rid=" + recordid + ")";
+    var html = "<p>A form to remove a session</p>";
+    var actionfunction = function(){
+
+        // add new empty session to #items
+        var emptysession = document.createElement("DIV");
+        emptysession.setAttribute("class", "session emptysession");
+        MAJ.make_sessions_draggable(null, emptysession);
+        MAJ.make_sessions_selectable(null, emptysession);
+        $("#items").append(emptysession);
+
+        // deselect current session
+        MAJ.select_session();
+
+        // swap the empty session and the target session
+        MAJ.click_session(emptysession);
+        MAJ.click_session(document.getElementById(id), true);
+        
+        var html = "<p>Session (rid=" + recordid + ") was removed</p>";
+        MAJ.open_dialog(evt, title, html, "OK");
+    };
+
+    MAJ.select_session(id);
+    MAJ.show_remove_dialog(evt, title, html, actionfunction);
+}
+
+MAJ.edit_room = function(evt) {
+    var room = $(this).closest(".roomheading").prop("class");
+    room = room.replace(new RegExp("^.*\\broom(\\d+)\\b.*$"), "$1");
+
+    var title = "Room settings (room=" + room + ")";
+    var html = "<p>A form to edit a room</p>";
+    var actionfunction = function(){
+        var html = "<p>Room " + room + " was updated</p>";
+        MAJ.open_dialog(evt, title, html, "OK");
+    };
+
+    MAJ.show_edit_dialog(evt, title, html, actionfunction);
+}
+
+MAJ.delete_room = function(evt) {
+    var room = $(this).closest(".roomheading").prop("class");
+    room = room.replace(new RegExp("^.*\\broom(\\d+)\\b.*$"), "$1");
+
+    var title = "Remove room (room=" + room + ")";
+    var html = "<p>A form to remove a room</p>";
+    var actionfunction = function(){
+        var html = "<p>Room " + room + " was removed</p>";
+        MAJ.open_dialog(evt, title, html, "OK");
+    };
+
+    MAJ.show_remove_dialog(evt, title, html, actionfunction);
+}
+
+MAJ.edit_slot = function(evt) {
+    var slot = $(this).closest(".slot").prop("class");
+    slot = slot.replace(new RegExp("^.*\\bslot(\\d+)\\b.*$"), "$1");
+
+    var title = "Slot settings (slot=" + slot + ")";
+    var html = "<p>A form to edit a slot</p>";
+    var actionfunction = function(){
+        var html = "<p>Slot " + slot + " was updated</p>";
+        MAJ.open_dialog(evt, title, html, "OK");
+    };
+
+    MAJ.show_edit_dialog(evt, title, html, actionfunction);
+}
+
+MAJ.delete_slot = function(evt) {
+    var slot = $(this).closest(".slot").prop("class");
+    slot = slot.replace(new RegExp("^.*\\bslot(\\d+)\\b.*$"), "$1");
+
+    var title = "Remove slot (slot=" + slot + ")";
+    var html = "<p>A form to remove a slot</p>";
+    var actionfunction = function(){
+        var html = "<p>Slot " + slot + " was removed</p>";
+        MAJ.open_dialog(evt, title, html, "OK");
+    };
+
+    MAJ.show_remove_dialog(evt, title, html, actionfunction);
+}
+
+MAJ.edit_day = function(evt) {
+    var day = $(this).closest(".tab").prop("class");
+    day = day.replace(new RegExp("^.*\\bday(\\d+)\\b.*$"), "$1");
+
+    var title = "Day settings (day=" + day + ")";
+    var html = "<p>A form to edit a day</p>";
+    var actionfunction = function(){
+        var html = "<p>Day " + day + " was updated</p>";
+        MAJ.open_dialog(evt, title, html, "OK");
+    };
+
+    MAJ.show_edit_dialog(evt, title, html, actionfunction);
+}
+
+MAJ.delete_day = function(evt) {
+    var day = $(this).closest(".tab").prop("class");
+    day = day.replace(new RegExp("^.*\\bday(\\d+)\\b.*$"), "$1");
+
+    var title = "Remove day (day=" + day + ")";
+    var html = "<p>A form to remove a day</p>";
+    var actionfunction = function(){
+        var html = "<p>Day " + day + " was removed</p>";
+        MAJ.open_dialog(evt, title, html, "OK");
+    };
+
+    MAJ.show_remove_dialog(evt, title, html, actionfunction);
+}
+
+MAJ.create_icons = function(type, id) {
+    var icons = document.createElement("SPAN");
+    icons.setAttribute("class", "icons");
+
+    var iconedit = document.createElement("IMG");
+    iconedit.setAttribute("src", MAJ.iconedit);
+    iconedit.setAttribute("title", "Edit this session");
+    iconedit.setAttribute("class", "icon");
+    if (MAJ["edit_" + type]) {
+        $(iconedit).click(MAJ["edit_" + type]);
+    }
+
+    var icondelete = document.createElement("IMG");
+    icondelete.setAttribute("src", MAJ.icondelete);
+    icondelete.setAttribute("title", "Delete this session from the schedule");
+    icondelete.setAttribute("class", "icon");
+    if (MAJ["delete_" + type]) {
+        $(icondelete).click(MAJ["delete_" + type]);
+    }
+
+    if (id) {
+        icons.setAttribute("id", id + "_icons");
+        iconedit.setAttribute("id", id + "_edit");
+        icondelete.setAttribute("id", id + "_delete");
+    }
+
+    icons.appendChild(iconedit);
+    icons.appendChild(icondelete);
+
+    return icons;
+}
+
+MAJ.click_session = function(targetsession, forceswap) {
 
     // select source
     if (MAJ.sourcesession==null) {
@@ -111,11 +374,15 @@ MAJ.clicksession = function(targetsession) {
     }
 
     // we need to swap these two sessions
-    // if (a), both sessions are non-empty
-    // or (b), the sessions have the same tagName
+    // if (a) if "forceswap is TRUE
+    // or (b), both sessions are non-empty
+    // or (c), the sessions have the same tagName
     // i.e. they are both TD cells in TABLE.schedule
     // or they are both DIVs in the #items area of the form
-    var swap = (targetIsEmpty==false && sourceIsEmpty==false);
+    var swap = forceswap;
+    if (targetIsEmpty==false && sourceIsEmpty==false) {
+        swap = true;
+    }
     if (targetsession.tagName==MAJ.sourcesession.tagName) {
         swap = true;
     }
@@ -243,17 +510,12 @@ MAJ.clicksession = function(targetsession) {
     }
 }
 
-MAJ.droppable = function(container, item) {
-    if (item) {
-        var target = $(item);
-    } else {
-        var target = $(container).find("td.session");
-    }
-    target.droppable({
+MAJ.make_sessions_droppable = function(container, session) {
+    MAJ.get_items(container, session, "td.session").droppable({
         "accept" : ".session",
         "drop" : function(evt, ui) {
             $(this).removeClass("ui-dropping");
-            MAJ.clicksession(this);
+            MAJ.click_session(this);
         },
         "out" : function(evt, ui) {
             $(this).removeClass("ui-dropping");
@@ -265,13 +527,8 @@ MAJ.droppable = function(container, item) {
     });
 };
 
-MAJ.draggable = function(container, item) {
-    if (item) {
-        var target = $(item);
-    } else {
-        var target = $(container).find(".session");
-    }
-    target.draggable({
+MAJ.make_sessions_draggable = function(container, session) {
+    MAJ.get_items(container, session, ".session").draggable({
         "cursor" : "move",
         "scroll" : true,
         "stack" : ".session",
@@ -300,18 +557,46 @@ MAJ.draggable = function(container, item) {
     });
 };
 
-MAJ.selectable = function(container, item) {
-    if (item) {
-        var target = $(item);
-    } else {
-        var target = $(container).find(".session");
-    }
-    target.click(function(){
-        MAJ.clicksession(this);
+MAJ.make_sessions_selectable = function(container, session) {
+    MAJ.get_items(container, session, ".session").click(function(evt){
+        MAJ.click_session(this);
     });
 }
 
-MAJ.multilang = function(container) {
+MAJ.make_sessions_editable = function(container, session) {
+    MAJ.get_items(container, session, ".session").each(function(){
+        var id = $(this).prop("id");
+        if (id.indexOf("id_record")==0) {
+            var icons = MAJ.create_icons("session");
+            $(this).find(".title").prepend(icons);
+        }
+    });
+}
+
+MAJ.make_rooms_editable = function(container, room) {
+    MAJ.get_items(container, room, ".roomheading").each(function(){
+        var icons = MAJ.create_icons("room");
+        $(this).prepend(icons);
+    });
+}
+
+MAJ.make_slots_editable = function(container, slot) {
+    MAJ.get_items(container, slot, ".slot .timeheading").each(function(){
+        var icons = MAJ.create_icons("slot");
+        var txt = document.createTextNode(" ");
+        $(this).append(txt, icons);
+    });
+}
+
+MAJ.make_days_editable = function(container, day) {
+    MAJ.get_items(container, day, ".tab").each(function(){
+        var icons = MAJ.create_icons("day");
+        var txt = document.createTextNode(" ");
+        $(this).append(txt, icons);
+    });
+}
+
+MAJ.hide_multilang_spans = function(container) {
     // extract main language from body classes
     var regexp = new RegExp("lang-(\\w+)");
     var lang = $("body").attr('class').match(regexp)[1];
@@ -320,7 +605,7 @@ MAJ.multilang = function(container) {
     $(container).find("span.multilang[lang!=" + lang + "]").css("display", "none");
 }
 
-MAJ.setuptools = function() {
+MAJ.setup_tools = function() {
     var missing = [];
     $("#tools .command").each(function(){
         var activecommand = true;
@@ -345,7 +630,7 @@ MAJ.setuptools = function() {
     });
 }
 
-MAJ.setupitems = function() {
+MAJ.setup_items = function() {
     var s = $("table.schedule");
     var i = $("#items");
     if (s.length && i.length) {
@@ -353,7 +638,7 @@ MAJ.setupitems = function() {
         w = (50 * parseInt(w / 50));
         i.css("max-width", w + "px");
     } else {
-        setTimeout(MAJ.setupitems, 500);
+        setTimeout(MAJ.setup_items, 500);
     }
 }
 
@@ -363,14 +648,14 @@ MAJ.initializeschedule = function(evt, day) {
     MAJ.emptyschedule(evt, day);
 
     // initialize each required day
-    $(MAJ.dayselector(day)).each(function(){
+    $(MAJ.get_day_selector(day)).each(function(){
     });
 }
 
 MAJ.emptyschedule = function(evt, day) {
 
     // select all sessions on the selected day
-    $(MAJ.dayselector(day) + " .session").each(function(){
+    $(MAJ.get_day_selector(day, " .session")).each(function(){
 
         // remove classes used on templates
 		$(this).removeClass("demo attending");
@@ -379,7 +664,7 @@ MAJ.emptyschedule = function(evt, day) {
 		$(this).find(".capacity").each(function(){
             $(this).find(".emptyseats").empty();
             $(this).find(".attendance").each(function(){
-                $(this).find("input[type=checkbox]").prop('checked', false);
+                $(this).find("input[type=checkbox]").removeAttr("checked");
                 $(this).find("label").empty();
             });
 		});
@@ -393,13 +678,12 @@ MAJ.emptyschedule = function(evt, day) {
                 // sessions with a recognized "id" are moved to the "#items" DIV
                 var div = $("<div></div>", {
                     "id" : id,
-                    "style" : "display: inline-block;",
                     "class" : MAJ.get_non_jquery_classes(this)
                 });
                 $(this).prop("id", "");
                 $(this).children(MAJ.sessioncontent).appendTo(div);
-                MAJ.draggable(null, div);
-                MAJ.selectable(null, div);
+                MAJ.make_sessions_draggable(null, div);
+                MAJ.make_sessions_selectable(null, div);
                 $("#items").append(div);
             } else {
                 // remove sessions without a recognized "id"
@@ -421,12 +705,10 @@ MAJ.emptyschedule = function(evt, day) {
 MAJ.populateschedule = function(evt, day) {
 
     // cancel previous clicks on sessions, if any
-    if (MAJ.sourcesession) {
-        MAJ.clicksession(MAJ.sourcesession);
-    }
+    MAJ.select_session();
 
     // select empty sessions on the selected day
-    var empty = $(MAJ.dayselector(day) + " .session.emptysession");
+    var empty = $(MAJ.get_day_selector(day, " .emptysession"));
     if (empty.length==0) {
         return true;
     }
@@ -441,8 +723,8 @@ MAJ.populateschedule = function(evt, day) {
     var i_max = Math.min(items.length,
                          empty.length);
     for (var i=(i_max-1); i>=0; i--) {
-        MAJ.clicksession(items.get(i));
-        MAJ.clicksession(empty.get(i));
+        MAJ.click_session(items.get(i));
+        MAJ.click_session(empty.get(i));
     }
     return true;
 }
@@ -481,7 +763,7 @@ MAJ.renumberschedule = function(evt, day) {
     var typeregexp = new RegExp("^.*(" + MAJ.sessiontypes + ").*$");
 
     // select all non-empty sessions on the selected day
-    $(MAJ.dayselector(day) + " .session").not(".emptysession").not(".demo").each(function(){
+    $(MAJ.get_day_selector(day, " .session:not(.emptysession):not(.demo)")).each(function(){
 
         var day = $(this).closest(".day");
         day = day.prop("class").replace(dayregexp, "$1");
@@ -531,7 +813,7 @@ MAJ.addroom = function(evt, pos) {
 MAJ.editcss = function(evt) {
 }
 
-MAJ.ajaxloaderror = function(action, r, x) {
+MAJ.format_ajax_error = function(action, r, x) {
     var moodleerror = false;
     var i = r.indexOf('<footer id="page-footer"');
     if (i >= 0) {
@@ -545,7 +827,7 @@ MAJ.ajaxloaderror = function(action, r, x) {
     }
     if (moodleerror) {
         // debugging error from Moodle
-        r = r.replace(new RegExp("<form[^>]*>.*?</form>", "g"), "");
+        r = r.replace(new RegExp('<form[^>]*>.*?</form>', "g"), "");
         r = r.replace(new RegExp('<p class="errorcode">.*?</p>'), "");
         r = r.replace(new RegExp('<div class="continuebutton">.*?</div>'), "");
         return r;
@@ -553,13 +835,17 @@ MAJ.ajaxloaderror = function(action, r, x) {
     return "Error (" + action + ") " + x.status + ": " + x.statusText;
 }
 
-// set hide all sections when document has loaded
+// main processing after page has loaded
 $(document).ready(function(){
 
     // extract toolroot URL and block instance id from page URL
     var blockroot = location.href.replace(new RegExp("^(.*?)/tools.*$"), "$1");
     var toolroot = location.href.replace(new RegExp("^(.*?)/tool.php.*$"), "$1");
     var id = location.href.replace(new RegExp("^.*?\\bid=([0-9]+)\\b.*$"), "$1");
+    var iconroot = $("img.iconhelp").prop("src").replace(new RegExp("/[^/]+$"), "");
+
+    MAJ.iconedit = iconroot + "/i/edit";
+    MAJ.icondelete = iconroot + "/i/delete";
 
     // hide "Session information" section of form
     $("#id_sessioninfo").css("display", "none");
@@ -588,9 +874,9 @@ $(document).ready(function(){
         // x : XMLHttpRequest object
         if (s=="success") {
             $(this).html(r);
-            MAJ.setuptools();
+            MAJ.setup_tools();
         } else if (s=="error") {
-            $(this).html(MAJ.ajaxloaderror(p.action, r, x));
+            $(this).html(MAJ.format_ajax_error(p.action, r, x));
         }
     });
 
@@ -605,12 +891,16 @@ $(document).ready(function(){
         // x : XMLHttpRequest object
         if (s=="success") {
             $(this).html(r);
-            MAJ.multilang(this);
-            MAJ.droppable(this);
-            MAJ.draggable(this);
-            MAJ.selectable(this);
+            MAJ.hide_multilang_spans(this);
+            MAJ.make_sessions_droppable(this);
+            MAJ.make_sessions_draggable(this);
+            MAJ.make_sessions_selectable(this);
+            MAJ.make_sessions_editable(this);
+            MAJ.make_rooms_editable(this);
+            MAJ.make_slots_editable(this);
+            MAJ.make_days_editable(this);
         } else if (s=="error") {
-            $(this).html(MAJ.ajaxloaderror(p.action, r, x));
+            $(this).html(MAJ.format_ajax_error(p.action, r, x));
         }
     });
 
@@ -625,16 +915,17 @@ $(document).ready(function(){
         // x : XMLHttpRequest object
         if (s=="success") {
             $(this).html(r);
-            MAJ.setupitems();
-            MAJ.draggable(this);
-            MAJ.selectable(this);
+            MAJ.setup_items();
+            MAJ.make_sessions_draggable(this);
+            MAJ.make_sessions_selectable(this);
+            MAJ.make_sessions_editable(this);
         } else if (s=="error") {
-            $(this).html(MAJ.ajaxloaderror(p.action, r, x));
+            $(this).html(MAJ.format_ajax_error(p.action, r, x));
         }
     });
 
     // set "schedule_html" when form is submitted
     $("form.mform").submit(function(evt){
-        MAJ.setschedulehtml();
+        MAJ.set_schedule_html();
     });
 });

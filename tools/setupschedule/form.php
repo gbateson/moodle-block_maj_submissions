@@ -74,11 +74,18 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
         global $PAGE;
 
         if (method_exists($PAGE->requires, 'jquery')) {
+            // Moodle >= 2.5
             $PAGE->requires->jquery();
             $PAGE->requires->jquery_plugin('ui');
+            $PAGE->requires->jquery_plugin('ui-css');
         } else {
-            // get JQuery some other way
+            // Moodle <= 2.4
+            $jquery = '/blocks/maj_submissions/jquery';
+            $PAGE->requires->css($jquery.'/jquery-ui.css');
+            $PAGE->requires->js($jquery.'/jquery.js', true);
+            $PAGE->requires->js($jquery.'/jquery-ui.js', true);
         }
+
         $PAGE->requires->js('/blocks/maj_submissions/tools/setupschedule/jquery.js', true);
 
         $mform = $this->_form;

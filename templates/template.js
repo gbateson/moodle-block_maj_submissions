@@ -144,7 +144,6 @@
     };
 
     if (document.readyState=="complete") {
-        if (confirm("Set up schedule tabs?"))
         setupschedule();
     } else if (window.addEventListener) {
         window.addEventListener("load", setupschedule, false);
