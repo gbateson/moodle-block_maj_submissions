@@ -165,6 +165,9 @@ class block_maj_submissions extends block_base {
             'registerpresenterstimefinish' => 0,
             'registerpresenterscmid'       => 0,
 
+            'registerearlytimestart'  => 0,
+            'registerearlytimefinish' => 0,
+
             // date settings
             'moodledatefmt' => 'strftimerecent', // 11 Nov, 10:12
             'customdatefmt' => '%b %d (%a) %H:%M', // Nov 11th (Wed) 10:12
@@ -1461,7 +1464,8 @@ class block_maj_submissions extends block_base {
                   'revise',
                   'publish'),
             array('registerpresenters',
-                  'registerdelegates')
+                  'registerdelegates',
+                  'registerearly')
         );
     }
 
