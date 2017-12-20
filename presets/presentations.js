@@ -33,7 +33,8 @@ MAJ.onload_view = function() {
 }
 
 MAJ.onload_edit = function() {
-    MAJ.reduce_multilang_edit();
+    MAJ.reduce_option_texts();
+    //MAJ.reduce_multilang_edit();
     MAJ.position_img_tags();
     MAJ.setup_affiliation();
     MAJ.setup_other_presenters();

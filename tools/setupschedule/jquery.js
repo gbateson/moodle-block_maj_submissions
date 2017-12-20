@@ -148,7 +148,7 @@ MAJ.open_dialog = function(evt, title, html, actiontext, actionicon, actionfunct
                 $(this).dialog("close");
             };
         }
-        buttons.push({"text": actiontext, "icon": actionicon,"click": actionfunction});
+        buttons.push({"text": actiontext,"click": actionfunction}); // "icon": actionicon
     }
     if (showcancelbutton) {
         var canceltext = "Cancel";
@@ -156,15 +156,17 @@ MAJ.open_dialog = function(evt, title, html, actiontext, actionicon, actionfunct
         var cancelfunction = function(){
             $(this).dialog("close");
         };
-        buttons.push({"text": canceltext, "icon": cancelicon, "click": cancelfunction});
+        buttons.push({"text": canceltext, "click": cancelfunction}); // "icon": cancelicon
     }
     dialog.dialog("option", "buttons", buttons);
 
     // update the dialog position
-    var position = {"my": "left top",
-                    "at": "right bottom",
-                    "of": evt.target};
-    dialog.dialog("option", "position", position);
+    if (showcancelbutton) {
+        var my = "left-96px; bottom+40px";
+    } else {
+        var my = "left-144px; bottom+36px";
+    }
+    dialog.dialog("option", "position", {"my" : my, "at": "center", "of": evt});
 
     // open the dialog box
     dialog.dialog("open");

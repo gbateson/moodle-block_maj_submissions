@@ -195,10 +195,22 @@ switch ($action) {
             }
         }
 
+        // search/replace strings to extract CSS class from field param1
+        $multilangsearch = array('/<(span|lang)\b[^>]*>([ -~]*?)<\/\1>/u',
+                                 '/<(span|lang)\b[^>]*>.*?<\/\1>/u');
+        $multilangreplace = array('$2', '');
+
+        $firstwordsearch = array('/[^a-zA-Z0-9 ]/u', '/ .*$/u');
+        $firstwordreplace = array('', '');
+
+        $durationsearch = array('/(^.*\()|(\).*$)/u', '/[^a-zA-Z0-9]/', '/^.*$/');
+        $durationreplace = array('', '', 'duration$0');
+
         // cache for CSS classes derived from
         // presentation "type" and "category"
         $classes = array('category' => array(),
-                         'type' => array());
+                         'type'     => array(),
+                         'duration' => array());
 
         // check these database types
         $types = array('presentation',
@@ -262,12 +274,14 @@ switch ($action) {
             } else {
                 $presentationcategory = $item['presentation_category'];
                 if (empty($classes['category'][$presentationcategory])) {
-                    $class = preg_replace('/[^a-zA-Z0-9 ]/u', '', $presentationcategory);
-                    $class = preg_replace('/ .*$/u', '', trim($class));
-                    $classes['category'][$presentationcategory] = strtolower($class);
+                    $class = $presentationcategory;
+                    if (strpos($class, '</span>') || strpos($class, '</lang>')) {
+                        $class = preg_replace($multilangsearch, $multilangreplace, $class);
+                    }
+                    $class = preg_replace($firstwordsearch, $firstwordreplace, $class);
+                    $classes['category'][$presentationcategory] = strtolower(trim($class));
                 }
                 $sessionclass .= ' '.$classes['category'][$presentationcategory];
-                $presentationcategory = block_maj_submissions_tool_form::convert_to_multilang($presentationcategory, $config);
             }
 
             // extract type
@@ -285,12 +299,32 @@ switch ($action) {
             } else {
                 $presentationtype = $item['presentation_type'];
                 if (empty($classes['type'][$presentationtype])) {
-                    $class = preg_replace('/[^a-zA-Z0-9 ]/u', '', $presentationtype);
-                    $class = preg_replace('/\s+(?=[^0-9])/', '', $class);
-                    $classes['type'][$presentationtype] = strtolower($class);
+                    $class = $presentationtype;
+                    if (strpos($class, '</span>') || strpos($class, '</lang>')) {
+                        $class = preg_replace($multilangsearch, $multilangreplace, $class);
+                    }
+                    $class = preg_replace($firstwordsearch, $firstwordreplace, $class);
+                    $classes['type'][$presentationtype] = strtolower(trim($class));
                 }
                 $sessionclass .= ' '.$classes['type'][$presentationtype];
-                $presentationtype = block_maj_submissions_tool_form::convert_to_multilang($presentationtype, $config);
+            }
+
+            // extract duration CSS class e.g. duration40mins
+            if (empty($item['schedule_duration'])) {
+                $scheduleduration = $presentationtype;
+            } else {
+                $scheduleduration = $item['schedule_duration'];
+            }
+            if ($scheduleduration) {
+                if (empty($classes['duration'][$scheduleduration])) {
+                    $class = $scheduleduration;
+                    if (strpos($class, '</span>') || strpos($class, '</lang>')) {
+                        $class = preg_replace($multilangsearch, $multilangreplace, $class);
+                    }
+                    $class = preg_replace($durationsearch, $durationreplace, $class);
+                    $classes['duration'][$scheduleduration] = strtolower(trim($class));
+                }
+                $sessionclass .= ' '.$classes['duration'][$scheduleduration];
             }
 
             // extract duration

@@ -684,10 +684,12 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $finish = $instance->multilang_userdate($finish, 'schedulesessiontime', $this->plugin);
 
             $duration = $times[$time]->duration;
+            $cssclass = 'duration'.round($duration / 60).'mins';
             $duration = $instance->multilang_format_time($duration);
 
             $slots[] = (object)array('startfinish' => "$start - $finish",
                                      'duration' => $duration,
+                                     'cssclass' => $cssclass,
                                      'allrooms' => true);
         }
 
@@ -709,6 +711,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
 
         // cache the formatted slot duration (e.g. 20 mins)
         $duration = $instance->multilang_format_time($slotduration);
+        $cssclass = 'duration'.round($slotduration / 60).'mins';
 
         $countslots = 0;
         $slottime = $firstslottime;
@@ -740,6 +743,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $finish = $instance->multilang_userdate($finish, 'schedulesessiontime', $this->plugin);
             $slots[] = (object)array('startfinish' => "$start - $finish",
                                      'duration' => $duration,
+            						 'cssclass' => $cssclass,
                                      'allrooms' => false);
 
             // increment counter
@@ -821,7 +825,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                 $content .= html_writer::start_tag('tr', array('class' => 'slot slot'.$s));
 
                 $time = html_writer::tag('span', $slot->startfinish, array('class' => 'startfinish')).
-                        html_writer::tag('span', $slot->duration, array('class' => 'duration'));
+                        html_writer::tag('span', $slot->duration, array('class' => 'duration '.$slot->cssclass));
                 $content .= html_writer::tag('td', $time, array('class' => 'timeheading'));
 
                 if ($generatecontent) {
@@ -939,6 +943,9 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                     }
 
                     $class = 'session demo';
+                    if ($slot->cssclass) {
+                        $class .= ' '.$slot->cssclass;
+                    }
                     if ($slot->allrooms) {
                         $class .= ' allrooms';
                     }

@@ -10,7 +10,8 @@ MAJ.onload_view = function() {
 }
 
 MAJ.onload_edit = function() {
-    MAJ.reduce_multilang_edit();
+    MAJ.reduce_option_texts();
+    //MAJ.reduce_multilang_edit();
     MAJ.position_img_tags();
     MAJ.setup_name_title();
     MAJ.setup_names();

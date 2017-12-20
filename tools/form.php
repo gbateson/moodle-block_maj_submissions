@@ -634,7 +634,7 @@ abstract class block_maj_submissions_tool_form extends moodleform {
         $ascii = self::low_ascii_substring();
         // ascii chars excluding numbers: 0-9 (=hex 30-39)
         $chars = '\\x{0000}-\\x{0029}\\x{0040}-\\x{007F}';
-        return '/^([^'.$chars.']*[^'.$ascii.']) *(['.$ascii.']+?)$/u';
+        return '/^([^'.$chars.']*[^'.$ascii.']) *(['.$ascii.']+?)$/mu';
     }
 
     /**

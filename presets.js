@@ -441,6 +441,21 @@ MAJ.remove_empty_section = function(sectionselector, subheading) {
     }
 }
 
+MAJ.reduce_option_texts = function() {
+    if (MAJ.lang) {
+        var myspan = new RegExp('<span\\b[^>]*lang="' + MAJ.lang + '"[^>]*>(.*?)</span>');
+        var anyspan = new RegExp('<span\\b[^>]*>.*?</span>', 'g');
+        $("option").each(function(){
+            var txt = $(this).val();
+            if (txt.match("span")) {
+                txt = txt.replace(myspan, "$1");
+                txt = txt.replace(anyspan, "");
+                $(this).html(txt);
+            }
+        });
+    }
+}
+
 /*
  * reduce lang strings in specified elements
  */
