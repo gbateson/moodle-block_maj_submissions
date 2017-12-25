@@ -150,3 +150,19 @@
     float:                none;
     text-align:         center;
 }
+
+#page-blocks-maj_submissions-tools-setupschedule-tool .ui-dialog table {
+    margin-left:          12px;
+    margin-right:         12px;
+}
+
+#page-blocks-maj_submissions-tools-setupschedule-tool .ui-dialog th {
+    padding-left:          6px;
+    text-align:           left;
+}
+
+#page-blocks-maj_submissions-tools-setupschedule-tool .ui-dialog th {
+    padding-right:         6px;
+    text-align:          right;
+    white-space:        nowrap;
+}

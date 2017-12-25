@@ -5,13 +5,13 @@
     }
 
     if (MAJ.str==null) {
-        MAJ.str = {
-            "attending"    : "Attending",
-            "notattending" : "Not attending",
-            "fullschedule" : "Full schedule",
-            "myschedule"   : "My schedule"
-        }
+        MAJ.str = {};
     }
+
+    MAJ.str.attending = "Attending";
+    MAJ.str.notattending = "Not attending";
+    MAJ.str.fullschedule = "Full schedule";
+    MAJ.str.myschedule = "My schedule";
 
     var setupschedule = function() {
 

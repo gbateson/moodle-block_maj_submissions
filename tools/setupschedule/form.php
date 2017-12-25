@@ -975,7 +975,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                                                            'defer' => 'defer'))."\n";
         $content .= "//<![CDATA[\n";
         $content .= '(function(){'."\n";
-        $content .= '    var wwwroot = location.href.replace(new RegExp("^(.*?)/mod/.*$"), "$1");'."\n";
+        $content .= '    var wwwroot = location.href.replace(new RegExp("^(.*?)/(blocks|course|mod)/.*$"), "$1");'."\n";
         $content .= '    var src = "'.$src->out_as_local_url().'";'."\n";
         $content .= '    var css = "@import url(" + wwwroot + src + ".css);";'."\n";
         $content .= '    var style = document.createElement("style");'."\n";

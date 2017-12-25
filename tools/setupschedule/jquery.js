@@ -27,6 +27,53 @@ if (window.MAJ==null) {
     window.MAJ = {};
 }
 
+if (MAJ.str==null) {
+    MAJ.str = {};
+}
+
+MAJ.str.en = "English";
+MAJ.str.ja = "Japanese";
+MAJ.str.roomname = "Room name";
+MAJ.str.roomseats = "Seating";
+MAJ.str.roomtopic = "Topic";
+
+MAJ.str.ok = "OK";
+MAJ.str.cancel = "Cancel";
+MAJ.str.remove = "Remove";
+MAJ.str.update = "Update";
+
+MAJ.str.day = "Day";
+MAJ.str.slot = "Slot";
+MAJ.str.time = "Time";
+MAJ.str.duration = "Duration";
+MAJ.str.starttime = "Start time";
+MAJ.str.finishtime = "Finish time";
+
+MAJ.str.editday = "Edit day";
+MAJ.str.editroom = "Edit room";
+MAJ.str.editslot = "Edit slot";
+MAJ.str.editsession = "Edit session";
+
+MAJ.str.removeday = "Remove day";
+MAJ.str.removeroom = "Remove room";
+MAJ.str.removeslot = "Remove slot";
+MAJ.str.removesession = "Remove session";
+
+MAJ.str.confirmremoveday = "Do you really want remove this day?";
+MAJ.str.confirmremoveroom = "Do you really want remove this room?";
+MAJ.str.confirmremovesession = "Do you really want remove this session?";
+MAJ.str.confirmremoveslot = "Do you really want remove this slot?";
+
+MAJ.str.editedday = "Day was updated";
+MAJ.str.editedroom = "Room was updated";
+MAJ.str.editedsession = "Session was updated";
+MAJ.str.editedslot = "Slot was updated";
+
+MAJ.str.removedday = "Day was removed";
+MAJ.str.removedroom = "Room was removed";
+MAJ.str.removedsession = "Session was removed";
+MAJ.str.removedslot = "Slot was removed";
+
 MAJ.sourcesession = null;
 
 // TODO: initialize this array from the PHP script on the server
@@ -36,6 +83,9 @@ MAJ.sessiontypes = "casestudy|lightningtalk|presentation|showcase|workshop";
 // define selectors for session child nodes
 MAJ.sessiontimeroom = ".time, .room";
 MAJ.sessioncontent = ".title, .authors, .categorytype, .summary";
+
+// define the selectors for room content
+MAJ.roomdetails = {"roomname" : null, "roomseats" : null, "roomtopic" : null};
 
 // the DOM id of the dialog box
 MAJ.dialogid = "dialog";
@@ -116,10 +166,10 @@ MAJ.open_dialog = function(evt, title, html, actiontext, actionicon, actionfunct
 
     // cache jQuery object for dialog
     var dialog = $(dialogbox);
-    
+
     // create/close the dialog element
     if (dialog.dialog("instance")==null) {
-        dialog.dialog({"autoOpen": false, "modal": true, "close": MAJ.select_session});
+        dialog.dialog({"autoOpen": false, "close": MAJ.select_session, "modal": true, "width" : "auto"});
     } else {
         if (dialog.dialog("isOpen")) {
             dialog.dialog("close");
@@ -132,13 +182,11 @@ MAJ.open_dialog = function(evt, title, html, actiontext, actionicon, actionfunct
     // update the dialog HTML
     dialog.html(html);
 
-    // set default button text/icon/function
-
     // update the dialog buttons
     var buttons = [];
     if (showactionbutton) {
         if (actiontext==null) {
-            actiontext = "OK";
+            actiontext = MAJ.str.ok;
         }
         if (actionicon==null) {
             actionicon = "ui-icon-check";
@@ -151,10 +199,11 @@ MAJ.open_dialog = function(evt, title, html, actiontext, actionicon, actionfunct
         buttons.push({"text": actiontext,"click": actionfunction}); // "icon": actionicon
     }
     if (showcancelbutton) {
-        var canceltext = "Cancel";
+        var canceltext = MAJ.str.cancel;
         var cancelicon = "ui-icon-cancel";
         var cancelfunction = function(){
             $(this).dialog("close");
+            MAJ.select_session();
         };
         buttons.push({"text": canceltext, "click": cancelfunction}); // "icon": cancelicon
     }
@@ -166,7 +215,7 @@ MAJ.open_dialog = function(evt, title, html, actiontext, actionicon, actionfunct
     } else {
         var my = "left-144px; bottom+36px";
     }
-    dialog.dialog("option", "position", {"my" : my, "at": "center", "of": evt});
+    //dialog.dialog("option", "position", {"my" : my, "at": "center", "of": evt});
 
     // open the dialog box
     dialog.dialog("open");
@@ -177,16 +226,18 @@ MAJ.open_dialog = function(evt, title, html, actiontext, actionicon, actionfunct
 }
 
 MAJ.show_edit_dialog = function(evt, title, html, actionfunction) {
-    MAJ.open_dialog(evt, title, html, "Update", null, actionfunction, true);
+    MAJ.open_dialog(evt, title, html, MAJ.str.update, null, actionfunction, true);
 }
 
 MAJ.show_remove_dialog = function(evt, title, html, actionfunction) {
-    MAJ.open_dialog(evt, title, html, "Remove", null, actionfunction, true);
+    MAJ.open_dialog(evt, title, html, MAJ.str.remove, null, actionfunction, true);
 }
 
 MAJ.select_session = function(id) {
     if (MAJ.sourcesession) {
         MAJ.click_session(MAJ.sourcesession);
+    } else {
+        $(".ui-selected").removeClass("ui-selected");
     }
     if (id) {
         MAJ.click_session(document.getElementById(id));
@@ -197,11 +248,10 @@ MAJ.edit_session = function(evt) {
     var id = $(this).closest(".session").prop("id");
     var recordid = id.replace(new RegExp("^id_recordid_(\\d+)$"), "$1");
 
-    var title = "Session settings (rid=" + recordid + ")";
-    var html = "<p>A form to edit a session</p>";
+    var title = MAJ.str.editsession + ": rid=" + recordid;
+    var html = "<p>Edit a session</p>";
     var actionfunction = function(){
-        var html = "<p>Session (rid=" + recordid + ") was updated</p>";
-        MAJ.open_dialog(evt, title, html, "OK");
+        MAJ.open_dialog(evt, title, MAJ.str.editedsession, MAJ.str.ok);
     };
 
     MAJ.select_session(id);
@@ -212,8 +262,8 @@ MAJ.delete_session = function(evt) {
     var id = $(this).closest(".session").prop("id");
     var recordid = id.replace(new RegExp("^id_recordid_(\\d+)$"), "$1");
 
-    var title = "Remove session (rid=" + recordid + ")";
-    var html = "<p>A form to remove a session</p>";
+    var title = MAJ.str.removesession + ": rid=" + recordid;
+    var html = MAJ.tag("p", MAJ.str.confirmremovesession);
     var actionfunction = function(){
 
         // add new empty session to #items
@@ -229,9 +279,8 @@ MAJ.delete_session = function(evt) {
         // swap the empty session and the target session
         MAJ.click_session(emptysession);
         MAJ.click_session(document.getElementById(id), true);
-        
-        var html = "<p>Session (rid=" + recordid + ") was removed</p>";
-        MAJ.open_dialog(evt, title, html, "OK");
+
+        MAJ.open_dialog(evt, title, MAJ.str.removedsession, MAJ.str.ok);
     };
 
     MAJ.select_session(id);
@@ -239,87 +288,340 @@ MAJ.delete_session = function(evt) {
 }
 
 MAJ.edit_room = function(evt) {
-    var room = $(this).closest(".roomheading").prop("class");
-    room = room.replace(new RegExp("^.*\\broom(\\d+)\\b.*$"), "$1");
 
-    var title = "Room settings (room=" + room + ")";
-    var html = "<p>A form to edit a room</p>";
+	// extract day and room
+	var day = MAJ.extract_parent_day(this);
+    var room = MAJ.extract_parent_room(this);
+
+    var langs = [];
+    var details = {};
+
+    var heading = $(this).closest(".roomheading");
+    heading.addClass("ui-selected");
+
+    for (var name in MAJ.roomdetails) {
+        var detail = heading.find("." + name);
+        if (detail.length==0) {
+            continue;
+        }
+        details[name] = {};
+        var span = detail.find("span.multilang");
+        if (span.length==0) {
+            details[name] = span.text();
+            continue;
+        }
+        span.each(function(){
+            var lang = $(this).prop("lang");
+            if (lang) {
+                if (langs.indexOf(lang) < 0) {
+                    langs.push(lang);
+                }
+                details[name][lang] = $(this).text();
+            }
+        });
+    }
+
+    var title = MAJ.str.editroom + ": " + room;
+
+    var html = "";
+    html += "<table><tbody>";
+
+    if (langs.length) {
+        html += "<tr>" + MAJ.tag("td", "");
+        for (var i=0; i<langs.length; i++) {
+            var lang = langs[i];
+            if (MAJ.str[lang]) {
+                lang = MAJ.str[lang];
+            }
+            html += MAJ.tag("td", MAJ.tag("b", lang), {"align" : "center"});
+        }
+        html += "</tr>";
+    }
+
+    var attr = {"type" : "text", "size" : 12};
+    for (var name in details) {
+        html += "<tr>" + MAJ.tag("th", MAJ.str[name]);
+        if (langs.length==0) {
+            attr.name = name;
+            attr.value = details[name];
+            html += MAJ.tag("td", MAJ.emptytag("input", attr));
+        } else {
+            for (var i=0; i<langs.length; i++) {
+                var lang = langs[i];
+                attr.name = name + "_" + lang;
+                attr.value = (details[name][lang] || "");
+                html += MAJ.tag("td", MAJ.emptytag("input", attr));
+            }
+        }
+        html += "</tr>";
+    }
+
+    html += "</tbody></table>";
+    html += MAJ.hidden("day", day);
+    html += MAJ.hidden("room", room);
+
     var actionfunction = function(){
-        var html = "<p>Room " + room + " was updated</p>";
-        MAJ.open_dialog(evt, title, html, "OK");
+        var day  = $(this).find("[name=day]").val();
+        var room = $(this).find("[name=room]").val();
+        var heading = $(".day" + day + " .roomheading.room" + room);
+        for (var name in MAJ.roomdetails) {
+            var detail = heading.find("." + name);
+            if (detail.length==0) {
+                continue;
+            }
+            var html = "";
+            $(this).find("input[name^=" + name + "]").each(function(){
+                var value = MAJ.htmlescape($(this).val());
+                var lang = $(this).prop("name").substr(name.length + 1);
+                if (lang) {
+                    var attr = {"class" : "multilang", "lang" : lang};
+                    value = MAJ.tag("span", value, attr);
+                }
+                html += value;
+            });
+            detail.html(html);
+        }
+        heading.removeClass("ui-selected");
+
+        MAJ.open_dialog(evt, title, MAJ.str.editedroom, MAJ.str.ok);
     };
 
     MAJ.show_edit_dialog(evt, title, html, actionfunction);
 }
 
 MAJ.delete_room = function(evt) {
-    var room = $(this).closest(".roomheading").prop("class");
-    room = room.replace(new RegExp("^.*\\broom(\\d+)\\b.*$"), "$1");
+	// extract day/room number and day text
+	var day = MAJ.extract_parent_day(this);
+    var room = MAJ.extract_parent_room(this);
+    var daytext = MAJ.extract_parent_daytext(this);
 
-    var title = "Remove room (room=" + room + ")";
-    var html = "<p>A form to remove a room</p>";
+    var heading = $(this).closest(".roomheading");
+    heading.addClass("ui-selected");
+
+    var title = MAJ.str.removeroom + ": " + room;
+
+    var html = MAJ.tag("p", MAJ.str.confirmremoveroom);
+    html += "<table><tbody>";
+    html += "<tr>" + MAJ.tag("th", MAJ.str.day) + MAJ.tag("td", daytext) + "</tr>";
+    for (var name in MAJ.roomdetails) {
+        var detail = heading.find("." + name);
+        if (detail.length==0) {
+            continue;
+        }
+        html += "<tr>" + MAJ.tag("th", MAJ.str[name]) + MAJ.tag("td", detail.html()) + "</tr>";
+    }
+    html += "</tbody></table>";
+    html += MAJ.hidden("day", day);
+    html += MAJ.hidden("room", room);
+
     var actionfunction = function(){
-        var html = "<p>Room " + room + " was removed</p>";
-        MAJ.open_dialog(evt, title, html, "OK");
+        var day  = $(this).find("[name=day]").val();
+        var room = $(this).find("[name=room]").val();
+
+        // unassign any active sessions
+        var heading = $(".day" + day + " .roomheading.room" + room);
+        if (heading.length) {
+            i = heading.get(0).cellIndex;
+            $(".day" + day + " tr").each(function(){
+                var cell = $(this).find(".allrooms");
+                if (cell.length) {
+                    var x = cell.prop("colspan");
+                    if (x > 1) {
+                        cell.prop("colspan", x - 1);
+                    }
+                } else {
+                    var cells = $(this).find("th, td");
+                    if (cells.length >= i) {
+                        var cell = cells.get(i);
+                        MAJ.unassignsession(cell);
+                        $(cell).remove();
+                    }
+                }
+            });
+        }
+        heading.removeClass("ui-selected");
+
+        MAJ.open_dialog(evt, title, MAJ.str.removedroom, MAJ.str.ok);
     };
 
     MAJ.show_remove_dialog(evt, title, html, actionfunction);
 }
 
-MAJ.edit_slot = function(evt) {
-    var slot = $(this).closest(".slot").prop("class");
-    slot = slot.replace(new RegExp("^.*\\bslot(\\d+)\\b.*$"), "$1");
+MAJ.replaceduration = function(items, duration) {
+    var num = new RegExp("[0-9]+", "g");
+    items.each(function(){
+        var c = $(this).prop("class");
+        $(this).prop("class", c.replace(num, duration));
+        $(this).find("span").each(function(){
+            var t = $(this).text();
+            $(this).text(t.replace(num, duration));
+        });
+    });
+}
 
-    var title = "Slot settings (slot=" + slot + ")";
-    var html = "<p>A form to edit a slot</p>";
+MAJ.edit_slot = function(evt) {
+
+	// extract day/slot number
+	var day = MAJ.extract_parent_day(this);
+    var slot = MAJ.extract_parent_slot(this);
+    var daytext = MAJ.extract_parent_daytext(this);
+
+    var heading = $(this).closest(".timeheading");
+    heading.addClass("ui-selected");
+
+    // extract start/finish times
+    var startfinish = heading.find(".startfinish").text();
+    var regexp = new RegExp("^.*(\\d{2}).*(\\d{2}).*(\\d{2}).*(\\d{2}).*$");
+    var starthours  = parseInt(startfinish.replace(regexp, "$1"));
+    var startmins   = parseInt(startfinish.replace(regexp, "$2"));
+    var finishhours = parseInt(startfinish.replace(regexp, "$3"));
+    var finishmins  = parseInt(startfinish.replace(regexp, "$4"));
+
+	// specify title
+    var title = MAJ.str.editslot + ": " + slot;
+
+	// get form elements
+	var start = MAJ.hoursmins("start", starthours, startmins);
+	var finish = MAJ.hoursmins("finish", finishhours, finishmins);
+
+	// create HTML for dialog
+    var html = "";
+    html += "<table><tbody>";
+    html += "<tr>" + MAJ.tag("th", MAJ.str.day + " ") + MAJ.tag("td", daytext) + "</tr>";
+    html += "<tr>" + MAJ.tag("th", MAJ.str.starttime + " ") + MAJ.tag("td", start) + "</tr>";
+    html += "<tr>" + MAJ.tag("th", MAJ.str.finishtime + " ") + MAJ.tag("td", finish) + "</tr>";
+    html += "</tbody></table>";
+    html += MAJ.hidden("day", day);
+    html += MAJ.hidden("slot", slot);
+
+	// specify action function for dialog button
     var actionfunction = function(){
-        var html = "<p>Slot " + slot + " was updated</p>";
-        MAJ.open_dialog(evt, title, html, "OK");
+
+        var day  = $(this).find("[name=day]").val();
+        var slot = $(this).find("[name=slot]").val();
+        var starthours  = parseInt($(this).find("[name=starthours] option:checked").val());
+        var startmins   = parseInt($(this).find("[name=startmins] option:checked").val());
+        var finishhours = parseInt($(this).find("[name=finishhours] option:checked").val());
+        var finishmins  = parseInt($(this).find("[name=finishmins] option:checked").val());
+
+        var duration = 0;
+        if (finishhours < starthours) {
+            duration = 23;
+        }
+        if (finishhours == starthours && finishmins <= startmins) {
+            duration = 23; // very unusual, probably a mistake
+        }
+        duration = (60 * (duration + finishhours - starthours));
+        duration = MAJ.pad(duration + finishmins - startmins);
+
+        var startfinish = MAJ.pad(starthours) + ":" + MAJ.pad(startmins) +
+                          " - " +
+                          MAJ.pad(finishhours) + ":" + MAJ.pad(finishmins);
+
+        var s = $(".day" + day + " .slot" + slot);
+        s.find(".timeheading .startfinish").html(startfinish);
+        MAJ.replaceduration(s.find(".timeheading .duration"), duration);
+        MAJ.replaceduration(s.find(".session"), duration);
+
+        MAJ.open_dialog(evt, title, MAJ.str.editedslot, MAJ.str.ok);
     };
 
     MAJ.show_edit_dialog(evt, title, html, actionfunction);
 }
 
 MAJ.delete_slot = function(evt) {
-    var slot = $(this).closest(".slot").prop("class");
-    slot = slot.replace(new RegExp("^.*\\bslot(\\d+)\\b.*$"), "$1");
 
-    var title = "Remove slot (slot=" + slot + ")";
-    var html = "<p>A form to remove a slot</p>";
+	// extract day/slot number and day text
+	var day = MAJ.extract_parent_day(this);
+    var slot = MAJ.extract_parent_slot(this);
+    var daytext = MAJ.extract_parent_daytext(this);
+
+    // locate timeheading for this day + slot
+    var heading = $(".day" + day + " .slot" + slot + " .timeheading");
+    heading.addClass("ui-selected");
+
+	// extract start/finish time text and duration text
+    var startfinish = heading.find(".startfinish").text();
+    var duration = heading.find(" .duration").html();
+
+    var title = MAJ.str.removeslot + ": " + slot;
+
+    var html = MAJ.tag("p", MAJ.str.confirmremoveslot);
+    html += "<table><tbody>";
+    html += "<tr>" + MAJ.tag("th", MAJ.str.day) + MAJ.tag("td", daytext) + "</tr>";
+    html += "<tr>" + MAJ.tag("th", MAJ.str.time) + MAJ.tag("td", startfinish) + "</tr>";
+    html += "<tr>" + MAJ.tag("th", MAJ.str.duration) + MAJ.tag("td", duration) + "</tr>";
+    html += "</tbody></table>";
+    html += MAJ.hidden("day", day);
+    html += MAJ.hidden("slot", slot);
+
     var actionfunction = function(){
-        var html = "<p>Slot " + slot + " was removed</p>";
-        MAJ.open_dialog(evt, title, html, "OK");
+        var day  = $(this).find("[name=day]").val();
+        var slot = $(this).find("[name=slot]").val();
+
+        // unassign any active sessions
+        var s = $(".day" + day + " .slot" + slot);
+        s.find(".session").not(".demo, .emptysession").each(function(){
+            MAJ.unassignsession(this);
+        });
+
+        // now we can remove this slot
+        s.remove();
+
+        MAJ.open_dialog(evt, title, MAJ.str.removedslot, MAJ.str.ok);
     };
 
     MAJ.show_remove_dialog(evt, title, html, actionfunction);
 }
 
 MAJ.edit_day = function(evt) {
-    var day = $(this).closest(".tab").prop("class");
-    day = day.replace(new RegExp("^.*\\bday(\\d+)\\b.*$"), "$1");
-
-    var title = "Day settings (day=" + day + ")";
-    var html = "<p>A form to edit a day</p>";
+    var day = MAJ.extract_parent_tabday(this);
+    $(this).closest(".tab").addClass("ui-selected");
+    var title = MAJ.str.editday + ": " + day;
+    var html = "<p>Form to edit a day</p>";
     var actionfunction = function(){
-        var html = "<p>Day " + day + " was updated</p>";
-        MAJ.open_dialog(evt, title, html, "OK");
+        MAJ.open_dialog(evt, title, MAJ.str.editedday, MAJ.str.ok);
     };
 
     MAJ.show_edit_dialog(evt, title, html, actionfunction);
 }
 
 MAJ.delete_day = function(evt) {
-    var day = $(this).closest(".tab").prop("class");
-    day = day.replace(new RegExp("^.*\\bday(\\d+)\\b.*$"), "$1");
-
-    var title = "Remove day (day=" + day + ")";
-    var html = "<p>A form to remove a day</p>";
+    var day = MAJ.extract_parent_tabday(this);
+    $(this).closest(".tab").addClass("ui-selected");
+    var title = MAJ.str.removeday + ": " + day;
+    var html = MAJ.tag("p", MAJ.str.confirmremoveday);
     var actionfunction = function(){
-        var html = "<p>Day " + day + " was removed</p>";
-        MAJ.open_dialog(evt, title, html, "OK");
+        MAJ.open_dialog(evt, title, MAJ.str.removedday, MAJ.str.ok);
     };
 
     MAJ.show_remove_dialog(evt, title, html, actionfunction);
+}
+
+MAJ.extract_parent_daytext = function(elm) {
+    return $(elm).closest(".day").find(".date td").first().html();
+}
+
+MAJ.extract_parent_day = function(elm) {
+    return MAJ.extract_parent_number(elm, "day", "day");
+}
+
+MAJ.extract_parent_tabday = function(elm) {
+    return MAJ.extract_parent_number(elm, "tab", "day");
+}
+
+MAJ.extract_parent_room = function(elm) {
+    return MAJ.extract_parent_number(elm, "roomheading", "room");
+}
+
+MAJ.extract_parent_slot = function(elm) {
+    return MAJ.extract_parent_number(elm, "slot", "slot");
+}
+
+MAJ.extract_parent_number = function(elm, parentclass, type) {
+    var num = $(elm).closest("." + parentclass).prop("class");
+    var regexp = new RegExp("^.*\\b" + type + "(\\d+)\\b.*$");
+    return num.replace(regexp, "$1");
 }
 
 MAJ.create_icons = function(type, id) {
@@ -671,29 +973,9 @@ MAJ.emptyschedule = function(evt, day) {
             });
 		});
 
-        // move/remove the contents of non-empty sessions
+        // move/remove this session
         if ($(this).not(".emptysession")) {
-
-            // move session details to #items container
-            var id = $(this).prop("id");
-            if (id.indexOf("id_recordid_")==0) {
-                // sessions with a recognized "id" are moved to the "#items" DIV
-                var div = $("<div></div>", {
-                    "id" : id,
-                    "class" : MAJ.get_non_jquery_classes(this)
-                });
-                $(this).prop("id", "");
-                $(this).children(MAJ.sessioncontent).appendTo(div);
-                MAJ.make_sessions_draggable(null, div);
-                MAJ.make_sessions_selectable(null, div);
-                $("#items").append(div);
-            } else {
-                // remove sessions without a recognized "id"
-                // i.e. "demo" sessions in schedule templates
-                $(this).find(MAJ.sessioncontent).remove();
-            }
-
-            // mark this session as empty
+            MAJ.unassignsession(this);
             $(this).addClass("emptysession");
         }
     });
@@ -704,13 +986,33 @@ MAJ.emptyschedule = function(evt, day) {
     });
 }
 
+MAJ.unassignsession = function(session) {
+    // sessions with a recognized "id" are moved to the "#items" DIV
+    var id = $(session).prop("id");
+    if (id.indexOf("id_recordid_")==0) {
+        var div = $("<div></div>", {
+            "id" : id,
+            "class" : MAJ.get_non_jquery_classes(session)
+        });
+        $(session).prop("id", "");
+        $(session).children(MAJ.sessioncontent).appendTo(div);
+        MAJ.make_sessions_draggable(null, div);
+        MAJ.make_sessions_selectable(null, div);
+        $("#items").append(div);
+    } else {
+        // remove sessions without a recognized "id"
+        // i.e. "demo" sessions in schedule templates
+        $(session).find(MAJ.sessioncontent).remove();
+    }
+}
+
 MAJ.populateschedule = function(evt, day) {
 
     // cancel previous clicks on sessions, if any
     MAJ.select_session();
 
     // select empty sessions on the selected day
-    var empty = $(MAJ.get_day_selector(day, " .emptysession"));
+    var empty = $(MAJ.get_day_selector(day, " .emptysession:not(.allrooms)"));
     if (empty.length==0) {
         return true;
     }
@@ -931,3 +1233,144 @@ $(document).ready(function(){
         MAJ.set_schedule_html();
     });
 });
+
+// ==========================================
+// helper functions to create HTML elements
+// ==========================================
+
+MAJ.htmlescape = function(value) {
+	value += ""; // convert to String
+	return value.replace(new RegExp("&", "g"), "&amp;")
+                .replace(new RegExp("'", "g"), "&apos;")
+                .replace(new RegExp('"', "g"), "&quot;")
+                .replace(new RegExp("<", "g"), "&lt;")
+                .replace(new RegExp(">", "g"), "&gt;");
+}
+
+MAJ.attribute = function(name, value) {
+	name = name.replace(new RegExp("^a-zA-Z0-9_-"), "g");
+	if (name=="") {
+		return "";
+	}
+	return " " + name + '="' + MAJ.htmlescape(value) + '"';
+}
+
+MAJ.attributes = function(attributes) {
+	var html = "";
+	for (var name in attributes) {
+		html += MAJ.attribute(name, attributes[name]);
+	}
+	return html;
+}
+
+MAJ.starttag = function(tag, attr) {
+	return "<" + tag + MAJ.attributes(attr) + ">";
+}
+
+MAJ.endtag = function(tag) {
+	return "</" + tag + ">";
+}
+
+MAJ.emptytag = function(tag, attr) {
+	return "<" + tag + MAJ.attributes(attr) + "/>";
+}
+
+MAJ.tag = function(tag, content, attr) {
+	return (MAJ.starttag(tag, attr) + content + MAJ.endtag(tag));
+}
+
+MAJ.hidden = function(name, value) {
+    var attr = {"type" : "hidden",
+                "name" : name,
+                "value" : value};
+	return MAJ.emptytag("input", attr);
+}
+
+MAJ.select = function(name, options, selected, attr) {
+    var html = "";
+	for (var value in options) {
+        var a = {"value" : value};
+        if (value==selected) {
+            a["selected"] = "selected";
+        }
+		html += MAJ.tag("option", options[value], a);
+	}
+	attr["name"] = name;
+	attr["id"] = "id_" + name;
+	return MAJ.tag("select", html, attr);
+}
+
+MAJ.dlist = function(items, attr) {
+    if (attr==null) {
+        attr = {};
+    }
+    var dlist = "";
+    for (var i in items) {
+        dlist += MAJ.tag("dt", i);
+        dlist += MAJ.tag("dd", items[i]);
+    }
+    return MAJ.tag("dl", dlist);
+}
+
+MAJ.alist = function(items, attr, tag) {
+    if (attr==null) {
+        attr = {};
+    }
+    if (tag==null) {
+        tag = "ul";
+    }
+    var alist = "";
+    for (var i in items) {
+        alist += MAJ.tag("li", items[i]);
+    }
+    return MAJ.tag(tag, alist);
+}
+
+MAJ.hours = function(name, selected, attr) {
+	var options = {};
+	for (var i=0; i<=23; i++) {
+		options[i] = MAJ.pad(i);
+	}
+	attr["class"] = "selecthours";
+	return MAJ.select(name, options, selected, attr);
+}
+
+MAJ.mins = function(name, selected, attr) {
+	var options = {};
+	for (var i=0; i<=59; i+=5) {
+		options[i] = MAJ.pad(i);
+	}
+	attr["class"] = "selectmins";
+	return MAJ.select(name, options, selected, attr);
+}
+
+MAJ.hoursmins = function(name, hours, mins) {
+    var hours  = MAJ.hours(name + "hours", hours, {});
+    var mins = MAJ.mins(name + "mins", mins, {});
+	return hours + " : " + mins;
+}
+
+MAJ.pad = function(txt, padlength, padchar, padleft) {
+    if (txt==null) {
+        return "";
+    } else {
+        txt += "";
+    }
+    if (padlength==null) {
+        padlength = 2;
+    }
+    if (padchar==null) {
+        padchar = (isNaN(txt) ? " " : "0");
+    }
+    if (padleft==null) {
+        padleft = (isNaN(txt) ? false : true);
+    }
+    while (txt.length < padlength) {
+        if (padleft) {
+            txt = (padchar + txt);
+        } else {
+            txt = (txt + padchar);
+        }
+    }
+    return txt;
+}

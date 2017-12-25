@@ -511,7 +511,7 @@
 //<![CDATA[
 (function(){
     if (location.protocol=='https:' || location.protocol=='http:') {
-        var wwwroot = location.href.replace(new RegExp("^(.*?)/mod/.*$"), "$1");
+        var wwwroot = location.href.replace(new RegExp("^(.*?)/(blocks|course|mod)/.*$"), "$1");
         var src = "/blocks/maj_submissions/templates/template";
     } else {
         var wwwroot = location.href.replace(new RegExp("^(.*)/.*?$"), "$1");

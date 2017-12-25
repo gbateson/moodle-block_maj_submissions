@@ -248,9 +248,9 @@
     }
 
     .schedule .schedulechooser {
-        float: right;
-        margin: 4px 8px;
-        padding: 0px;
+        float:        right;
+        margin:     4px 8px;
+        padding:        0px;
     }
 
     .schedule .schedulechooser span {
@@ -259,115 +259,114 @@
 
     .schedule .date td {
         padding-bottom: 4px;
-        padding-top: 12px;
+        padding-top:   12px;
     }
 
     .schedule .timeheading {
-        font-size: 0.9em;
+        font-size:    0.9em;
         font-weight: normal;
-        min-width: 80px;
-        padding-top: 6px;
-        text-align: center;
+        min-width:     80px;
+        padding-top:    6px;
+        text-align:  center;
         vertical-align: top;
     }
 
     .schedule .emptysession {
-        text-align: center;
-        /** visibility: hidden; */
+        text-align:  center;
 
     }
 
     .schedule .emptysession:before {
-        color: #999;
+        color:         #999;
         content: "No event scheduled here";
-        font-size: small;
+        font-size:    small;
     }
 
     .schedule .session {
-        margin: 4px 3px;
-        overflow: visible;
-        padding-bottom: 1.4em;
-        position: relative;
-        vertical-align: top;
-        min-width: 180px;
-        max-width: 180px;
+        margin:         4px 3px;
+        overflow:       visible;
+        padding-bottom:   1.4em;
+        position:      relative;
+        vertical-align:     top;
+        min-width:        180px;
+        max-width:        180px;
     }
 
     .schedule.myschedule .session:not(.attending) {
         display: table-cell;
-        visibility: hidden;
+        visibility:      hidden;
     }
 
     .schedule .time,
     .schedule .room,
     .schedule .summary {
-        display: none;
+        display:           none;
     }
 
     .schedule .allrooms .summary {
-        display: inline-block;
-        max-height: 24px;
-        max-width: 540px;
-        overflow: hidden;
+        display:   inline-block;
+        max-height:        24px;
+        max-width:        540px;
+        overflow:        hidden;
         text-overflow: ellipsis;
-        white-space: nowrap;
+        white-space:     nowrap;
     }
 
     .schedule .allrooms .room {
-        background-color: #ede;
-        border: 1px solid #cac;
-        border-radius: 4px;
-        color: #000;
-        display: block;
-        float: right;
-        padding: 3px 6px;
-        text-align: center;
-        width: initial;
+        background-color:  #ede;
+        border: 1px solid  #cac;
+        border-radius:      4px;
+        color:             #000;
+        display:          block;
+        float:            right;
+        padding:        3px 6px;
+        text-align:      center;
+        width:          initial;
     }
 
     .schedule .roomheading {
-        background-color: #ede;
-        border: 1px solid #cac;
-        border-radius: 4px;
-        color: black;
-        font-weight: normal;
-        padding: 4px 6px;
-        text-align: center;
+        background-color:  #ede;
+        border: 1px solid  #cac;
+        border-radius:      4px;
+        color:            black;
+        font-weight:     normal;
+        padding:        4px 6px;
+        text-align:      center;
     }
 
     .schedule .duration:not(:empty):before {
-        content: "\A(";
-        white-space: pre;
+        content:          "\A(";
+        white-space:        pre;
     }
 
     .schedule .duration:not(:empty):after {
-        content: ")";
+        content:            ")";
     }
 
     .schedule .title {
-        font-size: 0.8em;
-        font-weight: initial;
-        padding-top: 0px;
-        white-space: normal;
+        font-size:        0.8em;
+        font-weight:    initial;
+        padding-top:        0px;
+        white-space:     normal;
     }
 
     .schedule .authors {
-        font-style: italic;
+        font-style:      italic;
     }
 
     .schedule .capacity {
-        bottom: 4px;
-        float: none;
-        height: auto;
-        left: 6px;
-        padding-top: 3px;
-        position: absolute;
-        text-align: left;
-        width: 100%;
+        bottom:             4px;
+        float:             none;
+        height:            auto;
+        left:               6px;
+        padding-top:        3px;
+        position:      absolute;
+        text-align:        left;
+        width:             100%;
     }
 
     .schedule .emptyseats {
-        display: none;
+        display:           none;
     }
 }
 
@@ -375,21 +374,21 @@
 
     .schedule {
         position: relative;
-        z-index: 10;
+        z-index:        10;
     }
 
     .schedule .day,
     .schedule .date {
-        display: none;
+        display:      none;
     }
 
     .schedule .day.active {
-        display: initial;
+        display:   initial;
     }
 
     .schedule .tabs {
         display: table-row;
-        height: 60px;
+        height:       60px;
     }
 
     .schedule .tabs td {
@@ -397,37 +396,31 @@
     }
 
     .schedule .tab {
-        display: inline-block;
-        background-color: #eee;
-        border: 2px dotted #999;
-        border-bottom: none;
+        background-color:         #eee;
+        border-bottom:            none;
         border-radius: 8px 8px 0px 0px;
-        color: #999;
-        font-size: x-large;
-        line-height: 1.25em;
-        position: absolute;
-        text-align: center;
-        top: 2px;
-        /* left margin is 92px, right gap is 12px */
-        width: calc(calc(100% - 104px) * 30 / 100);
+        border:        2px dotted #999;
+        border-bottom:  1px solid #999;
+        color:                    #999;
+        display:          inline-block;
+        font-size:             x-large;
+        line-height:            1.25em;
+        margin:               0px 12px;
+        min-width:               140px;
+        padding:                   6px;
+        position:             relative;
+        text-align:             center;
+        top:                       6px;
     }
 
     .schedule .tab.active {
-        background-color: #fff;
-        border: 2px solid #999;
-        border-bottom: none;
-        color: purple;
+        background-color:         #fff;
+        border: 2px solid         #999;
+        border-bottom:            none;
+        color:                  purple;
     }
 
     .schedule .tab.day1 {
-        left: 92px;
-    }
-
-    .schedule .tab.day2 {
-        left: calc(92px + calc(100% - 104px) * 35 / 100);
-    }
-
-    .schedule .tab.day3 {
-        left: calc(92px + calc(100% - 104px) * 70 / 100);
+        margin-left:             120px;
     }
 }
