@@ -466,16 +466,17 @@ $string['initializeschedule'] = 'Initialize<br />schedule';
 $string['emptyschedule'] = 'Empty<br />schedule';
 $string['populateschedule'] = 'Populate<br />schedule';
 $string['renumberschedule'] = 'Renumber<br />schedule';
-$string['addday'] = 'Add<br />day';
-$string['addslot'] = 'Add<br />slot';
-$string['addroom'] = 'Add<br />room';
+$string['add'] = 'Add';
+$string['day'] = 'Day';
+$string['slot'] = 'Slot';
+$string['room'] = 'Room';
+$string['roomheadings'] = 'Room headings';
+$string['first'] = 'First';
+$string['after'] = 'After';
+$string['last'] = 'Last';
 $string['editcss'] = 'Edit<br />CSS';
-$string['above'] = 'Above';
-$string['below'] = 'Below';
-$string['start'] = 'Start';
-$string['end'] = 'End';
-$string['left'] = 'Left';
-$string['right'] = 'Right';
+
+$string['attending'] = 'Attending';
 $string['notattending'] = 'Not attending';
 
 $string['generatecontent_help'] = 'If this setting is enabled, then sample presentations will be added to the schedule. Otherwise, all sessions will be left empty.';

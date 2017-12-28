@@ -97,22 +97,15 @@ switch ($action) {
             }
         }
 
-        // cache position strings
-        $str = (object)array('above' => get_string('above', $plugin),
-                             'below' => get_string('below', $plugin),
-                             'left'  => get_string('left',  $plugin),
-                             'right' => get_string('right', $plugin),
-                             'start' => get_string('start', $plugin),
-                             'end'   => get_string('end',   $plugin));
-
         $commands = array(
-            'initializeschedule' => $days,
-            'emptyschedule'      => $days,
-            'populateschedule'   => $days,
-            'renumberschedule'   => $days,
-            'addday'  => array('above' => $str->above, 'below' => $str->below, 'start' => $str->start, 'end' => $str->end),
-            'addslot' => array('above' => $str->above, 'below' => $str->below, 'start' => $str->start, 'end' => $str->end),
-            'addroom' => array('left'  => $str->left,  'right' => $str->right, 'start' => $str->start, 'end' => $str->end),
+            'initializeschedule'  => $days,
+            'emptyschedule'       => $days,
+            'populateschedule'    => $days,
+            'renumberschedule'    => $days,
+            'add' => array('slot' => get_string('slot', $plugin),
+                           'room' => get_string('room', $plugin),
+                           'roomheadings' => get_string('roomheadings', $plugin),
+                           'day'  => get_string('day', $plugin)),
             'editcss' => array()
         );
 

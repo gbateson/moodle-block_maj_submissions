@@ -153,7 +153,9 @@
 
 .schedule .title {
     clear: left;
-    font-size: 1.6em;
+    font-size: 1.2em;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
 
@@ -163,6 +165,7 @@
 
 .schedule .schedulenumber {
     font-style: normal;
+    font-weight: 400;
 }
 
 .schedule .schedulenumber:not(:empty):before {
@@ -265,7 +268,7 @@
     .schedule .timeheading {
         font-size:    0.9em;
         font-weight: normal;
-        min-width:     80px;
+        min-width:    100px;
         padding-top:    6px;
         text-align:  center;
         vertical-align: top;
@@ -413,14 +416,14 @@
         top:                       6px;
     }
 
+    .schedule .tab:first-child {
+        margin-left:             120px;
+    }
+
     .schedule .tab.active {
         background-color:         #fff;
         border: 2px solid         #999;
         border-bottom:            none;
         color:                  purple;
-    }
-
-    .schedule .tab.day1 {
-        margin-left:             120px;
     }
 }

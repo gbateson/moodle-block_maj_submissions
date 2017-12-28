@@ -196,7 +196,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $mform->disabledIf($name, 'templatetype', 'neq', self::TEMPLATE_GENERATE);
 
             $name = 'slotinterval';
-            $default = (10 * MINSECS);
+            $default = (5 * MINSECS);
             $this->add_field($mform, $this->plugin, $name, 'duration', PARAM_INT, null, $default);
             $mform->disabledIf($name, 'templatetype', 'neq', self::TEMPLATE_GENERATE);
 
@@ -489,9 +489,14 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                         }
                     }
                 } else {
+                    // tidy the incoming HTML snippet
+                	$search = '/^.*?(<table[^>]*>.*<\/table>).*?$/us';
+                	//$data->schedule_html = clean_param($data->schedule_html, PARAM_CLEANHTML);
+                	$data->schedule_html = preg_replace($search, '$1', $data->schedule_html)."\n";
+
                 	// save the modified HTML for the schedule
                     $html = $DB->get_field($cm->modname, 'content', array('id' => $cm->instance));
-                    $html = preg_replace('/<table[^>]*>.*<\/table>/us', $data->schedule_html, $html);
+                    $html = preg_replace('/<table[^>]*>.*<\/table>\s*/us', $data->schedule_html, $html);
                     $DB->set_field($cm->modname, 'content', $html, array('id' => $cm->instance));
                     $link = "/mod/$cm->modname/view.php";
                     $link = new moodle_url($link, array('id' => $cm->id));
@@ -798,12 +803,12 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $content .= html_writer::end_tag('tr');
 
             // slots
-            $addroomheadings = true;
+            $addheadings = true;
             foreach ($slots as $s => $slot) {
 
                 // add room headings, if necessary
                 if (empty($slot->allrooms)) {
-                    if ($addroomheadings) {
+                    if ($addheadings) {
                         $content .= html_writer::start_tag('tr', array('class' => 'roomheadings'));
                         $content .= html_writer::tag('th', '', array('class' => 'timeheading'));
                         foreach ($rooms as $r => $room) {
@@ -816,10 +821,10 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                             $content .= html_writer::tag('th', $text, array('class' => "roomheading room$r"));
                         }
                         $content .= html_writer::end_tag('tr');
-                        $addroomheadings = false;
+                        $addheadings = false;
                     }
                 } else {
-                    $addroomheadings = true;
+                    $addheadings = true;
                 }
 
                 $content .= html_writer::start_tag('tr', array('class' => 'slot slot'.$s));
@@ -866,7 +871,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                         $text = html_writer::tag('span', $room->name,  array('class' => 'roomname')).
                                 html_writer::tag('span', $room->seats, array('class' => 'roomseats')).
                                 html_writer::tag('div',  $room->topic, array('class' => 'roomtopic'));
-                        $session .= html_writer::tag('div',  $text, array('class' => 'room'));
+                        $session .= html_writer::tag('div',  $text, array('class' => "room room$r"));
 
                         // title
                         $text = $instance->get_string('sessiontitlex', $this->plugin, "$d.$s.$r");
@@ -923,20 +928,17 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                         $session .= html_writer::tag('div', $summary, array('class' => 'summary'));
 
                         // capacity
+                        $id = "id_demo_$d$s$r";
+                        $params = array('type' => 'checkbox', 'value' => 1,
+                                        'name' => "demo[$r]", 'id' => $id);
                         if ($r==$attending) {
-                            $capacity = html_writer::empty_tag('input', array('type' => 'checkbox',
-                                                                              'value' => 1,
-                                                                              'checked' => 'checked',
-                                                                              'name' => "demo[$r]",
-                                                                              'id' => "id_demo_$d$s$r")).
-                                        html_writer::tag('label', 'Attending', array('for' => "id_demo_$d$s$r"));
+                            $label = get_string('attending', $this->plugin);
+                            $params['checked'] = 'checked';
                         } else {
-                            $capacity = html_writer::empty_tag('input', array('type' => 'checkbox',
-                                                                              'value' => 1,
-                                                                              'name' => "demo[$r]",
-                                                                              'id' => "id_demo_$r")).
-                                        html_writer::tag('label', 'Not attending', array('for' => "id_demo_$d$s$r"));
+                            $label = get_string('notattending', $this->plugin);
                         }
+                        $capacity = html_writer::empty_tag('input', $params).
+                                    html_writer::tag('label', $label, array('for' => $id));
                         $capacity = html_writer::tag('div', $room->emptyseats, array('class' => 'emptyseats')).
                                     html_writer::tag('div', $capacity, array('class' => 'attendance'));
                         $session .= html_writer::tag('div', $capacity, array('class' => 'capacity'));

@@ -33,11 +33,16 @@ if (MAJ.str==null) {
 
 MAJ.str.en = "English";
 MAJ.str.ja = "Japanese";
+MAJ.str.ko = "Korean";
+MAJ.str.zh_cn = "Chinese (Simplified)";
+MAJ.str.zh_tw = "Chinese (Traditional)";
+
 MAJ.str.roomname = "Room name";
 MAJ.str.roomseats = "Seating";
 MAJ.str.roomtopic = "Topic";
 
 MAJ.str.ok = "OK";
+MAJ.str.add = "Add";
 MAJ.str.cancel = "Cancel";
 MAJ.str.remove = "Remove";
 MAJ.str.update = "Update";
@@ -48,21 +53,40 @@ MAJ.str.time = "Time";
 MAJ.str.duration = "Duration";
 MAJ.str.starttime = "Start time";
 MAJ.str.finishtime = "Finish time";
+MAJ.str.allrooms = "All rooms";
+
+MAJ.str.textseparator = ": ";
+MAJ.str.timeseparator = ":";
+MAJ.str.durationseparator = " - ";
+
+MAJ.str.daytext = "Day text";
+
+MAJ.str.addday = "Add a new day";
+MAJ.str.addroom = "Add a new room";
+MAJ.str.addroomheadings = "Add room headings";
+MAJ.str.addslot = "Add a new slot";
 
 MAJ.str.editday = "Edit day";
 MAJ.str.editroom = "Edit room";
-MAJ.str.editslot = "Edit slot";
 MAJ.str.editsession = "Edit session";
+MAJ.str.editslot = "Edit slot";
 
 MAJ.str.removeday = "Remove day";
 MAJ.str.removeroom = "Remove room";
-MAJ.str.removeslot = "Remove slot";
+MAJ.str.removeroomheadings = "Remove room headings";
 MAJ.str.removesession = "Remove session";
+MAJ.str.removeslot = "Remove slot";
 
-MAJ.str.confirmremoveday = "Do you really want remove this day?";
-MAJ.str.confirmremoveroom = "Do you really want remove this room?";
-MAJ.str.confirmremovesession = "Do you really want remove this session?";
-MAJ.str.confirmremoveslot = "Do you really want remove this slot?";
+MAJ.str.confirmday = "Do you really want to remove this day?";
+MAJ.str.confirmroom = "Do you really want to remove this room?";
+MAJ.str.confirmroomheadings = "Do you really want to remove these room headings?";
+MAJ.str.confirmsession = "Do you really want to remove this session?";
+MAJ.str.confirmslot = "Do you really want to remove this slot?";
+
+MAJ.str.addedday = "New day was successfully added";
+MAJ.str.addedroom = "New room was successfully added";
+MAJ.str.addedroomheadings = "Room headings were successfully added";
+MAJ.str.addedslot = "New slot was successfully added";
 
 MAJ.str.editedday = "Day was updated";
 MAJ.str.editedroom = "Room was updated";
@@ -71,6 +95,7 @@ MAJ.str.editedslot = "Slot was updated";
 
 MAJ.str.removedday = "Day was removed";
 MAJ.str.removedroom = "Room was removed";
+MAJ.str.removedroomheadings = "Room headings were removed";
 MAJ.str.removedsession = "Session was removed";
 MAJ.str.removedslot = "Slot was removed";
 
@@ -94,7 +119,7 @@ MAJ.update_record = function(session) {
 }
 
 MAJ.set_schedule_html = function() {
-    var html = $("#schedule").html();
+    var html = MAJ.trim($("#schedule").html());
 
     // remove YUI ids
     html = html.replace(new RegExp(' *\\bid="yui_[^"]*"', "g"), "");
@@ -225,6 +250,10 @@ MAJ.open_dialog = function(evt, title, html, actiontext, actionicon, actionfunct
     evt.stopPropagation();
 }
 
+MAJ.show_add_dialog = function(evt, title, html, actionfunction) {
+    MAJ.open_dialog(evt, title, html, MAJ.str.add, null, actionfunction, true);
+}
+
 MAJ.show_edit_dialog = function(evt, title, html, actionfunction) {
     MAJ.open_dialog(evt, title, html, MAJ.str.update, null, actionfunction, true);
 }
@@ -246,7 +275,7 @@ MAJ.select_session = function(id) {
 
 MAJ.edit_session = function(evt) {
     var id = $(this).closest(".session").prop("id");
-    var recordid = id.replace(new RegExp("^id_recordid_(\\d+)$"), "$1");
+    var recordid = MAJ.extract_recordid(id);
 
     var title = MAJ.str.editsession + ": rid=" + recordid;
     var html = "<p>Edit a session</p>";
@@ -258,12 +287,12 @@ MAJ.edit_session = function(evt) {
     MAJ.show_edit_dialog(evt, title, html, actionfunction);
 }
 
-MAJ.delete_session = function(evt) {
+MAJ.remove_session = function(evt) {
     var id = $(this).closest(".session").prop("id");
-    var recordid = id.replace(new RegExp("^id_recordid_(\\d+)$"), "$1");
+    var recordid = MAJ.extract_recordid(id);
 
     var title = MAJ.str.removesession + ": rid=" + recordid;
-    var html = MAJ.tag("p", MAJ.str.confirmremovesession);
+    var html = MAJ.tag("p", MAJ.str.confirmsession);
     var actionfunction = function(){
 
         // add new empty session to #items
@@ -307,7 +336,7 @@ MAJ.edit_room = function(evt) {
         details[name] = {};
         var span = detail.find("span.multilang");
         if (span.length==0) {
-            details[name] = span.text();
+            details[name] = detail.text();
             continue;
         }
         span.each(function(){
@@ -321,7 +350,7 @@ MAJ.edit_room = function(evt) {
         });
     }
 
-    var title = MAJ.str.editroom + ": " + room;
+    var title = MAJ.str.editroom + MAJ.str.textseparator + room;
 
     var html = "";
     html += "<table><tbody>";
@@ -343,13 +372,13 @@ MAJ.edit_room = function(evt) {
         html += "<tr>" + MAJ.tag("th", MAJ.str[name]);
         if (langs.length==0) {
             attr.name = name;
-            attr.value = details[name];
+            attr.value = MAJ.trim(details[name]);
             html += MAJ.tag("td", MAJ.emptytag("input", attr));
         } else {
             for (var i=0; i<langs.length; i++) {
                 var lang = langs[i];
                 attr.name = name + "_" + lang;
-                attr.value = (details[name][lang] || "");
+                attr.value = MAJ.trim(details[name][lang]);
                 html += MAJ.tag("td", MAJ.emptytag("input", attr));
             }
         }
@@ -361,14 +390,11 @@ MAJ.edit_room = function(evt) {
     html += MAJ.hidden("room", room);
 
     var actionfunction = function(){
-        var day  = $(this).find("[name=day]").val();
-        var room = $(this).find("[name=room]").val();
+        var day = MAJ.form_value(this, "day");
+        var room = MAJ.form_value(this, "room");
         var heading = $(".day" + day + " .roomheading.room" + room);
+        var session = $(".day" + day + " .session .room" + room);
         for (var name in MAJ.roomdetails) {
-            var detail = heading.find("." + name);
-            if (detail.length==0) {
-                continue;
-            }
             var html = "";
             $(this).find("input[name^=" + name + "]").each(function(){
                 var value = MAJ.htmlescape($(this).val());
@@ -379,9 +405,9 @@ MAJ.edit_room = function(evt) {
                 }
                 html += value;
             });
-            detail.html(html);
+            heading.find("." + name).html(html);
+            session.find("." + name).html(html);
         }
-        heading.removeClass("ui-selected");
 
         MAJ.open_dialog(evt, title, MAJ.str.editedroom, MAJ.str.ok);
     };
@@ -389,7 +415,7 @@ MAJ.edit_room = function(evt) {
     MAJ.show_edit_dialog(evt, title, html, actionfunction);
 }
 
-MAJ.delete_room = function(evt) {
+MAJ.remove_room = function(evt) {
 	// extract day/room number and day text
 	var day = MAJ.extract_parent_day(this);
     var room = MAJ.extract_parent_room(this);
@@ -398,9 +424,9 @@ MAJ.delete_room = function(evt) {
     var heading = $(this).closest(".roomheading");
     heading.addClass("ui-selected");
 
-    var title = MAJ.str.removeroom + ": " + room;
+    var title = MAJ.str.removeroom + MAJ.str.textseparator + room;
 
-    var html = MAJ.tag("p", MAJ.str.confirmremoveroom);
+    var html = MAJ.tag("p", MAJ.str.confirmroom);
     html += "<table><tbody>";
     html += "<tr>" + MAJ.tag("th", MAJ.str.day) + MAJ.tag("td", daytext) + "</tr>";
     for (var name in MAJ.roomdetails) {
@@ -415,8 +441,8 @@ MAJ.delete_room = function(evt) {
     html += MAJ.hidden("room", room);
 
     var actionfunction = function(){
-        var day  = $(this).find("[name=day]").val();
-        var room = $(this).find("[name=room]").val();
+        var day = MAJ.form_value(this, "day");
+        var room = MAJ.form_value(this, "room");
 
         // unassign any active sessions
         var heading = $(".day" + day + " .roomheading.room" + room);
@@ -439,7 +465,6 @@ MAJ.delete_room = function(evt) {
                 }
             });
         }
-        heading.removeClass("ui-selected");
 
         MAJ.open_dialog(evt, title, MAJ.str.removedroom, MAJ.str.ok);
     };
@@ -447,16 +472,116 @@ MAJ.delete_room = function(evt) {
     MAJ.show_remove_dialog(evt, title, html, actionfunction);
 }
 
-MAJ.replaceduration = function(items, duration) {
-    var num = new RegExp("[0-9]+", "g");
-    items.each(function(){
-        var c = $(this).prop("class");
-        $(this).prop("class", c.replace(num, duration));
-        $(this).find("span").each(function(){
-            var t = $(this).text();
-            $(this).text(t.replace(num, duration));
+MAJ.add_roomheadings = function(evt) {
+    var added = false;
+    $(".day").each(function(){
+        var day = MAJ.extract_day($(this).prop("class"));
+        var add = true;
+        $(this).find("tr").not(".date").each(function(){
+            if (MAJ.is_allrooms($(this))) {
+                add = true;
+            } else if (add) {
+                if ($(this).is(":not(.roomheadings)")) {
+                    MAJ.roomheadings(day).insertBefore(this);
+                    added = true;
+                }
+                add = false;
+            }
         });
     });
+    MAJ.redraw_schedule(added);
+    MAJ.open_dialog(evt, MAJ.str.addroomheadings, MAJ.str.addedroomheadings, MAJ.str.ok);
+}
+
+MAJ.redraw_schedule = function(redraw) {
+    // some browsers (at least Chrome on Mac)
+    // need to redraw the schedule after adding tr
+    // rows to the main TABLE holding the schedule
+    if (redraw) {
+        $("#schedule").hide().show(50);
+    }
+}
+
+MAJ.remove_roomheadings = function(evt) {
+	// extract day number and day text
+	var day = MAJ.extract_parent_day(this);
+	var row = MAJ.extract_parent_row(this);
+    var daytext = MAJ.extract_parent_daytext(this);
+
+    var title = MAJ.str.removeroomheadings;
+
+    var html = MAJ.tag("p", MAJ.str.confirmroomheadings);
+    html += MAJ.alist([daytext]);
+    html += MAJ.hidden("day", day);
+    html += MAJ.hidden("row", row);
+
+    var actionfunction = function(){
+        var day = MAJ.form_value(this, "day");
+        var row = MAJ.form_value(this, "row");
+        $(".day.day" + day).closest("table").find("tr:eq(" + row + ")").remove();
+        MAJ.open_dialog(evt, title, MAJ.str.removedroomheadings, MAJ.str.ok);
+    };
+
+    MAJ.show_remove_dialog(evt, title, html, actionfunction);
+}
+
+MAJ.add_slot = function(evt) {
+	// specify title
+    var title = MAJ.str.addslot;
+
+	// get form elements
+	var start = MAJ.hoursmins("start");
+	var finish = MAJ.hoursmins("finish");
+    var targetday = MAJ.days("targetday");
+
+	// create HTML for dialog
+    var html = "";
+    html += "<table><tbody>";
+    html += "<tr>" + MAJ.tag("th", MAJ.str.day) + MAJ.tag("td", targetday) + "</tr>";
+    html += "<tr>" + MAJ.tag("th", MAJ.str.starttime) + MAJ.tag("td", start) + "</tr>";
+    html += "<tr>" + MAJ.tag("th", MAJ.str.finishtime) + MAJ.tag("td", finish) + "</tr>";
+    html += "</tbody></table>";
+
+	// specify action function for dialog button
+    var actionfunction = function(){
+
+        var targetday   = MAJ.form_value(this, "targetday");
+        var starthours  = MAJ.form_value(this, "starthours");
+        var startmins   = MAJ.form_value(this, "startmins");
+        var finishhours = MAJ.form_value(this, "finishhours");
+        var finishmins  = MAJ.form_value(this, "finishmins");
+
+        var duration = MAJ.form_duration(starthours, startmins, finishhours, finishmins);
+        var startfinish = MAJ.form_startfinish(starthours, startmins, finishhours, finishmins);
+
+        // create new slot
+        var slot = MAJ.slot(targetday, startfinish, duration);
+
+        // insert html for new slot in the targetday
+        $(".day.day" + targetday).find(".slot").each(function(){
+            var slotstartfinish = $(this).find(".timeheading .startfinish").text();
+            if (slotstartfinish > startfinish) {
+                slot.insertBefore(this);
+                slot = null;
+            }
+            // return false to stop each() loop
+            return (slot==null ? false : true);
+        });
+        if (slot) {
+            // append the new slot at the end of targetday
+            $(".day.day" + targetday).append(slot);
+            slot = null;
+        }
+
+        MAJ.redraw_schedule(true);
+
+        // renumber all slots on this day
+        MAJ.renumberslots(targetday);
+
+        MAJ.open_dialog(evt, title, MAJ.str.addedslot, MAJ.str.ok);
+    };
+
+    MAJ.show_add_dialog(evt, title, html, actionfunction);
 }
 
 MAJ.edit_slot = function(evt) {
@@ -478,18 +603,21 @@ MAJ.edit_slot = function(evt) {
     var finishmins  = parseInt(startfinish.replace(regexp, "$4"));
 
 	// specify title
-    var title = MAJ.str.editslot + ": " + slot;
+    var title = MAJ.str.editslot + MAJ.str.textseparator + slot;
 
 	// get form elements
 	var start = MAJ.hoursmins("start", starthours, startmins);
 	var finish = MAJ.hoursmins("finish", finishhours, finishmins);
+	var allrooms = MAJ.is_allrooms($(".day.day" + day + " .slot" + slot));
+	var checkbox = MAJ.checkbox("allrooms", allrooms);
 
 	// create HTML for dialog
     var html = "";
     html += "<table><tbody>";
-    html += "<tr>" + MAJ.tag("th", MAJ.str.day + " ") + MAJ.tag("td", daytext) + "</tr>";
-    html += "<tr>" + MAJ.tag("th", MAJ.str.starttime + " ") + MAJ.tag("td", start) + "</tr>";
-    html += "<tr>" + MAJ.tag("th", MAJ.str.finishtime + " ") + MAJ.tag("td", finish) + "</tr>";
+    html += "<tr>" + MAJ.tag("th", MAJ.str.day) + MAJ.tag("td", daytext) + "</tr>";
+    html += "<tr>" + MAJ.tag("th", MAJ.str.starttime) + MAJ.tag("td", start) + "</tr>";
+    html += "<tr>" + MAJ.tag("th", MAJ.str.finishtime) + MAJ.tag("td", finish) + "</tr>";
+    html += "<tr>" + MAJ.tag("th", MAJ.str.allrooms) + MAJ.tag("td", checkbox) + "</tr>";
     html += "</tbody></table>";
     html += MAJ.hidden("day", day);
     html += MAJ.hidden("slot", slot);
@@ -497,31 +625,36 @@ MAJ.edit_slot = function(evt) {
 	// specify action function for dialog button
     var actionfunction = function(){
 
-        var day  = $(this).find("[name=day]").val();
-        var slot = $(this).find("[name=slot]").val();
-        var starthours  = parseInt($(this).find("[name=starthours] option:checked").val());
-        var startmins   = parseInt($(this).find("[name=startmins] option:checked").val());
-        var finishhours = parseInt($(this).find("[name=finishhours] option:checked").val());
-        var finishmins  = parseInt($(this).find("[name=finishmins] option:checked").val());
+        var day  = MAJ.form_value(this, "day");
+        var slot = MAJ.form_value(this, "slot");
+        var allrooms = MAJ.form_value(this, "allrooms");
+        var starthours  = MAJ.form_value(this, "starthours");
+        var startmins   = MAJ.form_value(this, "startmins");
+        var finishhours = MAJ.form_value(this, "finishhours");
+        var finishmins  = MAJ.form_value(this, "finishmins");
 
-        var duration = 0;
-        if (finishhours < starthours) {
-            duration = 23;
-        }
-        if (finishhours == starthours && finishmins <= startmins) {
-            duration = 23; // very unusual, probably a mistake
-        }
-        duration = (60 * (duration + finishhours - starthours));
-        duration = MAJ.pad(duration + finishmins - startmins);
-
-        var startfinish = MAJ.pad(starthours) + ":" + MAJ.pad(startmins) +
-                          " - " +
-                          MAJ.pad(finishhours) + ":" + MAJ.pad(finishmins);
+        var duration = MAJ.form_duration(starthours, startmins, finishhours, finishmins);
+        var startfinish = MAJ.form_startfinish(starthours, startmins, finishhours, finishmins);
 
         var s = $(".day" + day + " .slot" + slot);
+        s.find(".session .startfinish").html(startfinish);
         s.find(".timeheading .startfinish").html(startfinish);
+        MAJ.replaceduration(s.find(".session .duration"), duration);
         MAJ.replaceduration(s.find(".timeheading .duration"), duration);
-        MAJ.replaceduration(s.find(".session"), duration);
+
+        if (allrooms) {
+            var keep = true;
+            s.find(".session").each(function(){
+                if (keep) {
+                    var colspan = (MAJ.extract_roomcount(day) - 1);
+                    $(this).prop("colspan", colspan).addClass("allrooms");
+                    keep = false;
+                } else {
+                    MAJ.unassignsession(this);
+                    $(this).remove();
+                }
+            });
+        }
 
         MAJ.open_dialog(evt, title, MAJ.str.editedslot, MAJ.str.ok);
     };
@@ -529,7 +662,17 @@ MAJ.edit_slot = function(evt) {
     MAJ.show_edit_dialog(evt, title, html, actionfunction);
 }
 
-MAJ.delete_slot = function(evt) {
+MAJ.replaceduration = function(items, duration) {
+    var num = new RegExp("[0-9]+", "g");
+    items.each(function(){
+        $(this).prop("class", $(this).prop("class").replace(num, duration));
+        $(this).find("span.multilang").each(function(){
+            $(this).text($(this).text().replace(num, duration));
+        });
+    });
+}
+
+MAJ.remove_slot = function(evt) {
 
 	// extract day/slot number and day text
 	var day = MAJ.extract_parent_day(this);
@@ -544,9 +687,9 @@ MAJ.delete_slot = function(evt) {
     var startfinish = heading.find(".startfinish").text();
     var duration = heading.find(" .duration").html();
 
-    var title = MAJ.str.removeslot + ": " + slot;
+    var title = MAJ.str.removeslot + MAJ.str.textseparator + slot;
 
-    var html = MAJ.tag("p", MAJ.str.confirmremoveslot);
+    var html = MAJ.tag("p", MAJ.str.confirmslot);
     html += "<table><tbody>";
     html += "<tr>" + MAJ.tag("th", MAJ.str.day) + MAJ.tag("td", daytext) + "</tr>";
     html += "<tr>" + MAJ.tag("th", MAJ.str.time) + MAJ.tag("td", startfinish) + "</tr>";
@@ -556,17 +699,20 @@ MAJ.delete_slot = function(evt) {
     html += MAJ.hidden("slot", slot);
 
     var actionfunction = function(){
-        var day  = $(this).find("[name=day]").val();
-        var slot = $(this).find("[name=slot]").val();
+        var day  = MAJ.form_value(this, "day");
+        var slot  = MAJ.form_value(this, "slot");
 
         // unassign any active sessions
         var s = $(".day" + day + " .slot" + slot);
-        s.find(".session").not(".demo, .emptysession").each(function(){
+        s.find(".session").each(function(){
             MAJ.unassignsession(this);
         });
 
-        // now we can remove this slot
+        // remove this slot
         s.remove();
+
+        // renumber remaining slots on this page
+        MAJ.renumberslots(day);
 
         MAJ.open_dialog(evt, title, MAJ.str.removedslot, MAJ.str.ok);
     };
@@ -574,85 +720,154 @@ MAJ.delete_slot = function(evt) {
     MAJ.show_remove_dialog(evt, title, html, actionfunction);
 }
 
+MAJ.renumberslots = function(day) {
+    var slotnumber = 0;
+    $(".day.day" + day).find(".slot").each(function(){
+        $(this).prop("class", "slot slot" + (slotnumber++));
+    });
+}
+
 MAJ.edit_day = function(evt) {
     var day = MAJ.extract_parent_tabday(this);
-    $(this).closest(".tab").addClass("ui-selected");
-    var title = MAJ.str.editday + ": " + day;
-    var html = "<p>Form to edit a day</p>";
+
+    var tab = $(this).closest(".tab");
+    tab.addClass("ui-selected");
+
+    var title = MAJ.str.editday + MAJ.str.textseparator + day;
+
+    var html = "";
+    html += "<table><tbody>";
+
+    var name = "daytext";
+    var attr = {"type" : "text", "size" : 15};
+
+    var span = tab.find("span.multilang");
+    if (span.length==0) {
+        var value = tab.contents().filter(function(){return (this.nodeType===3);});
+        attr.name = name;
+        attr.value = MAJ.trim(value.text());
+        html += "<tr>" + MAJ.tag("th", MAJ.str[name]) + MAJ.tag("td", MAJ.emptytag("input", attr)) + "</tr>";
+    } else {
+        html += "<tr>" + MAJ.tag("td", "") + MAJ.tag("td", MAJ.tag("b", MAJ.str[name]), {"align" : "center"}) + "</tr>";
+        span.each(function(){
+            var lang = $(this).prop("lang");
+            if (lang) {
+                attr.name = name + "_" + lang;
+                attr.value = MAJ.trim($(this).html());
+                if (MAJ.str[lang]) {
+                    lang = MAJ.str[lang];
+                }
+                html += "<tr>" + MAJ.tag("th", lang) + MAJ.tag("td", MAJ.emptytag("input", attr)) + "</tr>";
+            }
+        });
+    }
+
+    html += "</tbody></table>";
+    html += MAJ.hidden("day", day);
+
     var actionfunction = function(){
+        var html = "";
+        var name = "daytext";
+        $(this).find("input[name^=" + name + "]").each(function(){
+            var value = MAJ.force_simple_html($(this).val());
+            var lang = $(this).prop("name").substr(name.length + 1);
+            if (lang) {
+                var attr = {"class" : "multilang", "lang" : lang};
+                value = MAJ.tag("span", value, attr);
+            }
+            html += value;
+        });
+
+        var day = MAJ.form_value(this, "day");
+        $(".tab.day" + day).each(function(){
+            $(this).contents().not(".icons").remove();
+            $(this).prepend(html);
+        });
+        $(".day.day" + day + " .date td:first-child").each(function(){
+            $(this).contents().remove();
+            $(this).prepend(html);
+        });
+
+        // update the day display on the Tools submenus
+        $(".subcommand[id$=day" + day + "]").html(html);
+
         MAJ.open_dialog(evt, title, MAJ.str.editedday, MAJ.str.ok);
     };
 
     MAJ.show_edit_dialog(evt, title, html, actionfunction);
 }
 
-MAJ.delete_day = function(evt) {
+MAJ.remove_day = function(evt) {
     var day = MAJ.extract_parent_tabday(this);
-    $(this).closest(".tab").addClass("ui-selected");
-    var title = MAJ.str.removeday + ": " + day;
-    var html = MAJ.tag("p", MAJ.str.confirmremoveday);
+
+    var tab = $(this).closest(".tab");
+    tab.addClass("ui-selected");
+
+    var lang = MAJ.extract_main_language();
+    var daytext = tab.find(".multilang[lang=" + lang + "]").html();
+    daytext = MAJ.force_single_line(daytext);
+
+    var title = MAJ.str.removeday + MAJ.str.textseparator + day;
+
+    var html = MAJ.tag("p", MAJ.str.confirmday);
+    html += MAJ.alist([daytext]);
+    html += MAJ.hidden("day", day);
+
     var actionfunction = function(){
+        var day  = MAJ.form_value(this, "day");
+
+        var activatetab = false;
+        $(".tab.day" + day).each(function(){
+            if ($(this).hasClass("active")) {
+                activatetab = true;
+            }
+            $(this).remove();
+        });
+
+        $(".day.day" + day).each(function(){
+            $(this).find(".session").each(function(){
+                MAJ.unassignsession(this);
+                $(this).remove();
+            });
+        });
+
+        if (activatetab) {
+            $(".tab").first().trigger("click");
+        }
+
+        // remove this day from the Tools subcommands
+        $(".subcommand[id$=day" + day + "]").remove();
+
         MAJ.open_dialog(evt, title, MAJ.str.removedday, MAJ.str.ok);
     };
 
     MAJ.show_remove_dialog(evt, title, html, actionfunction);
 }
 
-MAJ.extract_parent_daytext = function(elm) {
-    return $(elm).closest(".day").find(".date td").first().html();
-}
-
-MAJ.extract_parent_day = function(elm) {
-    return MAJ.extract_parent_number(elm, "day", "day");
-}
-
-MAJ.extract_parent_tabday = function(elm) {
-    return MAJ.extract_parent_number(elm, "tab", "day");
-}
-
-MAJ.extract_parent_room = function(elm) {
-    return MAJ.extract_parent_number(elm, "roomheading", "room");
-}
-
-MAJ.extract_parent_slot = function(elm) {
-    return MAJ.extract_parent_number(elm, "slot", "slot");
-}
-
-MAJ.extract_parent_number = function(elm, parentclass, type) {
-    var num = $(elm).closest("." + parentclass).prop("class");
-    var regexp = new RegExp("^.*\\b" + type + "(\\d+)\\b.*$");
-    return num.replace(regexp, "$1");
-}
-
-MAJ.create_icons = function(type, id) {
+MAJ.create_icons = function(type, actions) {
     var icons = document.createElement("SPAN");
     icons.setAttribute("class", "icons");
-
-    var iconedit = document.createElement("IMG");
-    iconedit.setAttribute("src", MAJ.iconedit);
-    iconedit.setAttribute("title", "Edit this session");
-    iconedit.setAttribute("class", "icon");
-    if (MAJ["edit_" + type]) {
-        $(iconedit).click(MAJ["edit_" + type]);
+    if (actions==null) {
+        actions = ["edit", "remove"];
+    } else if (typeof(actions)=="string") {
+        actions = [actions];
     }
-
-    var icondelete = document.createElement("IMG");
-    icondelete.setAttribute("src", MAJ.icondelete);
-    icondelete.setAttribute("title", "Delete this session from the schedule");
-    icondelete.setAttribute("class", "icon");
-    if (MAJ["delete_" + type]) {
-        $(icondelete).click(MAJ["delete_" + type]);
+    for (var i=0; i<actions.length; i++) {
+        var action = actions[i];
+        var icon = document.createElement("IMG");
+        icon.setAttribute("src", MAJ["icon" + action]);
+        icon.setAttribute("title", MAJ.str[action + type]);
+        icon.setAttribute("class", "icon");
+        var clickhandler = action + "_" + type;
+        if (MAJ[clickhandler]) {
+            $(icon).click(MAJ[clickhandler]);
+        } else {
+            $(icon).click(function(){
+                alert("TODO: MAJ." + clickhandler + "()");
+            });
+        }
+        icons.appendChild(icon);
     }
-
-    if (id) {
-        icons.setAttribute("id", id + "_icons");
-        iconedit.setAttribute("id", id + "_edit");
-        icondelete.setAttribute("id", id + "_delete");
-    }
-
-    icons.appendChild(iconedit);
-    icons.appendChild(icondelete);
-
     return icons;
 }
 
@@ -750,14 +965,14 @@ MAJ.click_session = function(targetsession, forceswap) {
     var nonempty = null;
 
 	// if source is empty and target is not, then
-    // move target to source, then delete target
+    // move target to source, then remove target
     if (sourceIsEmpty && targetIsEmpty==false) {
         empty = MAJ.sourcesession;
         nonempty = targetsession;
     }
 
 	// if target is empty and source is not, then
-    // move source to target, then delete source
+    // move source to target, then remove source
     if (sourceIsEmpty==false && targetIsEmpty) {
         empty = targetsession;
         nonempty = MAJ.sourcesession;
@@ -770,22 +985,26 @@ MAJ.click_session = function(targetsession, forceswap) {
         // remove "time" and "room" DIVs
         $(empty).find(MAJ.sessiontimeroom).remove();
 
-        // set time DIV (includes duration)
-        var div = $("<div></div>", {"class" : "time"});
-        $(div).html($(empty).parent(".slot")
-                            .find(".timeheading")
-                            .html());
-        $(div).appendTo(empty);
-
-        // set room DIV (includes roomname, roomseats, roomtopic)
-        var div = $("<div></div>", {"class" : "room"});
-        $(div).html($(empty).parent(".slot")
+        // locate room heading for the empty session
+        var heading = $(empty).parent(".slot")
                            .prevAll(".roomheadings")
                            .first() // most recent TR
                            .find("th, td")
-                           .eq(empty.cellIndex)
-                           .html());
-        $(div).appendTo(empty);
+                           .eq(empty.cellIndex);
+
+        var room = heading.prop("class");
+        room = MAJ.extract_number(room, ".*\\broom", "\\b.*");
+
+        // locate the time heading for this slot
+        var timeheading = $(empty).parent(".slot").find(".timeheading")
+
+        // set time DIV (includes duration)
+        var div = $("<div></div>", {"class" : "time"});
+        $(div).html(timeheading.html()).appendTo(empty);
+
+        // set room DIV (includes roomname, roomseats, roomtopic)
+        var div = $("<div></div>", {"class" : "room room" + room});
+        $(div).html(heading.html()).appendTo(empty);
 
         // transfer DOM "id"
         var id = $(nonempty).prop("id");
@@ -878,17 +1097,25 @@ MAJ.make_sessions_editable = function(container, session) {
 }
 
 MAJ.make_rooms_editable = function(container, room) {
-    MAJ.get_items(container, room, ".roomheading").each(function(){
-        var icons = MAJ.create_icons("room");
-        $(this).prepend(icons);
+    MAJ.get_items(container, room, ".roomheadings").each(function(){
+        $(this).find(".timeheading").each(function(){
+            var icons = MAJ.create_icons("roomheadings", "remove");
+            $(this).prepend(icons);
+        });
+        $(this).find(".roomheading").each(function(){
+            var icons = MAJ.create_icons("room");
+            $(this).prepend(icons);
+        });
     });
 }
 
 MAJ.make_slots_editable = function(container, slot) {
-    MAJ.get_items(container, slot, ".slot .timeheading").each(function(){
-        var icons = MAJ.create_icons("slot");
-        var txt = document.createTextNode(" ");
-        $(this).append(txt, icons);
+    MAJ.get_items(container, slot, ".slot").each(function(){
+        $(this).find(".timeheading").each(function(){
+            var icons = MAJ.create_icons("slot");
+            var txt = document.createTextNode(" ");
+            $(this).append(txt, icons);
+        });
     });
 }
 
@@ -901,11 +1128,7 @@ MAJ.make_days_editable = function(container, day) {
 }
 
 MAJ.hide_multilang_spans = function(container) {
-    // extract main language from body classes
-    var regexp = new RegExp("lang-(\\w+)");
-    var lang = $("body").attr('class').match(regexp)[1];
-
-    // hide SPANs that are not for main language
+    var lang = MAJ.extract_main_language();
     $(container).find("span.multilang[lang!=" + lang + "]").css("display", "none");
 }
 
@@ -915,13 +1138,18 @@ MAJ.setup_tools = function() {
         var activecommand = true;
         $(this).find(".subcommand").each(function(){
             // extract c(ommand) and s(ubcommand)
-            // from id, e.g. addslot-above
+            // from id, e.g. add-slot
             $(this).click(function(evt){
                 var id = $(this).prop("id");
                 var i = id.indexOf("-");
                 var c = id.substring(0, i);
                 var s = id.substring(i + 1);
-                MAJ[c](evt, s);
+                var a = c + "_" + s;
+                if (MAJ[a]) {
+                    MAJ[a](evt);
+                } else if (MAJ[c]) {
+                    MAJ[c](evt, s);
+                }
             });
             activecommand = false;
         });
@@ -940,7 +1168,7 @@ MAJ.setup_items = function() {
     if (s.length && i.length) {
         var w = s.width();
         w = (50 * parseInt(w / 50));
-        i.css("max-width", w + "px");
+        //i.css("max-width", w + "px");
     } else {
         setTimeout(MAJ.setup_items, 500);
     }
@@ -964,19 +1192,21 @@ MAJ.emptyschedule = function(evt, day) {
         // remove classes used on templates
 		$(this).removeClass("demo attending");
 
-		// empty capacity info (but leave the DOM structure)
-		$(this).find(".capacity").each(function(){
-            $(this).find(".emptyseats").empty();
-            $(this).find(".attendance").each(function(){
-                $(this).find("input[type=checkbox]").removeAttr("checked");
-                $(this).find("label").empty();
-            });
-		});
-
         // move/remove this session
         if ($(this).not(".emptysession")) {
             MAJ.unassignsession(this);
+            $(this).children().remove();
             $(this).addClass("emptysession");
+        }
+
+        if ($(this).is(".allrooms")) {
+            var roomcount = $(this).prop("colspan");
+            $(this).prop("colspan", 1);
+            $(this).removeClass("allrooms");
+            var duration = MAJ.extract_duration($(this).prop("class"));
+            var durationclass = MAJ.html_duration_class(duration);
+            var html = MAJ.html_sessions(this.colIndex, roomcount + 1, durationclass);
+            this.insertAdjacentHTML("afterend", html);
         }
     });
 
@@ -1000,7 +1230,7 @@ MAJ.unassignsession = function(session) {
         MAJ.make_sessions_selectable(null, div);
         $("#items").append(div);
     } else {
-        // remove sessions without a recognized "id"
+        // remove content from sessions without a recognized "id"
         // i.e. "demo" sessions in schedule templates
         $(session).find(MAJ.sessioncontent).remove();
     }
@@ -1032,7 +1262,6 @@ MAJ.populateschedule = function(evt, day) {
     }
     return true;
 }
-
 
 MAJ.renumberschedule = function(evt, day) {
 
@@ -1105,13 +1334,12 @@ MAJ.renumberschedule = function(evt, day) {
     });
 }
 
-MAJ.addday = function(evt, pos) {
+MAJ.add_room = function(evt) {
+    console.log("Add room");
 }
 
-MAJ.addslot = function(evt, pos) {
-}
-
-MAJ.addroom = function(evt, pos) {
+MAJ.add_day = function(evt) {
+    console.log("Add day");
 }
 
 MAJ.editcss = function(evt) {
@@ -1139,7 +1367,396 @@ MAJ.format_ajax_error = function(action, r, x) {
     return "Error (" + action + ") " + x.status + ": " + x.statusText;
 }
 
+// ==========================================
+// helper functions to extract info from DOM
+// ==========================================
+
+MAJ.is_allrooms = function(slot) {
+    var colspan = function(){
+        return this.colspan > 1;
+    };
+    return (slot.find(".allrooms").filter(colspan).length > 0);
+}
+
+MAJ.extract_main_language = function() {
+    var regexp = new RegExp("lang-(\\w+)");
+    return $("body").attr('class').match(regexp)[1];
+}
+
+MAJ.extract_parent_daytext = function(elm) {
+    var daytext = $(elm).closest(".day").find(".date td");
+    if (daytext.length==0) {
+        return "";
+    }
+    return MAJ.force_single_line(daytext.first().html());
+}
+
+MAJ.extract_parent_row = function(elm) {
+    return $(elm).closest("tr").prop("rowIndex");
+}
+
+MAJ.extract_parent_day = function(elm) {
+    return MAJ.extract_parent_number(elm, "day", "day");
+}
+
+MAJ.extract_parent_tabday = function(elm) {
+    return MAJ.extract_parent_number(elm, "tab", "day");
+}
+
+MAJ.extract_parent_room = function(elm) {
+    return MAJ.extract_parent_number(elm, "roomheading", "room");
+}
+
+MAJ.extract_parent_slot = function(elm) {
+    return MAJ.extract_parent_number(elm, "slot", "slot");
+}
+
+MAJ.extract_parent_number = function(elm, parentclass, type) {
+    var str = $(elm).closest("." + parentclass).prop("class");
+    return MAJ.extract_type_number(str, type);
+}
+
+MAJ.extract_recordid = function(id) {
+    return MAJ.extract_number(id, "id_recordid_", "");
+}
+
+MAJ.extract_active_day = function() {
+    return MAJ.extract_day($(".tab.active").prop("class"));
+}
+
+MAJ.extract_day = function(str) {
+    return MAJ.extract_type_number(str, "day");
+}
+
+MAJ.extract_room = function(str) {
+    return MAJ.extract_type_number(str, "room");
+}
+
+MAJ.extract_slot = function(str) {
+    return MAJ.extract_type_number(str, "slot");
+}
+
+MAJ.extract_duration = function(str) {
+    return MAJ.extract_number(str, ".*\\bduration", "mins\\b.*");
+}
+
+MAJ.extract_type_number = function(str, type) {
+    return MAJ.extract_number(str, ".*\\b" + type, "\\b.*");
+}
+
+MAJ.extract_number = function(str, prefix, suffix) {
+    if (typeof(str)=="string") {
+        var pattern = "^" + prefix + "(\\d+)" + suffix + "$";
+        var number = str.replace(new RegExp(pattern), "$1");
+        return (isNaN(number) ? 0 : parseInt(number));
+    }
+    return 0;
+}
+
+MAJ.extract_roomcount = function(day) {
+    var daytext = ".day.day" + day + " tr.date td";
+    return parseInt($(daytext).prop("colspan"));
+}
+
+// ==========================================
+// helper functions to create $ objects
+// ==========================================
+
+MAJ.roomheadings = function(day) {
+    // if possible we clone another row of roomheadings
+    var headings = $(".day.day" + day + " .roomheadings");
+    if (headings.length) {
+        return headings.first().clone();
+    }
+    headings = $(MAJ.html_roomheadings(day));
+    MAJ.make_rooms_editable(null, headings);
+    return headings;
+}
+
+MAJ.slot = function(targetday, startfinish, duration) {
+    var slot = $(MAJ.html_slot(targetday, startfinish, duration));
+    MAJ.make_slots_editable(null, slot);
+    MAJ.make_sessions_droppable(slot);
+    MAJ.make_sessions_draggable(slot);
+    MAJ.make_sessions_selectable(slot);
+    return slot;
+}
+
+// ==========================================
+// helper functions to create HTML elements
+// ==========================================
+
+MAJ.html_roomheadings = function(day) {
+    var roomcount = MAJ.extract_roomcount(day);
+    var html = "";
+    html += MAJ.starttag("tr", {"class" : "roomheadings"});
+    html += MAJ.tag("th", "", {"class" : "timeheading"});
+    for (var r=1; r<roomcount; r++) {
+        html += MAJ.starttag("th", {"class" : "roomheading room" + r});
+        html += MAJ.tag("span", MAJ.str.roomname + " (" + r + ")", {"class" : "roomname"});
+        html += MAJ.tag("span", "40", {"class" : "roomseats"});
+        html += MAJ.tag("div", MAJ.str.roomtopic + " (" + r + ")", {"class" : "roomtopic"});
+        html += MAJ.endtag("th");
+    }
+    html += MAJ.endtag("tr");
+    return html;
+}
+
+MAJ.html_sessions = function(r_min, r_max, durationclass) {
+    var html = "";
+    for (var r=r_min; r<r_max; r++) {
+        html += MAJ.tag("td", "", {"class" : "session emptysession room" + r + durationclass});
+    }
+    return html;
+}
+
+MAJ.html_slot = function(targetday, startfinish, duration) {
+    var durationclass = MAJ.html_duration_class(duration);
+    var durationtext = MAJ.html_duration_text(duration);
+    var roomcount = MAJ.extract_roomcount(day);
+    var html = "";
+    html += MAJ.starttag("tr", {"class" : "slot"});
+    html += MAJ.starttag("td", {"class" : "timeheading"});
+    html += MAJ.tag("span", startfinish, {"class" : "startfinish"});
+    html += MAJ.tag("span", durationtext, {"class" : "duration " + durationclass});
+    html += MAJ.endtag("td");
+    html += MAJ.html_sessions(1, roomcount, durationclass);
+    html += MAJ.endtag("tr");
+    return html;
+}
+
+MAJ.html_duration_class = function(duration) {
+    return " duration" + duration + "mins";
+}
+
+MAJ.html_duration_text = function(duration) {
+    return duration + " mins";
+}
+
+MAJ.htmlescape = function(value) {
+	value += ""; // convert to String
+	return value.replace(new RegExp("&", "g"), "&amp;")
+                .replace(new RegExp("'", "g"), "&apos;")
+                .replace(new RegExp('"', "g"), "&quot;")
+                .replace(new RegExp("<", "g"), "&lt;")
+                .replace(new RegExp(">", "g"), "&gt;");
+}
+
+MAJ.attribute = function(name, value) {
+	name = name.replace(new RegExp("^a-zA-Z0-9_-"), "g");
+	if (name=="") {
+		return "";
+	}
+	return " " + name + '="' + MAJ.htmlescape(value) + '"';
+}
+
+MAJ.attributes = function(attributes) {
+	var html = "";
+	for (var name in attributes) {
+		html += MAJ.attribute(name, attributes[name]);
+	}
+	return html;
+}
+
+MAJ.starttag = function(tag, attr) {
+	return "<" + tag + MAJ.attributes(attr) + ">";
+}
+
+MAJ.endtag = function(tag) {
+	return "</" + tag + ">";
+}
+
+MAJ.emptytag = function(tag, attr) {
+	return "<" + tag + MAJ.attributes(attr) + "/>";
+}
+
+MAJ.tag = function(tag, content, attr) {
+	return (MAJ.starttag(tag, attr) + content + MAJ.endtag(tag));
+}
+
+MAJ.hidden = function(name, value) {
+    var attr = {"type" : "hidden",
+                "name" : name,
+                "value" : value};
+	return MAJ.emptytag("input", attr);
+}
+
+MAJ.checkbox = function(name, checked) {
+    var attr = {"type" : "checkbox",
+                "name" : name,
+                "value" : 1};
+    if (checked) {
+        attr.checked = "checked";
+    }
+	return MAJ.emptytag("input", attr);
+}
+
+MAJ.alist = function(items, attr, tag) {
+    if (attr==null) {
+        attr = {};
+    }
+    if (tag==null) {
+        tag = "ul";
+    }
+    var alist = "";
+    for (var i in items) {
+        alist += MAJ.tag("li", items[i]);
+    }
+    return MAJ.tag(tag, alist);
+}
+
+MAJ.select = function(name, options, selected, attr) {
+    var html = "";
+	for (var value in options) {
+        var a = {"value" : value};
+        if (value==selected) {
+            a["selected"] = "selected";
+        }
+		html += MAJ.tag("option", options[value], a);
+	}
+	attr["name"] = name;
+	attr["id"] = "id_" + name;
+	return MAJ.tag("select", html, attr);
+}
+
+MAJ.hours = function(name, selected, attr) {
+	var options = {};
+	for (var i=0; i<=23; i++) {
+		options[i] = MAJ.pad(i);
+	}
+	attr["class"] = "selecthours";
+	return MAJ.select(name, options, selected, attr);
+}
+
+MAJ.mins = function(name, selected, attr) {
+	var options = {};
+	for (var i=0; i<=59; i+=5) {
+		options[i] = MAJ.pad(i);
+	}
+	attr["class"] = "selectmins";
+	return MAJ.select(name, options, selected, attr);
+}
+
+MAJ.hoursmins = function(name, hours, mins) {
+    var hours  = MAJ.hours(name + "hours", hours, {});
+    var mins = MAJ.mins(name + "mins", mins, {});
+	return hours + " : " + mins;
+}
+
+MAJ.days = function(name) {
+    var selected = MAJ.extract_active_day();
+	var lang = MAJ.extract_main_language();
+	var options = {};
+	$(".tab").each(function(){
+	    var day = MAJ.extract_day($(this).prop("class"));
+        var html = $(this).find("span.multilang[lang=" + lang + "]");
+        if (html.length) {
+            html = html.html();
+        } else {
+            html = $(this).html();
+        }
+        options[day] = MAJ.force_single_line(html);
+	});
+    return MAJ.select(name, options, selected, {});
+}
+
+// ==========================================
+// helper functions to manipulate strings
+// ==========================================
+
+MAJ.force_simple_html = function(html) {
+    // remove all tags, except those allowed for formatting
+    var tags = "br|hr|b|i|u|em|strong|big|small|sup|sub|tt|var";
+    return html.replace(new RegExp("<(/?\\w+)\\b[^>]*>", "g"), "<$1>")
+               .replace(new RegExp("</([^>]*)>", "g"), "<$1/>")
+               .replace(new RegExp("<(?!" + tags + ")[^>]*>", "g"), "")
+               .replace(new RegExp("<([^>]*)/>", "g"), "</$1>");
+}
+
+MAJ.force_single_line = function(html) {
+    var linebreak = new RegExp("<br\\b[^>]*>", "g");
+    return MAJ.trim(html.replace(linebreak, " "));
+}
+
+MAJ.pad = function(txt, padlength, padchar, padleft) {
+    if (txt==null) {
+        return "";
+    } else {
+        txt += "";
+    }
+    if (padlength==null) {
+        padlength = 2;
+    }
+    if (padchar==null) {
+        padchar = (isNaN(txt) ? " " : "0");
+    }
+    if (padleft==null) {
+        padleft = (isNaN(txt) ? false : true);
+    }
+    while (txt.length < padlength) {
+        if (padleft) {
+            txt = (padchar + txt);
+        } else {
+            txt = (txt + padchar);
+        }
+    }
+    return txt;
+}
+
+MAJ.trim = function(str) {
+    if (str==null) {
+        return "";
+    } else {
+        str += "";
+    }
+    var inner = new RegExp("\\s+", "g");
+    var outer = new RegExp("(^\\s+)|(\\s+$)", "g");
+    return str.replace(outer, "").replace(inner, " ");
+}
+
+// ==========================================
+// get form values
+// ==========================================
+
+MAJ.form_startfinish = function(starthours, startmins, finishhours, finishmins) {
+    return MAJ.pad(starthours) + MAJ.str.timeseparator + MAJ.pad(startmins) +
+           MAJ.str.durationseparator +
+           MAJ.pad(finishhours) + MAJ.str.timeseparator + MAJ.pad(finishmins);
+}
+
+MAJ.form_duration = function(starthours, startmins, finishhours, finishmins) {
+    var duration = 0;
+    if (finishhours < starthours) {
+        duration = 23;
+    }
+    if (finishhours == starthours && finishmins <= startmins) {
+        duration = 23; // very unusual, probably a mistake
+    }
+    duration = (60 * (duration + finishhours - starthours));
+    duration = MAJ.pad(duration + finishmins - startmins);
+    return duration;
+}
+
+MAJ.form_value = function(elm, name) {
+    var x = $(elm).find("[name=" + name + "]");
+    if (x.is("select")) {
+        x = x.find("option:checked");
+        return parseInt(x.val());
+    }
+    if (x.is("input[type=radio]")) {
+        x = x.find("input:checked");
+        return parseInt(x.val());
+    }
+    if (x.is("input[type=checkbox]")) {
+        return (x.is(":checked") ? x.val() : null);
+    }
+    return x.val();
+}
+
+// ==========================================
 // main processing after page has loaded
+// ==========================================
+
 $(document).ready(function(){
 
     // extract toolroot URL and block instance id from page URL
@@ -1149,7 +1766,7 @@ $(document).ready(function(){
     var iconroot = $("img.iconhelp").prop("src").replace(new RegExp("/[^/]+$"), "");
 
     MAJ.iconedit = iconroot + "/i/edit";
-    MAJ.icondelete = iconroot + "/i/delete";
+    MAJ.iconremove = iconroot + "/i/delete";
 
     // hide "Session information" section of form
     $("#id_sessioninfo").css("display", "none");
@@ -1233,144 +1850,3 @@ $(document).ready(function(){
         MAJ.set_schedule_html();
     });
 });
-
-// ==========================================
-// helper functions to create HTML elements
-// ==========================================
-
-MAJ.htmlescape = function(value) {
-	value += ""; // convert to String
-	return value.replace(new RegExp("&", "g"), "&amp;")
-                .replace(new RegExp("'", "g"), "&apos;")
-                .replace(new RegExp('"', "g"), "&quot;")
-                .replace(new RegExp("<", "g"), "&lt;")
-                .replace(new RegExp(">", "g"), "&gt;");
-}
-
-MAJ.attribute = function(name, value) {
-	name = name.replace(new RegExp("^a-zA-Z0-9_-"), "g");
-	if (name=="") {
-		return "";
-	}
-	return " " + name + '="' + MAJ.htmlescape(value) + '"';
-}
-
-MAJ.attributes = function(attributes) {
-	var html = "";
-	for (var name in attributes) {
-		html += MAJ.attribute(name, attributes[name]);
-	}
-	return html;
-}
-
-MAJ.starttag = function(tag, attr) {
-	return "<" + tag + MAJ.attributes(attr) + ">";
-}
-
-MAJ.endtag = function(tag) {
-	return "</" + tag + ">";
-}
-
-MAJ.emptytag = function(tag, attr) {
-	return "<" + tag + MAJ.attributes(attr) + "/>";
-}
-
-MAJ.tag = function(tag, content, attr) {
-	return (MAJ.starttag(tag, attr) + content + MAJ.endtag(tag));
-}
-
-MAJ.hidden = function(name, value) {
-    var attr = {"type" : "hidden",
-                "name" : name,
-                "value" : value};
-	return MAJ.emptytag("input", attr);
-}
-
-MAJ.select = function(name, options, selected, attr) {
-    var html = "";
-	for (var value in options) {
-        var a = {"value" : value};
-        if (value==selected) {
-            a["selected"] = "selected";
-        }
-		html += MAJ.tag("option", options[value], a);
-	}
-	attr["name"] = name;
-	attr["id"] = "id_" + name;
-	return MAJ.tag("select", html, attr);
-}
-
-MAJ.dlist = function(items, attr) {
-    if (attr==null) {
-        attr = {};
-    }
-    var dlist = "";
-    for (var i in items) {
-        dlist += MAJ.tag("dt", i);
-        dlist += MAJ.tag("dd", items[i]);
-    }
-    return MAJ.tag("dl", dlist);
-}
-
-MAJ.alist = function(items, attr, tag) {
-    if (attr==null) {
-        attr = {};
-    }
-    if (tag==null) {
-        tag = "ul";
-    }
-    var alist = "";
-    for (var i in items) {
-        alist += MAJ.tag("li", items[i]);
-    }
-    return MAJ.tag(tag, alist);
-}
-
-MAJ.hours = function(name, selected, attr) {
-	var options = {};
-	for (var i=0; i<=23; i++) {
-		options[i] = MAJ.pad(i);
-	}
-	attr["class"] = "selecthours";
-	return MAJ.select(name, options, selected, attr);
-}
-
-MAJ.mins = function(name, selected, attr) {
-	var options = {};
-	for (var i=0; i<=59; i+=5) {
-		options[i] = MAJ.pad(i);
-	}
-	attr["class"] = "selectmins";
-	return MAJ.select(name, options, selected, attr);
-}
-
-MAJ.hoursmins = function(name, hours, mins) {
-    var hours  = MAJ.hours(name + "hours", hours, {});
-    var mins = MAJ.mins(name + "mins", mins, {});
-	return hours + " : " + mins;
-}
-
-MAJ.pad = function(txt, padlength, padchar, padleft) {
-    if (txt==null) {
-        return "";
-    } else {
-        txt += "";
-    }
-    if (padlength==null) {
-        padlength = 2;
-    }
-    if (padchar==null) {
-        padchar = (isNaN(txt) ? " " : "0");
-    }
-    if (padleft==null) {
-        padleft = (isNaN(txt) ? false : true);
-    }
-    while (txt.length < padlength) {
-        if (padleft) {
-            txt = (padchar + txt);
-        } else {
-            txt = (txt + padchar);
-        }
-    }
-    return txt;
-}
