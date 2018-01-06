@@ -58,10 +58,83 @@ require_capability('moodle/course:manageactivities', $context);
 
 // get the block instance object
 $instance = block_instance($blockname, $block_instance);
+$instance->set_multilang(true);
 $config = $instance->config;
 
 $html = '';
 switch ($action) {
+
+    case 'loadstrings':
+
+        // languages
+        $langs = get_string_manager()->get_list_of_languages();
+        $names = block_maj_submissions::get_languages($config->displaylangs);
+        foreach ($names as $name) {
+            if (strpos($name, '_')) {
+                $parent = substr($name, 0, 2);
+            } else {
+                $parent = '';
+            }
+            switch (true) {
+                case array_key_exists($name, $langs):
+                    $lang = $langs[$name];
+                    break;
+                case array_key_exists($parent, $langs):
+                    $lang = $langs[$parent]." ($name)";
+                    break;
+                default:
+                    $lang = $name;
+            }
+            $lang = json_encode($lang);
+            $html .= 'MAJ.str.'.$name.' = '.$lang.';'."\n";
+        }
+
+        // langconfig strings
+        $names = array('labelsep');
+        foreach ($names as $name) {
+            $string = json_encode(get_string($name, 'langconfig'));
+            $html .= 'MAJ.str.'.$name.' = '.$string.';'."\n";
+        }
+
+        // plain strings
+        $names = array('addday','addroom', 'addroomheadings', 'addslot',
+                       'addedday', 'addedroom', 'addedroomheadings', 'addedslot',
+                       'allheadingsalldays', 'allheadingsthisday', 'allrooms', 'applyto',
+                       'confirmday', 'confirmroom', 'confirmroomheadings', 'confirmsession', 'confirmslot',
+                       'currentheadings', 'daytext', 'duration', 'durationseparator',
+                       'editday', 'editroom', 'editroomheadings', 'editsession', 'editslot',
+                       'editedday', 'editedroom', 'editedroomheadings', 'editedsession', 'editedslot',
+                       'finishtime', 'position', 'positionbefore', 'positionlast',
+                       'removeday', 'removeroom', 'removeroomheadings', 'removesession', 'removeslot',
+                       'removedday', 'removedroom', 'removedroomheadings', 'removedsession', 'removedslot',
+                       'roomcount', 'roomname', 'roomseats', 'roomtopic',
+                       'slot', 'slotcount', 'slotinterval', 'slotlength', 'slotstart', 'starttime');
+
+        foreach ($names as $name) {
+            $string = json_encode(get_string($name, $plugin));
+            $html .= 'MAJ.str.'.$name.' = '.$string.';'."\n";
+        }
+
+        // standard strings
+        $names = array('add', 'cancel', 'day', 'hours', 'mins', 'ok', 'remove', 'time', 'update');
+        foreach ($names as $name) {
+            $string = json_encode(get_string($name));
+            $html .= 'MAJ.str.'.$name.' = '.$string.';'."\n";
+        }
+
+        // multilang strings
+        $names = array('durationtxt');
+        foreach ($names as $name) {
+            switch ($name) {
+                case 'durationtxt';
+                    $string = $instance->multilang_format_time(300);
+                    $string = str_replace('5', '{a}', $string);
+                    break;
+            }
+            $html .= 'MAJ.str.'.$name.' = '.json_encode($string).';'."\n";
+        }
+
+        break;
 
     case 'loadtools':
 
@@ -196,7 +269,7 @@ switch ($action) {
         $firstwordsearch = array('/[^a-zA-Z0-9 ]/u', '/ .*$/u');
         $firstwordreplace = array('', '');
 
-        $durationsearch = array('/(^.*\()|(\).*$)/u', '/[^a-zA-Z0-9]/', '/^.*$/');
+        $durationsearch = array('/(^.*\()|(\).*$)/u', '/[^0-9]/', '/^.*$/');
         $durationreplace = array('', '', 'duration$0');
 
         // cache for CSS classes derived from

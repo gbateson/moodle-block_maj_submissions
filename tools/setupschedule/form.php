@@ -67,6 +67,8 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
     const TEMPLATE_UPLOAD   = 3;
     const TEMPLATE_GENERATE = 4;
 
+    protected $dataids = array();
+
     /**
      * definition
      */
@@ -258,6 +260,10 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $name = 'schedule_html';
             $mform->addElement('hidden', $name, '');
             $mform->setType($name, PARAM_RAW);
+
+            $name = 'schedule_unassigned';
+            $mform->addElement('hidden', $name, '');
+            $mform->setType($name, PARAM_SEQUENCE);
         }
 
         $this->add_action_buttons();
@@ -360,6 +366,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                 continue;
             }
             $dataid = $cm->instance;
+            $this->dataids[$dataid] = true;
             foreach ($names as $name) {
                 if ($this->$name) {
                     continue; // this menu has already been set up
@@ -394,6 +401,8 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                 }
             }
         }
+        $this->dataids = array_keys($this->dataids);
+        $this->dataids = array_filter($this->dataids);
     }
 
     /**
@@ -432,17 +441,20 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
 
             if ($cm) {
 
+                // fetch the menus
+                $this->set_schedule_menus();
+
                 if (empty($data->schedule_html)) {
-                    $this->set_schedule_menus();
 
                     $recordid = 0;
-                    $fields = array('schedule_event',    'schedule_day',  'schedule_time',
-                                    'schedule_duration', 'schedule_room', 'schedule_audience');
-
-                    $fields = array_flip($fields);
-                    foreach (array_keys($fields) as $name) {
-
-                        $content = null;
+                    $fields = array('schedule_event'    => null,
+                                    'schedule_day'      => null,
+                                    'schedule_time'     => null,
+                                    'schedule_duration' => null,
+                                    'schedule_room'     => null,
+                                    'schedule_topic'    => null,
+                                    'schedule_audience' => null);
+                    foreach ($fields as $name => $content) {
                         if (isset($data->$name)) {
                             if ($name=='schedule_event') {
                                 foreach (array_keys($this->$name) as $activityname) {
@@ -488,7 +500,9 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                             }
                         }
                     }
+
                 } else {
+
                     // tidy the incoming HTML snippet
                 	$search = '/^.*?(<table[^>]*>.*<\/table>).*?$/us';
                 	//$data->schedule_html = clean_param($data->schedule_html, PARAM_CLEANHTML);
@@ -502,6 +516,167 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                     $link = new moodle_url($link, array('id' => $cm->id));
                     $link = html_writer::link($link, $cm->name, array('target' => '_blank'));
                     $msg[] = get_string('scheduleupdated', $this->plugin, $link);
+
+                    // prepare SQL to select database fields associated with this block
+                    list($dataidselect, $dataidparams) = $DB->get_in_or_equal($this->dataids);
+
+                    // search strings to parse HTML table
+                    $search = new stdClass();
+                    $search->tbody = '/<tbody\b([^>]*)>(.*?)<\/tbody>/us';
+                    $search->tr = '/<tr\b([^>]*)>(.*?)<\/tr>/us';
+                    $search->td = '/<td\b([^>]*)>(.*?)<\/td>/us';
+
+                    // search strings to detect CSS classes
+                    $search->class = '/(?<=class=").*?(?=")/';
+                    $search->date = '/\bdate\b/';
+                    $search->day = '/\bday\b/';
+                    $search->slot = '/\bslot\b/';
+                    $search->timeheading = '/\btimeheading\b/';
+
+                    // search string to detect recordid
+                    $search->recordid = '/(?<=id="id_recordid_)(\d+)(?=")/';
+
+                    // the search string to extract value from a session
+                    // the value can be a multilang string, or plain text
+                    $value = '((<span[^>]*class="multilang"[^>]*>.*?<\/span>)+|.*?)';
+
+                    // map CSS class names to database fields
+                    $fieldids = array();
+                    $fields = array('startfinish' => 'schedule_time',
+                                    'duration'    => 'schedule_duration',
+                                    'roomname'    => 'schedule_room',
+                                    'roomseats'   => 'capacity',       // in rooms database
+                                    'roomtopic'   => 'schedule_topic', // does not exist yet
+                                    'type'        => 'presentation_type',
+                                    'category'    => 'presentation_category',
+                                    'schedulenumber' => 'schedule_number');
+                    foreach ($fields as $name => $field) {
+                        $search->$name = '/<span[^>]*class="[^"]*\b('.$name.')\b[^"]*"[^>]*>'.$value.'<\/span>/us';
+                        $select = 'dataid '.$dataidselect.' AND name = ?';
+                        $params = array_merge($dataidparams, array($field));
+                        $fieldid = $DB->get_field_select('data_fields', 'id', $select, $params);
+                        if (empty($fieldid)) {
+                            unset($fields[$name]);
+                        } else {
+                            $fieldids[$field] = $fieldid;
+                        }
+                    }
+
+                    // update room/session info
+                    if (preg_match_all($search->tbody, $html, $days)) {
+                        $d_max = count($days[0]);
+                    } else {
+                        $d_max = 0;
+                    }
+                    for ($d=0; $d<$d_max; $d++) {
+                        $r_max = 0;
+                        if ($days[2][$d]) {
+                            if (preg_match($search->class, $days[1][$d], $dayclass)) {
+                                $dayclass = reset($dayclass);
+                                if (preg_match($search->day, $dayclass, $day)) {
+                                    $day = reset($day);
+                                    if (preg_match_all($search->tr, $days[2][$d], $rows)) {
+                                        $r_max = count($rows[0]);
+                                    }
+                                }
+                            }
+                        }
+                        $daytext = '';
+                        for ($r=0; $r<$r_max; $r++) {
+                            $slot = ''; // not used but might be useful
+                            $c_max = 0;
+                            if ($rows[2][$r]) {
+                                if (preg_match($search->class, $rows[1][$r], $rowclass)) {
+                                    $rowclass = reset($rowclass);
+                                    if (preg_match($search->date, $rowclass)) {
+                                        if (preg_match_all($search->td, $rows[2][$r], $cells)) {
+                                            $daytext = reset($cells[2]);
+                                            // Note: leave $c_max set to zero, to skip this row
+                                        }
+                                    } else if (preg_match($search->slot, $rowclass, $slot)) {
+                                        $slot = reset($slot);
+                                        if (preg_match_all($search->td, $rows[2][$r], $cells)) {
+                                            $c_max = count($cells[0]);
+                                        }
+                                    }
+                                }
+                            }
+                            $rowstartfinish = '';
+                            $rowduration = '';
+                            for ($c=0; $c<$c_max; $c++) {
+                                if (preg_match($search->timeheading, $cells[1][$c])) {
+                                    if (preg_match($search->startfinish, $cells[2][$c], $startfinish)) {
+                                        $rowstartfinish = $startfinish[1];
+                                    }
+                                    if (preg_match($search->duration, $cells[2][$c], $duration)) {
+                                        $rowduration = $duration[1];
+                                    }
+                                } else if (preg_match($search->recordid, $cells[1][$c], $recordid)) {
+                                    $recordid = $recordid[1];
+                                    $values = array();
+                                    foreach ($fields as $name => $field) {
+                                        if (preg_match($search->$name, $cells[2][$c], $value)) {
+                                            $values[$name] = $value[2];
+                                        }
+                                    }
+                                    foreach ($fields as $name => $field) {
+                                        if (array_key_exists($name, $values)) {
+                                            $value = $values[$name];
+                                            if (isset($this->$field)) {
+                                                if (! array_key_exists($value, $this->$field)) {
+                                                    $this->$field[$value] = '';
+                                                }
+                                            }
+                                            if ($fieldid = $fieldids[$field]) {
+                                                $params = array('fieldid' => $fieldid, 'recordid' => $recordid);
+                                                $DB->set_field('data_content', 'content', $value, $params);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // add new values to menu/select/radio fields in database
+                    foreach ($fields as $name => $field) {
+                        if (isset($this->$field) && ($fieldid = $fieldids[$field])) {
+                            foreach ($this->$field as $value => $link) {
+                                if ($link=='' && $value) {
+                                    $field = $DB->get_record('data_fields', array('id' => $fieldid));
+                                    $field->param1 = rtrim($field->param1)."\n".$value;
+                                    $field = $DB->update_record('data_fields', $field);
+                                }
+                            }
+                        }
+                    }
+
+                    // remove schedule settings for any unassigned sessions
+                    if ($ids = $data->schedule_unassigned) {
+                        $ids = explode(',', $ids);
+                        $ids = array_map('trim', $ids);
+                        $ids = array_filter($ids);
+                        if (count($ids)) {
+                            list($recordselect, $recordparams) = $DB->get_in_or_equal($ids);
+                            $fields = array('schedule_time'     => 0,
+                                            'schedule_duration' => 0,
+                                            'schedule_room'     => 0,
+                                            'schedule_topic'    => 0);
+                            foreach ($fields as $field => $fieldid) {
+                                if (array_key_exists($field, $fieldids)) {
+                                    $fields[$field] = $fieldids[$field];
+                                } else {
+                                    unset($fields[$field]);
+                                }
+                            }
+                            if (count($fields)) {
+                                list($fieldselect, $fieldparams) = $DB->get_in_or_equal($fields);
+                                $select = "recordid ".$recordselect." AND fieldid ".$fieldselect;
+                                $params = array_merge($recordparams, $fieldparams);
+                                $DB->set_field_select('data_content', 'content', '', $select, $params);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -689,7 +864,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $finish = $instance->multilang_userdate($finish, 'schedulesessiontime', $this->plugin);
 
             $duration = $times[$time]->duration;
-            $cssclass = 'duration'.round($duration / 60).'mins';
+            $cssclass = 'duration'.round($duration / 60);
             $duration = $instance->multilang_format_time($duration);
 
             $slots[] = (object)array('startfinish' => "$start - $finish",
@@ -716,7 +891,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
 
         // cache the formatted slot duration (e.g. 20 mins)
         $duration = $instance->multilang_format_time($slotduration);
-        $cssclass = 'duration'.round($slotduration / 60).'mins';
+        $cssclass = 'duration'.round($slotduration / 60);
 
         $countslots = 0;
         $slottime = $firstslottime;
@@ -764,15 +939,15 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
         $content .= html_writer::start_tag('table', array('class' => 'schedule'));
 
         // COLGROUP (after CAPTION, before THEAD)
-        $content .= html_writer::start_tag('colgroup');
-        $content .= html_writer::start_tag('col', array('class' => 'room0 timeheading'));
-        foreach ($rooms as $r => $room) {
-            if ($r==0) {
-                continue;
-            }
-            $content .= html_writer::start_tag('col', array('class' => "room$r"));
-        }
-        $content .= html_writer::end_tag('colgroup');
+        //$content .= html_writer::start_tag('colgroup');
+        //$content .= html_writer::start_tag('col', array('class' => 'room0 timeheading'));
+        //foreach ($rooms as $r => $room) {
+        //    if ($r==0) {
+        //        continue;
+        //    }
+        //    $content .= html_writer::start_tag('col', array('class' => "room$r"));
+        //}
+        //$content .= html_writer::end_tag('colgroup');
 
         // THEAD
         $content .= html_writer::start_tag('thead');
@@ -827,10 +1002,10 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                     $addheadings = true;
                 }
 
-                $content .= html_writer::start_tag('tr', array('class' => 'slot slot'.$s));
+                $content .= html_writer::start_tag('tr', array('class' => 'slot slot'.$s.' '.$slot->cssclass));
 
                 $time = html_writer::tag('span', $slot->startfinish, array('class' => 'startfinish')).
-                        html_writer::tag('span', $slot->duration, array('class' => 'duration '.$slot->cssclass));
+                        html_writer::tag('span', $slot->duration, array('class' => 'duration'));
                 $content .= html_writer::tag('td', $time, array('class' => 'timeheading'));
 
                 if ($generatecontent) {
@@ -851,7 +1026,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                     if ($r && $slot->allrooms==true) {
                         continue;
                     }
-                    if ($r==0) {
+                    if ($r==0 && $generatecontent) {
                         $attending = $r;
                     }
 
@@ -862,7 +1037,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                     if ($generatecontent==false) {
                         // do nothing
 
-                    } else if ($attending==$r || rand(0, 2)) {
+                    } else if ($r==$attending || rand(0, 2)) {
 
                         // time
                         $session .= html_writer::tag('div', $time, array('class' => 'time'));
@@ -944,9 +1119,9 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                         $session .= html_writer::tag('div', $capacity, array('class' => 'capacity'));
                     }
 
-                    $class = 'session demo';
-                    if ($slot->cssclass) {
-                        $class .= ' '.$slot->cssclass;
+                    $class = 'session';
+                    if ($session) {
+                        $class .= ' demo';
                     }
                     if ($slot->allrooms) {
                         $class .= ' allrooms';
