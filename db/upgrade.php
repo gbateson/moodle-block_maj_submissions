@@ -32,6 +32,8 @@ function xmldb_block_maj_submissions_upgrade($oldversion=0) {
 
     $result = true;
 
+    $dbman = $DB->get_manager();
+
     $newversion = 2017022350;
     if ($oldversion < $newversion) {
 
@@ -129,6 +131,41 @@ function xmldb_block_maj_submissions_upgrade($oldversion=0) {
     $newversion = 2017121842;
     if ($oldversion < $newversion) {
         block_maj_submissions_upgrade_multilang();
+        upgrade_block_savepoint($result, "$newversion", 'maj_submissions');
+    }
+
+    $newversion = 2018010851;
+    if ($oldversion < $newversion) {
+
+        /////////////////////////////////////////////////
+        // add table to storeattendance detalis
+        /////////////////////////////////////////////////
+
+        // Define table block_maj_submissions to be created.
+        $table = new xmldb_table('block_maj_submissions');
+
+        // Adding fields to table block_maj_submissions.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('instanceid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('recordid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('attend', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table block_maj_submissions.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+        $table->add_key('blocconf_ins_ix', XMLDB_KEY_FOREIGN, array('instanceid'), 'block_instances', array('id'));
+        $table->add_key('blocconf_rec_ix', XMLDB_KEY_FOREIGN, array('recordid'), 'data_records', array('id'));
+        $table->add_key('blocconf_use_ix', XMLDB_KEY_FOREIGN, array('userid'), 'user', array('id'));
+
+        // Adding indexes to table block_maj_submissions.
+        $table->add_index('blocconf_insuse_ix', XMLDB_INDEX_NOTUNIQUE, array('instanceid', 'userid'));
+        $table->add_index('blocconf_insrecuse_ix', XMLDB_INDEX_UNIQUE, array('instanceid', 'recordid', 'userid'));
+
+        // Conditionally launch create table for block_maj_submissions.
+        if (! $dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
         upgrade_block_savepoint($result, "$newversion", 'maj_submissions');
     }
 

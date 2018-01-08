@@ -1666,7 +1666,7 @@ class block_maj_submissions extends block_base {
      * @param   integer  $taillength (optional, default=16)
      * @return  string
      */
-    static function trim_text($text, $textlength=42, $headlength=16, $taillength=16) {
+    static public function trim_text($text, $textlength=42, $headlength=16, $taillength=16) {
         if ($textlength) {
             $strlen = self::textlib('strlen', $text);
             if ($strlen > $textlength) {
@@ -1729,5 +1729,100 @@ class block_maj_submissions extends block_base {
         } else {
             return self::context($contextlevel, $instanceid);
         }
+    }
+
+    /**
+     * get_room_seats
+     *
+     * extract a numeric number of seats from the "schedule_roomseats" field
+     *
+     * @param string $text
+     * @return the numeric number of seats extract from the schedule_roomseats
+     * @todo Finish documenting this function
+     */
+    static function extract_number_from_text($text, $parentheses) {
+
+        // search for double-byte parentheses
+        if ($parentheses) {
+            if (preg_match('/\x{FF08}(.*?)\x{FF09}/us', $text, $number)) {
+                $text = $number[1];
+                $parentheses = false;
+            } else if (preg_match('/\((.*?)\)/us', $text, $number)) {
+                $text = $number[1];
+                $parentheses = false;
+            }
+        }
+
+        // stop here if the parentheses were required but missing
+        if ($parentheses) {
+            return 0;
+        }
+
+        // search for double-byte numbers
+        if (preg_match('/[\x{FF10}-\x{FF19}]+/u', $text, $number)) {
+            $number = strtr($number[0], array("\u{FF10}" => 0, "\u{FF11}" => 1,
+                                              "\u{FF12}" => 2, "\u{FF13}" => 3,
+                                              "\u{FF14}" => 4, "\u{FF15}" => 5,
+                                              "\u{FF16}" => 6, "\u{FF17}" => 7,
+                                              "\u{FF18}" => 8, "\u{FF19}" => 9));
+            return intval($number);
+        }
+
+        // search for single-byte numbers
+        if (preg_match('/[0-9]+/', $text, $number)) {
+            return intval($number[0]);
+        }
+
+        return 0;
+    }
+
+    /**
+     * get_room_seats
+     *
+     * extract a numeric number of seats from the "schedule_roomseats" field
+     *
+     * @param integer $recordid
+     * @param integer $cmid
+     * @return the numeric number of seats extract from the schedule_roomseats
+     * @todo Finish documenting this function
+     */
+    static function get_room_seats($recordid, $cmid) {
+        global $DB;
+
+        $select = 'df.name AS fieldname, dc.content';
+        $from   = '{data_content} dc, '.
+                  '{data_fields} df, '.
+                  '{course_modules} cm';
+        $where  = 'dc.recordid = ? '.
+                  'AND dc.fieldid = df.id '.
+                  'AND (df.name = ? OR df.name = ?)'.
+                  'AND df.dataid = cm.instance '.
+                  'AND cm.id = ?';
+        $params = array($recordid, 'schedule_roomname', 'schedule_roomseats', $cmid);
+        $order = 'df.name DESC'; // i.e. roomseats FIRST
+
+        if ($texts = $DB->get_records_sql_menu("SELECT $select FROM $from WHERE $where ORDER BY $order", $params)) {
+            $search = '/<span[^>]*class="multilang"[^>]*>(.*?)<\/span>/us';
+            foreach ($texts as $fieldname => $text) {
+                if ($text=='') {
+                    continue;
+                }
+                $parentheses = ($fieldname=='schedule_roomname');
+                if (preg_match_all($search, $text, $matches)) {
+                    $i_max = count($matches[0]);
+                    for ($i=0; $i<$i_max; $i++) {
+                        if ($seats = self::extract_number_from_text($matches[1][$i], $parentheses)) {
+                            return $seats;
+                        }
+                    }
+                } else {
+                    if ($seats = self::extract_number_from_text($text, $parentheses)) {
+                        return $seats;
+                    }
+                }
+            }
+        }
+
+        return 0;
     }
 }

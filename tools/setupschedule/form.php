@@ -54,12 +54,13 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
     );
 
     // caches for the menu items
-    protected $schedule_day      = null;
-    protected $schedule_time     = null;
-    protected $schedule_duration = null;
-    protected $schedule_room     = null;
-    protected $schedule_audience = null;
-    protected $schedule_event    = array();
+    protected $schedule_day        = null;
+    protected $schedule_time       = null;
+    protected $schedule_duration   = null;
+    protected $schedule_roomname   = null;
+    protected $schedule_roomseats  = null;
+    protected $schedule_audience   = null;
+    protected $schedule_event      = array();
 
     const TEMPLATE_NONE     = 0;
     const TEMPLATE_ACTIVITY = 1;
@@ -168,10 +169,10 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $mform->disabledIf($name, 'templatetype', 'neq', self::TEMPLATE_GENERATE);
 
             $name = 'numberofrooms';
-            if (count($this->schedule_room) <= 1) {
+            if (count($this->schedule_roomname) <= 1) {
                 $default = 6;
             } else {
-                $default = count($this->schedule_room);
+                $default = count($this->schedule_roomname);
                 $default--;
             }
             $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, range(0, max(10, $default)), $default);
@@ -251,7 +252,10 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $name = 'schedule_duration';
             $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
 
-            $name = 'schedule_room';
+            $name = 'schedule_roomname';
+            $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
+
+            $name = 'schedule_roomseats';
             $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
 
             $name = 'schedule_audience';
@@ -345,7 +349,8 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
         $names = array('schedule_day',
                        'schedule_time',
                        'schedule_duration',
-                       'schedule_room',
+                       'schedule_roomname',
+                       'schedule_roomseats',
                        'schedule_audience');
 
         foreach ($types as $type) {
@@ -373,9 +378,6 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                 }
                 $params = array('dataid' => $dataid, 'name' => $name);
                 if (! $field = $DB->get_record('data_fields', $params)) {
-                    continue;
-                }
-                if (! $field->param1) {
                     continue;
                 }
                 if (self::is_menu_field($field)) {
@@ -447,13 +449,14 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                 if (empty($data->schedule_html)) {
 
                     $recordid = 0;
-                    $fields = array('schedule_event'    => null,
-                                    'schedule_day'      => null,
-                                    'schedule_time'     => null,
-                                    'schedule_duration' => null,
-                                    'schedule_room'     => null,
-                                    'schedule_topic'    => null,
-                                    'schedule_audience' => null);
+                    $fields = array('schedule_event'     => null,
+                                    'schedule_day'       => null,
+                                    'schedule_time'      => null,
+                                    'schedule_duration'  => null,
+                                    'schedule_roomname'  => null,
+                                    'schedule_roomseats' => null,
+                                    'schedule_topic'     => null,
+                                    'schedule_audience'  => null);
                     foreach ($fields as $name => $content) {
                         if (isset($data->$name)) {
                             if ($name=='schedule_event') {
@@ -544,8 +547,8 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                     $fieldids = array();
                     $fields = array('startfinish' => 'schedule_time',
                                     'duration'    => 'schedule_duration',
-                                    'roomname'    => 'schedule_room',
-                                    'roomseats'   => 'capacity',       // in rooms database
+                                    'roomname'    => 'schedule_roomname',
+                                    'roomseats'   => 'schedule_roomseats',
                                     'roomtopic'   => 'schedule_topic', // does not exist yet
                                     'type'        => 'presentation_type',
                                     'category'    => 'presentation_category',
@@ -642,11 +645,12 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                     foreach ($fields as $name => $field) {
                         if (isset($this->$field) && ($fieldid = $fieldids[$field])) {
                             foreach ($this->$field as $value => $link) {
-                                if ($link=='' && $value) {
-                                    $field = $DB->get_record('data_fields', array('id' => $fieldid));
-                                    $field->param1 = rtrim($field->param1)."\n".$value;
-                                    $field = $DB->update_record('data_fields', $field);
+                                if ($value=='0' || $link) {
+                                    continue;
                                 }
+                                $field = $DB->get_record('data_fields', array('id' => $fieldid));
+                                $field->param1 = rtrim($field->param1)."\n".$value;
+                                $field = $DB->update_record('data_fields', $field);
                             }
                         }
                     }
@@ -658,10 +662,11 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                         $ids = array_filter($ids);
                         if (count($ids)) {
                             list($recordselect, $recordparams) = $DB->get_in_or_equal($ids);
-                            $fields = array('schedule_time'     => 0,
-                                            'schedule_duration' => 0,
-                                            'schedule_room'     => 0,
-                                            'schedule_topic'    => 0);
+                            $fields = array('schedule_time'      => 0,
+                                            'schedule_duration'  => 0,
+                                            'schedule_roomname'  => 0,
+                                            'schedule_roomseats' => 0,
+                                            'schedule_topic'     => 0);
                             foreach ($fields as $field => $fieldid) {
                                 if (array_key_exists($field, $fieldids)) {
                                     $fields[$field] = $fieldids[$field];
@@ -671,7 +676,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                             }
                             if (count($fields)) {
                                 list($fieldselect, $fieldparams) = $DB->get_in_or_equal($fields);
-                                $select = "recordid ".$recordselect." AND fieldid ".$fieldselect;
+                                $select = "recordid $recordselect AND fieldid $fieldselect";
                                 $params = array_merge($recordparams, $fieldparams);
                                 $DB->set_field_select('data_content', 'content', '', $select, $params);
                             }

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="blocks/maj_submissions/db" VERSION="20180108" COMMENT="XMLDB file for Moodle blocks/maj_submissions"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="block_maj_submissions" COMMENT="Store details of attendance at conference presentations">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="instanceid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="recordid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="id from the data_records table of a conference event"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="id from the user table"/>
+        <FIELD NAME="attend" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="flag denoting whether or not the user (userid) is attending the presentation (recordid) associated with the block instance (instanceid)"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="blocconf_ins_ix" TYPE="foreign" FIELDS="instanceid" REFTABLE="block_instances" REFFIELDS="id" COMMENT="id in block_instances table"/>
+        <KEY NAME="blocconf_rec_ix" TYPE="foreign" FIELDS="recordid" REFTABLE="data_records" REFFIELDS="id" COMMENT="id in data_records table"/>
+        <KEY NAME="blocconf_use_ix" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id" COMMENT="id in the user table"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="blocconf_insuse_ix" UNIQUE="false" FIELDS="instanceid, userid" COMMENT="index to select all attendance for a certain user"/>
+        <INDEX NAME="blocconf_insrecuse_ix" UNIQUE="true" FIELDS="instanceid, recordid, userid" COMMENT="index to update info about a given user attending a certain conference event"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

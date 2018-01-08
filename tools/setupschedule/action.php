@@ -31,8 +31,58 @@ $blockname = 'maj_submissions';
 $plugin = "block_$blockname";
 $tool = 'toolsetupschedule';
 
-$id = required_param('id', PARAM_INT); // block_instance id
+// =========================================
+// fetch main input parameters
+// - to EDIT the schedule, we need $id and $action
+// - to VIEW the schedule, we need $cmid and $action
+// - to UPDATE attendance, we need $rid, $attend and $action
+// =========================================
+
+$id = optional_param('id', 0, PARAM_INT); // block_instances id
+$rid = optional_param('rid', 0, PARAM_INT); // database_records id
+$cmid = optional_param('cmid', 0, PARAM_INT); // course_modules id
+$attend = optional_param('attend', 0, PARAM_INT);
 $action = required_param('action', PARAM_ALPHA);
+
+// =========================================
+// if necessary, determine cmid from rid
+// =========================================
+
+if ($rid) {
+    $select = 'cm.id';
+    $from   = '{course_modules} cm,'.
+              '{modules} m,'.
+              '{data_records} dr';
+    $where  = 'dr.id = ? '.
+              'AND dr.dataid = cm.instance '.
+              'AND cm.module = m.id '.
+              'AND m.name = ?';
+    $params = array($rid, 'data');
+    $cmid = $DB->get_field_sql("SELECT $select FROM $from WHERE $where", $params);
+}
+
+// =========================================
+// if necessary, determine block_instance id
+// from cmid (only one block per course)
+// =========================================
+
+if ($cmid) {
+    $select = 'bi.id';
+    $from   = '{block_instances} bi,'.
+              '{context} ctx,'.
+              '{course_modules} cm';
+    $where  = 'cm.id = ? '.
+              'AND cm.course  = ctx.instanceid '.
+              'AND ctx.contextlevel = ? '.
+              'AND ctx.id = bi.parentcontextid '.
+              'AND bi.blockname = ?';
+    $params = array($cmid, CONTEXT_COURSE, 'maj_submissions');
+    $id = $DB->get_field_sql("SELECT $select FROM $from WHERE $where", $params);
+}
+
+// =========================================
+// fetch main records from Moodle Database
+// =========================================
 
 if (! $block_instance = $DB->get_record('block_instances', array('id' => $id))) {
     print_error('invalidinstanceid', $plugin);
@@ -53,16 +103,73 @@ if (! $course = $DB->get_record('course', array('id' => $context->instanceid))) 
 }
 $course->context = $context;
 
+// =========================================
+// check access rights
+// =========================================
+
 require_login($course->id);
 require_capability('moodle/course:manageactivities', $context);
 
-// get the block instance object
+// =========================================
+// setup the block instance object
+// =========================================
+
 $instance = block_instance($blockname, $block_instance);
 $instance->set_multilang(true);
 $config = $instance->config;
 
+// =========================================
+// take appropriate action
+// =========================================
+
 $html = '';
 switch ($action) {
+
+    case 'loadattendance':
+
+        $names = array('attending', 'notattending', 'fullschedule', 'myschedule');
+        foreach ($names as $name) {
+            $string = json_encode(get_string($name, $plugin));
+            $html .= 'MAJ.str.'.$name.' = '.$string.';'."\n";
+        }
+
+        $html .= 'MAJ.attend = {};'."\n";
+        $params = array('instanceid' => $id,
+                        'userid'     => $USER->id,
+                        'attend'     => 1);
+        if ($attendances = $DB->get_records($plugin, $params)) {
+            foreach ($attendances as $a) {
+                $html .= 'MAJ.attend['.$a->recordid.'] = '.intval($a->attend).';';
+            }
+        }
+
+        $html .= 'MAJ.emptyseats = {};'."\n";
+        break;
+
+    case 'updateattendance':
+
+        if ($rid) {
+            $params = array('instanceid' => $id,
+                            'recordid'   => $rid,
+                            'userid'     => $USER->id);
+            if (! $DB->record_exists($plugin, $params)) {
+                $DB->insert_record($plugin, $params);
+            }
+            $DB->set_field($plugin, 'attend', ($attend ? 1 : 0), $params);
+
+            // get number of seats allocated in this presentation
+            $params['attend'] = 1;
+            if ($usedseats = $DB->get_field($plugin, 'COUNT(*)', $params)) {
+                $usedseats = intval($usedseats);
+            } else {
+                $usedseats = 0;
+            }
+
+            if ($totalseats = block_maj_submissions::get_room_seats($rid, $cmid)) {
+                $html .= get_string('emptyseatsx', $plugin, $totalseats - $usedseats);
+            }
+        }
+        break;
 
     case 'loadstrings':
 
@@ -92,7 +199,7 @@ switch ($action) {
         // langconfig strings
         $names = array('labelsep');
         foreach ($names as $name) {
-            $string = json_encode(get_string($name, 'langconfig'));
+            $string = json_encode(trim(get_string($name, 'langconfig')));
             $html .= 'MAJ.str.'.$name.' = '.$string.';'."\n";
         }
 
@@ -104,7 +211,7 @@ switch ($action) {
                        'currentheadings', 'daytext', 'duration', 'durationseparator',
                        'editday', 'editroom', 'editroomheadings', 'editsession', 'editslot',
                        'editedday', 'editedroom', 'editedroomheadings', 'editedsession', 'editedslot',
-                       'finishtime', 'position', 'positionbefore', 'positionlast',
+                       'finishtime', 'numhours', 'nummins', 'position', 'positionbefore', 'positionlast',
                        'removeday', 'removeroom', 'removeroomheadings', 'removesession', 'removeslot',
                        'removedday', 'removedroom', 'removedroomheadings', 'removedsession', 'removedslot',
                        'roomcount', 'roomname', 'roomseats', 'roomtopic',
@@ -116,7 +223,7 @@ switch ($action) {
         }
 
         // standard strings
-        $names = array('add', 'cancel', 'day', 'hours', 'mins', 'ok', 'remove', 'time', 'update');
+        $names = array('add', 'cancel', 'day', 'ok', 'remove', 'time', 'update');
         foreach ($names as $name) {
             $string = json_encode(get_string($name));
             $html .= 'MAJ.str.'.$name.' = '.$string.';'."\n";
@@ -414,7 +521,7 @@ switch ($action) {
 
             // room
             $html .= html_writer::start_tag('div', array('class' => 'room'));
-            $html .= html_writer::tag('span', $item['schedule_room'], array('class' => 'roomname'));
+            $html .= html_writer::tag('span', $item['schedule_roomname'], array('class' => 'roomname'));
             $html .= html_writer::tag('span', '', array('class' => 'roomseats'));
             $html .= html_writer::tag('span', '', array('class' => 'roomtopic'));
             $html .= html_writer::end_tag('div');

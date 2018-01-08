@@ -932,7 +932,7 @@ MAJ.add_day = function(evt) {
     var slotintervals = {};
 
     // RegExp to parse start/finish times
-    var startfinish = new RegExp("(\\d+):(\\d+) - (\\d+):(\\d+)");
+    var startfinish = new RegExp("(\\d+)\\s*:\\s*(\\d+)\\s*-\\s*(\\d+)\\s*:\\s*(\\d+)");
 
     // search the current schedule and pick out default values for the new day
     $("tbody.day").each(function(){
@@ -961,16 +961,16 @@ MAJ.add_day = function(evt) {
     });
 
     // set default values for form elements
-    var roomcount = MAJ.mode(roomcounts) || $("select[name=schedule_room] option").length || 5;
-    var slotcount = MAJ.mode(slotcounts) || $("select[name=schedule_slot] option").length || 10;
-    var slotlength = MAJ.mode(slotlengths) || 20;
+    var roomcount = MAJ.mode(roomcounts) || 5;
+    var slotcount = MAJ.mode(slotcounts) || 10;
+    var slotlength = MAJ.mode(slotlengths) || 25;
     var slotinterval = MAJ.mode(slotintervals) || 5;
 
     // create form elements
-    roomcount = MAJ.range("roomcount", roomcount);
-    slotcount = MAJ.range("slotcount", slotcount);
-    slotlength = MAJ.mins("slotlength", slotlength, 5, 120);
-    slotinterval = MAJ.mins("slotinterval", slotinterval, 0, 55);
+    roomcount = MAJ.range("roomcount", roomcount, 1, Math.max(10, MAJ.max(roomcounts)));
+    slotcount = MAJ.range("slotcount", slotcount, 1, Math.max(20, MAJ.max(slotcounts)));
+    slotlength = MAJ.mins("slotlength", slotlength, 10, Math.max(120, MAJ.max(slotlengths)));
+    slotinterval = MAJ.mins("slotinterval", slotinterval, 0, Math.max(60, MAJ.max(slotintervals)));
 
 	// create HTML for dialog
     var html = "";
@@ -1535,8 +1535,41 @@ MAJ.emptyschedule = function(evt, day) {
 
 MAJ.populateschedule = function(evt, day) {
 
+    // Slot allocation rules
+    // =====================
+    // https://stackoverflow.com/questions/2746309/best-fit-scheduling-algorithm
+    // https://www.codeproject.com/Articles/23111/Making-a-Class-Schedule-Using-a-Genetic-Algorithm
+
+    // Hard requirements (if you break one of these, then the schedule is infeasible):
+    // (1) presenters cannot teach twice in the same slot
+    // (2) presenters should not present in consecutive slots
+    // (3) distribute languages equally throughout schedule
+    // (4) distribute sponsors equally throughout schedule
+    // (5) slot should match presentation_times
+
+    // Some soft requirements (can be broken, but the schedule is still feasible):
+    // (6) try to have same topics as previous/next session
+    // (7) try to have same language as previous/next session
+    // (8) try to have same keywords as previous/next session
+
+    // SETTINGS SCREEN:
+    // preference_time_1 => day first_slot last_slot
+    // preference_time_2 => day first_slot last_slot
+    // preference_time_3 => day first_slot last_slot
+    // preference_time_4 => day first_slot last_slot
+
     // cancel previous clicks on sessions, if any
     MAJ.select_session();
+
+    // request scheduling info from server: "loadinfo"
+    // (only send info about submission whose status is accepeted)
+    // - presentation_language
+    // - presentation_topics
+    // - presentation_keywords
+    // - presentation_times
+    // - presenter userids (including co-presenters)
+
+    // determine common keywords and topics
 
     // select empty sessions on the selected day
     var empty = $(MAJ.get_day_selector(day, " .emptysession:not(.allrooms)"));
@@ -1552,7 +1585,7 @@ MAJ.populateschedule = function(evt, day) {
 
     // mimic clicks to assign sessions
     var max = Math.min(items.length,
-                         empty.length);
+                       empty.length);
     for (var i=(max-1); i>=0; i--) {
         MAJ.click_session(items.get(i));
         MAJ.click_session(empty.get(i));
@@ -1672,12 +1705,24 @@ MAJ.mode = function(a) {
     var mode = null;
     var count = null;
     for (var i in a) {
-        if (count===null || count < a[i]) {
+        i = parseInt(i);
+        if (count===null || count < a[i] || (count==a[i] && mode < i)) {
             count = a[i];
             mode = i;
         }
     }
-    return mode;
+    return (mode==null ? 0 : mode);
+}
+
+MAJ.max = function(a) {
+    var max = null;
+    for (var i in a) {
+        i = parseInt(i);
+        if (max===null || max < i) {
+            max = i;
+        }
+    }
+    return (max==null ? 0 : max);
 }
 
 // ==========================================
@@ -2296,7 +2341,7 @@ MAJ.hours = function(name, selected, min, max, attr) {
 	    if (pad) {
             options[i] = MAJ.pad(i);
 	    } else {
-            options[i] = MAJ.get_string("hours", i);
+            options[i] = MAJ.get_string("numhours", i);
 	    }
 	}
 	return MAJ.select(name, options, selected, attr);
@@ -2321,7 +2366,7 @@ MAJ.mins = function(name, selected, min, max, attr) {
 	    if (pad) {
             options[i] = MAJ.pad(i);
 	    } else {
-            options[i] = MAJ.get_string("mins", i);
+            options[i] = MAJ.get_string("nummins", i);
 	    }
 	}
 	return MAJ.select(name, options, selected, attr);
@@ -2333,7 +2378,7 @@ MAJ.hoursmins = function(name, hours, mins) {
 	return hours + MAJ.str.labelsep + mins;
 }
 
-MAJ.range = function(name, max, min, selected, attr) {
+MAJ.range = function(name, selected, min, max, attr) {
     if (name==null) {
         return "";
     }
@@ -2430,7 +2475,7 @@ MAJ.days = function(name) {
 }
 
 MAJ.rooms = function(name, currentroom) {
-    var rooms = $("select[name=schedule_room]");
+    var rooms = $("select[name=schedule_roomname]");
     if (rooms.length) {
         rooms = rooms.first().clone();
         rooms.prop("name", name);
