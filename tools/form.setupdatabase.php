@@ -375,7 +375,7 @@ class block_maj_submissions_tool_setupdatabase extends block_maj_submissions_too
             $intro = '<script type="text/javascript">'."\n".
                      '//<![CDATA['."\n".
                      '(function(){'."\n".
-                     '    var css = ".path-mod-data .howto { display: none; }";'."\n".
+                     '    var css = ".path-mod-data .howto, .path-mod-data .alert-error { display: none; }";'."\n".
                      '    var style = document.createElement("style");'."\n".
                      '    style.setAttribute("type","text/css");'."\n".
                      '    style.appendChild(document.createTextNode(css));'."\n".

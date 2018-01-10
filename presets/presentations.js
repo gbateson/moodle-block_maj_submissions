@@ -83,7 +83,7 @@ MAJ.setup_other_presenters = function() {
     var visible_rows = 0;
     $(rows).each(function(){
         var has_value = false;
-        $(this).find("input, textarea").each(function(){
+        $(this).find("input[type=text], textarea").each(function(){
             if ($(this).val()) {
                 has_value = true;
             }

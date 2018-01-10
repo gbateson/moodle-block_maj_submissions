@@ -118,7 +118,7 @@ MAJ.extract_query_attributes = function() {
 
 MAJ.extract_page_info = function() {
 
-    var x = $("div.usermenu a[href*='/course/switchrole.php']").length;
+    var x = $("div.usermenu a[href*='/course/switchrole.php'][data-title*=switchrolereturn]").length;
     MAJ.is_switchrole = (x>=1 ? true : false);
 
     // watch out for admin who has switched roles
