@@ -1542,12 +1542,12 @@ MAJ.populateschedule = function(evt, day) {
 
     // Hard requirements (if you break one of these, then the schedule is infeasible):
     // (1) presenters cannot teach twice in the same slot
+
+    // Some soft requirements (can be broken, but the schedule is still feasible):
     // (2) presenters should not present in consecutive slots
     // (3) distribute languages equally throughout schedule
     // (4) distribute sponsors equally throughout schedule
     // (5) slot should match presentation_times
-
-    // Some soft requirements (can be broken, but the schedule is still feasible):
     // (6) try to have same topics as previous/next session
     // (7) try to have same language as previous/next session
     // (8) try to have same keywords as previous/next session
@@ -1568,8 +1568,6 @@ MAJ.populateschedule = function(evt, day) {
     // - presentation_keywords
     // - presentation_times
     // - presenter userids (including co-presenters)
-
-    // determine common keywords and topics
 
     // select empty sessions on the selected day
     var empty = $(MAJ.get_day_selector(day, " .emptysession:not(.allrooms)"));
@@ -2094,7 +2092,7 @@ MAJ.html_day = function(day, daytext, roomcount, slotcount, slotstart, slotlengt
 MAJ.html_roomheadings_toprow = function() {
     return MAJ.starttag("tr")
            + MAJ.tag("td", "")
-           + MAJ.boldcenter("td", MAJ.str.roomname)
+           + MAJ.boldcenter("td", MAJ.str.room)
            + MAJ.boldcenter("td", MAJ.str.roomtopic)
            + MAJ.endtag("tr");
 }

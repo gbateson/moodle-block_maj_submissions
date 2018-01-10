@@ -296,7 +296,11 @@
     }
 
     .schedule.myschedule .session:not(.attending) {
-        display: table-cell;
+        display:     table-cell;
+        border-style:    dashed;
+    }
+
+    .schedule.myschedule .session:not(.attending) div {
         visibility:      hidden;
     }
 

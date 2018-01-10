@@ -685,7 +685,7 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
 
         $where = 'dc.recordid = :recordid'.
                  ' AND dc.content IS NOT NULL'.
-                 ' AND dc.content != :emptystring'.
+                 ' AND dc.content <> :emptystring'.
                  ' AND ('.$DB->sql_like('df.name', ':firstname').
                         ' OR '.$DB->sql_like('df.name', ':lastname').')';
 

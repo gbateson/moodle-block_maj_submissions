@@ -83,8 +83,13 @@ MAJ.setup_other_presenters = function() {
     var visible_rows = 0;
     $(rows).each(function(){
         var has_value = false;
-        $(this).find("input").each(function(){
+        $(this).find("input, textarea").each(function(){
             if ($(this).val()) {
+                has_value = true;
+            }
+        });
+        $(this).find("div[contenteditable=true]").each(function(){
+            if ($(this).text()) {
                 has_value = true;
             }
         });

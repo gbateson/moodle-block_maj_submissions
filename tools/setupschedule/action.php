@@ -33,9 +33,19 @@ $tool = 'toolsetupschedule';
 
 // =========================================
 // fetch main input parameters
+//
 // - to EDIT the schedule, we need $id and $action
+//   actions: loadstrings
+//            loadtools
+//            loaditems
+//            loadschedule
+//            loadinfo
+//
 // - to VIEW the schedule, we need $cmid and $action
+//   actions: loadattendance
+//
 // - to UPDATE attendance, we need $rid, $attend and $action
+//   actions: updateattendance
 // =========================================
 
 $id = optional_param('id', 0, PARAM_INT); // block_instances id
@@ -214,7 +224,7 @@ switch ($action) {
                        'finishtime', 'numhours', 'nummins', 'position', 'positionbefore', 'positionlast',
                        'removeday', 'removeroom', 'removeroomheadings', 'removesession', 'removeslot',
                        'removedday', 'removedroom', 'removedroomheadings', 'removedsession', 'removedslot',
-                       'roomcount', 'roomname', 'roomseats', 'roomtopic',
+                       'room', 'roomcount', 'roomname', 'roomseats', 'roomtopic',
                        'slot', 'slotcount', 'slotinterval', 'slotlength', 'slotstart', 'starttime');
 
         foreach ($names as $name) {
@@ -636,6 +646,151 @@ switch ($action) {
             $html .= html_writer::end_tag('div'); // end capacity DIV
 
             $html .= html_writer::end_tag('div'); // end session DIV
+        }
+        break;
+
+    case 'loadinfo':
+        if ($cmid = $config->collectpresentationscmid) {
+            $params = array('presentation_keywords',
+                            'presentation_language',
+                            'presentation_times',
+                            'presentation_topics');
+            list($where, $params) = $DB->get_in_or_equal($params);
+            $select = 'dc.id, '.
+                      'dc.content AS value, '.
+                      'dc.recordid, '.
+                      'dr.userid, '.
+                      'df.name AS field';
+            $from   = '{data_content} dc, '.
+                      '{data_records} dr, '.
+                      '{data_fields} df, '.
+                      '{course_modules} cm';
+            $where  = 'dc.recordid = dr.id '.
+                      'AND dc.fieldid = df.id '.
+                      'AND (df.name '.$where.
+                       ' OR '.$DB->sql_like('df.name', '?').' '.
+                       ' OR '.$DB->sql_like('df.name', '?').
+                       ') '.
+                      'AND df.dataid = cm.instance '.
+                      'AND cm.id = ? '.
+                      'AND dc.content <> ?';
+            $order  = 'dc.recordid, df.name';
+            array_push($params, 'name_given_%', 'name_surname_%', $cmid, '');
+            $info = new stdClass();
+            $info->userids = array();
+            $names = array();
+            if ($contents = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $order", $params)) {
+                foreach ($contents as $content) {
+                    $rid = $content->recordid;
+                    $value = $content->value;
+                    $field = $content->field;
+
+                    if (empty($info->userids[$rid])) {
+                        $info->userids[$rid] = array();
+                    }
+                    $info->userids[$rid][$content->userid] = 1;
+
+                    if (substr($field, 0, 5)=='name_') {
+
+                        // process name field
+                        $i = 0;
+                        $name = '';
+                        $type = '';
+                        $lang = 'xx';
+
+                        $parts = explode('_', $field);
+                        switch (count($parts)) {
+                            case 2:
+                                list($name, $type) = $parts;
+                                break;
+                            case 3:
+                                if (is_numeric($parts[2])) {
+                                    list($name, $type, $i) = $parts;
+                                } else {
+                                    list($name, $type, $lang) = $parts;
+                                }
+                                break;
+                            case 4:
+                                if (is_numeric($parts[2])) {
+                                    list($name, $type, $i, $lang) = $parts;
+                                } else {
+                                    list($name, $type, $lang, $i) = $parts;
+                                }
+                                break;
+                        }
+                        if ($i) {
+                            if (empty($names[$rid])) {
+                                $names[$rid] = array();
+                            }
+                            if (empty($names[$rid][$i])) {
+                                $names[$rid][$i] = array();
+                            }
+                            if (empty($names[$rid][$i][$lang])) {
+                                $names[$rid][$i][$lang] = array();
+                            }
+                            switch ($type) {
+                                case 'given': $type = 'firstname'; break;
+                                case 'surname': $type = 'lastname'; break;
+                            }
+                            $value = block_maj_submissions::textlib('strtoupper', $value);
+                            $names[$rid][$i][$lang][$type] = $value;
+                        }
+
+                    } else {
+
+                        // process "presentation_" fields
+                        $field = substr($field, 13);
+                        switch ($field) {
+                            case 'language': $delimiter = '';   break;
+                            case 'keywords': $delimiter = '/[,\x{3000}\x{3001}\x{FF0C}]/u';  break;
+                            case 'topics':   $delimiter = '##'; break;
+                            case 'times':    $delimiter = '##'; break;
+                            default:         $delimiter = null;
+                        }
+                        if (empty($info->$field)) {
+                            $info->$field = array();
+                        }
+                        if ($delimiter) {
+                            if ($delimiter=='##') {
+                                $values = explode($delimiter, $value);
+                            } else {
+                                $values = preg_split($delimiter, $value);
+                            }
+                            $values = array_map('trim', $values);
+                            $values = array_filter($values);
+                            foreach ($values as $value) {
+                                if (array_key_exists($value, $info->$field)) {
+                                    $info->$field[$value][] = $rid;
+                                } else {
+                                    $info->$field[$value] = array($rid);
+                                }
+                            }
+                        } else if ($delimiter==='') {
+                            if (array_key_exists($value, $info->$field)) {
+                                $info->$field[$value][] = $rid;
+                            } else {
+                                $info->$field[$value] = array($rid);
+                            }
+                        }
+                    }
+                }
+            }
+            foreach ($names as $rid => $parts) {
+                foreach ($parts as $i => $langs) {
+                    foreach ($langs as $lang => $types) {
+                        if (array_key_exists('firstname', $types) && array_key_exists('lastname', $types)) {
+                            $params = array('firstname' => $types['firstname'],
+                                            'lastname' => $types['lastname']);
+                            if ($users = $DB->get_records('user', $params)) {
+                                foreach ($users as $userid => $user) {
+                                    $info->userids[$rid][$userid] = 1;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            $html = json_encode($info);
         }
         break;
 
