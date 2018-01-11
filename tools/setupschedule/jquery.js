@@ -45,7 +45,7 @@ MAJ.sessiontypes = "casestudy|lightningtalk|presentation|showcase|workshop";
 
 // define selectors for session child nodes
 MAJ.sessiontimeroom = ".time, .room";
-MAJ.sessioncontent = ".title, .authors, .categorytype, .summary";
+MAJ.sessioncontent = ".title, .authors, .categorytype, .summary, .scheduleinfo";
 
 // define the selectors for room content
 MAJ.details = {"roomname" : null, "roomseats" : null, "roomtopic" : null};
@@ -264,7 +264,7 @@ MAJ.remove_session = function(evt) {
 MAJ.add_room = function(evt) {
     var title = MAJ.str.addrooms;
 
-	// start HTML for dialog
+    // start HTML for dialog
     var html = "";
     html += "<table><tbody>";
 
@@ -354,8 +354,8 @@ MAJ.add_room = function(evt) {
 
 MAJ.edit_room = function(evt) {
 
-	// extract day and room
-	var day = MAJ.extract_parent_day(this);
+    // extract day and room
+    var day = MAJ.extract_parent_day(this);
     var room = MAJ.extract_parent_room(this);
 
     var langs = [];
@@ -443,8 +443,8 @@ MAJ.edit_room = function(evt) {
 }
 
 MAJ.remove_room = function(evt) {
-	// extract day/room number and day text
-	var day = MAJ.extract_parent_day(this);
+    // extract day/room number and day text
+    var day = MAJ.extract_parent_day(this);
     var room = MAJ.extract_parent_room(this);
     var daytext = MAJ.extract_parent_daytext(this);
 
@@ -538,7 +538,7 @@ MAJ.add_roomheadings = function(evt) {
 
     var title = MAJ.str.addroomheadings;
 
-	// start HTML for dialog
+    // start HTML for dialog
     var html = "";
     html += "<table><tbody>";
 
@@ -601,14 +601,14 @@ MAJ.redraw_schedule = function(redraw) {
 }
 
 MAJ.edit_roomheadings = function(evt) {
-	// extract day number and day text
-	var day = MAJ.extract_parent_day(this);
-	var row = MAJ.extract_parent_row(this);
+    // extract day number and day text
+    var day = MAJ.extract_parent_day(this);
+    var row = MAJ.extract_parent_row(this);
     var daytext = MAJ.extract_parent_daytext(this);
 
     var title = MAJ.str.editroomheadings;
 
-	// start HTML for dialog
+    // start HTML for dialog
     var html = "";
     html += "<table><tbody>";
 
@@ -673,9 +673,9 @@ MAJ.edit_roomheadings = function(evt) {
 }
 
 MAJ.remove_roomheadings = function(evt) {
-	// extract day number and day text
-	var day = MAJ.extract_parent_day(this);
-	var row = MAJ.extract_parent_row(this);
+    // extract day number and day text
+    var day = MAJ.extract_parent_day(this);
+    var row = MAJ.extract_parent_row(this);
     var daytext = MAJ.extract_parent_daytext(this);
 
     var title = MAJ.str.removeroomheadings;
@@ -696,15 +696,15 @@ MAJ.remove_roomheadings = function(evt) {
 }
 
 MAJ.add_slot = function(evt) {
-	// specify title
+    // specify title
     var title = MAJ.str.addslot;
 
-	// get form elements
-	var start = MAJ.hoursmins("start");
-	var finish = MAJ.hoursmins("finish");
+    // get form elements
+    var start = MAJ.hoursmins("start");
+    var finish = MAJ.hoursmins("finish");
     var targetday = MAJ.days_select("targetday");
 
-	// create HTML for dialog
+    // create HTML for dialog
     var html = "";
     html += "<table><tbody>";
     html += "<tr>" + MAJ.tag("th", MAJ.str.day) + MAJ.tag("td", targetday) + "</tr>";
@@ -712,7 +712,7 @@ MAJ.add_slot = function(evt) {
     html += "<tr>" + MAJ.tag("th", MAJ.str.finishtime) + MAJ.tag("td", finish) + "</tr>";
     html += "</tbody></table>";
 
-	// specify action function for dialog button
+    // specify action function for dialog button
     var actionfunction = function(){
 
         var targetday   = MAJ.form_value(this, "targetday",   true);
@@ -756,8 +756,8 @@ MAJ.add_slot = function(evt) {
 
 MAJ.edit_slot = function(evt) {
 
-	// extract day/slot number
-	var day = MAJ.extract_parent_day(this);
+    // extract day/slot number
+    var day = MAJ.extract_parent_day(this);
     var slot = MAJ.extract_parent_slot(this);
     var daytext = MAJ.extract_parent_daytext(this);
 
@@ -776,17 +776,17 @@ MAJ.edit_slot = function(evt) {
     var dayslot = ".day" + day + " .slot" + slot;
     var s = $(dayslot);
 
-	// specify title
+    // specify title
     var title = MAJ.str.editslot;
 
-	// get form elements
-	var start = MAJ.hoursmins("start", starthours, startmins);
-	var finish = MAJ.hoursmins("finish", finishhours, finishmins);
-	var checkbox = MAJ.checkbox("allrooms", MAJ.has_allrooms(s));
+    // get form elements
+    var start = MAJ.hoursmins("start", starthours, startmins);
+    var finish = MAJ.hoursmins("finish", finishhours, finishmins);
+    var checkbox = MAJ.checkbox("allrooms", MAJ.has_allrooms(s));
 
     var roomname = MAJ.extract_sessionroom(dayslot + " .allrooms", "name");
 
-	// create HTML for dialog
+    // create HTML for dialog
     var html = "";
     html += "<table><tbody>";
     html += "<tr>" + MAJ.tag("th", MAJ.str.day) + MAJ.tag("td", daytext) + "</tr>";
@@ -797,7 +797,7 @@ MAJ.edit_slot = function(evt) {
     html += MAJ.hidden("day", day);
     html += MAJ.hidden("slot", slot);
 
-	// specify action function for dialog button
+    // specify action function for dialog button
     var actionfunction = function(){
 
         var day  = MAJ.form_value(this, "day", true);
@@ -863,8 +863,8 @@ MAJ.edit_slot = function(evt) {
 
 MAJ.remove_slot = function(evt) {
 
-	// extract day/slot number and day text
-	var day = MAJ.extract_parent_day(this);
+    // extract day/slot number and day text
+    var day = MAJ.extract_parent_day(this);
     var slot = MAJ.extract_parent_slot(this);
     var daytext = MAJ.extract_parent_daytext(this);
 
@@ -873,7 +873,7 @@ MAJ.remove_slot = function(evt) {
     var heading = $(dayslot + " .timeheading");
     heading.addClass("ui-selected");
 
-	// extract start/finish time text and duration text
+    // extract start/finish time text and duration text
     var startfinish = heading.find(".startfinish").text();
     var duration = heading.find(" .duration").html();
 
@@ -917,7 +917,7 @@ MAJ.renumberslots = function(day) {
 }
 
 MAJ.add_day = function(evt) {
-	// specify title
+    // specify title
     var title = MAJ.str.addday;
 
     var position = MAJ.position("day", $(".tabs .tab").length);
@@ -972,7 +972,7 @@ MAJ.add_day = function(evt) {
     slotlength = MAJ.mins("slotlength", slotlength, 10, Math.max(120, MAJ.max(slotlengths)));
     slotinterval = MAJ.mins("slotinterval", slotinterval, 0, Math.max(60, MAJ.max(slotintervals)));
 
-	// create HTML for dialog
+    // create HTML for dialog
     var html = "";
     html += "<table><tbody>";
     html += "<tr>" + MAJ.tag("th", MAJ.str.position) + MAJ.tag("td", position) + "</tr>";
@@ -984,7 +984,7 @@ MAJ.add_day = function(evt) {
     html += "<tr>" + MAJ.tag("th", MAJ.str.slotinterval) + MAJ.tag("td", slotinterval) + "</tr>";
     html += "</tbody></table>";
 
-	// specify action function for dialog button
+    // specify action function for dialog button
     var actionfunction = function(){
 
         var position     = MAJ.form_value(this, "position",     true);
@@ -1309,20 +1309,20 @@ MAJ.click_session = function(targetsession, forceswap) {
         return true;
     }
 
-	// otherwise, one session is empty
-	// and the other is not empty
+    // otherwise, one session is empty
+    // and the other is not empty
 
     var empty = null;
     var nonempty = null;
 
-	// if source is empty and target is not, then
+    // if source is empty and target is not, then
     // move target to source, then remove target
     if (sourceIsEmpty && targetIsEmpty==false) {
         empty = MAJ.sourcesession;
         nonempty = targetsession;
     }
 
-	// if target is empty and source is not, then
+    // if target is empty and source is not, then
     // move source to target, then remove source
     if (sourceIsEmpty==false && targetIsEmpty) {
         empty = targetsession;
@@ -1527,9 +1527,9 @@ MAJ.emptyschedule = function(evt, day) {
         });
     });
 
-	// remove any "demo" sessions in the #items container
+    // remove any "demo" sessions in the #items container
     $("#items .session").not("div[id^=id_record]").each(function(){
-		$(this).remove();
+        $(this).remove();
     });
 }
 
@@ -1561,14 +1561,6 @@ MAJ.populateschedule = function(evt, day) {
     // cancel previous clicks on sessions, if any
     MAJ.select_session();
 
-    // request scheduling info from server: "loadinfo"
-    // (only send info about submission whose status is accepeted)
-    // - presentation_language
-    // - presentation_topics
-    // - presentation_keywords
-    // - presentation_times
-    // - presenter userids (including co-presenters)
-
     // select empty sessions on the selected day
     var empty = $(MAJ.get_day_selector(day, " .emptysession:not(.allrooms)"));
     if (empty.length==0) {
@@ -1589,6 +1581,82 @@ MAJ.populateschedule = function(evt, day) {
         MAJ.click_session(empty.get(i));
     }
     return true;
+}
+
+MAJ.loadscheduleinfo = function() {
+    // request scheduling info from server: "loadinfo"
+    // (only send info about submission whose status is accepeted?)
+    var p = {"id" : MAJ.pageid, "action" : "loadinfo"};
+    $.getJSON(MAJ.toolroot + "/action.php", p, function(info){
+        MAJ.info = info;
+        MAJ.colors = {};
+        var color = '';
+        var multilang = new RegExp('<span[^>]*class="multilang"[^>]*>(.*?)</span>', "g");
+        for (var type in MAJ.info.icons) {
+            var icon = MAJ.info.icons[type];
+            MAJ.colors[type] = {};
+            for (var value in MAJ.info[type]) {
+                var i_max = MAJ.info[type][value].length
+                for (var i=0; i<i_max; i++) {
+                    var rid = MAJ.info[type][value][i];
+                    var session = $("#id_recordid_" + rid);
+                    if (session.length==0) {
+                        continue; // shouldn't happen !!
+                    }
+                    color = MAJ.colors[type][value];
+                    if (color==null) {
+                        var count = 0;
+                        for (color in MAJ.colors[type]) {
+                            count++;
+                        }
+                        switch (count) {
+                            // use standard colors for the first 10 items
+                            case 0: color = '#33f'; break; // blue
+                            case 1: color = '#c00'; break; // red
+                            case 2: color = '#093'; break; // green
+                            case 3: color = '#f93'; break; // orange
+                            case 4: color = '#c0c'; break; // mauve
+                            case 5: color = '#069'; break; // indigo
+                            case 6: color = '#c90'; break; // brown
+                            case 7: color = '#96f'; break; // purple
+                            case 8: color = '#0f9'; break; // lime
+                            case 9: color = '#ff0'; break; // yellow
+                            default:
+                                // generate random color (thanks to Cory who responde to a question on stackoverflow.com)
+                                // https://stackoverflow.com/questions/23095637/how-do-you-do-a-random-rbg-in-javascript
+                                var x = Math.round(0xffffff * Math.random());
+                                var r = x >> 16;
+                                var g = x >> 8 & 255;
+                                var b = x & 255;
+                                color = 'rgb(' + r + ', ' + g + ', ' + b + ')';
+                        }
+                        MAJ.colors[type][value] = color;
+                    }
+                    var scheduleinfo = session.find(".scheduleinfo");
+                    if (scheduleinfo.length==0) {
+                        scheduleinfo = MAJ.tag("div", "", {"class" : "scheduleinfo"});
+                        scheduleinfo = $(scheduleinfo).appendTo(session);
+                    }
+                    var div = scheduleinfo.find("." + type);
+                    if (div.length==0) {
+                        div = MAJ.tag("div", "", {"class" : type});
+                        div = $(div).appendTo(scheduleinfo);
+                    }
+                    var span = false;
+                    div.find(".text").each(function(){
+                        if (this.innerHTML==value) {
+                            span = true;
+                        }
+                    });
+                    if (span==false) {
+                        span = MAJ.tag("span", icon, {"class" : "icon", "style" : "color:" + color}) + MAJ.tag("span", value, {"class" : "text"});
+                        span = MAJ.tag("span", span, {"class" : "icontext"});
+                        $(span).appendTo(div);
+                    }
+                }
+            }
+        }
+    });
 }
 
 MAJ.renumberschedule = function(evt, day) {
@@ -1617,7 +1685,7 @@ MAJ.renumberschedule = function(evt, day) {
     };
     var smallschedule = (count.days < 10 && count.slots < 10 && count.rooms < 10);
 
-	// initialize RegExp's to extract info from CSS class
+    // initialize RegExp's to extract info from CSS class
     var dayregexp = new RegExp("^.*day(\\d+).*$");
     var slotregexp = new RegExp("^.*slot(\\d+).*$");
     var roomregexp = new RegExp("^.*room(\\d+).*$");
@@ -2231,8 +2299,8 @@ MAJ.get_string = function(name, insert) {
 }
 
 MAJ.htmlescape = function(value) {
-	value += ""; // convert to String
-	return value.replace(new RegExp("&", "g"), "&amp;")
+    value += ""; // convert to String
+    return value.replace(new RegExp("&", "g"), "&amp;")
                 .replace(new RegExp("'", "g"), "&apos;")
                 .replace(new RegExp('"', "g"), "&quot;")
                 .replace(new RegExp("<", "g"), "&lt;")
@@ -2240,36 +2308,36 @@ MAJ.htmlescape = function(value) {
 }
 
 MAJ.attribute = function(name, value) {
-	if (name = name.replace(new RegExp("^a-zA-Z0-9_-"), "g")) {
-		name = " " + name + '="' + MAJ.htmlescape(value) + '"';
-	}
-	return name;
+    if (name = name.replace(new RegExp("^a-zA-Z0-9_-"), "g")) {
+        name = " " + name + '="' + MAJ.htmlescape(value) + '"';
+    }
+    return name;
 }
 
 MAJ.attributes = function(attr) {
-	var html = "";
+    var html = "";
     if (attr) {
         for (var name in attr) {
             html += MAJ.attribute(name, attr[name]);
         }
     }
-	return html;
+    return html;
 }
 
 MAJ.starttag = function(tag, attr) {
-	return "<" + tag + MAJ.attributes(attr) + ">";
+    return "<" + tag + MAJ.attributes(attr) + ">";
 }
 
 MAJ.endtag = function(tag) {
-	return "</" + tag + ">";
+    return "</" + tag + ">";
 }
 
 MAJ.emptytag = function(tag, attr) {
-	return "<" + tag + MAJ.attributes(attr) + "/>";
+    return "<" + tag + MAJ.attributes(attr) + "/>";
 }
 
 MAJ.tag = function(tag, content, attr) {
-	return (MAJ.starttag(tag, attr) + content + MAJ.endtag(tag));
+    return (MAJ.starttag(tag, attr) + content + MAJ.endtag(tag));
 }
 
 MAJ.input = function(name, type, attr) {
@@ -2308,16 +2376,16 @@ MAJ.alist = function(tag, items) {
 
 MAJ.select = function(name, options, selected, attr) {
     var html = "";
-	for (var value in options) {
+    for (var value in options) {
         var a = {"value" : value};
         if (value==selected) {
             a["selected"] = "selected";
         }
-		html += MAJ.tag("option", options[value], a);
-	}
-	attr.name = name;
-	attr.id = "id_" + name;
-	return MAJ.tag("select", html, attr);
+        html += MAJ.tag("option", options[value], a);
+    }
+    attr.name = name;
+    attr.id = "id_" + name;
+    return MAJ.tag("select", html, attr);
 }
 
 MAJ.hours = function(name, selected, min, max, attr) {
@@ -2328,21 +2396,21 @@ MAJ.hours = function(name, selected, min, max, attr) {
     if (max==null) {
         max = 23;
     }
-	if (attr==null) {
-	    attr = {};
-	}
-	if (attr.class==null) {
+    if (attr==null) {
+        attr = {};
+    }
+    if (attr.class==null) {
         attr.class = "select" + name;
-	}
-	var options = {};
-	for (var i=min; i<=max; i++) {
-	    if (pad) {
+    }
+    var options = {};
+    for (var i=min; i<=max; i++) {
+        if (pad) {
             options[i] = MAJ.pad(i);
-	    } else {
+        } else {
             options[i] = MAJ.get_string("numhours", i);
-	    }
-	}
-	return MAJ.select(name, options, selected, attr);
+        }
+    }
+    return MAJ.select(name, options, selected, attr);
 }
 
 MAJ.mins = function(name, selected, min, max, attr) {
@@ -2353,27 +2421,27 @@ MAJ.mins = function(name, selected, min, max, attr) {
     if (max==null) {
         max = 59;
     }
-	if (attr==null) {
-	    attr = {};
-	}
-	if (attr.class==null) {
+    if (attr==null) {
+        attr = {};
+    }
+    if (attr.class==null) {
         attr.class = "select" + name;
-	}
-	var options = {};
-	for (var i=min; i<=max; i+=5) {
-	    if (pad) {
+    }
+    var options = {};
+    for (var i=min; i<=max; i+=5) {
+        if (pad) {
             options[i] = MAJ.pad(i);
-	    } else {
+        } else {
             options[i] = MAJ.get_string("nummins", i);
-	    }
-	}
-	return MAJ.select(name, options, selected, attr);
+        }
+    }
+    return MAJ.select(name, options, selected, attr);
 }
 
 MAJ.hoursmins = function(name, hours, mins) {
     var hours  = MAJ.hours(name + "hours", hours);
     var mins = MAJ.mins(name + "mins", mins);
-	return hours + MAJ.str.labelsep + mins;
+    return hours + MAJ.str.labelsep + mins;
 }
 
 MAJ.range = function(name, selected, min, max, attr) {
@@ -2389,17 +2457,17 @@ MAJ.range = function(name, selected, min, max, attr) {
     if (selected==null) {
         selected = max;
     }
-	if (attr==null) {
-	    attr = {};
-	}
-	if (attr.class) {
-	    attr.class = "select" + name;
-	}
-	var options = {};
-	for (var i=min; i<=max; i++) {
-		options[i] = i;
-	}
-	return MAJ.select(name, options, selected, attr);
+    if (attr==null) {
+        attr = {};
+    }
+    if (attr.class) {
+        attr.class = "select" + name;
+    }
+    var options = {};
+    for (var i=min; i<=max; i++) {
+        options[i] = i;
+    }
+    return MAJ.select(name, options, selected, attr);
 }
 
 
@@ -2428,10 +2496,10 @@ MAJ.position = function(type, max, name, attr) {
 
 MAJ.days_select = function(name) {
     var selected = MAJ.extract_active_day();
-	var lang = MAJ.extract_main_language();
-	var options = {};
-	$(".tab").each(function(){
-	    var day = MAJ.extract_day($(this).prop("class"));
+    var lang = MAJ.extract_main_language();
+    var options = {};
+    $(".tab").each(function(){
+        var day = MAJ.extract_day($(this).prop("class"));
         var html = $(this).find("span.multilang[lang=" + lang + "]");
         if (html.length) {
             html = html.html();
@@ -2439,7 +2507,7 @@ MAJ.days_select = function(name) {
             html = $(this).html();
         }
         options[day] = MAJ.force_single_line(html);
-	});
+    });
     return MAJ.select(name, options, selected, {});
 }
 
@@ -2641,14 +2709,14 @@ MAJ.form_multilang_values = function(elm, name) {
 
 $(document).ready(function(){
 
-    // extract toolroot URL and block instance id from page URL
-    var blockroot = location.href.replace(new RegExp("^(.*?)/tools.*$"), "$1");
-    var toolroot = location.href.replace(new RegExp("^(.*?)/tool.php.*$"), "$1");
-    var id = location.href.replace(new RegExp("^.*?\\bid=([0-9]+)\\b.*$"), "$1");
-    var iconroot = $("img.iconhelp").prop("src").replace(new RegExp("/[^/]+$"), "");
+    // extract URLa and block instance id from page URL
+    MAJ.blockroot = location.href.replace(new RegExp("^(.*?)/tools.*$"), "$1");
+    MAJ.toolroot = location.href.replace(new RegExp("^(.*?)/tool.php.*$"), "$1");
+    MAJ.pageid = location.href.replace(new RegExp("^.*?\\bid=([0-9]+)\\b.*$"), "$1");
+    MAJ.iconroot = $("img.iconhelp").prop("src").replace(new RegExp("/[^/]+$"), "");
 
-    MAJ.iconedit = iconroot + "/i/edit";
-    MAJ.iconremove = iconroot + "/i/delete";
+    MAJ.iconedit = MAJ.iconroot + "/i/edit";
+    MAJ.iconremove = MAJ.iconroot + "/i/delete";
 
     // hide "Session information" section of form
     $("#id_sessioninfo").css("display", "none");
@@ -2656,15 +2724,15 @@ $(document).ready(function(){
     // fetch CSS and JS files
     $("<link/>", {
         rel: "stylesheet", type: "text/css",
-        href: toolroot + "/styles.css"
+        href: MAJ.toolroot + "/styles.css"
     }).appendTo("head");
 
     $("<link/>", {
         rel: "stylesheet", type: "text/css",
-        href: blockroot + "/templates/template.css"
+        href: MAJ.blockroot + "/templates/template.css"
     }).appendTo("head");
 
-    $.getScript(blockroot + "/templates/template.js")
+    $.getScript(MAJ.blockroot + "/templates/template.js")
 
     // In order to delay making the Schedule/Items elements editable
     // until after all the  strings have loaded, we created a Deferred
@@ -2672,8 +2740,8 @@ $(document).ready(function(){
     var loadstrings = $.Deferred();
 
     // load the language strings
-    var p = "?id=" + id + "&action=loadstrings"
-    $.getScript(toolroot + "/action.php" + p).done(function(){
+    var p = "?id=" + MAJ.pageid + "&action=loadstrings"
+    $.getScript(MAJ.toolroot + "/action.php" + p).done(function(){
         loadstrings.resolve();
     });
 
@@ -2681,8 +2749,8 @@ $(document).ready(function(){
     var tools = $("<div></div>", {"id" : "tools"}).insertAfter("#id_sessioninfo");
 
     // populate Tools area
-    var p = {"id" : id, "action" : "loadtools"};
-    tools.load(toolroot + "/action.php", p, function(r, s, x){
+    var p = {"id" : MAJ.pageid, "action" : "loadtools"};
+    tools.load(MAJ.toolroot + "/action.php", p, function(r, s, x){
         // r : response text
         // s : status text ("success" or "error")
         // x : XMLHttpRequest object
@@ -2698,8 +2766,8 @@ $(document).ready(function(){
     var schedule = $("<div></div>", {"id" : "schedule"}).insertAfter("#tools");
 
     // populate Schedule area
-    var p = {"id" : id, "action" : "loadschedule"};
-    schedule.load(toolroot + "/action.php", p, function(r, s, x){
+    var p = {"id" : MAJ.pageid, "action" : "loadschedule"};
+    schedule.load(MAJ.toolroot + "/action.php", p, function(r, s, x){
         // r : response text
         // s : status text ("success" or "error")
         // x : XMLHttpRequest object
@@ -2725,8 +2793,8 @@ $(document).ready(function(){
     var items = $("<div></div>", {"id" : "items", "class" : "schedule"}).insertAfter("#schedule");
 
     // populate Items area
-    var p = {"id" : id, "action" : "loaditems"};
-    items.load(toolroot + "/action.php", p, function(r, s, x){
+    var p = {"id" : MAJ.pageid, "action" : "loaditems"};
+    items.load(MAJ.toolroot + "/action.php", p, function(r, s, x){
         // r : response text
         // s : status text ("success" or "error")
         // x : XMLHttpRequest object

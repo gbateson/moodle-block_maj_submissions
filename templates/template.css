@@ -196,6 +196,7 @@
     float: left;
     font-style: italic;
     max-height: 3.5em;
+    margin-right: 8px;
     padding-top: 3px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -226,6 +227,34 @@
 
 .schedule .emptyseats {
     color: purple;
+}
+
+.schedule .scheduleinfo div {
+    display: none;
+}
+
+/* show icon text as a pop up when mouse hovers over icon */
+.schedule .icontext {
+    position: relative;
+}
+
+.schedule .icontext .text {
+    background-color: black;
+    border-radius:      6px;
+    color:             #fff;
+    left:               0px;
+    max-width:        120px;
+    min-width:         80px;
+    padding:          5px 0;
+    position:      absolute;
+    top:               18px;
+    text-align:      center;
+    visibility:      hidden;
+    z-index:           1000;
+}
+
+.schedule .icontext:hover .text {
+    visibility:     visible;
 }
 
 @media print, screen and (min-width: 768px) {

@@ -478,7 +478,7 @@ $string['roomheadings'] = 'Room headings';
 $string['first'] = 'First';
 $string['after'] = 'After';
 $string['last'] = 'Last';
-$string['editcss'] = 'Edit<br />CSS';
+$string['loadscheduleinfo'] = 'Load<br />schedule info';
 
 $string['attending'] = 'Attending';
 $string['notattending'] = 'Not attending';

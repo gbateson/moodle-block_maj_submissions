@@ -134,6 +134,15 @@
     text-align:         right;
 }
 
+#page-blocks-maj_submissions-tools-setupschedule-tool .schedule .scheduleinfo {
+    display: block;
+}
+
+#page-blocks-maj_submissions-tools-setupschedule-tool .schedule .scheduleinfo div {
+    display: inline-block;
+    margin-right: 6px;
+}
+
 /** jQuery dialog styles */
 
 #page-blocks-maj_submissions-tools-setupschedule-tool .ui-dialog {

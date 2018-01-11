@@ -296,7 +296,7 @@ switch ($action) {
                            'room' => get_string('room', $plugin),
                            'roomheadings' => get_string('roomheadings', $plugin),
                            'day'  => get_string('day', $plugin)),
-            'editcss' => array()
+            'loadscheduleinfo'    => array()
         );
 
         $params = array('class' => 'commands');
@@ -651,10 +651,18 @@ switch ($action) {
 
     case 'loadinfo':
         if ($cmid = $config->collectpresentationscmid) {
-            $params = array('presentation_keywords',
-                            'presentation_language',
+
+            $info = new stdClass();
+            $info->userids = array();
+            $info->icons = array();
+
+            $names = array(); // firstname + lastname or authors
+            $fields = array(); // suffix of target fields e.g. times
+
+            $params = array('presentation_language',
                             'presentation_times',
-                            'presentation_topics');
+                            'presentation_topics',
+                            'presentation_keywords');
             list($where, $params) = $DB->get_in_or_equal($params);
             $select = 'dc.id, '.
                       'dc.content AS value, '.
@@ -676,18 +684,41 @@ switch ($action) {
                       'AND dc.content <> ?';
             $order  = 'dc.recordid, df.name';
             array_push($params, 'name_given_%', 'name_surname_%', $cmid, '');
-            $info = new stdClass();
-            $info->userids = array();
-            $names = array();
             if ($contents = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $order", $params)) {
+
+                // sort the $contents records recordid, language-times-topics-keywords
+                uasort($contents, function ($a, $b) {
+                    switch (true) {
+                        case ($a->recordid < $b->recordid): return -1;
+                        case ($a->recordid > $b->recordid): return  1;
+                    }
+                    $afield = substr($a->field, 13);
+                    $bfield = substr($b->field, 13);
+                    switch (true) {
+                        case ($afield=='language'): return -1;
+                        case ($bfield=='language'): return  1;
+                        case ($afield=='times')   : return -1;
+                        case ($bfield=='times')   : return  1;
+                        case ($afield=='topics')  : return -1;
+                        case ($bfield=='topics')  : return  1;
+                        case ($afield=='keywords'): return -1;
+                        case ($bfield=='keywords'): return  1;
+                    }
+                    return ($a->field < $b->field ? -1 : ($a->field > $b->field ? 1 : 0));
+                });
+
                 foreach ($contents as $content) {
                     $rid = $content->recordid;
                     $value = $content->value;
                     $field = $content->field;
 
+                    // initialize the array of userids
+                    // for this submission recordid
                     if (empty($info->userids[$rid])) {
                         $info->userids[$rid] = array();
                     }
+
+                    // add the userid of the main presenter
                     $info->userids[$rid][$content->userid] = 1;
 
                     if (substr($field, 0, 5)=='name_') {
@@ -742,9 +773,9 @@ switch ($action) {
                         $field = substr($field, 13);
                         switch ($field) {
                             case 'language': $delimiter = '';   break;
-                            case 'keywords': $delimiter = '/[,\x{3000}\x{3001}\x{FF0C}]/u';  break;
-                            case 'topics':   $delimiter = '##'; break;
                             case 'times':    $delimiter = '##'; break;
+                            case 'topics':   $delimiter = '##'; break;
+                            case 'keywords': $delimiter = '/[,\x{3000}\x{3001}\x{FF0C}]/u';  break;
                             default:         $delimiter = null;
                         }
                         if (empty($info->$field)) {
@@ -772,22 +803,48 @@ switch ($action) {
                                 $info->$field[$value] = array($rid);
                             }
                         }
+                        if ($delimiter || $delimiter==='') {
+                            $fields[$field] = 1;
+                        }
                     }
                 }
             }
+
             foreach ($names as $rid => $parts) {
                 foreach ($parts as $i => $langs) {
                     foreach ($langs as $lang => $types) {
                         if (array_key_exists('firstname', $types) && array_key_exists('lastname', $types)) {
-                            $params = array('firstname' => $types['firstname'],
-                                            'lastname' => $types['lastname']);
-                            if ($users = $DB->get_records('user', $params)) {
+                            $select = '(firstname = ? AND lastname = ?) OR (firstnamephonetic = ? AND lastnamephonetic = ?)';
+                            $params = array($types['firstname'],
+                                            $types['lastname'],
+                                            $types['firstname'],
+                                            $types['lastname']);
+                            if ($users = $DB->get_records_select('user', $select, $params)) {
                                 foreach ($users as $userid => $user) {
                                     $info->userids[$rid][$userid] = 1;
                                 }
                             }
                         }
                     }
+                }
+            }
+
+            // declare annonymous function for sorting by number of $rids
+            // (more popular items will appear first)
+            $uasort = function ($a, $b) {
+                $acount = (empty($a) ? 0 : count($a));
+                $bcount = (empty($b) ? 0 : count($b));
+                return ($acount < $bcount ? 1 : ($acount > $bcount ? -1 : 0));
+            };
+
+            $fields = array_keys($fields);
+            foreach ($fields as $field) {
+                uasort($info->$field, $uasort);
+                switch ($field) {
+                    case 'language': $info->icons[$field] = "\u{25A9}"; break; // black square
+                    case 'times':    $info->icons[$field] = "\u{25CF}"; break; // white circle
+                    case 'topics':   $info->icons[$field] = "\u{25B2}"; break; // black triangle
+                    case 'keywords': $info->icons[$field] = "\u{266A}"; break; // musical note
                 }
             }
             $html = json_encode($info);
