@@ -1584,6 +1584,10 @@ MAJ.populateschedule = function(evt, day) {
 }
 
 MAJ.loadscheduleinfo = function() {
+
+    // remove all previous scheduleinfo
+    $(".scheduleinfo").remove();
+
     // request scheduling info from server: "loadinfo"
     // (only send info about submission whose status is accepeted?)
     var p = {"id" : MAJ.pageid, "action" : "loadinfo"};

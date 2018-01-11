@@ -292,11 +292,11 @@ switch ($action) {
             'emptyschedule'       => $days,
             'populateschedule'    => $days,
             'renumberschedule'    => $days,
+            'loadscheduleinfo'    => array(),
             'add' => array('slot' => get_string('slot', $plugin),
                            'room' => get_string('room', $plugin),
                            'roomheadings' => get_string('roomheadings', $plugin),
-                           'day'  => get_string('day', $plugin)),
-            'loadscheduleinfo'    => array()
+                           'day'  => get_string('day', $plugin))
         );
 
         $params = array('class' => 'commands');
