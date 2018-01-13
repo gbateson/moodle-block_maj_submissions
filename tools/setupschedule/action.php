@@ -213,7 +213,7 @@ switch ($action) {
             $html .= 'MAJ.str.'.$name.' = '.$string.';'."\n";
         }
 
-        // plain strings
+        // plugin strings
         $names = array('addday','addroom', 'addroomheadings', 'addslot',
                        'addedday', 'addedroom', 'addedroomheadings', 'addedslot',
                        'allheadingsalldays', 'allheadingsthisday', 'allrooms', 'applyto',
@@ -225,7 +225,8 @@ switch ($action) {
                        'removeday', 'removeroom', 'removeroomheadings', 'removesession', 'removeslot',
                        'removedday', 'removedroom', 'removedroomheadings', 'removedsession', 'removedslot',
                        'room', 'roomcount', 'roomname', 'roomseats', 'roomtopic',
-                       'slot', 'slotcount', 'slotinterval', 'slotlength', 'slotstart', 'starttime');
+                       'slot', 'slotcount', 'slotinterval', 'slotlength', 'slotstart', 'starttime',
+                       'title', 'authornames', 'schedulenumber', 'category', 'type', 'rowspan');
 
         foreach ($names as $name) {
             $string = json_encode(get_string($name, $plugin));
@@ -233,9 +234,16 @@ switch ($action) {
         }
 
         // standard strings
-        $names = array('add', 'cancel', 'day', 'ok', 'remove', 'time', 'update');
+        $names = array('add', 'cancel', 'ok', 'remove', 'update');
         foreach ($names as $name) {
             $string = json_encode(get_string($name));
+            $html .= 'MAJ.str.'.$name.' = '.$string.';'."\n";
+        }
+
+        // standard form strings
+        $names = array('day', 'time');
+        foreach ($names as $name) {
+            $string = json_encode(get_string($name, 'form'));
             $html .= 'MAJ.str.'.$name.' = '.$string.';'."\n";
         }
 
@@ -292,7 +300,8 @@ switch ($action) {
             'emptyschedule'       => $days,
             'populateschedule'    => $days,
             'renumberschedule'    => $days,
-            'loadscheduleinfo'    => array(),
+            'scheduleinfo'    => array('add' => get_string('add', $plugin),
+                                       'remove' => get_string('remove', $plugin)),
             'add' => array('slot' => get_string('slot', $plugin),
                            'room' => get_string('room', $plugin),
                            'roomheadings' => get_string('roomheadings', $plugin),
@@ -446,6 +455,13 @@ switch ($action) {
         // add a "session" for each $item
         foreach ($items as $recordid => $item) {
 
+            $name = 'submission_status';
+            if (array_key_exists($name, $item)) {
+                if (strpos($item[$name], 'Not accepted') || strpos($item[$name], 'Cancelled')) {
+                    continue;
+                }
+            }
+
             $sessionclass = 'session';
 
             // extract category
@@ -541,19 +557,19 @@ switch ($action) {
 
             // format authornames
             $authornames = array();
-            $namefields = preg_grep('/^name_(surname)(.*)$/', array_keys($item));
-            foreach ($namefields as $namefield) {
-                if (empty($item[$namefield])) {
+            $fields = preg_grep('/^name_(surname)(.*)$/', array_keys($item));
+            foreach ($fields as $field) {
+                if (empty($item[$field])) {
                     continue;
                 }
-                if (trim($item[$namefield])=='') {
+                if (trim($item[$field])=='') {
                     continue;
                 }
                 $i = 0;
                 $name = '';
                 $type = '';
                 $lang = 'xx';
-                $parts = explode('_', $namefield);
+                $parts = explode('_', $field);
                 switch (count($parts)) {
                     case 2:
                         list($name, $type) = $parts;
@@ -579,7 +595,7 @@ switch ($action) {
                 if (empty($authornames[$i][$lang])) {
                     $authornames[$i][$lang] = array();
                 }
-                $authornames[$i][$lang][$type] = block_maj_submissions::textlib('strtotitle', $item[$namefield]);
+                $authornames[$i][$lang][$type] = block_maj_submissions::textlib('strtotitle', $item[$field]);
             }
 
             ksort($authornames);
@@ -613,6 +629,36 @@ switch ($action) {
 
             if ($authornames=='') {
                 $authornames = 'Tom, Dick, Harry';
+            }
+
+            // for commercial presentations, we append the (Company name) too
+            if (strpos($presentationcategory, 'Sponsored')) {
+                $affiliation = array();
+                $fields = preg_grep('/^affiliation(.*)$/', array_keys($item));
+                foreach ($fields as $field) {
+                    if (empty($item[$field])) {
+                        continue;
+                    }
+                    if (trim($item[$field])=='') {
+                        continue;
+                    }
+                    $parts = explode('_', $field);
+                    if (count($parts) > 1) {
+                        $lang = end($parts);
+                    } else {
+                        $lang = 'xx';
+                    }
+                    $affiliation[$lang] = $item[$field];
+                }
+                if (count($affiliation) > 2) {
+                    foreach ($affiliation as $lang => $name) {
+                        $params = array('class' => 'multilang', 'lang' => $lang);
+                        $affiliation[$lang] = html_writer::tag('span', $name, $params);
+                    }
+                }
+                if ($affiliation = implode('', $affiliation)) {
+                    $authornames .= " ($affiliation)";
+                }
             }
 
             // schedule number and authornames
@@ -840,11 +886,33 @@ switch ($action) {
             $fields = array_keys($fields);
             foreach ($fields as $field) {
                 uasort($info->$field, $uasort);
+                $info->icons[$field] = array();
                 switch ($field) {
-                    case 'language': $info->icons[$field] = "\u{25A9}"; break; // black square
-                    case 'times':    $info->icons[$field] = "\u{25CF}"; break; // white circle
-                    case 'topics':   $info->icons[$field] = "\u{25B2}"; break; // black triangle
-                    case 'keywords': $info->icons[$field] = "\u{266A}"; break; // musical note
+                    case 'language':
+                        // 6 items (musical symbols)
+                        array_push($info->icons[$field],
+                            "\u{266A}", "\u{266B}", "\u{266C}", // quaver, quavers, semi-quavers
+                            "\u{266D}", "\u{266E}", "\u{266f}"); // flat, natural, sharp
+                        break;
+                    case 'times':
+                        // 8 items (card suits) diamond, club, spade, heart
+                        array_push($info->icons[$field],
+                            "\u{2662}", "\u{2667}", "\u{2664}", "\u{2661}", // empty
+                            "\u{2666}", "\u{2663}", "\u{2660}", "\u{2665}"); // filled
+                        break;
+                    case 'topics':
+                        // 12 items (chess pieces) King, Queen, Rook, Bishop, Knight, Pawn
+                        array_push($info->icons[$field],
+                            "\u{265A}", "\u{265B}", "\u{265C}", "\u{265D}", "\u{265E}", "\u{265F}", // filled
+                            "\u{2654}", "\u{2655}", "\u{2656}", "\u{2657}", "\u{2658}", "\u{2659}"); // empty
+                        break;
+                    case 'keywords':
+                        // 160 items (circled and bracketed numbers)
+                        $i_min = 0x2460; $i_max = 0x24EF;
+                        for ($i=$i_min; $i<=$i_max; $i++) {
+                            $info->icons[$field][] = block_maj_submissions::textlib('code2utf8', $i);
+                        }
+                        break; // use first letter of keyword
                 }
             }
             $html = json_encode($info);

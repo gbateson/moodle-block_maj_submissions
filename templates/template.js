@@ -50,6 +50,13 @@ MAJ.setup_tabs = function(count) {
     }
 };
 
+MAJ.setup_autolinks = function() {
+    var links = document.querySelectorAll("a.autolink");
+    for (var i=0; i<links.length; i++) {
+        links[i].target = "MAJ";
+    }
+};
+
 MAJ.setup_attendance = function() {
 
     if (location.href.indexOf("/mod/page/view.php") < 0) {
@@ -248,4 +255,5 @@ MAJ.setup_attendance = function() {
 }
 
 MAJ.setup_tabs();
+MAJ.setup_autolinks();
 MAJ.setup_attendance();

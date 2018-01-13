@@ -87,6 +87,25 @@
     overflow: auto;
 }
 
+.schedule .session.case,
+.schedule .session.casestudy {
+    background-color: #f8f8ff; /* blue */
+}
+
+.schedule .session.lightning,
+.schedule .session.lightningtalk {
+    background-color: #f8ffff; /* cian */
+}
+
+.schedule .session.poster,
+.schedule .session.showcase {
+    background-color: #fffff8; /* yellow */
+}
+
+.schedule .session.workshop {
+    background-color: #fff8ff; /* purple */
+}
+
 .schedule .emptysession {
     display: none;
 }
@@ -184,12 +203,12 @@
     content: " ";
 }
 
-/**
-    there's no need to mark "individual" sessions,
-    because most sessions will be "individual"
- */
-.schedule .individual .category {
+.schedule .category {
     display: none;
+}
+
+.schedule .lightning .category {
+    display: inline;
 }
 
 .schedule .summary {
@@ -229,8 +248,32 @@
     color: purple;
 }
 
+.schedule .scheduleinfo {
+    font-size: small;
+}
+
 .schedule .scheduleinfo div {
     display: none;
+}
+
+.schedule .scheduleinfo .language .icon {
+    color: #c36; /* modest red */
+}
+
+.schedule .scheduleinfo .times .icon {
+    color: #6c3; /* modest green */
+}
+
+.schedule .scheduleinfo .topics .icon {
+    color: #36c; /* modest blue */
+}
+
+.schedule .scheduleinfo .keywords .icon {
+    color: #c63; /* modest orange */
+}
+
+.schedule .scheduleinfo .keywords .icon:before {
+    content: " ";
 }
 
 /* show icon text as a pop up when mouse hovers over icon */
@@ -242,12 +285,12 @@
     background-color: black;
     border-radius:      4px;
     color:             #fff;
-    left:               0px;
+    right:             -8px;
     max-width:        120px;
     min-width:         80px;
     padding:        2px 6px;
     position:      absolute;
-    top:               18px;
+    bottom:            18px;
     text-align:      center;
     visibility:      hidden;
     z-index:           1000;

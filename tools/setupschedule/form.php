@@ -54,13 +54,15 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
     );
 
     // caches for the menu items
-    protected $schedule_day        = null;
-    protected $schedule_time       = null;
-    protected $schedule_duration   = null;
-    protected $schedule_roomname   = null;
-    protected $schedule_roomseats  = null;
-    protected $schedule_audience   = null;
-    protected $schedule_event      = array();
+    protected $schedule_event     = array();
+    protected $schedule_day       = null;
+    protected $schedule_time      = null;
+    protected $schedule_duration  = null;
+    protected $schedule_roomname  = null;
+    protected $schedule_roomseats = null;
+    protected $schedule_audience  = null;
+    protected $presentation_type  = null;
+    protected $presentation_category = null;
 
     const TEMPLATE_NONE     = 0;
     const TEMPLATE_ACTIVITY = 1;
@@ -261,6 +263,12 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $name = 'schedule_audience';
             $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
 
+            $name = 'presentation_type';
+            $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
+
+            $name = 'presentation_category';
+            $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
+
             $name = 'schedule_html';
             $mform->addElement('hidden', $name, '');
             $mform->setType($name, PARAM_RAW);
@@ -351,7 +359,9 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                        'schedule_duration',
                        'schedule_roomname',
                        'schedule_roomseats',
-                       'schedule_audience');
+                       'schedule_audience',
+                       'presentation_type',
+                       'presentation_category');
 
         foreach ($types as $type) {
             if ($type=='event') {
@@ -456,7 +466,9 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                                     'schedule_roomname'  => null,
                                     'schedule_roomseats' => null,
                                     'schedule_topic'     => null,
-                                    'schedule_audience'  => null);
+                                    'schedule_audience'  => null,
+                                    'presentation_type'  => null,
+                                    'presentation_category' => null);
                     foreach ($fields as $name => $content) {
                         if (isset($data->$name)) {
                             if ($name=='schedule_event') {
