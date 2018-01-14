@@ -226,7 +226,7 @@ switch ($action) {
                        'removedday', 'removedroom', 'removedroomheadings', 'removedsession', 'removedslot',
                        'room', 'roomcount', 'roomname', 'roomseats', 'roomtopic',
                        'slot', 'slotcount', 'slotinterval', 'slotlength', 'slotstart', 'starttime',
-                       'title', 'authornames', 'schedulenumber', 'category', 'type', 'rowspan');
+                       'title', 'authornames', 'schedulenumber', 'category', 'type', 'rowspan', 'colspan');
 
         foreach ($names as $name) {
             $string = json_encode(get_string($name, $plugin));

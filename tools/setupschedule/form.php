@@ -551,6 +551,10 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                     // search string to detect recordid
                     $search->recordid = '/(?<=id="id_recordid_)(\d+)(?=")/';
 
+                    // search string to extract multilang spans
+                    $search->multilang = '/(<span[^>]*lang="([^"]*)"[^>]*>)(.*?)\s*(<\/span>)/us';
+                    $search->ascii = '/^[[:ascii:]]*$/us';
+
                     // the search string to extract value from a session
                     // the value can be a multilang string, or plain text
                     $value = '((<span[^>]*class="multilang"[^>]*>.*?<\/span>)+|.*?)';
@@ -634,6 +638,39 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                                             $values[$name] = $value[2];
                                         }
                                     }
+
+                                    if (array_key_exists('roomname', $values) && array_key_exists('roomseats', $values)) {
+                                        if ($values['roomname']=='undefined') {
+                                            $values['roomname']=='';
+                                        }
+                                        if ($values['roomseats']=='undefined') {
+                                            $values['roomseats']=='';
+                                        }
+                                        $value = $values['roomname'].$values['roomseats'];
+                                        if (preg_match_all($search->multilang, $value, $value)) {
+                                            // $1 : opening SPAN tag
+                                            // $2 : lang code
+                                            // $3 : text
+                                            // $4 : closing SPAN tag
+                                            $langs = array();
+                                            $i_max = count($value[0]);
+                                            for ($i=0; $i<$i_max; $i++) {
+                                                $lang = $value[2][$i];
+                                                if (! array_key_exists($lang, $langs)) {
+                                                    $langs[$lang] = $i;
+                                                } else if (preg_match($search->ascii, $value[3][$i])) {
+                                                    $value[3][$langs[$lang]] .= ' ('.$value[3][$i].')';
+                                                } else {
+                                                    $value[3][$langs[$lang]] .= "\u{FF08}".$value[3][$i]."\u{FF09}";
+                                                }
+                                            }
+                                            foreach ($langs as $lang => $i) {
+                                                $langs[$lang] = $value[1][$i].$value[3][$i].$value[4][$i];
+                                            }
+                                            $values['roomname'] = implode('', $langs);
+                                        }
+                                    }
+
                                     foreach ($fields as $name => $field) {
                                         if (array_key_exists($name, $values)) {
                                             $value = $values[$name];

@@ -606,7 +606,8 @@ $string['authornames'] = 'Author name(s)';
 $string['schedulenumber'] = 'Schedule number';
 $string['category'] = 'Category';
 $string['type'] = 'Type';
-$string['rowspan'] = 'Row height';
+$string['rowspan'] = 'Row span';
+$string['colspan'] = 'Column span';
 
 $string['presentation_category_help'] = 'The presentation category, if any, of this event.';
 $string['presentation_category'] = 'Presentation category';
