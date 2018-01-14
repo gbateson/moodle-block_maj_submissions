@@ -110,11 +110,6 @@
     display: none;
 }
 
-.schedule .session.attending {
-    border: 1px solid #3c3;
-    background-color: #f8fff8;
-}
-
 .schedule .time,
 .schedule .room,
 .schedule .title,
@@ -132,6 +127,11 @@
 .schedule .title,
 .schedule .authors {
     color: #333;
+}
+
+.schedule .time,
+.schedule .room {
+    font-size: smaller;
 }
 
 .schedule .time {
@@ -196,7 +196,7 @@
 }
 
 .schedule .categorytype {
-    font-size: small;
+    font-size: x-small;
 }
 
 .schedule .category:not(:empty) + .type:not(:empty):before {
@@ -212,44 +212,67 @@
 }
 
 .schedule .summary {
-    float: left;
-    font-style: italic;
-    max-height: 3.5em;
-    margin-right: 8px;
-    padding-top: 3px;
-    overflow: hidden;
+    float:             left;
+    font-size:     xx-small;
+    font-style:      italic;
+    line-height:       12px;
+    max-height:        36px;
+    margin-right:       8px;
+    padding-top:        3px;
+    overflow:        hidden;
     text-overflow: ellipsis;
-    width: calc(100% - 8em);
+    width: calc(100% - 140px);
 }
 
 .schedule .capacity {
-    float: right;
-    font-size: 0.9em;
-    height: 3em;
-    text-align: right;
-    width: 8em;
+    background:        #eee;
+    border:  1px solid #ccc;
+    border-radius:      4px;
+    float:            right;
+    font-size:        0.9em;
+    height:             3em;
+    text-align:       right;
+    width:            132px;
 }
 
+.schedule .session.attending .capacity {
+    background:        #efe;
+    border:  1px solid #aca;
+}
+
+
 .schedule .attendance {
-    color: #888;
-    display: inline;
+    color:             #363;
+    display:         inline;
 }
 
 .schedule .session.attending .attendance {
-    color: #1a1;
+    color:             #696;
+}
+
+.schedule .attendance label {
+    display:         inline;
+    font-weight:        300;
+    padding:        0px 6px;
+}
+
+.schedule .session.attending .attendance label {
+    font-weight:        400;
 }
 
 .schedule .attendance input[type="checkbox"] {
-    margin-top: 0px;
-    margin-right: 6px;
+    margin-top:         0px;
+    margin-right:       6px;
 }
 
 .schedule .emptyseats {
-    color: purple;
+    color:           purple;
+    height:            17px;
+    margin:         1px 6px;
 }
 
 .schedule .scheduleinfo {
-    font-size: small;
+    font-size:        small;
 }
 
 .schedule .scheduleinfo div {
@@ -360,7 +383,7 @@
     .schedule .session {
         margin:         4px 3px;
         overflow:       visible;
-        padding-bottom:   1.4em;
+        padding-bottom:   1.8em;
         position:      relative;
         vertical-align:     top;
         min-width:        180px;
@@ -434,14 +457,15 @@
     }
 
     .schedule .capacity {
-        bottom:             4px;
+        bottom:             2px;
         float:             none;
         height:            auto;
-        left:               6px;
-        padding-top:        3px;
+        right:              2px;
+        padding:        0px 6px;
         position:      absolute;
-        text-align:        left;
-        width:             100%;
+        text-align:       right;
+        max-width:        9.0em;
+        width: calc(100% - 4px);
     }
 
     .schedule .emptyseats {

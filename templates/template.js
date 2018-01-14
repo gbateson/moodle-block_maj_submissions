@@ -123,17 +123,19 @@ MAJ.setup_attendance = function() {
 
                 // set up checkbox
                 var name = "attend[" + id + "]";
+                var checked = (MAJ.attend[rid] ? true : false);
+
                 var checkbox = document.createElement("INPUT");
                 checkbox.setAttribute("type", "checkbox");
                 checkbox.setAttribute("id", "id_" + name);
                 checkbox.setAttribute("name", name);
                 checkbox.setAttribute("value", "1");
-                checkbox.checked = (MAJ.attend[rid] ? true : false);
+                checkbox.checked = checked;
 
                 // setup checkbox label
                 var label = document.createElement("LABEL");
                 label.setAttribute("for", id);
-                if (checkbox.checked) {
+                if (checked) {
                     label.innerHTML = MAJ.str.attending;
                 } else {
                     label.innerHTML = MAJ.str.notattending;
@@ -141,8 +143,8 @@ MAJ.setup_attendance = function() {
 
                 var attendance = document.createElement("DIV");
                 attendance.className = "attendance";
-                attendance.appendChild(checkbox);
                 attendance.appendChild(label);
+                attendance.appendChild(checkbox);
 
                 var capacity = document.createElement("DIV");
                 capacity.className = "capacity";

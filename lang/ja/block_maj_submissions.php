@@ -374,3 +374,6 @@ $string['pleaseregistercopresenters'] = '共同発表者の登録も必ず行っ
 $string['acceptedfarewell'] = '{$a}にお会い出来るのを楽しみにしています！';
 
 $string['emptyseatsx'] = '残り{$a}席';
+
+$string['attending'] = '出席する';
+$string['notattending'] = '出席しない';
