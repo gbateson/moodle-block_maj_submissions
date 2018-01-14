@@ -122,7 +122,7 @@ MAJ.setup_attendance = function() {
                 }
 
                 // set up checkbox
-                var name = "attend[" + id + "]";
+                var name = "attend[" + rid + "]";
                 var checked = (MAJ.attend[rid] ? true : false);
 
                 var checkbox = document.createElement("INPUT");
@@ -134,7 +134,7 @@ MAJ.setup_attendance = function() {
 
                 // setup checkbox label
                 var label = document.createElement("LABEL");
-                label.setAttribute("for", id);
+                label.setAttribute("for", "id_" + name);
                 if (checked) {
                     label.innerHTML = MAJ.str.attending;
                 } else {
