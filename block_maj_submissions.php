@@ -1732,48 +1732,17 @@ class block_maj_submissions extends block_base {
     }
 
     /**
-     * get_room_seats
+     * get_room_name
      *
      * extract a numeric number of seats from the "schedule_roomseats" field
      *
-     * @param string $text
+     * @param integer $recordid
+     * @param integer $cmid
      * @return the numeric number of seats extract from the schedule_roomseats
      * @todo Finish documenting this function
      */
-    static function extract_number_from_text($text, $parentheses) {
-
-        // search for double-byte parentheses
-        if ($parentheses) {
-            if (preg_match('/\x{FF08}(.*?)\x{FF09}/us', $text, $number)) {
-                $text = $number[1];
-                $parentheses = false;
-            } else if (preg_match('/\((.*?)\)/us', $text, $number)) {
-                $text = $number[1];
-                $parentheses = false;
-            }
-        }
-
-        // stop here if the parentheses were required but missing
-        if ($parentheses) {
-            return 0;
-        }
-
-        // search for double-byte numbers
-        if (preg_match('/[\x{FF10}-\x{FF19}]+/u', $text, $number)) {
-            $number = strtr($number[0], array("\u{FF10}" => 0, "\u{FF11}" => 1,
-                                              "\u{FF12}" => 2, "\u{FF13}" => 3,
-                                              "\u{FF14}" => 4, "\u{FF15}" => 5,
-                                              "\u{FF16}" => 6, "\u{FF17}" => 7,
-                                              "\u{FF18}" => 8, "\u{FF19}" => 9));
-            return intval($number);
-        }
-
-        // search for single-byte numbers
-        if (preg_match('/[0-9]+/', $text, $number)) {
-            return intval($number[0]);
-        }
-
-        return 0;
+    static function get_room_name($cmid, $recordid=0) {
+        return self::get_room_info($cmid, $recordid, 'name');
     }
 
     /**
@@ -1786,43 +1755,177 @@ class block_maj_submissions extends block_base {
      * @return the numeric number of seats extract from the schedule_roomseats
      * @todo Finish documenting this function
      */
-    static function get_room_seats($recordid, $cmid) {
+    static function get_room_seats($cmid, $recordid=0) {
+        return self::get_room_info($cmid, $recordid, 'seats');
+    }
+
+    /**
+     * get_room_info_one
+     *
+     * extract a numeric number of seats from the "schedule_roomseats" field
+     *
+     * @param integer $recordid
+     * @param integer $cmid
+     * @param string $type (optiona;, default="")
+     * @return array [recordid => mixed], either "name", "seats" of array("name" => 99, "seats" => 99)
+     * @todo Finish documenting this function
+     */
+    static function get_room_info($cmid, $recordid=0, $type='') {
         global $DB;
 
-        $select = 'df.name AS fieldname, dc.content';
-        $from   = '{data_content} dc, '.
+        $select = 'dc.id, dc.recordid, df.name AS fieldname, dc.content';
+        $from   = '{course_modules} cm, '.
                   '{data_fields} df, '.
-                  '{course_modules} cm';
-        $where  = 'dc.recordid = ? '.
-                  'AND dc.fieldid = df.id '.
-                  'AND (df.name = ? OR df.name = ?)'.
-                  'AND df.dataid = cm.instance '.
-                  'AND cm.id = ?';
-        $params = array($recordid, 'schedule_roomname', 'schedule_roomseats', $cmid);
-        $order = 'df.name DESC'; // i.e. roomseats FIRST
+                  '{data_content} dc';
+        $where  = 'cm.id = ? '.
+                  'AND cm.instance = df.dataid '.
+                  'AND (df.name = ? OR df.name = ?) '.
+                  'AND df.id = dc.fieldid';
+        $params = array($cmid, 'schedule_roomname', 'schedule_roomseats');
+        $order = 'dc.recordid ASC, df.name DESC'; // i.e. roomseats FIRST
 
-        if ($texts = $DB->get_records_sql_menu("SELECT $select FROM $from WHERE $where ORDER BY $order", $params)) {
-            $search = '/<span[^>]*class="multilang"[^>]*>(.*?)<\/span>/us';
-            foreach ($texts as $fieldname => $text) {
-                if ($text=='') {
+        if ($recordid) {
+            $where .= ' AND dc.recordid = ?';
+            $params[] = $recordid;
+        }
+
+        $info = array();
+        if ($contents = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $order", $params)) {
+            $search = '/(<span[^>]*class="multilang"[^>]*>)(.*?)\s*(<\/span>)/us';
+            $rid = 0;
+            foreach ($contents as $id => $content) {
+                if ($content->content=='') {
                     continue;
                 }
-                $parentheses = ($fieldname=='schedule_roomname');
-                if (preg_match_all($search, $text, $matches)) {
+                if ($rid && $rid==$content->recordid) {
+                    // do nothing
+                } else {
+                    $rid = $content->recordid;
+                    if ($type) {
+                        $info[$rid] = '';
+                    } else {
+                        $info[$rid] = array('name' => '', 'seats' => '');
+                    }
+                }
+                $parentheses = ($content->fieldname=='schedule_roomname');
+                if (preg_match_all($search, $content->content, $matches)) {
                     $i_max = count($matches[0]);
                     for ($i=0; $i<$i_max; $i++) {
-                        if ($seats = self::extract_number_from_text($matches[1][$i], $parentheses)) {
-                            return $seats;
-                        }
+                        list($name, $seats) = self::extract_room_from_text($matches[2][$i], $parentheses);
+                        $matches[0][$i] = $matches[1][$i].$name.$matches[3][$i];
                     }
+                    $name = implode('', $matches[0]);
                 } else {
-                    if ($seats = self::extract_number_from_text($text, $parentheses)) {
-                        return $seats;
+                    list($name, $seats) = self::extract_room_from_text($content->content, $parentheses);
+                }
+                $name = format_string($name);
+                if ($name && $seats) {
+                    if ($type) {
+                        if ($info[$rid]=='') {
+                            $info[$rid] = ('type'=='name' ? $name : $seats);
+                        }
+                    } else {
+                        if ($info[$rid]['name']==='') {
+                            $info[$rid]['name'] = $name;
+                        }
+                        if ($info[$rid]['seats']==='') {
+                            $info[$rid]['seats'] = $seats;
+                        }
                     }
                 }
             }
         }
+        if ($recordid==0) {
+            return $info;
+        }
 
-        return 0;
+        if (array_key_exists($recordid, $info)) {
+            return $info[$recordid];
+        } else {
+            return ($type=='name' ? '' : 0);
+        }
+    }
+
+    /**
+     * extract_room_from_text
+     *
+     * extract a numeric number of seats from the "schedule_roomseats" field
+     *
+     * @param string $name
+     * @param boolean $parentheses
+     * @param string $type "name" or "seats" or ""
+     * @return the numeric seats of seats extract from the schedule_roomseats
+     * @todo Finish documenting this function
+     */
+    static function extract_room_from_text($name, $parentheses, $type='') {
+
+        // search for double-byte parentheses
+        $seats = '';
+        if ($parentheses) {
+            if (preg_match('/^(.*?)\s*\x{FF08}(.*?)\x{FF09}/us', $name, $match)) {
+                $name = $match[1];
+                $seats = $match[2];
+                $parentheses = false;
+            } else if (preg_match('/^(.*?)\s*\((.*?)\)/us', $name, $match)) {
+                $name = $match[1];
+                $seats = $match[2];
+                $parentheses = false;
+            }
+        }
+
+        // search for double-byte seatss
+        if (preg_match('/[\x{FF10}-\x{FF19}]+/u', $seats, $match)) {
+            $seats = strtr($match[0], array("\u{FF10}" => 0, "\u{FF11}" => 1,
+                                            "\u{FF12}" => 2, "\u{FF13}" => 3,
+                                            "\u{FF14}" => 4, "\u{FF15}" => 5,
+                                            "\u{FF16}" => 6, "\u{FF17}" => 7,
+                                            "\u{FF18}" => 8, "\u{FF19}" => 9));
+        } else if (preg_match('/[0-9]+/', $seats, $match)) {
+            $seats = $match[0];
+        }
+        $seats = ($seats=='' ? 0 : intval($seats));
+
+        switch ($type) {
+            case 'name' : return $name;
+            case 'seats': return $seats;
+            default: return array($name, $seats);
+        }
+    }
+
+    /**
+     * get_seats_info
+     *
+     * @param array $info ()
+     * @return array [recordid => string]
+     * @todo Finish documenting this function
+     */
+    static public function get_seats_info($info) {
+        global $DB;
+        if (empty($info)) {
+            return $info;
+        }
+        list($sql, $params) = $DB->get_in_or_equal(array_keys($info));
+        $select = 'SELECT recordid, SUM(attend) AS attendance '.
+                  'FROM {block_maj_submissions} '.
+                  "WHERE recordid $sql ".
+                  'GROUP BY recordid';
+        $attend = $DB->get_records_sql_menu($select, $params);
+        if ($attend===false) {
+            $attend = array();
+        }
+
+        $string = 'emptyseatsx';
+        $plugin = 'block_maj_submissions';
+        foreach ($info as $rid => $seats) {
+            $seats = intval($seats);
+            if (array_key_exists($rid, $attend)) {
+                $seats -= intval($attend[$rid]);
+            }
+            if ($seats < 0) {
+                $seats = 0;
+            }
+            $info[$rid] = get_string($string, $plugin, $seats);
+        }
+        return $info;
     }
 }

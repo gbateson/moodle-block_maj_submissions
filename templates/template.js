@@ -84,6 +84,9 @@ MAJ.setup_attendance = function() {
             }
             items = null;
 
+            // RegExp to trim leading/trailing white space
+            var trimspace = new RegExp("(^\\s+)|(\\s+)$", "g");
+
             // set up attending/not attending checkboxes
             var sessions = document.querySelectorAll("table.schedule .session");
             for (var i in sessions) {
@@ -106,19 +109,13 @@ MAJ.setup_attendance = function() {
                     sessions[i].className += " attending";
                 }
 
-                // extract room name
-                var roomname = sessions[i].querySelector(".roomname");
-                if (roomname) {
-                    roomname = roomname.innerHTML;
-                }
-
                 // set up empty seats info
                 var emptyseats = document.createElement("DIV");
                 emptyseats.className = "emptyseats";
-                if (MAJ.emptyseats[roomname]) {
-                    emptyseats.innerHTML = MAJ.emptyseats[roomname];
+                if (MAJ.emptyseats[rid]) {
+                    emptyseats.innerHTML = MAJ.emptyseats[rid];
                 } else {
-                    emptyseats.innerHTML = "Seats available";
+                    emptyseats.innerHTML = MAJ.str.seatsavailable;
                 }
 
                 // set up checkbox

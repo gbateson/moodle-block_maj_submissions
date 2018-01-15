@@ -137,9 +137,10 @@ switch ($action) {
 
     case 'loadattendance':
 
-        $names = array('attending', 'notattending', 'fullschedule', 'myschedule');
+        $names = array('attending', 'emptyseatsx', 'fullschedule', 'myschedule', 'notattending', 'seatsavailable');
         foreach ($names as $name) {
-            $string = json_encode(get_string($name, $plugin));
+            $a = ($name=='emptyseatsx' ? 99 : null);
+            $string = json_encode(get_string($name, $plugin, $a));
             $html .= 'MAJ.str.'.$name.' = '.$string.';'."\n";
         }
 
@@ -153,7 +154,14 @@ switch ($action) {
             }
         }
 
-        $html .= 'MAJ.emptyseats = {};'."\n";
+        // get number of empty seats in each room
+        if ($info = $config->collectpresentationscmid) {
+            $info = block_maj_submissions::get_room_info($info, 0, 'seats');
+            $info = block_maj_submissions::get_seats_info($info);
+        } else {
+            $info = new stdClass();
+        }
+        $html .= 'MAJ.emptyseats = '.json_encode($info).';'."\n";
         break;
 
     case 'updateattendance':
@@ -175,7 +183,7 @@ switch ($action) {
                 $usedseats = 0;
             }
 
-            if ($totalseats = block_maj_submissions::get_room_seats($rid, $cmid)) {
+            if ($totalseats = block_maj_submissions::get_room_seats($cmid, $rid)) {
                 $html .= get_string('emptyseatsx', $plugin, $totalseats - $usedseats);
             }
         }

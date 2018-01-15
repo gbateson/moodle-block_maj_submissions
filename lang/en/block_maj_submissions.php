@@ -482,6 +482,7 @@ $string['last'] = 'Last';
 
 $string['attending'] = 'Attending';
 $string['notattending'] = 'Not attending';
+$string['seatsavailable'] = 'Seats available';
 
 $string['generatecontent_help'] = 'If this setting is enabled, then sample presentations will be added to the schedule. Otherwise, all sessions will be left empty.';
 $string['generatecontent'] = 'Generate content';
