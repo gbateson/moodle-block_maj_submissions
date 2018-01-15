@@ -72,6 +72,10 @@ MAJ.setup_attendance = function() {
     xhr.onreadystatechange = function(){
         if (this.readyState == 4 && this.status == 200) {
 
+            if (this.responseText=='') {
+                return true;
+            }
+
             // get the new MAJ settings from the incoming data
             eval(this.responseText);
 

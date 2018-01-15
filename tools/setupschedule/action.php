@@ -51,8 +51,11 @@ $tool = 'toolsetupschedule';
 $id = optional_param('id', 0, PARAM_INT); // block_instances id
 $rid = optional_param('rid', 0, PARAM_INT); // database_records id
 $cmid = optional_param('cmid', 0, PARAM_INT); // course_modules id
-$attend = optional_param('attend', 0, PARAM_INT);
-$action = required_param('action', PARAM_ALPHA);
+$attend = optional_param('attend', 0, PARAM_INT); // 1 or 0
+$action = optional_param('action', '', PARAM_ALPHA);
+
+// announce that this is an ajax script
+define('AJAX_SCRIPT', true);
 
 // =========================================
 // if necessary, determine cmid from rid
@@ -118,7 +121,18 @@ $course->context = $context;
 // =========================================
 
 require_login($course->id);
-require_capability('moodle/course:manageactivities', $context);
+
+if (isguestuser()) {
+    die('');
+}
+
+if ($action=='loadattendance' || $action=='updateattendance') {
+    // delegate wants to load/update attendance
+    require_capability('mod/assign:view', $context);
+} else {
+    // manager wants to load strings/tools/schedule/items/info
+    require_capability('moodle/course:manageactivities', $context);
+}
 
 // =========================================
 // setup the block instance object
