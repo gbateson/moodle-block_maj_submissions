@@ -62,7 +62,7 @@
     /* fc9 pale orange */
 }
 
-.schedule.myschedule .session:not(.attending) {
+.schedule.myschedule .session.notattending {
     display: none;
 }
 
@@ -385,19 +385,23 @@
     .schedule .session {
         margin:         4px 3px;
         overflow:       visible;
-        padding-bottom:   1.8em;
         position:      relative;
         vertical-align:     top;
         min-width:        180px;
         max-width:        180px;
     }
 
-    .schedule.myschedule .session:not(.attending) {
+    .schedule .session.attending,
+    .schedule .session.notattending {
+        padding-bottom:   1.8em;
+    }
+
+    .schedule.myschedule .session.notattending {
         display:     table-cell;
         border-style:    dashed;
     }
 
-    .schedule.myschedule .session:not(.attending) div {
+    .schedule.myschedule .session.notattending div {
         visibility:      hidden;
     }
 

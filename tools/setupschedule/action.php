@@ -24,6 +24,9 @@
  * @since      Moodle 2.3
  */
 
+// announce that this is an ajax script
+define('AJAX_SCRIPT', true);
+
 /** Include required files */
 require_once('../../../../config.php');
 
@@ -53,9 +56,6 @@ $rid = optional_param('rid', 0, PARAM_INT); // database_records id
 $cmid = optional_param('cmid', 0, PARAM_INT); // course_modules id
 $attend = optional_param('attend', 0, PARAM_INT); // 1 or 0
 $action = optional_param('action', '', PARAM_ALPHA);
-
-// announce that this is an ajax script
-define('AJAX_SCRIPT', true);
 
 // =========================================
 // if necessary, determine cmid from rid
@@ -859,14 +859,14 @@ switch ($action) {
                             $values = array_filter($values);
                             foreach ($values as $value) {
                                 if (array_key_exists($value, $info->$field)) {
-                                    $info->$field[$value][] = $rid;
+                                    array_push($info->$field[$value], $rid);
                                 } else {
                                     $info->$field[$value] = array($rid);
                                 }
                             }
                         } else if ($delimiter==='') {
                             if (array_key_exists($value, $info->$field)) {
-                                $info->$field[$value][] = $rid;
+                                array_push($info->$field[$value], $rid);
                             } else {
                                 $info->$field[$value] = array($rid);
                             }

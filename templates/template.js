@@ -91,6 +91,9 @@ MAJ.setup_attendance = function() {
             // RegExp to trim leading/trailing white space
             var trimspace = new RegExp("(^\\s+)|(\\s+)$", "g");
 
+            // RegExp to trim (not)attending css class
+            var attending = new RegExp(" (not)?attending", "g");
+
             // set up attending/not attending checkboxes
             var sessions = document.querySelectorAll("table.schedule .session");
             for (var i in sessions) {
@@ -106,11 +109,13 @@ MAJ.setup_attendance = function() {
                 var rid = id.substr(12);
 
                 // remove "attending" class name
-                sessions[i].className = sessions[i].className.replace(" attending", "");
+                sessions[i].className = sessions[i].className.replace(attending, "");
 
                 // add "attending" class if necessary
                 if (MAJ.attend[rid]) {
                     sessions[i].className += " attending";
+                } else {
+                    sessions[i].className += " notattending";
                 }
 
                 // set up empty seats info
@@ -162,12 +167,10 @@ MAJ.setup_attendance = function() {
                     }
                     if (checkbox.checked) {
                         label.textContent = MAJ.str.attending;
-                        if (session.className.indexOf(" attending") < 0) {
-                            session.className += " attending";
-                        }
+                        session.className = session.className.replace(" notattending", " attending");
                     } else {
                         label.textContent = MAJ.str.notattending;
-                        session.className = session.className.replace(" attending", "");
+                        session.className = session.className.replace(" attending", " notattending");
                     }
                     var target = this;
                     var xhr = new XMLHttpRequest();
