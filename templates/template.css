@@ -196,7 +196,7 @@
 }
 
 .schedule .categorytype {
-    font-size: x-small;
+    font-size: small;
 }
 
 .schedule .category:not(:empty) + .type:not(:empty):before {
@@ -232,7 +232,7 @@
     font-size:        0.9em;
     height:             3em;
     text-align:       right;
-    width:            132px;
+    width:            120px;
 }
 
 .schedule .session.attending .capacity {
@@ -253,7 +253,9 @@
 .schedule .attendance label {
     display:         inline;
     font-weight:        300;
-    padding:        0px 6px;
+    font-size:        small;
+    padding:            0px;
+    padding-right:      6px;
 }
 
 .schedule .session.attending .attendance label {
@@ -262,7 +264,7 @@
 
 .schedule .attendance input[type="checkbox"] {
     margin-top:         0px;
-    margin-right:       6px;
+    margin-right:       2px;
 }
 
 .schedule .emptyseats {
@@ -464,8 +466,6 @@
         padding:        0px 6px;
         position:      absolute;
         text-align:       right;
-        max-width:        9.0em;
-        width: calc(100% - 4px);
     }
 
     .schedule .emptyseats {

@@ -923,6 +923,19 @@ switch ($action) {
                         break; // use first letter of keyword
                 }
             }
+
+            // set all presenters as "presenting" at their own presentation
+            foreach ($info->userids as $rid => $userids) {
+                foreach ($userids as $userid => $attend) {
+                    $params = array('instanceid' => $id,
+                                    'recordid'   => $rid,
+                                    'userid'     => $userid);
+                    if (! $DB->record_exists($plugin, $params)) {
+                        $DB->insert_record($plugin, $params);
+                    }
+                    $DB->set_field($plugin, 'attend', $attend, $params);
+                }
+            }
             $html = json_encode($info);
         }
         break;
