@@ -169,6 +169,13 @@ function xmldb_block_maj_submissions_upgrade($oldversion=0) {
         upgrade_block_savepoint($result, "$newversion", 'maj_submissions');
     }
 
+    $newversion = 2018011767;
+    if ($oldversion < $newversion) {
+        block_maj_submissions_upgrade_multiroom();
+        upgrade_block_savepoint($result, "$newversion", 'maj_submissions');
+    }
+
+
     return $result;
 }
 
@@ -256,6 +263,150 @@ function block_maj_submissions_upgrade_property_names($names=null) {
             $DB->set_field('block_instances', 'configdata', $instance->configdata, array('id' => $instance->id));
         }
     }
+}
+
+function block_maj_submissions_upgrade_multiroom() {
+    global $CFG, $DB;
+
+	$blockname = 'maj_submissions';
+	$plugin = "block_$blockname";
+
+	$dataids = array();
+	$pageids = array();
+
+	$oldtext = '';
+	$oldmenu = array();
+
+	$newtext = '';
+	$newmenu = array();
+
+    if ($instances = $DB->get_records('block_instances', array('blockname' => 'maj_submissions'))) {
+
+		// cache id of "data" and "page" modules
+		$datamoduleid = $DB->get_field('modules', 'id', array('name' => 'data'));
+		$pagemoduleid = $DB->get_field('modules', 'id', array('name' => 'page'));
+
+        foreach ($instances as $instance) {
+
+            if (empty($instance->configdata)) {
+                continue;
+            }
+
+            $config = unserialize(base64_decode($instance->configdata));
+
+            if (empty($config)) {
+                continue;
+            }
+
+			if ($newtext=='') {
+				$block_instance = block_instance($blockname, $instance);
+				$block_instance->set_multilang(true);
+				$newtext = $block_instance->get_string('schedule_roomtype', $plugin);
+				$newmenu[] = $block_instance->get_string('normalroom', $plugin);
+				$newmenu[] = $block_instance->get_string('largeroom', $plugin);
+				$newmenu[] = $block_instance->get_string('multiplerooms', $plugin);
+				$block_instance = null;
+			}
+
+            $names = array_keys(get_object_vars($config));
+            $names = preg_grep('/^(collect|publish|register).*cmid$/', $names);
+            // we expect the following settings:
+            // - collect(presentations|sponsoreds|workshops)cmid
+            // - register(delegates|presenters)cmid
+            // - publishcmid (the schedule)
+
+            foreach ($names as $name) {
+                if (empty($config->$name)) {
+                    continue;
+                }
+                if (substr($name, 0, 7)=='publish') {
+					$params = array('id' => $config->$name,
+									'module' => $pagemoduleid);
+					$pageids[] = $DB->get_field('course_modules', 'instance', $params);
+                } else {
+					$params = array('id' => $config->$name,
+									'module' => $datamoduleid);
+					$dataids[] = $DB->get_field('course_modules', 'instance', $params);
+                }
+            }
+        }
+        $dataids = array_filter($dataids);
+        $pageids = array_filter($pageids);
+    }
+
+	if ($newtext=='') {
+		$newtext = get_string('schedule_roomtype', $plugin);
+	}
+
+	foreach ($pageids as $id) {
+		if ($content = $DB->get_field('page', 'content', array('id' => $id))) {
+			$content = str_replace('allrooms', 'multiroom', $content);
+			$DB->set_field('page', 'content', $content, array('id' => $id));
+		}
+	}
+
+	$templates = array('singletemplate',
+					   'listtemplate',
+					   'listtemplateheader',
+					   'listtemplatefooter',
+					   'addtemplate',
+					   'asearchtemplate');
+
+	$oldname = 'schedule_audience';
+	$newname = 'schedule_roomtype';
+
+	foreach ($dataids as $id) {
+		if ($data = $DB->get_record('data', array('id' => $id))) {
+			$params = array('dataid' => $id, 'name' => $oldname);
+			if ($field = $DB->get_record('data_fields', $params)) {
+
+				$field->name = $newname;
+				$oldtext = $field->description;
+				$field->description = $newtext;
+
+				if ($field->type=='menu' || ($field->type=='admin' && $field->param10=='menu')) {
+					$oldmenu = $field->param1;
+					$field->param1 = implode("\n", $newmenu);
+					$oldmenu = preg_split('/[\r\n]+/', $oldmenu);
+					$oldmenu = array_filter($oldmenu);
+				} else {
+					$oldmenu = array();
+				}
+				$DB->update_record('data_fields', $field);
+
+				foreach ($templates as $template) {
+					$data->$template = str_replace($oldname, $newname, $data->$template);
+					$data->$template = str_replace($oldtext, $newtext, $data->$template);
+				}
+				$DB->update_record('data', $data);
+
+                $content = array();
+
+                $oldvalue = reset($oldmenu);
+                $newvalue = reset($oldmenu);
+                if ($oldvalue && $newvalue) {
+                    array_push($content, 'WHEN content = ? THEN ?');
+                    array_push($params, $oldvalue, $newvalue);
+                }
+
+                $oldvalue = end($oldmenu);
+                $newvalue = end($oldmenu);
+                if ($oldvalue && $newvalue) {
+                    array_push($content, 'WHEN content = ? THEN ?');
+                    array_push($params, $oldvalue, $newvalue);
+                }
+
+                if ($content = implode(' ', $content)) {
+                    $content = "(CASE $content ELSE ? END)";
+                } else {
+                    $content = '?';
+                }
+                $params[] = '';
+
+ 				$DB->execute('UPDATE {data_content} SET content = '.$content.' WHERE fieldid = ?', $params);
+			}
+		}
+	}
 }
 
 function block_maj_submissions_upgrade_multilang() {

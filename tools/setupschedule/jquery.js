@@ -183,7 +183,7 @@ MAJ.setup_tbody_rooms = function(tbody) {
 }
 
 MAJ.fix_times_and_rooms = function(container) {
-    $(container).find(".session").not(".allrooms").each(function(){
+    $(container).find(".session").not(".multiroom").each(function(){
         MAJ.insert_timeroom(this);
     });
 }
@@ -311,9 +311,9 @@ MAJ.set_schedule_html = function() {
     // remove jQuery CSS classes
     html = html.replace(new RegExp(' *\\bui-[a-z0-9_-]*', "g"), "");
 
-    // reset hidden multilang SPANs
-    html = html.replace(new RegExp(' *\\bdisplay: *none;*', "g"), "");
-
+    // reset inline styles for hidden multilang SPANs and jquery items
+    html = html.replace(new RegExp(' *\\b(display|position|z-index): *[^;"]*;', "g"), "");
+    
     // remove leading space from class/style counts
     html = html.replace(new RegExp('(\\b(class|style)=") +', "g"), "$1");
 
@@ -405,7 +405,7 @@ MAJ.populateschedule = function(evt, day) {
     MAJ.select_session();
 
     // select empty sessions on the selected day
-    var empty = $(MAJ.get_day_selector(day, " .emptysession:not(.allrooms)"));
+    var empty = $(MAJ.get_day_selector(day, " .emptysession:not(.multiroom)"));
     if (empty.length==0) {
         return true;
     }
@@ -472,7 +472,7 @@ MAJ.renumberschedule = function(evt, day) {
             slot = slot.prop("class").replace(slotregexp, "$1");
 
             var room = $(this).closest(".slot").prevAll(".roomheadings");
-            if (room.length==0 || $(this).hasClass("allrooms")) {
+            if (room.length==0 || $(this).hasClass("multiroom")) {
                 var room = 0;
             } else {
                 room = room.first().find("th, td").eq(this.cellIndex);
@@ -883,7 +883,7 @@ MAJ.add_roomheadings = function(evt) {
             if (days[day]) {
                 var add = true;
                 $(this).find("tr").not(".date").each(function(){
-                    if (MAJ.has_allrooms($(this))) {
+                    if (MAJ.has_multiroom($(this))) {
                         add = true;
                     } else if (add) {
                         if ($(this).is(":not(.roomheadings)")) {
@@ -1004,7 +1004,8 @@ MAJ.remove_roomheadings = function(evt) {
 // ==========================================
 
 MAJ.add_room = function(evt) {
-    var title = MAJ.str.addrooms;
+
+	var title = MAJ.str.addroom;
 
     // start HTML for dialog
     var html = "";
@@ -1036,42 +1037,49 @@ MAJ.add_room = function(evt) {
             var day = MAJ.extract_day($(this).prop("class"));
             if (days[day]) {
 
+				// increase colspan for this day
                 $(this).find(".date td").each(function(){
                     var colspan = $(this).prop("colspan") || 1;
                     $(this).prop("colspan", colspan + 1);
                 });
 
+				// increase colspan for this day
                 $(this).find(".roomheadings").each(function(){
-                    var r = 1;
+                    var r = 0, i = 0;
                     var added = false;
                     var oldclass = new RegExp("\\broom\\d+");
                     $(this).find(".roomheading").each(function(index){
-                        if (added==false && position <= index) {
+                    	var r = $(this).data("room");
+                    	console.log("position" + position + ", r=" + r);
+                        if (added==false && position <= r) {
                             added = true;
-                            $(this).before(MAJ.roomheading(r++, roomtxt, roomtopic));
+                            $(this).before(MAJ.roomheading(r, roomtxt, roomtopic));
+                        }
+                        if (added) {
+                        	r++;
                         }
                         var cssclass = $(this).prop("class").replace(oldclass, "");
-                        $(this).prop("class", MAJ.trim(cssclass) + " room" + r++);
+                        $(this).prop("class", MAJ.trim(cssclass) + " room" + r);
                     });
                     if (added==false) {
                         added = true;
-                        $(this).append(MAJ.roomheading(r++, roomtxt, roomtopic));
+                        r++;
+                        $(this).append(MAJ.roomheading(r, roomtxt, roomtopic));
                     }
                 });
 
                 var html = MAJ.tag("td", "", {"class" : "session emptysession"});
                 $(this).find(".slot").each(function(){
-                    var allrooms = MAJ.has_allrooms($(this));
                     var added = false;
                     $(this).find(".session").each(function(index){
+                    	var r = $(this).data("room");
                         if (added==false) {
-                            if ($(this).hasClass("allrooms")) {
-                                added = true;
-                                var colspan = $(this).prop("colspan") || 1;
-                                $(this).prop("colspan", colspan + 1);
-                            } else if (position <= index) {
-                                added = true;
+                            if (this.colSpan && this.colSpan > 1) {
+                                $(this).prop("colspan", this.colSpan + 1);
+								added = true;
+                            } else if (position <= r) {
                                 MAJ.insert_session(html, "insertBefore", this);
+								added = true;
                             }
                         }
                     });
@@ -1088,7 +1096,7 @@ MAJ.add_room = function(evt) {
 
         MAJ.redraw_schedule(added);
 
-        MAJ.open_dialog(evt, title, MAJ.str.addedrooms, MAJ.str.ok);
+        MAJ.open_dialog(evt, title, MAJ.str.addedroom, MAJ.str.ok);
     };
 
     MAJ.show_add_dialog(evt, title, html, actionfunction);
@@ -1234,14 +1242,12 @@ MAJ.remove_room = function(evt) {
                     return true;
                 }
 
-                if ($(this).is(".allrooms")) {
-                    var cellcolspan = $(this).prop("colspan");
-                    if (cellcolspan && cellcolspan > 2) {
-                        cellcolspan = (cellcolspan - 1);
-                        $(this).prop("colspan", cellcolspan);
-                    } else {
-                        cellcolspan = 1;
+				if (this.colSpan && this.colSpan > 1) {
+                    var cellcolspan = (this.colSpan - 1);
+                    if (cellcolspan==1) {
                         $(this).removeAttr("colspan");
+                    } else {
+						$(this).prop("colspan", cellcolspan);
                     }
                     rowcolspan += cellcolspan;
                     removed = true;
@@ -1367,9 +1373,9 @@ MAJ.edit_slot = function(evt) {
     // get form elements
     var start = MAJ.hoursmins("start", starthours, startmins);
     var finish = MAJ.hoursmins("finish", finishhours, finishmins);
-    var checkbox = MAJ.checkbox("allrooms", MAJ.has_allrooms(s));
+    var checkbox = MAJ.checkbox("multiroom", MAJ.has_multiroom(s));
 
-    var roomname = MAJ.extract_sessionroom(dayslot + " .allrooms", "name");
+    var roomname = MAJ.extract_sessionroom(dayslot + " .multiroom", "name");
 
     // create HTML for dialog
     var html = "";
@@ -1377,7 +1383,7 @@ MAJ.edit_slot = function(evt) {
     html += "<tr>" + MAJ.tag("th", MAJ.str.day) + MAJ.tag("td", daytext) + "</tr>";
     html += "<tr>" + MAJ.tag("th", MAJ.str.starttime) + MAJ.tag("td", start) + "</tr>";
     html += "<tr>" + MAJ.tag("th", MAJ.str.finishtime) + MAJ.tag("td", finish) + "</tr>";
-    html += "<tr>" + MAJ.tag("th", MAJ.str.allrooms) + MAJ.tag("td", checkbox + " "+ MAJ.rooms("roomtxt", roomname)) + "</tr>";
+    html += "<tr>" + MAJ.tag("th", MAJ.str.largeroom) + MAJ.tag("td", checkbox + " "+ MAJ.rooms("roomtxt", roomname)) + "</tr>";
     html += "</tbody></table>";
     html += MAJ.hidden("day", day);
     html += MAJ.hidden("slot", slot);
@@ -1388,7 +1394,7 @@ MAJ.edit_slot = function(evt) {
         var day  = MAJ.form_value(this, "day", true);
         var slot = MAJ.form_value(this, "slot", true);
         var roomtxt = MAJ.form_value(this, "roomtxt");
-        var allrooms = MAJ.form_value(this, "allrooms", true);
+        var multiroom = MAJ.form_value(this, "multiroom", true);
         var starthours  = MAJ.form_value(this, "starthours", true);
         var startmins   = MAJ.form_value(this, "startmins", true);
         var finishhours = MAJ.form_value(this, "finishhours", true);
@@ -1410,11 +1416,11 @@ MAJ.edit_slot = function(evt) {
         var firstsession = true;
         var roomcount = MAJ.extract_roomcount(day);
         $(dayslot + " .session").each(function(){
-            if (allrooms) {
-                // convert to allrooms
+            if (multiroom) {
+                // convert to multiroom
                 if (firstsession) {
                     firstsession = false;
-                    $(this).addClass("allrooms");
+                    $(this).addClass("multiroom");
                     if (roomcount > 1) {
                         $(this).prop("colspan", roomcount);
                     }
@@ -1424,9 +1430,9 @@ MAJ.edit_slot = function(evt) {
                 }
             } else {
                 // revert to single rooms
-                if ($(this).is(".allrooms")) {
+                if ($(this).is(".multiroom")) {
                     $(this).removeAttr("colspan")
-                           .removeClass("allrooms");
+                           .removeClass("multiroom");
                     if ($(this).is(":not(.emptysession)")) {
                         MAJ.insert_timeroom(this);
                     } else {
@@ -1646,8 +1652,8 @@ MAJ.click_session = function(targetsession, forceswap) {
         return true;
     }
 
-    var targetAllRooms = $(targetsession).hasClass("allrooms");
-    var sourceAllRooms = $(MAJ.sourcesession).hasClass("allrooms");
+    var targetAllRooms = $(targetsession).hasClass("multiroom");
+    var sourceAllRooms = $(MAJ.sourcesession).hasClass("multiroom");
 
     var targetAssigned = $(targetsession).closest("table.schedule").length;
     var sourceAssigned = $(MAJ.sourcesession).closest("table.schedule").length;
@@ -1715,9 +1721,9 @@ MAJ.click_session = function(targetsession, forceswap) {
 
         if (sourceAssigned) {
             if (sourceAllRooms) {
-                $(MAJ.sourcesession).addClass("allrooms");
+                $(MAJ.sourcesession).addClass("multiroom");
             } else {
-                $(MAJ.sourcesession).removeClass("allrooms");
+                $(MAJ.sourcesession).removeClass("multiroom");
                 if (targetIsEmpty==false) {
                     MAJ.insert_timeroom(MAJ.sourcesession);
                 }
@@ -1725,9 +1731,9 @@ MAJ.click_session = function(targetsession, forceswap) {
         }
         if (targetAssigned) {
             if (targetAllRooms) {
-                $(targetsession).addClass("allrooms");
+                $(targetsession).addClass("multiroom");
             } else {
-                $(targetsession).removeClass("allrooms");
+                $(targetsession).removeClass("multiroom");
                 if (targetIsEmpty==false) {
                     MAJ.insert_timeroom(targetsession);
                 }
@@ -1776,7 +1782,7 @@ MAJ.click_session = function(targetsession, forceswap) {
         $(empty).prop("id", $(nonempty).prop("id"));
 
         // set flag if empty session uses All Rooms
-        var emptyAllRooms = $(empty).is(".allrooms");
+        var emptyAllRooms = $(empty).is(".multiroom");
 
         // transfer CSS classes
         var emptyclasses = MAJ.get_non_jquery_classes(empty);
@@ -1785,10 +1791,10 @@ MAJ.click_session = function(targetsession, forceswap) {
 
         // remove child nodes and transfer time/room details
         if (emptyAllRooms) {
-            $(empty).addClass("allrooms");
+            $(empty).addClass("multiroom");
             $(empty).children().not(MAJ.sessiontimeroom).remove();
         } else {
-            $(empty).removeClass("allrooms");
+            $(empty).removeClass("multiroom");
             $(empty).children().remove();
             MAJ.insert_timeroom(empty);
         }
@@ -1910,8 +1916,8 @@ MAJ.close_dialog = function() {
 // helper functions to extract info from DOM
 // ==========================================
 
-MAJ.has_allrooms = function(slot) {
-    return (slot.find(".allrooms").filter(MAJ.colspan).length > 0);
+MAJ.has_multiroom = function(slot) {
+    return (slot.find(".multiroom").filter(MAJ.colspan).length > 0);
 }
 
 MAJ.extract_main_language = function() {
@@ -1990,16 +1996,15 @@ MAJ.extract_number = function(str, prefix, suffix) {
 }
 
 MAJ.extract_roomcount = function(day) {
-    var daytext = $(".day.day" + day + " tr.date td");
-    if (daytext.length==0) {
-        return 0;
-    }
-    return (daytext.prop("colspan") - 1);
+    return $(".day.day" + day).data("roomcount");
 }
 
-MAJ.extract_max_roomcount = function() {
-    var max = 0;
-    $(".day").each(function(){
+MAJ.extract_max_roomcount = function(day) {
+    var max = 0, days = ".day";
+    if (day) {
+        days += ".day" + day;
+    }
+    $(days).each(function(){
         var day = MAJ.extract_parent_day(this);
         max = Math.max(max, MAJ.extract_roomcount(day));
     });
@@ -2174,7 +2179,7 @@ MAJ.unassign_session = function(session, remove) {
     } else {
         $(session).children().remove();
         $(session).removeAttr("id colspan")
-                  .removeClass("demo attending allrooms")
+                  .removeClass("demo attending multiroom")
                   .addClass("emptysession");
     }
 }

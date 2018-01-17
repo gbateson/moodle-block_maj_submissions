@@ -887,7 +887,7 @@ MB (11F) PC Room (140 seats)</param1>
 
 <field>
 <type>admin</type>
-<name>schedule_audience</name>
+<name>schedule_roomtype</name>
 <description>聴講予定者 Schedule Audience</description>
 <required>0</required>
 <param1>開催室のみ Single room

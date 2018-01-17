@@ -238,7 +238,7 @@ switch ($action) {
         // plugin strings
         $names = array('addday','addroom', 'addroomheadings', 'addslot',
                        'addedday', 'addedroom', 'addedroomheadings', 'addedslot',
-                       'allheadingsalldays', 'allheadingsthisday', 'allrooms', 'applyto',
+                       'allheadingsalldays', 'allheadingsthisday', 'applyto',
                        'confirmday', 'confirmroom', 'confirmroomheadings', 'confirmsession', 'confirmslot',
                        'currentheadings', 'daytext', 'duration', 'durationseparator',
                        'editday', 'editroom', 'editroomheadings', 'editsession', 'editslot',
@@ -246,7 +246,7 @@ switch ($action) {
                        'finishtime', 'numhours', 'nummins', 'position', 'positionbefore', 'positionlast',
                        'removeday', 'removeroom', 'removeroomheadings', 'removesession', 'removeslot',
                        'removedday', 'removedroom', 'removedroomheadings', 'removedsession', 'removedslot',
-                       'room', 'roomcount', 'roomname', 'roomseats', 'roomtopic',
+                       'room', 'roomcount', 'roomname', 'roomseats', 'roomtopic', 'largeroom',
                        'slot', 'slotcount', 'slotinterval', 'slotlength', 'slotstart', 'starttime',
                        'title', 'authornames', 'schedulenumber', 'category', 'type', 'rowspan', 'colspan');
 

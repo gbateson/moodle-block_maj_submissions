@@ -60,7 +60,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
     protected $schedule_duration  = null;
     protected $schedule_roomname  = null;
     protected $schedule_roomseats = null;
-    protected $schedule_audience  = null;
+    protected $schedule_roomtype  = null;
     protected $presentation_type  = null;
     protected $presentation_category = null;
 
@@ -260,7 +260,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $name = 'schedule_roomseats';
             $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
 
-            $name = 'schedule_audience';
+            $name = 'schedule_roomtype';
             $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
 
             $name = 'presentation_type';
@@ -359,7 +359,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                        'schedule_duration',
                        'schedule_roomname',
                        'schedule_roomseats',
-                       'schedule_audience',
+                       'schedule_roomtype',
                        'presentation_type',
                        'presentation_category');
 
@@ -466,7 +466,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                                     'schedule_roomname'  => null,
                                     'schedule_roomseats' => null,
                                     'schedule_topic'     => null,
-                                    'schedule_audience'  => null,
+                                    'schedule_roomtype'  => null,
                                     'presentation_type'  => null,
                                     'presentation_category' => null);
                     foreach ($fields as $name => $content) {
@@ -924,7 +924,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $slots[] = (object)array('startfinish' => "$start - $finish",
                                      'duration' => $duration,
                                      'cssclass' => $cssclass,
-                                     'allrooms' => true);
+                                     'multiroom' => true);
         }
 
 		// TODO: get presentation categories from the DB
@@ -978,7 +978,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $slots[] = (object)array('startfinish' => "$start - $finish",
                                      'duration' => $duration,
             						 'cssclass' => $cssclass,
-                                     'allrooms' => false);
+                                     'multiroom' => false);
 
             // increment counter
             $countslots++;
@@ -1036,7 +1036,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             foreach ($slots as $s => $slot) {
 
                 // add room headings, if necessary
-                if (empty($slot->allrooms)) {
+                if (empty($slot->multiroom)) {
                     if ($addheadings) {
                         $content .= html_writer::start_tag('tr', array('class' => 'roomheadings'));
                         $content .= html_writer::tag('th', '', array('class' => 'timeheading'));
@@ -1070,14 +1070,14 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                 foreach ($rooms as $r => $room) {
                     $session = '';
 
-                    if (empty($slot->allrooms)) {
-                        $slot->allrooms = false;
+                    if (empty($slot->multiroom)) {
+                        $slot->multiroom = false;
                     }
 
-                    if ($r==0 && $slot->allrooms==false) {
+                    if ($r==0 && $slot->multiroom==false) {
                         continue;
                     }
-                    if ($r && $slot->allrooms==true) {
+                    if ($r && $slot->multiroom==true) {
                         continue;
                     }
                     if ($r==0 && $generatecontent) {
@@ -1177,8 +1177,8 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                     if ($session) {
                         $class .= ' demo';
                     }
-                    if ($slot->allrooms) {
-                        $class .= ' allrooms';
+                    if ($slot->multiroom) {
+                        $class .= ' multiroom';
                     }
                     if ($r==$attending) {
                         $class .= ' attending';
@@ -1187,7 +1187,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                         $class .= ' emptysession';
                     }
                     $params = array('class' => $class);
-                    if ($slot->allrooms) {
+                    if ($slot->multiroom) {
                         $params['colspan'] = $countrooms;
                     }
                     $content .= html_writer::tag('td', $session, $params);
