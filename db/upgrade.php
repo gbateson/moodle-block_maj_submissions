@@ -385,14 +385,14 @@ function block_maj_submissions_upgrade_multiroom() {
                 $oldvalue = reset($oldmenu);
                 $newvalue = reset($oldmenu);
                 if ($oldvalue && $newvalue) {
-                    array_push($content, 'WHEN content = ? THEN ?');
+                    array_push($content, '(WHEN content = ? THEN ?)');
                     array_push($params, $oldvalue, $newvalue);
                 }
 
                 $oldvalue = end($oldmenu);
                 $newvalue = end($oldmenu);
                 if ($oldvalue && $newvalue) {
-                    array_push($content, 'WHEN content = ? THEN ?');
+                    array_push($content, '(WHEN content = ? THEN ?)');
                     array_push($params, $oldvalue, $newvalue);
                 }
 

@@ -64,7 +64,7 @@ if (! isset($block->version)) {
 }
 
 if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
-    $content = $instance->set_multilang(true);
+    $instance->set_multilang(true);
     $content = $instance->get_content()->text;
 
     // remove the links and icons for edit, import and export

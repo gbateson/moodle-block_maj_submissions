@@ -543,9 +543,9 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
 
                     // search strings to detect CSS classes
                     $search->class = '/(?<=class=").*?(?=")/';
-                    $search->date = '/\bdate\b/';
-                    $search->day = '/\bday\b/';
-                    $search->slot = '/\bslot\b/';
+                    $search->dateclass = '/\bdate\b/';
+                    $search->dayclass = '/\bday\b/';
+                    $search->slotclass = '/\bslot\b/';
                     $search->timeheading = '/\btimeheading\b/';
 
                     // search string to detect recordid
@@ -561,16 +561,23 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
 
                     // map CSS class names to database fields
                     $fieldids = array();
-                    $fields = array('startfinish' => 'schedule_time',
+                    $fields = array('day'         => 'schedule_day',
+                                    'startfinish' => 'schedule_time',
                                     'duration'    => 'schedule_duration',
                                     'roomname'    => 'schedule_roomname',
                                     'roomseats'   => 'schedule_roomseats',
                                     'roomtopic'   => 'schedule_topic', // does not exist yet
+                                    'title'       => 'presentation_title',
                                     'type'        => 'presentation_type',
                                     'category'    => 'presentation_category',
                                     'schedulenumber' => 'schedule_number');
                     foreach ($fields as $name => $field) {
-                        $search->$name = '/<span[^>]*class="[^"]*\b('.$name.')\b[^"]*"[^>]*>'.$value.'<\/span>/us';
+                        if ($name=='title') {
+                            $tag = 'div';
+                        } else {
+                            $tag = 'span';
+                        }
+                        $search->$name = '/<'.$tag.'[^>]*class="[^"]*\b('.$name.')\b[^"]*"[^>]*>'.$value.'<\/'.$tag.'>/us';
                         $select = 'dataid '.$dataidselect.' AND name = ?';
                         $params = array_merge($dataidparams, array($field));
                         $fieldid = $DB->get_field_select('data_fields', 'id', $select, $params);
@@ -587,12 +594,13 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                     } else {
                         $d_max = 0;
                     }
+
                     for ($d=0; $d<$d_max; $d++) {
                         $r_max = 0;
                         if ($days[2][$d]) {
                             if (preg_match($search->class, $days[1][$d], $dayclass)) {
                                 $dayclass = reset($dayclass);
-                                if (preg_match($search->day, $dayclass, $day)) {
+                                if (preg_match($search->dayclass, $dayclass, $day)) {
                                     $day = reset($day);
                                     if (preg_match_all($search->tr, $days[2][$d], $rows)) {
                                         $r_max = count($rows[0]);
@@ -607,12 +615,12 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                             if ($rows[2][$r]) {
                                 if (preg_match($search->class, $rows[1][$r], $rowclass)) {
                                     $rowclass = reset($rowclass);
-                                    if (preg_match($search->date, $rowclass)) {
+                                    if (preg_match($search->dateclass, $rowclass)) {
                                         if (preg_match_all($search->td, $rows[2][$r], $cells)) {
                                             $daytext = reset($cells[2]);
                                             // Note: leave $c_max set to zero, to skip this row
                                         }
-                                    } else if (preg_match($search->slot, $rowclass, $slot)) {
+                                    } else if (preg_match($search->slotclass, $rowclass, $slot)) {
                                         $slot = reset($slot);
                                         if (preg_match_all($search->td, $rows[2][$r], $cells)) {
                                             $c_max = count($cells[0]);
@@ -634,11 +642,12 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                                     $recordid = $recordid[1];
                                     $values = array();
                                     foreach ($fields as $name => $field) {
-                                        if (preg_match($search->$name, $cells[2][$c], $value)) {
+                                        if ($name=='day') {
+                                            $values[$name] = $daytext;
+                                        } else if (preg_match($search->$name, $cells[2][$c], $value)) {
                                             $values[$name] = $value[2];
                                         }
                                     }
-
                                     if (array_key_exists('roomname', $values) && array_key_exists('roomseats', $values)) {
                                         if ($values['roomname']=='undefined') {
                                             $values['roomname']=='';
