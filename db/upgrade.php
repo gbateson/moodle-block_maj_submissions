@@ -403,7 +403,9 @@ function block_maj_submissions_upgrade_multiroom() {
                 }
                 $params[] = '';
 
- 				$DB->execute('UPDATE {data_content} SET content = '.$content.' WHERE fieldid = ?', $params);
+                // the following line is commented out because it caused a fatal MySQL error :-(
+                // Error: Truncated incorrect DOUBLE value
+ 				//$DB->execute('UPDATE {data_content} SET content = '.$content.' WHERE fieldid = ?', $params);
 			}
 		}
 	}

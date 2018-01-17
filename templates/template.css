@@ -87,23 +87,31 @@
     overflow: auto;
 }
 
+.schedule .session.presentation {
+	background-color: #fffcf6; /* light orange */
+}
+
 .schedule .session.case,
 .schedule .session.casestudy {
-    background-color: #f8f8ff; /* blue */
+    background-color: #f8f8ff; /* light blue */
 }
 
 .schedule .session.lightning,
 .schedule .session.lightningtalk {
-    background-color: #f8ffff; /* cian */
+    background-color: #f8ffff; /* light cian */
 }
 
 .schedule .session.poster,
 .schedule .session.showcase {
-    background-color: #fffff8; /* yellow */
+    background-color: #fffff8; /* light yellow */
 }
 
 .schedule .session.workshop {
-    background-color: #fff8ff; /* purple */
+    background-color: #fff8ff; /* light purple */
+}
+
+.schedule .session.keynote {
+	background-color: #f9f2ec; /* light brown */
 }
 
 .schedule .emptysession {
