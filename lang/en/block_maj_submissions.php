@@ -162,7 +162,6 @@ $string['emptyschedule'] = 'Empty<br />schedule';
 $string['emptyseatsx'] = '{$a} seats left';
 $string['events'] = 'Conference event [{no}]';
 $string['events_help'] = 'Enter the name of an event that can be added to the schedule.';
-$string['exportcontent'] = 'Export content';
 $string['exportsettings'] = 'Export settings';
 $string['exportsettings_help'] = 'This link allows you export the configuration settings for this block to a file that you can import into a similar block in another course.';
 $string['feereceiptnumber'] = 'Fee receipt number';
@@ -570,3 +569,8 @@ $string['workshopsrecord'] = 'a workshop proposal';
 $string['workshopstime'] = 'Conference workshops';
 $string['workshopstime_help'] = 'The start and finish dates of the conference workshops.';
 $string['youwillbenotified'] = 'When the changes have been made, they will be reviewed and you will be notified of the new acceptance status.';
+
+$string['exportdates'] = 'Export dates';
+$string['exportschedule'] = 'Export schedule';
+$string['exporthandbook'] = 'Export handbook';
+

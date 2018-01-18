@@ -600,39 +600,23 @@ class block_maj_submissions extends block_base {
             }
         }
 
-        // If necessary, format the export, import and edit icons.
-        // These icons will be printed next to the first heading in this block
-        $icons = '';
-        if ($this->user_can_edit()) {
-            if ($countdates) {
-                $icons .= ' '.$this->get_exportimport_icon($plugin, 'export', 'content',  'f/html');
-                $icons .= ' '.$this->get_exportimport_icon($plugin, 'export', 'settings', 'i/export');
-            }
-            $icons .= ' '.$this->get_exportimport_icon($plugin, 'import', 'settings', 'i/import');
-            if (empty($USER->editing)) {
-                $icons .= ' '.$this->get_edit_icon($plugin, $courseid);
-            }
-        }
-
         // add quick links, if necessary
         if ($links = implode('', $links)) {
-            $heading = $this->get_string('quicklinks', $plugin).$icons;
+            $heading = $this->get_string('quicklinks', $plugin);
             $this->content->text .= html_writer::tag('h4', $heading, array('class' => 'quicklinks'));
             $this->content->text .= html_writer::tag('ul', $links, array('class' => 'quicklinks'));
-            $icons = ''; // to ensure we only print the icons once
         }
 
         // add important dates, if necessary
         if ($dates = implode('', $dates)) {
-            $heading = $this->get_string('importantdates', $plugin).$icons;
+            $heading = $this->get_string('importantdates', $plugin);
             $this->content->text .= html_writer::tag('h4', $heading, array('class' => 'importantdates'));
             $this->content->text .= html_writer::tag('ul', $dates,   array('class' => 'importantdates'));
-            $icons = ''; // to ensure we only print the icons once
         }
 
         // add conference tools, if necessary
         if ($this->user_can_edit()) {
-            $heading = $this->get_string('conferencetools', $plugin).$icons;
+            $heading = $this->get_string('conferencetools', $plugin);
             $this->content->text .= html_writer::tag('h4', $heading, array('class' => 'toollinks'));
             $this->content->text .= $this->get_tool_link($plugin, 'setupregistrations');
             $this->content->text .= $this->get_tool_link($plugin, 'setuppresentations');
@@ -645,6 +629,12 @@ class block_maj_submissions extends block_base {
             $this->content->text .= $this->get_tool_link($plugin, 'workshop2data');
             $this->content->text .= $this->get_tool_link($plugin, 'setupevents');
             $this->content->text .= $this->get_tool_link($plugin, 'setupschedule');
+            if ($countdates) {
+                $this->content->text .= html_writer::tag('p', '', array('class' => 'tooldivider'));
+                $this->content->text .= $this->get_exportimport_link($plugin, 'export','dates',    'c/event'    );
+                $this->content->text .= $this->get_exportimport_link($plugin, 'export','schedule', 'i/calendar' ); // i/export
+                $this->content->text .= $this->get_exportimport_link($plugin, 'export','handbook', 'f/html'     );
+            }
         }
 
         return $this->content;
@@ -949,7 +939,7 @@ class block_maj_submissions extends block_base {
     }
 
     /**
-     * get_exportimport_icon
+     * get_exportimport_link
      *
      * @param string $plugin
      * @param string $action "import" or "export"
@@ -957,11 +947,15 @@ class block_maj_submissions extends block_base {
      * @param string $dir within "pix" dir where icon file is located
      * @return array
      */
-    protected function get_exportimport_icon($plugin, $action, $type, $icon) {
+    protected function get_exportimport_link($plugin, $action, $type, $icon) {
         $title = get_string($action.$type, $plugin);
         $params = array('id' => $this->instance->id, 'sesskey' => sesskey());
-        $href = new moodle_url("/blocks/maj_submissions/$action.$type.php", $params);
-        return $this->get_icon($icon, $title, $href, $action.$type.'icon');
+        $href = new moodle_url("/blocks/maj_submissions/tools/$action$type/tool.php", $params);
+        $icon = $this->get_icon($icon, $title, $href, $action.$type.'icon');
+        //$title = html_writer::tag('b', $title);
+        $title = html_writer::tag('a', $title, array('href' => $href));
+        return html_writer::tag('p', $icon.' '.$title, array('class' => 'toollink'));
+
     }
 
     /**
