@@ -72,7 +72,7 @@ if (empty($instance->config->title)) {
     $filename = $block->name.'.html';
 } else {
     $filename = format_string($instance->config->title, true);
-    $filename = clean_filename(strip_tags($filename).'.csv');
+    $filename = clean_filename(strip_tags($filename).'.html');
 }
 $filename = preg_replace('/[ \.]/', '.', $filename);
 send_file($html, $filename, 0, 0, true, true);

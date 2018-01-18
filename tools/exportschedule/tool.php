@@ -132,10 +132,20 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
     $mainlangsearch = '/<span[^>]*lang="en"[^>]*>(.*?)<\/span>/';
     $multilangsearch = '/<span[^>]*lang="[^""]*"[^>]*>.*?<\/span>/';
 
+    $th = array('st ' => ' ',
+    			'nd ' => ' ',
+    			'rd ' => ' ',
+    			'th ' => ' ',
+    			' '   => '-');
+    $dates = array();
+
     // add fields from each record
     $lines = array();
     foreach ($records as $record) {
         $line = array();
+
+        $required = 0;
+
         foreach ($fields as $name => $field) {
             if (! array_key_exists($field, $fieldnames)) {
                 continue;
@@ -144,33 +154,51 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
                 $line[] = '';
                 continue;
             }
+            if ($name=='name' || $name=='start_time' || $name=='start_date' || $name=='end_time' || $name=='end_date') {
+                $required++;
+            }
+			$value = $record->$field;
             switch ($name) {
+                case 'speaker_name':
+                    $value = block_maj_submissions::textlib('strtotitle', $value);
+                    break;
                 case 'text':
-                    $record->$field = block_maj_submissions::trim_text($record->$field, 100, 100, 0);
-                    $line[] = block_maj_submissions_tool_form::plain_text($record->$field);
+                    $value = block_maj_submissions_tool_form::plain_text($value);
+                    $value = block_maj_submissions::trim_text($value, 100, 100, 0);
                     break;
                 case 'start_date':
                 case 'end_date':
-                    $record->$field = preg_replace($mainlangsearch, '$1', $record->$field);
-                    $record->$field = preg_replace($multilangsearch, '', $record->$field);
-                    $line[] = strtotime($record->$field);
+                    if (isset($dates[$value])) {
+						$value = $dates[$value];
+                    } else {
+						$value = preg_replace($mainlangsearch, '$1', $value);
+						$value = preg_replace($multilangsearch, '', $value);
+						// "Feb 23rd (Fri)"
+						$value = strtr($value, $th);
+						if ($pos = strpos($value, ' (')) {
+							$value = substr($value, 0, $pos);
+						}
+						$value = date('y-m-d', strtotime(date('Y').'-'.$value));
+						$dates[$record->$field] = $value;
+                    }
                     break;
                 case 'start_time':
-                    $line[] = preg_replace($timesearch, '$1:$2', $record->$field);
+                    $value = preg_replace($timesearch, '$1:$2', $value);
                     break;
                 case 'end_time':
-                    $line[] = preg_replace($timesearch, '$3:$4', $record->$field);
+                    $value = preg_replace($timesearch, '$3:$4', $value);
                     break;
                 default:
-                    if (strpos($record->$field, 'multilang')) {
-                        $record->$field = preg_replace($mainlangsearch, '$1', $record->$field);
-                        $record->$field = preg_replace($multilangsearch, '', $record->$field);
+                    if (strpos($value, 'multilang')) {
+                        $value = preg_replace($mainlangsearch, '$1', $value);
+                        $value = preg_replace($multilangsearch, '', $value);
                     }
-                    $line[] = $record->$field;
+                    $value = block_maj_submissions_tool_form::plain_text($value);
             }
+			$line[] = '"'.str_replace('"', '""', $value).'"';
         }
-        if (count($line)) {
-            $lines[] = $line;
+        if ($required >= 5 && count($line)) {
+            $lines[] = implode(',', $line);
         }
     }
 
@@ -178,13 +206,7 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
     if (empty($lines)) {
         $lines = '';
     } else {
-        $fp = fopen('php://temp', 'w+');
-        foreach ($lines as $line) {
-            fputcsv($fp, $line);
-        }
-        rewind($fp);
-        $lines = stream_get_contents($fp);
-        fclose($fp);
+        $lines = implode("\n", $lines);
     }
 
     // create heading line

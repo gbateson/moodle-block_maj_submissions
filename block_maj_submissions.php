@@ -631,8 +631,10 @@ class block_maj_submissions extends block_base {
             $this->content->text .= $this->get_tool_link($plugin, 'setupschedule');
             if ($countdates) {
                 $this->content->text .= html_writer::tag('p', '', array('class' => 'tooldivider'));
+                $this->content->text .= $this->get_exportimport_link($plugin, 'import','settings', 'i/import'    );
+                $this->content->text .= $this->get_exportimport_link($plugin, 'export','settings', 'i/export'  );
                 $this->content->text .= $this->get_exportimport_link($plugin, 'export','dates',    'c/event'    );
-                $this->content->text .= $this->get_exportimport_link($plugin, 'export','schedule', 'i/calendar' ); // i/export
+                $this->content->text .= $this->get_exportimport_link($plugin, 'export','schedule', 'i/calendar' );
                 $this->content->text .= $this->get_exportimport_link($plugin, 'export','handbook', 'f/html'     );
             }
         }
