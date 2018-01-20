@@ -33,14 +33,14 @@ MAJ.setup_tabs = function(count) {
                     return true;
                 }
                 var items = document.querySelectorAll(".tab.active, .day.active");
-                for (var i in items) {
+                for (var i=0; i<items.length; i++) {
                     if (items[i].className) {
                         items[i].className = items[i].className.replace(" active", "");
                     }
                 }
                 var day = this.className.substr(this.className.length - 4);
                 var items = document.querySelectorAll("." + day);
-                for (var i in items) {
+                for (var i=0; i<items.length; i++) {
                     if (items[i].className) {
                         items[i].className += " active";
                     }
@@ -81,7 +81,7 @@ MAJ.setup_attendance = function() {
 
             // remove any remnants of previous attendance elements
             var items = document.querySelectorAll(".schedule .capacity");
-            for (var i in items) {
+            for (var i=0; i<items.length; i++) {
                 if (items[i].parentNode) {
                     items[i].parentNode.removeChild(items[i]);
                 }
@@ -95,101 +95,110 @@ MAJ.setup_attendance = function() {
             var attending = new RegExp(" (not)?attending", "g");
 
             // set up attending/not attending checkboxes
-            var sessions = document.querySelectorAll("table.schedule .session");
-            for (var i in sessions) {
+            var sessions = document.querySelectorAll("table.schedule .session:not(.emptysession)");
+            for (var s=0; s<sessions.length; s++) {
 
-                if (! sessions[i].id) {
-                    continue;
-                }
-
-                var id = sessions[i].id;
-                if (id.indexOf("id_recordid_")) {
-                    continue;
-                }
-                var rid = id.substr(12);
-
-                // remove "attending" class name
-                sessions[i].className = sessions[i].className.replace(attending, "");
-
-                // add "attending" class if necessary
-                if (MAJ.attend[rid]) {
-                    sessions[i].className += " attending";
+                if (sessions[s].className.indexOf("sharedsession") >= 0) {
+                    var items = sessions[s].querySelectorAll(".item");
                 } else {
-                    sessions[i].className += " notattending";
+                    var items = [sessions[s]];
                 }
 
-                // set up empty seats info
-                var emptyseats = document.createElement("DIV");
-                emptyseats.className = "emptyseats";
-                if (MAJ.emptyseats[rid]) {
-                    emptyseats.innerHTML = MAJ.emptyseats[rid];
-                } else {
-                    emptyseats.innerHTML = MAJ.str.seatsavailable;
-                }
+                for (var i=0; i<items.length; i++) {
 
-                // set up checkbox
-                var name = "attend[" + rid + "]";
-                var checked = (MAJ.attend[rid] ? true : false);
-
-                var checkbox = document.createElement("INPUT");
-                checkbox.setAttribute("type", "checkbox");
-                checkbox.setAttribute("id", "id_" + name);
-                checkbox.setAttribute("name", name);
-                checkbox.setAttribute("value", "1");
-                checkbox.checked = checked;
-
-                // setup checkbox label
-                var label = document.createElement("LABEL");
-                label.setAttribute("for", "id_" + name);
-                if (checked) {
-                    label.innerHTML = MAJ.str.attending;
-                } else {
-                    label.innerHTML = MAJ.str.notattending;
-                }
-
-                var attendance = document.createElement("DIV");
-                attendance.className = "attendance";
-                attendance.appendChild(label);
-                attendance.appendChild(checkbox);
-
-                var capacity = document.createElement("DIV");
-                capacity.className = "capacity";
-                capacity.setAttribute("data-rid", rid);
-                capacity.appendChild(emptyseats);
-                capacity.appendChild(attendance);
-
-                capacity.addEventListener("click", function(){
-                    var checkbox = this.querySelector("input[type=checkbox]");
-                    var label = this.querySelector(".attendance label");
-                    var session = this.parentNode;
-                    while (session.className.indexOf("session") < 0) {
-                        session = session.parentNode;
+                    if (! items[i].id) {
+                        continue;
                     }
-                    if (checkbox.checked) {
-                        label.textContent = MAJ.str.attending;
-                        session.className = session.className.replace(" notattending", " attending");
+
+                    var id = items[i].id;
+                    if (id.indexOf("id_recordid_")) {
+                        continue;
+                    }
+                    var rid = id.substr(12);
+
+                    // remove "attending" class name
+                    items[i].className = items[i].className.replace(attending, "");
+
+                    // add "attending" class if necessary
+                    if (MAJ.attend[rid]) {
+                        items[i].className += " attending";
                     } else {
-                        label.textContent = MAJ.str.notattending;
-                        session.className = session.className.replace(" attending", " notattending");
+                        items[i].className += " notattending";
                     }
-                    var target = this;
-                    var xhr = new XMLHttpRequest();
-                    xhr.open("POST", action, true);
-                    xhr.onreadystatechange = function(){
-                        if (this.readyState == 4 && this.status == 200) {
-                            var seats = target.querySelector(".emptyseats");
-                            if (seats) {
-                                seats.innerHTML = this.responseText;
-                            }
-                        }
-                    };
-                    var rid = target.getAttribute('data-rid');
-                    var attend = (checkbox.checked ? 1 : 0);
-                    xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-                    xhr.send("action=updateattendance&rid=" + rid + "&attend=" + attend);
-                });
 
-                sessions[i].appendChild(capacity);
+                    // set up empty seats info
+                    var emptyseats = document.createElement("DIV");
+                    emptyseats.className = "emptyseats";
+                    if (MAJ.emptyseats[rid]) {
+                        emptyseats.innerHTML = MAJ.emptyseats[rid];
+                    } else {
+                        emptyseats.innerHTML = MAJ.str.seatsavailable;
+                    }
+
+                    // set up checkbox
+                    var name = "attend[" + rid + "]";
+                    var checked = (MAJ.attend[rid] ? true : false);
+
+                    var checkbox = document.createElement("INPUT");
+                    checkbox.setAttribute("type", "checkbox");
+                    checkbox.setAttribute("id", "id_" + name);
+                    checkbox.setAttribute("name", name);
+                    checkbox.setAttribute("value", "1");
+                    checkbox.checked = checked;
+
+                    // setup checkbox label
+                    var label = document.createElement("LABEL");
+                    label.setAttribute("for", "id_" + name);
+                    if (checked) {
+                        label.innerHTML = MAJ.str.attending;
+                    } else {
+                        label.innerHTML = MAJ.str.notattending;
+                    }
+
+                    var attendance = document.createElement("DIV");
+                    attendance.className = "attendance";
+                    attendance.appendChild(label);
+                    attendance.appendChild(checkbox);
+
+                    var capacity = document.createElement("DIV");
+                    capacity.className = "capacity";
+                    capacity.setAttribute("data-rid", rid);
+                    capacity.appendChild(emptyseats);
+                    capacity.appendChild(attendance);
+
+                    capacity.addEventListener("click", function(){
+                        var checkbox = this.querySelector("input[type=checkbox]");
+                        var label = this.querySelector(".attendance label");
+                        var item = this.parentNode;
+                        while (item.className.indexOf("item") < 0 && item.className.indexOf("session") < 0) {
+                            item = item.parentNode;
+                        }
+                        if (checkbox.checked) {
+                            label.textContent = MAJ.str.attending;
+                            item.className = item.className.replace(" notattending", " attending");
+                        } else {
+                            label.textContent = MAJ.str.notattending;
+                            item.className = item.className.replace(" attending", " notattending");
+                        }
+                        var target = this; // the "capacity" div
+                        var xhr = new XMLHttpRequest();
+                        xhr.open("POST", action, true);
+                        xhr.onreadystatechange = function(){
+                            if (this.readyState == 4 && this.status == 200) {
+                                var seats = target.querySelector(".emptyseats");
+                                if (seats) {
+                                    seats.innerHTML = this.responseText;
+                                }
+                            }
+                        };
+                        var attend = (checkbox.checked ? 1 : 0);
+                        var rid = target.getAttribute('data-rid');
+                        xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                        xhr.send("action=updateattendance&attend=" + attend + "&rid=" + rid);
+                    });
+
+                    items[i].appendChild(capacity);
+                }
             }
             sessions = null;
 
@@ -217,14 +226,14 @@ MAJ.setup_attendance = function() {
 
             // set up event handlers for schedule chooser
             var items = document.querySelectorAll(".schedule .schedulechooser span");
-            for (var i in items) {
+            for (var i=0; i<items.length; i++) {
                 if (! items[i].addEventListener) {
                     continue;
                 }
                 items[i].addEventListener("click", function(){
                     if (this.className.indexOf(" active") < 0) {
                         var items = this.parentNode.querySelectorAll("span");
-                        for (var i in items) {
+                        for (var i=0; i<items.length; i++) {
                             if (typeof(items[i].className)=="string") {
                                 if (items[i]==this) {
                                     items[i].className += " active";

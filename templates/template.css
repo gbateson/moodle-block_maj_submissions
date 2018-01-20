@@ -62,7 +62,7 @@
     /* fc9 pale orange */
 }
 
-.schedule.myschedule .session.notattending {
+.schedule.myschedule .notattending {
     display: none;
 }
 
@@ -116,6 +116,12 @@
 
 .schedule .emptysession {
     display: none;
+}
+
+.schedule .sharedsession .item {
+    margin-bottom: 12px;
+    overflow: auto;
+    position: relative;
 }
 
 .schedule .time,
@@ -243,7 +249,7 @@
     width:            120px;
 }
 
-.schedule .session.attending .capacity {
+.schedule .attending .capacity {
     background:        #efe;
     border:  1px solid #aca;
 }
@@ -254,7 +260,7 @@
     display:         inline;
 }
 
-.schedule .session.attending .attendance {
+.schedule .attending .attendance {
     color:             #696;
 }
 
@@ -266,7 +272,7 @@
     padding-right:      6px;
 }
 
-.schedule .session.attending .attendance label {
+.schedule .attending .attendance label {
     font-weight:        400;
 }
 
@@ -399,17 +405,17 @@
         max-width:        180px;
     }
 
-    .schedule .session.attending,
-    .schedule .session.notattending {
+    .schedule .attending,
+    .schedule .notattending {
         padding-bottom:   1.8em;
     }
 
-    .schedule.myschedule .session.notattending {
+    .schedule.myschedule .notattending {
         display:     table-cell;
         border-style:    dashed;
     }
 
-    .schedule.myschedule .session.notattending div {
+    .schedule.myschedule .notattending div {
         visibility:      hidden;
     }
 

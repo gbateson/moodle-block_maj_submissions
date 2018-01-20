@@ -190,7 +190,9 @@ switch ($action) {
             $DB->set_field($plugin, 'attend', ($attend ? 1 : 0), $params);
 
             // get number of seats allocated in this presentation
-            $params['attend'] = 1;
+            $params = array('instanceid' => $id,
+                            'recordid'   => $rid,
+                            'attend'     => 1);
             if ($usedseats = $DB->get_field($plugin, 'COUNT(*)', $params)) {
                 $usedseats = intval($usedseats);
             } else {
