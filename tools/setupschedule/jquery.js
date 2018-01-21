@@ -313,7 +313,7 @@ MAJ.set_schedule_html = function() {
 
     // reset inline styles for hidden multilang SPANs and jquery items
     html = html.replace(new RegExp(' *\\b(display|position|z-index): *[^;"]*;', "g"), "");
-    
+
     // remove leading space from class/style counts
     html = html.replace(new RegExp('(\\b(class|style)=") +', "g"), "$1");
 
@@ -464,36 +464,44 @@ MAJ.renumberschedule = function(evt, day) {
         var day = $(this).closest(".day");
         day = day.prop("class").replace(dayregexp, "$1");
 
-        var type = $(this).prop("class").replace(typeregexp, "$1").charAt(0).toUpperCase();
-
-        if (smallschedule) {
-
-            var slot = $(this).closest(".slot");
-            slot = slot.prop("class").replace(slotregexp, "$1");
-
-            var room = $(this).closest(".slot").prevAll(".roomheadings");
-            if (room.length==0 || $(this).hasClass("multiroom")) {
-                var room = 0;
-            } else {
-                room = room.first().find("th, td").eq(this.cellIndex);
-                room = room.prop("class").replace(roomregexp, "$1");
-            }
-
-            var schedulenumber = (day + slot + room + "-" + type);
-
+        if (this.className.indexOf("sharedsession") >= 0) {
+            var items = this.querySelectorAll(".item");
         } else {
-
-            if (i[day]==null) {
-                i[day] = 1;
-            } else {
-                i[day]++;
-            }
-
-            var schedulenumber = ((day * multiply.slots) + i[day]);
-            schedulenumber = (schedulenumber + "-" + type);
+            var items = [this];
         }
 
-        $(this).find(".schedulenumber").text(schedulenumber);
+        for (var i=0; i<items.length; i++) {
+            var item = items[i];
+            var type = $(item).prop("class").replace(typeregexp, "$1").charAt(0).toUpperCase();
+            if (smallschedule) {
+
+                var slot = $(item).closest(".slot");
+                slot = slot.prop("class").replace(slotregexp, "$1");
+
+                var room = $(item).closest(".slot").prevAll(".roomheadings");
+                if (room.length==0 || $(item).hasClass("multiroom")) {
+                    var room = 0;
+                } else {
+                    room = room.first().find("th, td").eq(item.cellIndex);
+                    room = room.prop("class").replace(roomregexp, "$1");
+                }
+
+                var schedulenumber = (day + slot + room + "-" + type);
+
+            } else {
+
+                if (i[day]==null) {
+                    i[day] = 1;
+                } else {
+                    i[day]++;
+                }
+
+                var schedulenumber = ((day * multiply.slots) + i[day]);
+                schedulenumber = (schedulenumber + "-" + type);
+            }
+
+            $(item).find(".schedulenumber").text(schedulenumber);
+        }
     });
 }
 

@@ -92,7 +92,7 @@ MAJ.setup_attendance = function() {
             var trimspace = new RegExp("(^\\s+)|(\\s+)$", "g");
 
             // RegExp to trim (not)attending css class
-            var attending = new RegExp(" (not)?attending", "g");
+            var attendingClass = new RegExp(" (not)?attending", "g");
 
             // set up attending/not attending checkboxes
             var sessions = document.querySelectorAll("table.schedule .session:not(.emptysession)");
@@ -104,6 +104,7 @@ MAJ.setup_attendance = function() {
                     var items = [sessions[s]];
                 }
 
+                var attending = false;
                 for (var i=0; i<items.length; i++) {
 
                     if (! items[i].id) {
@@ -117,10 +118,11 @@ MAJ.setup_attendance = function() {
                     var rid = id.substr(12);
 
                     // remove "attending" class name
-                    items[i].className = items[i].className.replace(attending, "");
+                    items[i].className = items[i].className.replace(attendingClass, "");
 
                     // add "attending" class if necessary
                     if (MAJ.attend[rid]) {
+                        attending = true;
                         items[i].className += " attending";
                     } else {
                         items[i].className += " notattending";
@@ -180,6 +182,7 @@ MAJ.setup_attendance = function() {
                             label.textContent = MAJ.str.notattending;
                             item.className = item.className.replace(" attending", " notattending");
                         }
+
                         var target = this; // the "capacity" div
                         var xhr = new XMLHttpRequest();
                         xhr.open("POST", action, true);

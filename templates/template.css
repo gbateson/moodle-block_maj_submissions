@@ -412,11 +412,14 @@
 
     .schedule.myschedule .notattending {
         display:     table-cell;
-        border-style:    dashed;
     }
 
     .schedule.myschedule .notattending div {
         visibility:      hidden;
+    }
+
+    .schedule.myschedule .session.notattending {
+        border-style:    dashed;
     }
 
     .schedule .time,
