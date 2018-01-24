@@ -428,8 +428,8 @@ MAJ.populateschedule = function(evt, day) {
 
 MAJ.renumberschedule = function(evt, day) {
 
-    // initialize array of i(ndexes), counts and multipliers
-    var i = [];
+    // initialize array of indexes, counts and multipliers
+    var index = [];
     var count = {
         "days"  : $(".day").length,
         "slots" : 0,
@@ -464,6 +464,8 @@ MAJ.renumberschedule = function(evt, day) {
         var day = $(this).closest(".day");
         day = day.prop("class").replace(dayregexp, "$1");
 
+        var type = $(this).prop("class").replace(typeregexp, "$1").charAt(0).toUpperCase();
+
         if (this.className.indexOf("sharedsession") >= 0) {
             var items = this.querySelectorAll(".item");
         } else {
@@ -471,18 +473,17 @@ MAJ.renumberschedule = function(evt, day) {
         }
 
         for (var i=0; i<items.length; i++) {
-            var item = items[i];
-            var type = $(item).prop("class").replace(typeregexp, "$1").charAt(0).toUpperCase();
+
             if (smallschedule) {
 
-                var slot = $(item).closest(".slot");
+                var slot = $(this).closest(".slot");
                 slot = slot.prop("class").replace(slotregexp, "$1");
 
-                var room = $(item).closest(".slot").prevAll(".roomheadings");
-                if (room.length==0 || $(item).hasClass("multiroom")) {
+                var room = $(this).closest(".slot").prevAll(".roomheadings");
+                if (room.length==0 || $(this).hasClass("multiroom")) {
                     var room = 0;
                 } else {
-                    room = room.first().find("th, td").eq(item.cellIndex);
+                    room = room.first().find("th, td").eq(this.cellIndex);
                     room = room.prop("class").replace(roomregexp, "$1");
                 }
 
@@ -490,17 +491,17 @@ MAJ.renumberschedule = function(evt, day) {
 
             } else {
 
-                if (i[day]==null) {
-                    i[day] = 1;
+                if (index[day]==null) {
+                    index[day] = 1;
                 } else {
-                    i[day]++;
+                    index[day]++;
                 }
 
-                var schedulenumber = ((day * multiply.slots) + i[day]);
+                var schedulenumber = ((day * multiply.slots) + index[day]);
                 schedulenumber = (schedulenumber + "-" + type);
             }
 
-            $(item).find(".schedulenumber").text(schedulenumber);
+            $(items[i]).find(".schedulenumber").text(schedulenumber);
         }
     });
 }
