@@ -930,10 +930,15 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $cssclass = 'duration'.round($duration / 60);
             $duration = $instance->multilang_format_time($duration);
 
+            $title = $instance->get_string($time, $this->plugin);
+            $summary = $instance->get_string($time.'summary', $this->plugin);
+
             $slots[] = (object)array('startfinish' => "$start - $finish",
                                      'duration' => $duration,
                                      'cssclass' => $cssclass,
-                                     'multiroom' => true);
+                                     'multiroom' => true,
+                                     'title' => $title,
+                                     'summary' => $summary);
         }
 
 		// TODO: get presentation categories from the DB
@@ -1111,59 +1116,64 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                                 html_writer::tag('div',  $room->topic, array('class' => 'roomtopic'));
                         $session .= html_writer::tag('div',  $text, array('class' => "room room$r"));
 
-                        // title
-                        $text = $instance->get_string('sessiontitlex', $this->plugin, "$d.$s.$r");
-                        $session .= html_writer::tag('div', $text, array('class' => 'title'));
-
-                        // start authors DIV
-                        $session .= html_writer::start_tag('div', array('class' => 'authors'));
-
-                        // schedulenumber
-                        $session .= html_writer::tag('span', "$d$s$r-P", array('class' => 'schedulenumber'));
-
-                        // list, of, author, names
-                        $keys = array_rand($authors, rand(1, 2));
-                        if (is_array($keys)) {
-                            sort($keys);
-                            $text = array();
-                            foreach ($keys as $key) {
-                                $text[] = $authors[$key];
-                            }
-                            $text = implode(', ', $text);
+                        if ($slot->multiroom) {
+                            $session .= html_writer::tag('div', $slot->title, array('class' => 'title'));
+                            $session .= html_writer::tag('div', $slot->summary, array('class' => 'summary'));
                         } else {
-                            $text = $authors[$keys];
-                        }
-                        $session .= html_writer::tag('span', $text, array('class' => 'authornames'));
+                            // title
+                            $text = $instance->get_string('sessiontitlex', $this->plugin, "$d.$s.$r");
+                            $session .= html_writer::tag('div', $text, array('class' => 'title'));
 
-                        // finish authors DIV
-                        $session .= html_writer::end_tag('div');
+                            // start authors DIV
+                            $session .= html_writer::start_tag('div', array('class' => 'authors'));
 
-                        // category and type
-                        $session .= html_writer::start_tag('div', array('class' => 'categorytype'));
+                            // schedulenumber
+                            $session .= html_writer::tag('span', "$d$s$r-P", array('class' => 'schedulenumber'));
 
-                        $category = $categories[rand(0, $countcategories)];
-                        $category = self::convert_to_multilang($category, $config);
-                        $session .= html_writer::tag('span', $category, array('class' => 'category'));
-
-                        $type = $types[rand(0, $counttypes)];
-                        $type = self::convert_to_multilang($type, $config);
-                        $session .= html_writer::tag('span', $type, array('class' => 'type'));
-
-                        $session .= html_writer::end_tag('div'); // end categorytype DIV
-
-                        // summary
-                        $summary = array();
-                        for ($i=0; $i<40; $i++) {
-                            $keys = array_rand($letters, rand(3, 7));
-                            sort($keys);
-                            $word = '';
-                            foreach ($keys as $key) {
-                                $word .= $letters[$key];
+                            // list, of, author, names
+                            $keys = array_rand($authors, rand(1, 2));
+                            if (is_array($keys)) {
+                                sort($keys);
+                                $text = array();
+                                foreach ($keys as $key) {
+                                    $text[] = $authors[$key];
+                                }
+                                $text = implode(', ', $text);
+                            } else {
+                                $text = $authors[$keys];
                             }
-                            $summary[] = $word;
+                            $session .= html_writer::tag('span', $text, array('class' => 'authornames'));
+
+                            // finish authors DIV
+                            $session .= html_writer::end_tag('div');
+
+                            // category and type
+                            $session .= html_writer::start_tag('div', array('class' => 'categorytype'));
+
+                            $category = $categories[rand(0, $countcategories)];
+                            $category = self::convert_to_multilang($category, $config);
+                            $session .= html_writer::tag('span', $category, array('class' => 'category'));
+
+                            $type = $types[rand(0, $counttypes)];
+                            $type = self::convert_to_multilang($type, $config);
+                            $session .= html_writer::tag('span', $type, array('class' => 'type'));
+
+                            $session .= html_writer::end_tag('div'); // end categorytype DIV
+
+                            // summary
+                            $summary = array();
+                            for ($i=0; $i<40; $i++) {
+                                $keys = array_rand($letters, rand(3, 7));
+                                sort($keys);
+                                $word = '';
+                                foreach ($keys as $key) {
+                                    $word .= $letters[$key];
+                                }
+                                $summary[] = $word;
+                            }
+                            $summary = implode(' ', $summary);
+                            $session .= html_writer::tag('div', $summary, array('class' => 'summary'));
                         }
-                        $summary = implode(' ', $summary);
-                        $session .= html_writer::tag('div', $summary, array('class' => 'summary'));
 
                         // capacity
                         $id = "id_demo_$d$s$r";

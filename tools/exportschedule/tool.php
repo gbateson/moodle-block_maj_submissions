@@ -178,14 +178,17 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
 						if ($pos = strpos($value, ' (')) {
 							$value = substr($value, 0, $pos);
 						}
-						$value = date('y-m-d', strtotime(date('Y').'-'.$value));
+						// Start/End date - must be DD-MM-YY, e.g. 15-10-15
+						$value = date('d-m-y', strtotime(date('Y').'-'.$value));
 						$dates[$record->$field] = $value;
                     }
                     break;
                 case 'start_time':
+                    // Start time - must be HH:MM
                     $value = preg_replace($timesearch, '$1:$2', $value);
                     break;
                 case 'end_time':
+                    // End time - must be HH:MM
                     $value = preg_replace($timesearch, '$3:$4', $value);
                     break;
                 default:
