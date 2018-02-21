@@ -499,6 +499,12 @@ MAJ.setup_amount_due = function() {
         // hide the input element
         $(this).css("display","none");
 
+        // in "theme/bootstrapbase/style/moodle.css", we must override the following
+        // .d-inline-block {
+        //       display: inline-block !important;
+        // }
+        $(this).removeClass("d-inline");
+
         // extract and format the amount due
         var amount_due = $(this).val();
         amount_due = MAJ.reduce_currency_string(amount_due);

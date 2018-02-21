@@ -156,5 +156,5 @@ function block_maj_submissions_pluginfile_baseurl($course, $blockcontext=null) {
     if (empty($CFG->slasharguments)) {
         $url .= '?file=';
     }
-    return $url."/$blockcontext->id/$pluginname/files/";
+    return $url."/$blockcontext->id/$pluginname/files";
 }
