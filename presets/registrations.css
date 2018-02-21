@@ -112,7 +112,10 @@ CSS for the View All/Single/Search pages
 
 #page-mod-data-view .box_big {
     background-color : #000000;
-    margin-top   : 15px;
+    display          : inline-block;
+    margin-top       : 15px;
+    margin-right     : 24px;
+    vertical-align   : top;
 }
 #page-mod-data-view .box_small {
     background-color : #000000;
