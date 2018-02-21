@@ -57,6 +57,8 @@ CSS for the View All/Single/Search pages
     -moz-border-radius: 0px;
     border-radius: 0px;
 }
+
+/**********************************
 #page-mod-data-view .badge {
     background-image: url("[[pluginfiles]]/background-badge.jpg") !important;
 }
@@ -69,6 +71,7 @@ CSS for the View All/Single/Search pages
 #page-mod-data-view .participation_certificate {
     background-image: url("[[pluginfiles]]/background-certificate.jpg") !important;
 }
+**********************************/
 
 #page-mod-data-view .badge TD,
 #page-mod-data-view .receipt TD,

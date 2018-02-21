@@ -91,4 +91,8 @@ CSS for the View All/Single/Search pages
         *** print background images **/
         -webkit-print-color-adjust: exact;
     }
+
+    #page-mod-data-view .box_big {
+        border: 1px solid black;
+    }
 }
