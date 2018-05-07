@@ -520,6 +520,12 @@ $string['title_help'] = 'This is the string that will be displayed as the title 
 $string['toofewauthors'] = 'No records were transferred because the number of anonymous users, {$a->countanonymous}, is less than the number of records selected from the database, {$a->countselected}.';
 $string['toofewmembers'] = 'There are not enough members in the selected group.';
 $string['toofewreviewers'] = 'There are too few anonymous reviewers, {$a->countanonymous}, for the number of real reviewers, {$a->countreviewers}.';
+$string['toolauthorsforum'] = 'Setup presenters forum';
+$string['toolauthorsforum_desc'] = 'Setup a forum for presenters';
+$string['toolauthorsforum_help'] = 'On this page, you can setup a Moodle forum that is accessible only to users who belong to the specified group of presenters.';
+$string['toolauthorsgroup'] = 'Setup presenters group';
+$string['toolauthorsgroup_desc'] = 'Setup a group of presenters';
+$string['toolauthorsgroup_help'] = 'On this page, you can setup a Moodle group that contains all presenters, including any co-presenters, associated with records in the specified submissions database.';
 $string['toolcreateusers'] = 'Create vetting users and groups';
 $string['toolcreateusers_desc'] = 'Setup groups of anonymous users';
 $string['tooldata2workshop'] = 'Prepare submissions for review';
@@ -529,6 +535,9 @@ $string['tooldata2workshop_help'] = 'On this page you can select records from a 
 **To use an existing workshop** in this course, select it from the "Target workshop" menu below.
 
 **To create a new workshop**, give a name for the new workshop and specify the section in which it should be created. This can be an existing section, or a new section. If you specify a new section you will need to give a name for the new section.';
+$string['toolreviewersforum'] = 'Setup reviewers forum';
+$string['toolreviewersforum_desc'] = 'Setup a forum for reviewers';
+$string['toolreviewersforum_help'] = 'On this page, you can setup a Moodle forum that is accessible only to users who belong to the specified group of reviewers.';
 $string['toolsetup'] = 'Setup a database for a conference.';
 $string['toolsetup_help'] = 'On this page you can set up a database for a conference. You can overwrite a currently existing database or create a new one.
 
@@ -583,3 +592,15 @@ $string['lunch'] = 'Lunch';
 $string['lunchsummary'] = 'Lunch will be served in the cafetria on the 2nd floor of main building.';
 $string['registration'] = 'Registration';
 $string['registrationsummary'] = 'Collect your badges and have coffee.';
+
+$string['targetgroup'] = 'Target group';
+$string['targetgroup_help'] = 'Select the Moodle group to which the selected users will be added.';
+
+$string['resetgroup'] = 'Reset group';
+$string['resetgroup_help'] = 'This setting specifies whether or not to reset the target group before adding the selected presenters.
+
+**No**
+: Exsiting members of the group will not be changed and selected presenters will be added if they are not already members.
+
+**Yes**
+: Any existing members of the group will be removed, after which the selected presenters will be added to the group.';

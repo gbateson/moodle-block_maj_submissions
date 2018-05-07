@@ -489,8 +489,8 @@ abstract class block_maj_submissions_tool_form extends moodleform {
             $activitynametext = block_maj_submissions::filter_text($activityname);
             $activitynametext = strip_tags($activitynametext);
 
-            $sectionnum   = $data->coursesectionnum;
-            $sectionname  = $data->coursesectionname;
+            $sectionnum   = (empty($data->coursesectionnum) ? 0 : $data->coursesectionnum);
+            $sectionname  = (empty($data->coursesectionname) ? '' : $data->coursesectionname);
         } else {
             $activitynum = $data->$name;
         }
