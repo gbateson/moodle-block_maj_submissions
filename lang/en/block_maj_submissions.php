@@ -604,3 +604,6 @@ $string['resetgroup_help'] = 'This setting specifies whether or not to reset the
 
 **Yes**
 : Any existing members of the group will be removed, after which the selected presenters will be added to the group.';
+
+$string['presentersadded'] = 'Added {$a->added} out of {$a->presenters} presenters (from {$a->selected} out of {$a->submissions} submissions) to group: {$a->group}.';
+$string['groupreset'] = 'All members removed from group: {$a}';
