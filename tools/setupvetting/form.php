@@ -59,7 +59,7 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
 
     /**
      * The name of the form field containing
-     * the id of a group of anonymous assessors
+     * the id of a group of anonymous reviewers
      */
     protected $groupfieldname = 'anonymousreviewers';
 

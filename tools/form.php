@@ -873,6 +873,7 @@ abstract class block_maj_submissions_tool_form extends moodleform {
     /**
      * set access restrctions (=availability) on a newly created $cm
      *
+     * @param course module object
      * @param array of stdClass $availability (decoded from JSON)
      * @todo Finish documenting this function
      */
@@ -947,15 +948,21 @@ abstract class block_maj_submissions_tool_form extends moodleform {
         if (! isset($structure->c)) {
             $structure->c = array();
         }
-        if (! isset($structure->showc)) {
-            $structure->showc = array();
+        if ($structure->op=='|') {
+            if (! isset($structure->show)) {
+                $structure->show = false;
+            }
+            unset($structure->showc);
         }
-        if (! isset($structure->show)) {
-            $structure->show = true;
+        if ($structure->op=='&') {
+            if (! isset($structure->showc)) {
+                $structure->showc = array_fill(0, count($structure->showc), false);
+            }
+            unset($structure->show);
         }
 
         // remove conditions in $structure that refer to groups,
-        // gropuings, activities or grade items in another course
+        // groupings, activities or grade items in another course
         for ($i = (count($structure->c) - 1); $i >= 0; $i--) {
             $old = $structure->c[$i];
             if (isset($old->type)) {
@@ -1022,10 +1029,6 @@ abstract class block_maj_submissions_tool_form extends moodleform {
             if ($found==false) {
                 array_push($structure->c, $new);
             }
-        }
-
-        if (empty($structure->showc)) {
-            unset($structure->showc);
         }
 
         return $structure;

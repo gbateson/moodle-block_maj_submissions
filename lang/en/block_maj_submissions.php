@@ -593,17 +593,35 @@ $string['lunchsummary'] = 'Lunch will be served in the cafetria on the 2nd floor
 $string['registration'] = 'Registration';
 $string['registrationsummary'] = 'Collect your badges and have coffee.';
 
-$string['targetgroup'] = 'Target group';
-$string['targetgroup_help'] = 'Select the Moodle group to which the selected users will be added.';
+$string['authorsgroup'] = 'Presenters group';
+$string['authorsgroup_help'] = 'Select the Moodle group to presenters will be added.';
 
 $string['resetgroup'] = 'Reset group';
 $string['resetgroup_help'] = 'This setting specifies whether or not to reset the target group before adding the selected presenters.
 
 **No**
-: Exsiting members of the group will not be changed and selected presenters will be added if they are not already members.
+: Existing members of the group will not be changed and selected presenters will be added if they are not already members.
 
 **Yes**
-: Any existing members of the group will be removed, after which the selected presenters will be added to the group.';
+: Any existing members of the group will be removed, and then the newly selected presenters will be added.';
 
-$string['presentersadded'] = 'Added {$a->added} out of {$a->presenters} presenters (from {$a->selected} out of {$a->submissions} submissions) to group: {$a->group}.';
-$string['groupreset'] = 'All members removed from group: {$a}';
+$string['presentersadded'] = 'Added {$a->added} out of {$a->presenters} presenters (from {$a->selected} out of {$a->submissions} submissions) to the "{$a->group}" group';
+$string['groupreset'] = 'All members were removed from the "{$a}" group.';
+
+$string['resetforum'] = 'Reset forum';
+$string['resetforum_help'] = 'This setting specifies whether or not to reset the forum activity.
+
+**No**
+: Current posts and subscriptions to the forum will be left untouched.
+
+**Yes**
+: All current posts and subscriptions to the forum will be removed.';
+
+$string['forumactivity'] = 'Forum activity';
+$string['forumactivity_help'] = 'Either choose a specific forum activity that you wish to setup, or choose "Create new activity", and specify the course section in which the new forum should be created.';
+
+$string['forumgroup'] = 'Forum group';
+$string['forumgroup_help'] = 'Select the Moodle group which will be granted access to the selected forum activity.';
+
+$string['subscribersadded'] = '{$a->users} users ({$a->old} existing users and {$a->new} new users) from the "{$a->group}" group were subscribed to the "{$a->forum}" forum.';
+$string['forumreset'] = 'The "{$a}" forum was reset.';

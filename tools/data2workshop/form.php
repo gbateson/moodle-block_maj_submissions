@@ -157,12 +157,17 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
             $dataid = get_fast_modinfo($this->course)->get_cm($cmid)->instance;
             $select = 'dataid = ? AND type NOT IN (?, ?, ?, ?, ?, ?)';
             $params = array($dataid, 'action', 'admin', 'constant', 'template', 'report', 'file');
-            if ($options = $DB->get_records_select('data_fields', $select, $params, null, 'id,name,description')) {
+            $fields = 'id,name,description';
+            if ($options = $DB->get_records_select('data_fields', $select, $params, null, $fields)) {
                 $search = self::bilingual_string();
                 if (self::is_low_ascii_language()) {
                     $replace = '$2'; // low-ascii language e.g. English
                 } else {
                     $replace = '$1'; // high-ascii/multibyte language
+                }
+                $params = array('dataid' => $dataid, 'name' => 'submission_status');
+                if ($option = $DB->get_record('data_fields', $params, $fields)) {
+                	$options[$option->id] = $option;
                 }
                 foreach ($options as $id => $option) {
                     if (preg_match('/_\d+(_[a-z]{2})?$/', $option->name)) {
