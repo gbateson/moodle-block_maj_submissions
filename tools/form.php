@@ -593,10 +593,14 @@ abstract class block_maj_submissions_tool_form extends moodleform {
      * @return single-line, plain-text version of $text
      */
     static public function plain_text($text) {
+        // remove single-byte spaces before HTML tags
         $search = '/(?: |\t|\r|\n|\x{00A0}|\x{3000}|&nbsp;|(?:<[^>]*>))+/us';
         $text = preg_replace($search, ' ', $text);
+        // remove single-byte spaces following double-byte char
         $search = '/(?<=[\x{3001}-\x{3002},\x{FF01}-\x{FF1F}]) +/u';
         $text = preg_replace($search, '', $text);
+        // ensure exactly one-space after commas (and none before)
+        $text = preg_replace('/ *, */u', ', ', $text);
         return trim($text);
     }
 
