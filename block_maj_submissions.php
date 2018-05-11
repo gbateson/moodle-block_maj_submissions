@@ -622,8 +622,8 @@ class block_maj_submissions extends block_base {
             $this->content->text .= $this->get_tool_link($plugin, 'setuppresentations');
             $this->content->text .= $this->get_tool_link($plugin, 'setupworkshops');
             $this->content->text .= html_writer::tag('p', '', array('class' => 'tooldivider'));
-            $this->content->text .= $this->get_tool_link($plugin, 'data2workshop');
             $this->content->text .= $this->get_tool_link($plugin, 'createusers');
+            $this->content->text .= $this->get_tool_link($plugin, 'data2workshop');
             $this->content->text .= $this->get_tool_link($plugin, 'setupvetting');
             $this->content->text .= html_writer::tag('p', '', array('class' => 'tooldivider'));
             $this->content->text .= $this->get_tool_link($plugin, 'workshop2data');

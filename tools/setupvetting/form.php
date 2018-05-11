@@ -61,7 +61,7 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
      * The name of the form field containing
      * the id of a group of anonymous reviewers
      */
-    protected $groupfieldname = 'anonymousreviewers';
+    protected $groupfieldnames = 'programcommittee,anonymousreviewers';
 
     /**
      * definition
@@ -78,10 +78,11 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
         $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options);
         $mform->disabledIf($name, 'targetworkshop', 'eq', 0);
 
-        $name = 'anonymousreviewers';
-        $options = $this->get_group_options();
-        $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options);
-        $mform->disabledIf($name, 'targetworkshop', 'eq', 0);
+		foreach ($this->groupfieldnames as $name) {
+			$options = $this->get_group_options();
+			$this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options);
+			$mform->disabledIf($name, 'targetworkshop', 'eq', 0);
+		}
 
         $name = 'resetpasswords';
         $this->add_field($mform, $this->plugin, $name, 'selectyesno', PARAM_INT);
@@ -488,7 +489,8 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
 
 				// TODO: setup a reviewers forum
 				// TODO: subscribe all reviewers to the forum
-            }
+				// (this is done by separate tool, reviewersforum)
+	            }
 
             // create a page resource
             if (count($table->data)) {
@@ -521,6 +523,12 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                     'content' => html_writer::table($table),
                     'visible' => 0
                 );
+				$name = 'programcommittee';
+				if (isset($data->$name) && is_numeric($data->$name)) {
+					$resourcedata->$name = $data->$name;
+				} else {
+					$resourcedata->visible = 0; // hide from students
+				}
                 $this->get_cm($msg, $resourcedata, $time, 'resource', $a);
             }
         }

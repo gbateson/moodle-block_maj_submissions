@@ -71,7 +71,7 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
      * The name of the form field containing
      * the id of a group of anonymous submitters
      */
-    protected $groupfieldname = 'anonymousauthors';
+    protected $groupfieldnames = 'programcommittee,anonymousauthors';
 
     const FILTER_NONE           = 0;
     const FILTER_CONTAINS       = 1;
@@ -138,9 +138,10 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
         $mform->disabledIf($name, 'targetworkshopnum', 'eq', 0);
         $mform->disabledIf($name, 'targetworkshopnum', 'eq', self::CREATE_NEW);
 
-        $name = $this->groupfieldname;
-        $options = $this->get_group_options();
-        $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options);
+        foreach ($this->groupfieldnames as $name) {
+            $options = $this->get_group_options();
+            $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options);
+        }
 
         $this->add_action_buttons();
     }
@@ -299,8 +300,7 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
             $workshop = new workshop($workshop, $cm, $this->course);
 
             // get ids of anonymous authors
-            $name = $this->groupfieldname;
-            $params = array('groupid' => $data->$name);
+            $params = array('groupid' => $data->anonymousauthors);
             $anonymous = $DB->get_records_menu('groups_members', $params, null, 'id,userid');
 
             // basic SQL to fetch records from database activity

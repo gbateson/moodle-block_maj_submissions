@@ -37,7 +37,7 @@ $string['alldays'] = 'All days';
 $string['allheadingsalldays'] = 'All room headings on all days';
 $string['allheadingsthisday'] = 'All room headings on this day';
 $string['anonymousauthors'] = 'Anonymous authors';
-$string['anonymousauthors_help'] = 'Select the group or anonymous users who will be registered as the authors of submissions in the target workshop. The number of users in the group should greater than, or equal to, the number of submissions, so that each submission is assigned a unique owner.';
+$string['anonymousauthors_help'] = 'Select the group of anonymous users who will be registered as the authors of submissions in the target workshop. The number of users in the group should greater than, or equal to, the number of submissions, so that each submission is assigned a unique owner.';
 $string['anonymouspassword'] = 'Anonymous password';
 $string['anonymousreviewers'] = 'Anonymous reviewers';
 $string['anonymousreviewers_help'] = 'Select the group of anonymous users who will review and assess the submissions in the target workshop activity.';
@@ -625,3 +625,8 @@ $string['forumgroup_help'] = 'Select the Moodle group which will be granted acce
 
 $string['subscribersadded'] = '{$a->users} users ({$a->old} existing users and {$a->new} new users) from the "{$a->group}" group were subscribed to the "{$a->forum}" forum.';
 $string['forumreset'] = 'The "{$a}" forum was reset.';
+
+$string['programcommittee'] = 'Program committee';
+$string['programcommittee_help'] = 'Select the Moodle group containing the Program Committee. If selected, this group will also be given access to the forums, activities or resources that are created by this tool.';
+
+$string['missingforumactivityname'] = 'Please give a name for the new forum.';

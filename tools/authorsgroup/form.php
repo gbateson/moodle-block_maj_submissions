@@ -51,7 +51,7 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
      * The name of the form field containing
      * the id of a group of anonymous submitters
      */
-    protected $groupfieldname = 'authorsgroup';
+    protected $groupfieldnames = 'authorsgroup';
 
     /**
      * definition
@@ -94,9 +94,10 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
         $mform->disabledIf('add'.$name, 'sourcedatabase', 'eq', 0);
         $mform->disabledIf('add'.$name, 'sourcedatabase', 'eq', self::CREATE_NEW);
 
-        $name = $this->groupfieldname;
-        $options = $this->get_group_options();
-        $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options);
+		foreach ($this->groupfieldnames as $name) {
+			$options = $this->get_group_options();
+			$this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options);
+		}
 
         $name = 'resetgroup';
         $this->add_field($mform, $this->plugin, $name, 'selectyesno', PARAM_INT);
@@ -139,14 +140,19 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
             // cache the database id
             $dataid = get_fast_modinfo($this->course)->get_cm($databasenum)->instance;
 
+			// cache the groupname
             $groupname = groups_get_group_name($groupid);
             $groupname = format_string($groupname);
 
-            // cache id of target group (of presenters)
+            // reset group, if required
             if ($resetgroup) {
                 $msg[] = get_string('groupreset', $this->plugin, $groupname);
                 $DB->delete_records('groups_members', array('groupid' => $groupid));
             }
+
+			// cache ids of enrolled users
+			$fields = 'u.id, u.firstname, u.lastname, u.firstnamephonetic, u.lastnamephonetic';
+			$enrolledusers = get_enrolled_users($this->course->context, '', 0, $fields);
 
             // initialize counters
             $countsubmissions = $DB->get_field('data_records', 'COUNT(*)', array('dataid' => $dataid));
@@ -258,10 +264,24 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
                                                 $types['lastname'],
                                                 $types['firstname'],
                                                 $types['lastname']);
-                                if ($users = $DB->get_records_select('user', $select, $params)) {
-                                    foreach ($users as $userid => $user) {
-                                        $userids[$userid] = 1;
-                                    }
+                                if ($users = $DB->get_records_select('user', $select, $params, 'id')) {
+                                	$userid = 0;
+									foreach ($users as $user) {
+										if (array_key_exists($user->id, $enrolledusers)) {
+											$userid = $user->id;
+											break;
+										}
+									}
+									if ($userid) {
+										// add only the enrolled user
+										$userids[$userid] = 1;
+									} else {
+                                		// Add all users, since none are enrolled.
+                                		// They will be listed as "No role" in the group.
+										foreach ($users as $user) {
+											$userids[$user->id] = 1;
+										}
+                                	}
                                 }
                             }
                         }

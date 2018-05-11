@@ -50,7 +50,7 @@ class block_maj_submissions_tool_setupforum extends block_maj_submissions_tool_f
         'timestart' => array('accesstimestart'),
         'timefinish' => array('accesstimefinish')
     );
-    protected $groupfieldname = 'forumgroup';
+    protected $groupfieldnames = 'programcommittee,forumgroup';
     protected $forumfieldname = 'forumactivity';
 
     /**
@@ -75,7 +75,7 @@ class block_maj_submissions_tool_setupforum extends block_maj_submissions_tool_f
             $sectionnum = 0;
         }
 
-        if ($name = $this->groupfieldname) {
+        foreach ($this->groupfieldnames as $name) {
             $options = $this->get_group_options();
             $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options);
             $mform->disabledIf($name, $this->forumfieldname, 'eq', 0);
@@ -127,7 +127,7 @@ class block_maj_submissions_tool_setupforum extends block_maj_submissions_tool_f
             $group = 'group_'.$name;
             $num = $name.'num';
             $name = $name.'name';
-            if (empty($data[$num])) {
+            if ($data[$num]=='') { // section 0 is allowed
                 $errors[$group] = get_string("missing$num", $this->plugin);
             } else if ($data[$num]==self::CREATE_NEW) {
                 if (empty($data[$name])) {
@@ -226,7 +226,7 @@ class block_maj_submissions_tool_setupforum extends block_maj_submissions_tool_f
                 }
                 $msg[] = get_string('forumreset', $this->plugin, $forum->name);
             }
-            if ($groupid = $data->{$this->groupfieldname}) {
+            if ($groupid = $data->forumgroup) {
 
 				$groupname = groups_get_group_name($groupid);
 				$groupname = format_string($groupname);

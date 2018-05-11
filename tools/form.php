@@ -55,9 +55,9 @@ abstract class block_maj_submissions_tool_form extends moodleform {
     protected $cmid = 0;
 
     /**
-     * The name of the form field, if any, containing the id of a group of anonymous users
+     * The names of the form field, if any, containing the id of a group of anonymous users
      */
-    protected $groupfieldname = '';
+    protected $groupfieldnames = '';
 
     /**
      * The course activity type, if any, to which this form relates
@@ -91,6 +91,10 @@ abstract class block_maj_submissions_tool_form extends moodleform {
 
         // cache $this->plugin, $this->course and $this->instance
         $this->cache_customdata($customdata);
+
+        $this->groupfieldnames = explode(',', $this->groupfieldnames);
+        $this->groupfieldnames = array_map('trim', $this->groupfieldnames);
+        $this->groupfieldnames = array_filter($this->groupfieldnames);
 
         // call parent constructor, to continue normal setup
         // which includes calling the "definition()" method
@@ -446,7 +450,7 @@ abstract class block_maj_submissions_tool_form extends moodleform {
      */
     public function get_restrictions($data) {
         $restrictions = $this->restrictions;
-        if ($name = $this->groupfieldname) {
+        foreach ($this->groupfieldnames as $name) {
             if (isset($data->$name) && is_numeric($data->$name)) {
                 $restrictions[] = (object)array(
                     'type' => 'group',
