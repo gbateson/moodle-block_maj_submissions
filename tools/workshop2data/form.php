@@ -195,6 +195,7 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
             $database = $DB->get_record('data', array('id' => $cm->instance), '*', MUST_EXIST);
             $database->cmidnumber = (empty($cm->idnumber) ? '' : $cm->idnumber);
             $database->instance   = $cm->instance;
+            $database->cmid       = $cm->id;
 
             // get workshop
             $cm = $DB->get_record('course_modules', array('id' => $data->sourceworkshop));
@@ -358,7 +359,8 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                     // i.e. the creator of the original database record
                     $author = $DB->get_record('user', array('id' => $record->userid));
 
-                    $databaseurl = array('id' => $cm->id, 'rid' => $record->recordid);
+                    // NOTE: $cm is now the WORKSHOP cm record
+                    $databaseurl = array('id' => $database->cmid, 'rid' => $record->recordid);
                     $databaseurl = new moodle_url('/mod/data/view.php', $databaseurl);
 
                     // add author info to email parameters

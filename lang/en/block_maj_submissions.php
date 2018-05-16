@@ -370,7 +370,7 @@ Please complete the vetting process before {$a->deadline}. We wish to inform the
 Thank you in advance for your helpful participation. Please contact with me if you have any difficulties or need further instructions.
 
 Best regards,
-{$a->senderfullname}
+{$a->sendername}
 {$a->senderemail}
 
 {$a->conferencename}
@@ -400,7 +400,7 @@ After logging in, you can view feedback from the reviewers of your submission vi
 URL: {$a->databaseurl}
 
 Best regards,
-{$a->senderfullname}
+{$a->sendername}
 {$a->senderemail}
 
 {$a->conferencename}

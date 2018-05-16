@@ -407,7 +407,7 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                 'username'       => '', // added later
                 'password'       => '', // added later
                 'deadline'       => userdate($config->reviewtimefinish),
-                'senderfullname' => $data->sendername,
+                'sendername'     => $data->sendername,
                 'senderemail'    => $data->senderemail,
                 'conferencename' => $config->conferencename,
                 'reviewteamname' => $config->reviewteamname
