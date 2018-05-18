@@ -77,6 +77,28 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
             $sectionnum = 0;
         }
 
+        // cache shortcut to block config settings
+        $config = $this->instance->config;
+
+        $warning = array();
+        if (empty($config->revisetimefinish)) {
+            $warning[] = get_string('missingrevisetime', $this->plugin);
+        }
+
+        if (empty($config->registerdelegatescmid) && empty($config->registerpresenterscmid)) {
+            $warning[] = get_string('missingregistercmid', $this->plugin);
+        }
+
+        if ($warning = implode('</li><li>', $warning)) {
+            $warning = '<ul><li>'.$warning.'</li></ul>';
+            $a = array('sesskey' => sesskey(),
+                       'id' => $this->course->id,
+                       'bui_editid' => $this->instance->instance->id);
+            $a = new moodle_url('/course/view.php', $a);
+            $warning = html_writer::tag('p', get_string('missingconfig', $this->plugin, $a->out())).$warning;
+            $this->add_field($mform, $this->plugin, 'warning', 'static', PARAM_TEXT, $warning);
+        }
+
         $name = 'sourceworkshop';
         $options = self::get_cmids($mform, $this->course, $this->plugin, 'workshop');
         $this->add_field($mform, $this->plugin, $name, 'selectgroups', PARAM_INT, $options, 0);
@@ -225,7 +247,13 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                 }
                 $dateformat = get_string($dateformat);
             }
-            $revisetimefinish = $config->revisetimefinish;
+
+            if (empty($config->revisetimefinish)) {
+                // no deadline has been set for the revisions, so we give them a week
+                $revisetimefinish = strtotime('today midnight') + WEEKSECS - (5 * MINSECS);
+            } else {
+                $revisetimefinish = $config->revisetimefinish;
+            }
             $revisetimefinish = userdate($revisetimefinish, $dateformat);
 
             $registrationlink = '';
@@ -327,7 +355,7 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
             }
 
             if (empty($config->reviewteamname)) {
-                $a->reviewteamname = '提出審査委員 Submission review team';
+                $a->reviewteamname = $this->instance->get_string('reviewteamname', $this->plugin);
             } else {
                 $a->reviewteamname = $config->reviewteamname;
             }
@@ -488,7 +516,7 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                                 $content .= html_writer::tag('p', get_string('peerreviewgreeting', $this->plugin), $params)."\n";
 
                                 switch (true) {
-                                    case strpos($status, 'Conditionally accepted'):
+                                    case is_numeric(strpos($status, 'Conditionally accepted')):
                                         $content .= html_writer::tag('p', get_string('conditionallyaccepted', $this->plugin), array('class' => 'status'))."\n";
                                         $advice = array(
                                             get_string('pleasemakechanges', $this->plugin, $revisetimefinish),
@@ -497,11 +525,11 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                                         $content .= html_writer::alist($advice, array('class' => 'advice'))."\n";
                                         break;
 
-                                    case strpos($status, 'Not accepted'):
+                                    case is_numeric(strpos($status, 'Not accepted')):
                                         $content .= html_writer::tag('p', get_string('notaccepted', $this->plugin), array('class' => 'status'))."\n";
                                         break;
 
-                                    case strpos($status, 'Accepted'):
+                                    case is_numeric(strpos($status, 'Accepted')):
                                         $content .= html_writer::tag('p', get_string('accepted', $this->plugin), array('class' => 'status'))."\n";
                                         if ($registrationlink) {
                                             $advice = array(
@@ -513,7 +541,7 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                                         $content .= html_writer::tag('p', get_string('acceptedfarewell', $this->plugin, $conferencemonth), array('class' => 'farewell'));
                                         break;
 
-                                    case strpos($status, 'Waiting for review'):
+                                    case is_numeric(strpos($status, 'Waiting for review')):
                                         $content .= html_writer::tag('p', get_string('waitingforreview', $this->plugin), array('class' => 'status'))."\n";
                                         break;
                                 }
@@ -559,8 +587,9 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                     // message text for this data record
                     $datarecord = "[$datarecord] ($submission->grade%) ".$submission->title;
 
-                    // cache the message text and index by grade for sorting later 
-                    $datarecords[$submission->grade] = $datarecord;
+                    // cache the message text and index by grade for sorting later
+                    // (append recordid to key to ensure uniqueness)
+                    $datarecords[$submission->grade.'_'.$record->recordid] = $datarecord;
                     $counttransferred++;
 
                     // send email to the author regarding review results
@@ -583,7 +612,7 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
             }
 
             if ($counttransferred) {
-                ksort($datarecords); // sort by grade (low -> high)
+                uksort($datarecords, 'strnatcmp'); // natural sort by grade (low -> high)
                 $msg[] = html_writer::tag('p', get_string('reviewstransferred', $this->plugin)).
                          html_writer::alist($datarecords, null, 'ol');
             }

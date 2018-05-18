@@ -123,6 +123,7 @@ URL: {$a->workshopurl}
 {$a->conferencename}
 {$a->reviewteamname}';
 $string['reviewersloginpage'] = '無記名審査委員ログイン情報（{$a}）';
+$string['reviewteamname'] = '提出審査委員';
 $string['reviewtime'] = '提出物の審査';
 $string['reviewtime_help'] = '提出物の審査の開始と終了日時';
 $string['revisetime'] = '提出物の最終編集';
@@ -149,6 +150,8 @@ $string['workshopsrecord'] = 'ワークショップ提案';
 $string['workshopstime'] = 'ワークショップ';
 $string['workshopstime_help'] = 'ワークショップの開始と終了日時';
 $string['youwillbenotified'] = '変更が完了したら、再度通知をいたします。';
+$string['warning'] = '注意';
+
 
 /* ==================================================
 ** these strings are also used by the TaskChain module

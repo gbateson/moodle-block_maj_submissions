@@ -412,6 +412,7 @@ $string['reviewspersubmission'] = 'Reviews per submission';
 $string['reviewspersubmission_help'] = 'The number of reviews required for each submission. If this number if zero, then ALL reviewers will be assigned to ALL submissions. Otherwise, the system will try to assign this number of reviewers to each submission, and try to assign the same number of submissions to each anonymous reviewer.';
 $string['reviewstransferred'] = 'Reviews for the following submissions were transfered to the target database.';
 $string['reviewsubmissions'] = 'Review submissions';
+$string['reviewteamname'] = 'Submission review team';
 $string['reviewtime'] = 'Selection of submissions';
 $string['reviewtime_help'] = 'The start and finish dates of the submission selection period.';
 $string['revisecmids'] = 'Revision activity [{no}]';
@@ -630,3 +631,9 @@ $string['programcommittee'] = 'Program committee';
 $string['programcommittee_help'] = 'Select the Moodle group containing the Program Committee. If selected, this group will also be given access to the forums, activities or resources that are created by this tool.';
 
 $string['missingforumactivityname'] = 'Please give a name for the new forum.';
+
+$string['warning_help'] = 'If you proceed without setting up the items in this list, the automatic feedback to presenters regarding the revision deadline or/and the registration database will not be generated.';
+$string['warning'] = 'Warning';
+$string['missingrevisetime'] = 'The deadline for revising submissions is missing.';
+$string['missingregistercmid'] = 'The registration database is missing (or not specified).';
+$string['missingconfig'] = 'Before proceeding, please <a href="{$a}">add the following settings</a>:';

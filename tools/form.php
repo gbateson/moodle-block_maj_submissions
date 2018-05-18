@@ -345,7 +345,7 @@ abstract class block_maj_submissions_tool_form extends moodleform {
      * @param string $type e.g. month, day, hour
      * @return void, but will modify $mform
      */
-    protected function add_field($mform, $plugin, $name, $elementtype, $paramtype, $options=null, $default=null) {
+    protected function add_field($mform, $plugin, $name, $elementtype, $paramtype='', $options=null, $default=null) {
         if ($elementtype=='selectgroups' && is_scalar(current($options))) {
             $elementtype = 'select'; // prevent error in PEAR library
         }
@@ -603,8 +603,11 @@ abstract class block_maj_submissions_tool_form extends moodleform {
         // remove single-byte spaces following double-byte char
         $search = '/(?<=[\x{3001}-\x{3002},\x{FF01}-\x{FF1F}]) +/u';
         $text = preg_replace($search, '', $text);
-        // ensure exactly one-space after commas (and none before)
-        $text = preg_replace('/ *, */u', ', ', $text);
+        // ensure there is no space before punctuation
+        // and exactly one space after (but don't touch numbers)
+        $search = array('/ +(?=[,.?!:;])/us', '/([,.])(?=[^0-9 ])\s*/us', '/([?!:;])\s*/us');
+        $replace = array('', '$1 ', '$1 ');
+        $text = preg_replace($search, $replace, $text);
         return trim($text);
     }
 
