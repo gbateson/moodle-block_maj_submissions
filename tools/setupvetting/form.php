@@ -515,9 +515,9 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                         }
                     }
                 }
-                $resourcedata = (object)array(
-                    'resourcenum' => self::CREATE_NEW,
-                    'resourcename' => '',
+                $pagedata = (object)array(
+                    'pagenum' => self::CREATE_NEW,
+                    'pagename' => '',
                     'coursesectionnum' => $cm->sectionnum,
                     'coursesectionname' => '',
                     'content' => html_writer::table($table),
@@ -525,11 +525,11 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                 );
 				$name = 'programcommittee';
 				if (isset($data->$name) && is_numeric($data->$name)) {
-					$resourcedata->$name = $data->$name;
+					$pagedata->$name = $data->$name;
 				} else {
-					$resourcedata->visible = 0; // hide from students
+					$pagedata->visible = 0; // hide from students
 				}
-                $this->get_cm($msg, $resourcedata, $time, 'resource', $a);
+                $this->get_cm($msg, $pagedata, $time, 'page', $a);
             }
         }
 

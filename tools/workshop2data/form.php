@@ -122,12 +122,17 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                          $name => array('helpbutton' => array($name, $this->plugin)));
         $addstring = get_string('add'.$name, $this->plugin, 1);
         $this->repeat_elements($elements, $repeats, $options, 'count'.$name, 'add'.$name, 1, $addstring, true);
-
         $mform->disabledIf('add'.$name, 'targetdatabase', 'eq', 0);
 
         $name = 'targetdatabase';
         $this->add_field_cm($mform, $this->course, $this->plugin, $name, $this->cmid);
         $this->add_field_section($mform, $this->course, $this->plugin, 'coursesection', $name, $sectionnum);
+
+        $name = 'programcommittee';
+        $options = $this->get_group_options();
+        $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options);
+        $mform->disabledIf($name, 'sourceworkshop', 'eq', 0);
+        $mform->disabledIf($name, 'targetdatabasenum', 'eq', 0);
 
         $name = 'sendername';
         $this->add_field($mform, $this->plugin, $name, 'text', PARAM_TEXT);
@@ -612,9 +617,42 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
             }
 
             if ($counttransferred) {
+
+                // format list of reviewed submissions
                 uksort($datarecords, 'strnatcmp'); // natural sort by grade (low -> high)
+                $datarecords = array_reverse($datarecords); // reverse order (high -> low)
                 $msg[] = html_writer::tag('p', get_string('reviewstransferred', $this->plugin)).
                          html_writer::alist($datarecords, null, 'ol');
+
+                // prepare resource with list of reviewed submissions
+                $pagedata = (object)array(
+                    'modname' => 'page',
+                    'pagenum' => self::CREATE_NEW,
+                    'pagename' => $this->instance->get_string('vettingresults', $this->plugin),
+                    'coursesectionnum' => get_fast_modinfo($this->course)->get_cm($cm->id)->sectionnum,
+                    'coursesectionname' => '',
+                    'content' => end($msg)
+                );
+
+                // hide list of from ordinary users (=students)
+				$name = 'programcommittee';
+				if (empty($data->$name)) {
+					$pagedata->visible = 0;
+				} else {
+					$pagedata->visible = 1;
+				}
+
+				// create Moodle page page
+                $cm = $this->get_cm($msg, $pagedata, $time, 'page', $a);
+
+                // restrict access to "Program Committee" only
+                if (isset($data->$name) && is_numeric($data->$name)) {
+                    $restrictions = array((object)array(
+                        'type' => 'group',
+                        'id' => intval($data->$name)
+                    ));
+                    self::set_cm_restrictions($cm, $restrictions);
+                }
             }
         }
 

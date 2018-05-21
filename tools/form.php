@@ -500,6 +500,7 @@ abstract class block_maj_submissions_tool_form extends moodleform {
         }
 
         if ($activitynum) {
+
             if ($activitynum==self::CREATE_NEW) {
 
                 if ($sectionnum==self::CREATE_NEW) {
@@ -509,8 +510,15 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                 }
 
                 if ($section) {
-                    $defaultvalues = $this->get_defaultvalues($data, $time);
-                    $cm = self::get_coursemodule($this->course, $section, $this->modulename, $activityname, $defaultvalues);
+                    if (isset($data->modname)) {
+						$modname = $data->modname;
+						$defaultvalues = $data;
+					} else {
+						$modname = $this->modulename;
+						$defaultvalues = $this->get_defaultvalues($data, $time);
+                    }
+					$is_resource = in_array($modname, array('book', 'folder', 'imscp', 'page', 'resource', 'url'));
+                    $cm = self::get_coursemodule($this->course, $section, $modname, $activityname, $defaultvalues);
 
                     if ($cm) {
                         $permissions = $this->get_permissions($data);
@@ -527,14 +535,23 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                                 $this->instance->instance_config_save($this->instance->config);
                             }
                         }
+
                         // create link to new module
-                        $link = "/mod/$this->modulename/view.php";
+                        $link = "/mod/$modname/view.php";
                         $link = new moodle_url($link, array('id' => $cm->id));
                         $link = html_writer::link($link, $activitynametext, array('target' => '_blank'));
 
-                        $msg[] = get_string('newactivitycreated', $this->plugin, $link);
+						if ($is_resource) {
+							$msg[] = get_string('newresourcecreated', $this->plugin, $link);
+						} else {
+							$msg[] = get_string('newactivitycreated', $this->plugin, $link);
+						}
                     } else {
-                        $msg[] = get_string('newactivityskipped', $this->plugin, $activitynametext);
+						if ($is_resource) {
+							$msg[] = get_string('newresourceskipped', $this->plugin, $activitynametext);
+						} else {
+							$msg[] = get_string('newactivityskipped', $this->plugin, $activitynametext);
+						}
                     }
                 }
             } else {

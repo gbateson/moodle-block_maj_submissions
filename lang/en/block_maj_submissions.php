@@ -637,3 +637,8 @@ $string['warning'] = 'Warning';
 $string['missingrevisetime'] = 'The deadline for revising submissions is missing.';
 $string['missingregistercmid'] = 'The registration database is missing (or not specified).';
 $string['missingconfig'] = 'Before proceeding, please <a href="{$a}">add the following settings</a>:';
+
+$string['vettingresults'] = 'Vetting results';
+$string['newactivityskipped'] = 'Creation of new activity skipped: {$a}';
+$string['newresourcecreated'] = 'New resource created: {$a}';
+$string['newresourceskipped'] = 'Creation of new resource skipped: {$a}';
