@@ -243,7 +243,7 @@ $string['notendswith'] = 'does not end with';
 $string['notisempty'] = 'is not empty';
 $string['notisequalto'] = 'is not equal to';
 $string['notisinlist'] = 'is not in list';
-$string['notitle'] = '(No title)';
+$string['notitle'] = '(No title {rid=$a})';
 $string['notstartswith'] = 'does not start with';
 $string['numberofdays'] = 'Number of days';
 $string['numberofdays_help'] = 'The number of days to appear on the schedule';
@@ -642,3 +642,7 @@ $string['vettingresults'] = 'Vetting results';
 $string['newactivityskipped'] = 'Creation of new activity skipped: {$a}';
 $string['newresourcecreated'] = 'New resource created: {$a}';
 $string['newresourceskipped'] = 'Creation of new resource skipped: {$a}';
+
+$string['duplicateauthors'] = '{$a} authors already had workshop submissions, and were excluded from the pool of anonymous authors.';
+$string['duplicaterecords'] = '{$a->count} duplicate records were found in the submissions database and were not transferred to the workshop: {$a->list}.';
+$string['duplicatesubmissions'] = '{$a->count} submissions already exist in the workshop, and were not transferred from the submissions database: {$a->list}';

@@ -332,8 +332,77 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
 
             if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
 
+				$duplicaterecords = array();
+				$duplicateauthors = array();
+				$duplicatesubmissions = array();
+
+				// sanitize submission titles (and remove duplicates)
+				foreach ($records as $id => $record) {
+					if (empty($record->title)) {
+						$title = get_string('notitle', $this->plugin, $record->recordid);
+					} else {
+						$title = self::plain_text($record->title);
+					}
+					if (array_key_exists($title, $duplicaterecords)) {
+						$duplicaterecords[$title]++;
+						unset($records[$id]);
+					} else {
+						$duplicaterecords[$title] = 0;
+					}
+					$records[$id]->title = $title;
+				}
+
+				// remove duplicate authors and submissions
+				if (empty($data->resetsubmissions)) {
+
+					// we should exclude authors who already have a submission,
+					// because the workshop module allows only ONE submission per user.
+					if ($submissions = $workshop->get_submissions('all', $data->anonymousauthors)) {
+						foreach ($submissions as $submission) {
+							$id = array_search($submission->authorid, $anonymous);
+							if (is_numeric($id)) {
+								$duplicateauthors[] = $submission->authorid;
+								unset($anonymous[$id]);
+							}
+						}
+					}
+
+					// skip database records that already exist in the workshop
+					foreach ($records as $id => $record) {
+						$title = $record->title;
+						if (array_key_exists($title, $duplicatesubmissions)) {
+							$duplicatesubmissions[$title]++;
+							unset($records[$id]);
+						} else if ($DB->record_exists('workshop_submissions', array('title' => $title, 'workshopid' => $cm->instance))) {
+							$duplicatesubmissions[$title] = 1;
+							unset($records[$id]);
+						} else {
+							$duplicatesubmissions[$title] = 0;
+						}
+					}
+				}
+
+				if ($count = count($duplicateauthors)) {
+					$msg[] = get_string('duplicateauthors', $this->plugin, $count);
+				}
+
+				$duplicaterecords = array_filter($duplicaterecords);
+				if ($count = count($duplicaterecords)) {
+					$a = html_writer::alist(array_keys($duplicaterecords));
+					$a = (object)array('count' => $count,'list' => $a);
+					$msg[] = get_string('duplicaterecords', $this->plugin, $a);
+				}
+
+				$duplicatesubmissions = array_filter($duplicatesubmissions);
+				if ($count = count($duplicatesubmissions)) {
+					$a = html_writer::alist(array_keys($duplicatesubmissions));
+					$a = (object)array('count' => $count,'list' => $a);
+					$msg[] = get_string('duplicatesubmissions', $this->plugin, $a);
+				}
+
                 $countanonymous = count($anonymous);
                 $countselected = count($records);
+
                 if ($countanonymous < $countselected) {
                     $a = (object)array('countanonymous' => $countanonymous,
                                        'countselected' => $countselected);
@@ -386,14 +455,6 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
                     // transfer submission records from database to workshop
                     foreach ($records as $record) {
 
-                        // sanitize submission title
-                        $name = 'title';
-                        if (empty($record->$name)) {
-                            $record->$name = get_string('notitle', $this->plugin);
-                        } else {
-                            $record->$name = self::plain_text($record->$name);
-                        }
-
                         // sanitize submission abstract
                         $name = 'abstract';
                         if (empty($record->$name)) {
@@ -442,14 +503,8 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
                             'contenttrust' => 0
                         );
 
-                        // add submission to workshop
-                        $params = array('workshopid' => $cm->instance,
-                                        'title' => $submission->title);
-                        if ($DB->record_exists('workshop_submissions', $params)) {
-                            // Oops - this submission appears to be a duplicate
-                            $msg[] = get_string('duplicatesubmission', $this->plugin, $submission->title);
-
-                        } else if ($submission->id = $DB->insert_record('workshop_submissions', $submission)) {
+                        // add submission to workshop (dupicates have already been removed)
+                        if ($submission->id = $DB->insert_record('workshop_submissions', $submission)) {
 
                             // add reference to this submission from the database record
                             $link = $workshop->submission_url($submission->id)->out(false);
