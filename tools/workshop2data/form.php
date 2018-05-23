@@ -154,26 +154,12 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
      * @return array of database fieldnames
      */
     protected function get_statuslevel_options() {
-        global $DB;
-        $options = array();
         if ($cmid = optional_param('targetdatabasenum', null, PARAM_INT)) {
             $dataid = get_fast_modinfo($this->course)->get_cm($cmid)->instance;
-            $params = array('dataid' => $dataid, 'name' => 'submission_status');
-            if ($record = $DB->get_record('data_fields', $params)) {
-                $search = self::bilingual_string();
-                if (self::is_low_ascii_language()) {
-                    $replace = '$2'; // low-ascii language e.g. English
-                } else {
-                    $replace = '$1'; // high-ascii/multibyte language
-                }
-                $options = preg_split('/[\r\n]+/', $record->param1);
-                $options = array_filter($options);
-                $options = array_flip($options);
-                foreach (array_keys($options) as $option) {
-                    $options[$option] = preg_replace($search, $replace, $option);
-                }
-            }
-        }
+            $options = $this->get_menufield_options($dataid, 'submission_status');
+    	} else {
+    		$options = array();
+    	}
         return $options;
     }
 
@@ -360,7 +346,7 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
             }
 
             if (empty($config->reviewteamname)) {
-                $a->reviewteamname = $this->instance->get_string('reviewteamname', $this->plugin);
+                $a->reviewteamname = get_string('reviewteamname', $this->plugin);
             } else {
                 $a->reviewteamname = $config->reviewteamname;
             }

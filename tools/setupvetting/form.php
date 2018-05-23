@@ -393,7 +393,7 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                 $data->senderemail = $USER->email;
             }
             if (empty($config->reviewteamname)) {
-                $config->reviewteamname = '提出審査委員 Submission review team';
+                $config->reviewteamname = get_string('reviewteamname', $this->plugin);
             }
             if (empty($config->conferencename)) {
                 $config->conferencename = $config->conferencenameen;
@@ -426,7 +426,7 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
 
             if (empty($resetpasswords)) {
                 $i = array_search('anonymouspassword', $cells);
-                $cells = array_splice($cells, $i, 1);
+                array_splice($cells, $i, 1);
             }
 
             // add headers

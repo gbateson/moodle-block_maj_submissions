@@ -579,6 +579,38 @@ abstract class block_maj_submissions_tool_form extends moodleform {
     }
 
     /**
+     * get_menufield_options
+     *
+     * @uses $DB
+     * @param $dataid id of database activity instance
+     * @param $name of field in database activity
+     * @return array of database fieldnames
+     */
+    public function get_menufield_options($dataid, $name, $numerickeys=false) {
+        global $DB;
+        $options = array();
+		$params = array('dataid' => $dataid, 'name' => $name);
+		if ($record = $DB->get_record('data_fields', $params)) {
+			$search = self::bilingual_string();
+			if (self::is_low_ascii_language()) {
+				$replace = '$2'; // low-ascii language e.g. English
+			} else {
+				$replace = '$1'; // high-ascii/multibyte language
+			}
+			$options = preg_split('/[\r\n]+/', $record->param1);
+			$options = array_filter($options);
+			$options = array_flip($options);
+			foreach (array_keys($options) as $option) {
+				$options[$option] = preg_replace($search, $replace, $option);
+			}
+		}
+        if ($numerickeys) {
+           $options = array_keys($options);
+        }
+        return $options;
+    }
+
+    /**
      * peer_review_link_fieldid
      *
      * @param string  $plugin

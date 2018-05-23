@@ -458,7 +458,7 @@ switch ($action) {
                       'df.name AS fieldname, dc.content';
             $from   = '{data_content} dc '.
                       'JOIN {data_fields} df ON df.id = dc.fieldid';
-            $where  = 'df.dataid = ?'.$ridignore.$fieldignore;
+            $where  = 'df.dataid = ?'.$ridignore.$fieldignore.' AND dc.recordid IN (143,144)';
             $order  = 'dc.recordid';
             $params = array_merge(array($cm->instance), $ridparams, $fieldparams);
 
@@ -539,15 +539,24 @@ switch ($action) {
                 $scheduleduration = $item['schedule_duration'];
             }
             if ($scheduleduration) {
-                if (empty($classes['duration'][$scheduleduration])) {
+                if (isset($classes['duration'][$scheduleduration])) {
+                    $class = $classes['duration'][$scheduleduration];
+                } else {
                     $class = $scheduleduration;
                     if (strpos($class, '</span>') || strpos($class, '</lang>')) {
                         $class = preg_replace($multilangsearch, $multilangreplace, $class);
                     }
                     $class = preg_replace($durationsearch, $durationreplace, $class);
-                    $classes['duration'][$scheduleduration] = strtolower(trim($class));
+                    if (preg_match('/^\s*duration\d+\s*$/i', $class)) {
+                        $class = strtolower(trim($class));
+                    } else {
+                        $class = ''; // no duration specfied
+                    }
+                    $classes['duration'][$scheduleduration] = $class;
                 }
-                $sessionclass .= ' '.$classes['duration'][$scheduleduration];
+                if ($class) {
+                    $sessionclass .= ' '.$class;
+                }
             }
 
             // extract duration

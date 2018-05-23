@@ -882,6 +882,27 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
         $letters = range(97, 122); // ascii a-z
         $letters = array_map('chr', $letters);
 
+		// get presentation categories, types and topics
+        if ($cmid = $config->collectpresentationscmid) {
+            $dataid = get_fast_modinfo($this->course)->get_cm($cmid)->instance;
+            $categories = $this->get_menufield_options($dataid, 'presentation_category', true);
+            $types = $this->get_menufield_options($dataid, 'presentation_type', true);
+            $topics = $this->get_menufield_options($dataid, 'presentation_topics', true);
+    	} else {
+			$categories = array('Individual session',
+								'Sponsored session',
+								'Keynote speech');
+			$types = array('Lightning talk',
+						   'Research paper',
+						   'Show and tell',
+						   'Symposium',
+						   'Poster');
+            $topics = array();
+    	}
+
+        $countcategories = (count($categories) - 1);
+        $counttypes = (count($types) - 1);
+
         $rooms = array();
         for ($i=0; $i<=$numberofrooms; $i++) {
             if ($i==0) {
@@ -894,8 +915,12 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                 $seats = 20 + (5 * ($numberofrooms - $i));
                 $emptyseats = rand(0, $seats);
                 $seats = $instance->get_string('roomseatsx', $this->plugin, $seats);
-                $topic = 'roomtopic'.(($i % 6) + 1);
-                $topic = $instance->get_string($topic, $this->plugin);
+                if (array_key_exists($i - 1, $topics)) {
+                    $topic = $topics[$i - 1];
+                } else {
+                    $topic = 'roomtopic'.(($i % 6) + 1);
+                    $topic = $instance->get_string($topic, $this->plugin);
+                }
             }
             $emptyseats = $instance->get_string('emptyseatsx', $this->plugin, $emptyseats);
             $rooms[$i] = (object)array('name' => $name,
@@ -930,32 +955,13 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $cssclass = 'duration'.round($duration / 60);
             $duration = $instance->multilang_format_time($duration);
 
-            $title = $instance->get_string($time, $this->plugin);
-            $summary = $instance->get_string($time.'summary', $this->plugin);
-
             $slots[] = (object)array('startfinish' => "$start - $finish",
                                      'duration' => $duration,
                                      'cssclass' => $cssclass,
                                      'multiroom' => true,
-                                     'title' => $title,
-                                     'summary' => $summary);
+                                     'title' => $instance->get_string($time, $this->plugin),
+                                     'summary' => $instance->get_string($time.'summary', $this->plugin));
         }
-
-		// TODO: get presentation categories from the DB
-        $categories = array('個人の発表 Individual session',
-                            'スポンサー提供の発表 Sponsored session',
-                            'ＭＡＪ補助金計画の報告 MAJ R&D grant report');
-
-		// TODO: get presentation types from the DB
-        $types = array('ライトニング・トーク Lightning talk',
-                       'ケース・スタディー Case study',
-                       'プレゼンテーション Presentation',
-                       'ショーケース Showcase',
-                       '商用ライトニング・トーク Commercial lightning talk',
-                       '商用プレゼンテーション Commercial presentation');
-
-        $countcategories = (count($categories) - 1);
-        $counttypes = (count($types) - 1);
 
         // cache the formatted slot duration (e.g. 20 mins)
         $duration = $instance->multilang_format_time($slotduration);
