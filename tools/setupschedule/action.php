@@ -233,7 +233,7 @@ switch ($action) {
         // langconfig strings
         $names = array('labelsep');
         foreach ($names as $name) {
-            $string = json_encode(trim(get_string($name, 'langconfig')));
+            $string = json_encode(get_string($name, 'langconfig'));
             $html .= 'MAJ.str.'.$name.' = '.$string.';'."\n";
         }
 
@@ -250,7 +250,8 @@ switch ($action) {
                        'removedday', 'removedroom', 'removedroomheadings', 'removedsession', 'removedslot',
                        'room', 'roomcount', 'roomname', 'roomseats', 'roomtopic', 'largeroom',
                        'slot', 'slotcount', 'slotinterval', 'slotlength', 'slotstart', 'starttime',
-                       'title', 'authornames', 'schedulenumber', 'category', 'type', 'rowspan', 'colspan');
+                       'title', 'authornames', 'schedulenumber', 'type', 'topic', 'category', 'rowspan', 'colspan',
+                       'selectrooms', 'selectitems', 'populateschedule', 'populatedschedule');
 
         foreach ($names as $name) {
             $string = json_encode(get_string($name, $plugin));
@@ -322,7 +323,7 @@ switch ($action) {
         $commands = array(
             'initializeschedule'  => $days,
             'emptyschedule'       => $days,
-            'populateschedule'    => $days,
+            'populateschedule'    => array(),
             'renumberschedule'    => $days,
             'scheduleinfo'    => array('add' => get_string('add', $plugin),
                                        'remove' => get_string('remove', $plugin)),
@@ -458,7 +459,7 @@ switch ($action) {
                       'df.name AS fieldname, dc.content';
             $from   = '{data_content} dc '.
                       'JOIN {data_fields} df ON df.id = dc.fieldid';
-            $where  = 'df.dataid = ?'.$ridignore.$fieldignore.' AND dc.recordid IN (143,144)';
+            $where  = 'df.dataid = ?'.$ridignore.$fieldignore;
             $order  = 'dc.recordid';
             $params = array_merge(array($cm->instance), $ridparams, $fieldparams);
 
@@ -530,6 +531,12 @@ switch ($action) {
                     $classes['type'][$presentationtype] = strtolower(trim($class));
                 }
                 $sessionclass .= ' '.$classes['type'][$presentationtype];
+            }
+
+            if (empty($item['presentation_topic'])) {
+                $presentationtopic = '';
+            } else {
+                $presentationtopic = $item['presentation_topic'];
             }
 
             // extract duration CSS class e.g. duration40mins
@@ -701,11 +708,12 @@ switch ($action) {
             $html .= html_writer::end_tag('div');
 
             // category and type
-            $html .= html_writer::start_tag('div', array('class' => 'categorytype'));
+            $html .= html_writer::start_tag('div', array('class' => 'categorytypetopic'));
             $html .= html_writer::tag('span', $presentationcategory, array('class' => 'category'));
             $html .= html_writer::tag('span', $presentationtype, array('class' => 'type'));
+            $html .= html_writer::tag('span', $presentationtopic, array('class' => 'topic'));
 
-            $html .= html_writer::end_tag('div'); // end categorytype DIV
+            $html .= html_writer::end_tag('div'); // end categorytypetopic DIV
 
             // summary (remove all tags and nbsp)
             $text = $item['presentation_abstract'];
@@ -740,7 +748,7 @@ switch ($action) {
 
             $params = array('presentation_language',
                             'presentation_times',
-                            'presentation_topics',
+                            'presentation_topic',
                             'presentation_keywords');
             list($where, $params) = $DB->get_in_or_equal($params);
             $select = 'dc.id, '.

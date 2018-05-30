@@ -175,6 +175,12 @@ function xmldb_block_maj_submissions_upgrade($oldversion=0) {
         upgrade_block_savepoint($result, "$newversion", 'maj_submissions');
     }
 
+    $newversion = 2018052891;
+    if ($oldversion < $newversion) {
+        $fieldnames = array('presentation_topics' => 'presentation_topic');
+        block_maj_submissions_upgrade_fieldnames($fieldnames);
+        upgrade_block_savepoint($result, "$newversion", 'maj_submissions');        
+    }
 
     return $result;
 }
@@ -638,5 +644,77 @@ function block_maj_submissions_upgrade_multilang_text($table, $record, $field, $
     } else {
         $DB->set_field($table, $field, $text, array('id' => $record->id));
         return true;
+    }
+}
+
+function block_maj_submissions_upgrade_fieldnames($fieldnames) {
+    global $CFG, $DB;
+
+	$blockname = 'maj_submissions';
+	$plugin = "block_$blockname";
+
+	$dataids = array();
+    if ($instances = $DB->get_records('block_instances', array('blockname' => 'maj_submissions'))) {
+
+		// cache id of "data" and "page" modules
+		$datamoduleid = $DB->get_field('modules', 'id', array('name' => 'data'));
+		$pagemoduleid = $DB->get_field('modules', 'id', array('name' => 'page'));
+
+        foreach ($instances as $instance) {
+
+            if (empty($instance->configdata)) {
+                continue;
+            }
+
+            $config = unserialize(base64_decode($instance->configdata));
+
+            if (empty($config)) {
+                continue;
+            }
+
+            $names = array_keys(get_object_vars($config));
+            $names = preg_grep('/^(collect|register).*cmid$/', $names);
+            // we expect the following settings:
+            // - collect(presentations|sponsoreds|workshops)cmid
+            // - register(delegates|presenters)cmid
+
+            foreach ($names as $name) {
+                if (empty($config->$name)) {
+                    continue;
+                }
+                $params = array('id' => $config->$name,
+                                'module' => $datamoduleid);
+                $dataids[] = $DB->get_field('course_modules', 'instance', $params);
+            }
+        }
+        $dataids = array_filter($dataids);
+    }
+
+	$templates = array('singletemplate',
+					   'listtemplate',
+					   'listtemplateheader',
+					   'listtemplatefooter',
+					   'addtemplate',
+					   'asearchtemplate');
+
+    foreach ($dataids as $id) {
+        if ($data = $DB->get_record('data', array('id' => $id))) {
+            foreach ($fieldnames as $oldname => $newname) {
+                $params = array('dataid' => $id, 'name' => $oldname);
+                if ($field = $DB->get_record('data_fields', $params)) {
+
+                    $field->name = $newname;
+                    $field->description = get_string($newname, $plugin);
+                    $DB->update_record('data_fields', $field);
+
+                    $search = "/\\b$oldname\\b/";
+                    $replace = "/\\b$newname\\b/";
+                    foreach ($templates as $template) {
+                        $data->$template = preg_replace($search, $replace, $data->$template);
+                    }
+                }
+            }
+            $DB->update_record('data', $data);
+        }
     }
 }

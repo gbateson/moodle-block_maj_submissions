@@ -1,21 +1,11 @@
 <?php
-
-// ===================
 // essential strings
-// ===================
-//
 $string['pluginname'] = 'MAJ Submissions';
-$string['blockdescription'] = 'This block facilitates administration of a conference registration and submissions system based on a set of Database and Workshop activities.';
-$string['blockname'] = 'MAJ Submissions';
-$string['blocknameplural'] = 'MAJ Submissions';
 
 // roles strings
 $string['maj_submissions:addinstance'] = 'Add a new MAJ Submissions block';
 
-// ===================
 // more strings
-// ===================
-//
 $string['accepted'] = 'Your proposal has been <u>accepted</u>.';
 $string['acceptedfarewell'] = 'We look forward to seeing you at the conference in {$a}.';
 $string['add'] = 'Add';
@@ -46,6 +36,8 @@ $string['applyto'] = 'Apply to';
 $string['assessmentsdeleted'] = 'Workshop was reset and {$a} old assessments(s) were removed.';
 $string['attending'] = 'Attending';
 $string['authornames'] = 'Author name(s)';
+$string['authorsgroup'] = 'Presenters group';
+$string['authorsgroup_help'] = 'Select the Moodle group to presenters will be added.';
 $string['autoincrementsettings'] = 'Auto-increment settings';
 $string['autoincrementsettings_help'] = 'These settings define the starting values and output format strings for the auto-increment fields in the registration database.
 
@@ -123,15 +115,16 @@ $string['dateopenedon'] = 'opened on {$a}';
 $string['dateopenson'] = 'opens on {$a}';
 $string['day'] = 'Day';
 $string['daytext'] = 'Day text';
+$string['dinner'] = 'Dinner';
 $string['dinnerdate'] = 'Dinner date';
 $string['dinnerdate_help'] = 'The conference dinner date, as a text string, that appears on the documents and webpages for this conference.';
 $string['dinnername'] = ' Dinner name';
 $string['dinnername_help'] = 'The conference dinner name that appears on the documents and webpages for this conference.';
 $string['dinnerreceiptnumber'] = 'Dinner receipt number';
 $string['dinnerreceiptnumber_help'] = 'The starting value for the auto-increment dinner receipt numbers.';
+$string['dinnersummary'] = 'Come and mingle at the networking receiption. Food and drink will be served.';
 $string['dinnerticketnumber'] = 'Dinner ticket number';
 $string['dinnerticketnumber_help'] = 'The starting value for the auto-increment dinner ticket numbers.';
-$string['dinnersummary'] = 'The networking reception will be held in the Main Hall.';
 $string['dinnertime'] = 'Dinner time';
 $string['dinnertime_help'] = 'The start and end times of dinner';
 $string['dinnervenue'] = 'Dinner venue';
@@ -146,7 +139,10 @@ $string['displaylinks'] = 'Display links';
 $string['displaylinks_help'] = 'If this setting is enabled, this block will display a list of links - one to each section in this course.';
 $string['displaystats'] = 'Display statistics';
 $string['displaystats_help'] = 'If this setting is enabled, the number of submissions and registrations received so far will be displayed in this MAJ Submissions block on the course page.';
+$string['duplicateauthors'] = '{$a} authors already had workshop submissions, and were excluded from the pool of anonymous authors.';
+$string['duplicaterecords'] = '{$a->count} duplicate records were found in the submissions database and were not transferred to the workshop: {$a->list}.';
 $string['duplicatesubmission'] = 'Duplicate submission was NOT transferred: {$a}';
+$string['duplicatesubmissions'] = '{$a->count} submissions already exist in the workshop, and were not transferred from the submissions database: {$a->list}';
 $string['duration'] = 'Duration';
 $string['durationseparator'] = ' - ';
 $string['editday'] = 'Edit day';
@@ -163,6 +159,9 @@ $string['emptyschedule'] = 'Empty<br />schedule';
 $string['emptyseatsx'] = '{$a} seats left';
 $string['events'] = 'Conference event [{no}]';
 $string['events_help'] = 'Enter the name of an event that can be added to the schedule.';
+$string['exportdates'] = 'Export dates';
+$string['exporthandbook'] = 'Export handbook';
+$string['exportschedule'] = 'Export schedule';
 $string['exportsettings'] = 'Export settings';
 $string['exportsettings_help'] = 'This link allows you export the configuration settings for this block to a file that you can import into a similar block in another course.';
 $string['feereceiptnumber'] = 'Fee receipt number';
@@ -178,11 +177,17 @@ $string['firstslottime'] = 'Time of first slot';
 $string['firstslottime_help'] = 'The time at which the first time slot starts';
 $string['fixdates'] = 'Remove leading zeros';
 $string['fixdates_help'] = 'These settings control whether or not the leading zero on months, days and hours less than 10 are removed.';
+$string['forumactivity'] = 'Forum activity';
+$string['forumactivity_help'] = 'Either choose a specific forum activity that you wish to setup, or choose "Create new activity", and specify the course section in which the new forum should be created.';
+$string['forumgroup'] = 'Forum group';
+$string['forumgroup_help'] = 'Select the Moodle group which will be granted access to the selected forum activity.';
+$string['forumreset'] = 'The "{$a}" forum was reset.';
 $string['fullschedule'] = 'Full schedule';
 $string['generatecontent'] = 'Generate content';
 $string['generatecontent_help'] = 'If this setting is enabled, then sample presentations will be added to the schedule. Otherwise, all sessions will be left empty.';
 $string['generatesampletemplate'] = 'Generate a sample template';
 $string['groupnamecount'] = '{$a->name} [{$a->count} users]';
+$string['groupreset'] = 'All members were removed from the "{$a}" group.';
 $string['howtoadd'] = 'To add {$a->record}, please click the "Add entry" link below, and fill out the form on the next page.';
 $string['howtobegin'] = 'In order to add, edit or delete {$a->record} for this conference, you need to log in to this website and enrol in this Moodle course.';
 $string['howtodelete'] = 'To delete {$a->record}, please click the "View single" link below, and then click the delete icon on the next page.';
@@ -210,19 +215,23 @@ $string['last'] = 'Last';
 $string['linkenrol'] = 'Enrol in this Moodle course';
 $string['linklogin'] = 'Login to this Moodle site';
 $string['linksignup'] = 'Create an account on this Moodle site';
-$string['lunchsummary'] = 'Lunch will be served in the cafeteria.';
+$string['lunch'] = 'Lunch';
+$string['lunchsummary'] = 'Lunch will be served in the cafetria on the 2nd floor of main building.';
 $string['lunchtime'] = 'Lunch time';
 $string['lunchtime_help'] = 'The start and end times of lunch';
-$string['maj_submissions:addinstance'] = 'Add a new MAJ Submissions block';
 $string['manageevents'] = 'Manage calendar events';
 $string['manageevents_help'] = 'If this option is enabled, then calendar events for start and finish times will automatically be added, updated or removed when this block\'s settings are saved.';
 $string['membershipinfocmid'] = 'Membership information';
 $string['membershipinfocmid_help'] = 'The page resource that displays information on membership';
+$string['missingconfig'] = 'Before proceeding, please <a href="{$a}">add the following settings</a>:';
 $string['missingcoursesectionname'] = 'Please give a name for the new course section';
 $string['missingcoursesectionnum'] = 'Please select a section';
 $string['missingdatabaseactivityname'] = 'Please give a name for the new database';
 $string['missingdatabaseactivitynum'] = 'Please select a database';
+$string['missingforumactivityname'] = 'Please give a name for the new forum.';
 $string['missingpreset'] = 'Please upload a preset file or select a preset from the list.';
+$string['missingregistercmid'] = 'The registration database is missing (or not specified).';
+$string['missingrevisetime'] = 'The deadline for revising submissions is missing.';
 $string['moodledatefmt'] = 'Moodle date format string';
 $string['moodledatefmt_help'] = 'Start and finish dates will be formatted in a similar way to the date selected here.
 
@@ -232,8 +241,11 @@ Note that if the &quot;Display dates&quot; is set to &quot;No&quot; then no date
 $string['multiplerooms'] = 'Multiple rooms';
 $string['myschedule'] = 'My schedule';
 $string['newactivitycreated'] = 'New activity created: {$a}';
+$string['newactivityskipped'] = 'Creation of new activity skipped: {$a}';
 $string['newgroupcreated'] = 'New group created: {$a}';
 $string['newgroupmembers'] = '{$a->count} member(s) added to group: {$a->name}';
+$string['newresourcecreated'] = 'New resource created: {$a}';
+$string['newresourceskipped'] = 'Creation of new resource skipped: {$a}';
 $string['newsectioncreated'] = 'New section created: {$a}';
 $string['noabstract'] = 'Oops - no abstract found for this presentation.';
 $string['normalroom'] = 'Normal room';
@@ -251,8 +263,8 @@ $string['numberofrooms'] = 'Number of rooms';
 $string['numberofrooms_help'] = 'The number of rooms to appear on the schedule';
 $string['numberofslots'] = 'Number of time slots';
 $string['numberofslots_help'] = 'The number of a time slots in each day';
-$string['numhours'] = '{a} hours';
-$string['nummins'] = '{a} mins';
+$string['numhours'] = '{$a} hours';
+$string['nummins'] = '{$a} mins';
 $string['ok'] = 'OK';
 $string['paymentinfocmid'] = 'Payment information';
 $string['paymentinfocmid_help'] = 'The page resource that displays information on how to pay for this conference.';
@@ -262,16 +274,20 @@ $string['peerreviewnumber'] = 'Peer Review {$a}';
 $string['pleasemakechanges'] = 'For this submission to be fully accepted, please make the requested changes to your abstract/presentation before <u>{$a}</u>.';
 $string['pleaseregistercopresenters'] = 'Please be sure to have any co-presenters register as well.';
 $string['pleaseregisteryourself'] = 'Please remember to register for the conference ({$a}).';
+$string['populatedschedule'] = '{$a} sessions were added to the schedule';
 $string['populateschedule'] = 'Populate<br />schedule';
 $string['position'] = 'Position';
-$string['positionbefore'] = 'Before {a->type} {a->num}';
+$string['positionbefore'] = 'Before {$a->type} {$a->num}';
 $string['positionlast'] = 'Last position';
 $string['presentation_category'] = 'Presentation category';
 $string['presentation_category_help'] = 'The presentation category, if any, of this event.';
+$string['presentation_topic'] = 'Presentation topic';
+$string['presentation_topic_help'] = 'The presentation topic, if any, of this event.';
 $string['presentation_type'] = 'Presentation type';
 $string['presentation_type_help'] = 'The presentation type, if any, of this event.';
 $string['presentationsprocess'] = 'the proposal submission process';
 $string['presentationsrecord'] = 'a presentation proposal';
+$string['presentersadded'] = 'Added {$a->added} out of {$a->presenters} presenters (from {$a->selected} out of {$a->submissions} submissions) to the "{$a->group}" group';
 $string['preset'] = 'Database preset';
 $string['preset_help'] = 'A "preset" is a template for creating a Moodle database activity. It includes specifications of the database fields, and the layout of the webpages to edit and display records. However, it does not include any actual data.
 
@@ -284,6 +300,8 @@ $string['presetnameevents'] = 'MAJ events database';
 $string['presetnamepresentations'] = 'MAJ presentations database';
 $string['presetnameregistrations'] = 'MAJ registrations database';
 $string['presetnameworkshops'] = 'MAJ workshops database';
+$string['programcommittee'] = 'Program committee';
+$string['programcommittee_help'] = 'Select the Moodle group containing the Program Committee. If selected, this group will also be given access to the forums, activities or resources that are created by this tool.';
 $string['publishcmid'] = 'Schedule activity';
 $string['publishcmid_help'] = 'The resource or database activity where accepted submissions are published online.';
 $string['publishsubmissions'] = 'Publish schedule';
@@ -312,9 +330,10 @@ $string['registerpresenterssectionnum'] = 'Registration section';
 $string['registerpresenterssectionnum_help'] = 'The course section in which to create the new registration database.';
 $string['registerpresenterstime'] = 'Registration for presenters';
 $string['registerpresenterstime_help'] = 'The dates and times at which the online registration for presenters starts and finshes.';
+$string['registration'] = 'Registration';
 $string['registrationsprocess'] = 'the conference registration process';
 $string['registrationsrecord'] = 'your registration details';
-$string['registrationsummary'] = 'Pick up your bags and have some coffee.';
+$string['registrationsummary'] = 'Collect your badges and have coffee.';
 $string['registrationtime'] = 'Registration';
 $string['registrationtime_help'] = 'The start and end times of registration';
 $string['remove'] = 'Remove';
@@ -339,6 +358,22 @@ $string['resetassessments_help'] = 'This setting specifies whether or not to rem
 
 **Yes**
 : Current data about reviewers and their reviews will be removed from the target workshop before the new reviewers are assigned. In addition, review feedback and scores will be removed from the submissions database related to the target workshop.';
+$string['resetforum'] = 'Reset forum';
+$string['resetforum_help'] = 'This setting specifies whether or not to reset the forum activity.
+
+**No**
+: Current posts and subscriptions to the forum will be left untouched.
+
+**Yes**
+: All current posts and subscriptions to the forum will be removed.';
+$string['resetgroup'] = 'Reset group';
+$string['resetgroup_help'] = 'This setting specifies whether or not to reset the target group before adding the selected presenters.
+
+**No**
+: Existing members of the group will not be changed and selected presenters will be added if they are not already members.
+
+**Yes**
+: Any existing members of the group will be removed, and then the newly selected presenters will be added.';
 $string['resetpasswords'] = 'Regenerate passwords';
 $string['resetpasswords_help'] = 'If this setting is enabled, the passwords for the anonymous users will be regenerated and included in the report of which real reviewer was assigned as which anonymous reviewer.';
 $string['resetsubmissions'] = 'Reset submissions';
@@ -498,6 +533,7 @@ $string['submissionscount'] = 'Number of submissions';
 $string['submissionsdeleted'] = 'Workshop was reset and {$a} old submission(s) were removed.';
 $string['submissionslist'] = 'List of submissions';
 $string['submissionstranferred'] = 'Transferred {$a->transferred} of {$a->selected} submissions selected from {$a->total} database records.';
+$string['subscribersadded'] = '{$a->users} users ({$a->old} existing users and {$a->new} new users) from the "{$a->group}" group were subscribed to the "{$a->forum}" forum.';
 $string['targetdatabase'] = 'Target database';
 $string['targetdatabase_help'] = 'Select the database to which the vetted submissions are to be copied.';
 $string['targetworkshop'] = 'Target workshop';
@@ -566,13 +602,17 @@ $string['toolworkshop2data_help'] = 'On this page you can copy reviewers\' feedb
 **To use an existing database** in this course, select it from the "Target database" menu below.
 
 **To create a new database**, give a name for the new database activity and specify the section in which it should be created. This can be an existing section, or a new section. If you specify a new section you will need to give a name for the new section.';
+$string['topic'] = 'Topic';
 $string['type'] = 'Type';
 $string['unknownlanguage'] = 'Unknown language';
 $string['update'] = 'Update';
 $string['uploadpreset'] = 'Upload preset zip file';
 $string['uploadtemplatefile'] = 'Upload a template file';
 $string['validimportfile'] = 'Configuration settings were successfully imported';
+$string['vettingresults'] = 'Vetting results';
 $string['waitingforreview'] = 'Your proposal is <u>waiting to be reviewed</u>.';
+$string['warning'] = 'Warning';
+$string['warning_help'] = 'If you proceed without setting up the items in this list, the automatic feedback to presenters regarding the revision deadline or/and the registration database will not be generated.';
 $string['wordcount'] = 'Number of words';
 $string['workshopnamecount'] = '{$a->name} [{$a->count} submissions]';
 $string['workshopscmid'] = 'Workshop information';
@@ -583,66 +623,5 @@ $string['workshopstime'] = 'Conference workshops';
 $string['workshopstime_help'] = 'The start and finish dates of the conference workshops.';
 $string['youwillbenotified'] = 'When the changes have been made, they will be reviewed and you will be notified of the new acceptance status.';
 
-$string['exportdates'] = 'Export dates';
-$string['exportschedule'] = 'Export schedule';
-$string['exporthandbook'] = 'Export handbook';
-
-$string['dinner'] = 'Dinner';
-$string['dinnersummary'] = 'Come and mingle at the networking receiption. Food and drink will be served.';
-$string['lunch'] = 'Lunch';
-$string['lunchsummary'] = 'Lunch will be served in the cafetria on the 2nd floor of main building.';
-$string['registration'] = 'Registration';
-$string['registrationsummary'] = 'Collect your badges and have coffee.';
-
-$string['authorsgroup'] = 'Presenters group';
-$string['authorsgroup_help'] = 'Select the Moodle group to presenters will be added.';
-
-$string['resetgroup'] = 'Reset group';
-$string['resetgroup_help'] = 'This setting specifies whether or not to reset the target group before adding the selected presenters.
-
-**No**
-: Existing members of the group will not be changed and selected presenters will be added if they are not already members.
-
-**Yes**
-: Any existing members of the group will be removed, and then the newly selected presenters will be added.';
-
-$string['presentersadded'] = 'Added {$a->added} out of {$a->presenters} presenters (from {$a->selected} out of {$a->submissions} submissions) to the "{$a->group}" group';
-$string['groupreset'] = 'All members were removed from the "{$a}" group.';
-
-$string['resetforum'] = 'Reset forum';
-$string['resetforum_help'] = 'This setting specifies whether or not to reset the forum activity.
-
-**No**
-: Current posts and subscriptions to the forum will be left untouched.
-
-**Yes**
-: All current posts and subscriptions to the forum will be removed.';
-
-$string['forumactivity'] = 'Forum activity';
-$string['forumactivity_help'] = 'Either choose a specific forum activity that you wish to setup, or choose "Create new activity", and specify the course section in which the new forum should be created.';
-
-$string['forumgroup'] = 'Forum group';
-$string['forumgroup_help'] = 'Select the Moodle group which will be granted access to the selected forum activity.';
-
-$string['subscribersadded'] = '{$a->users} users ({$a->old} existing users and {$a->new} new users) from the "{$a->group}" group were subscribed to the "{$a->forum}" forum.';
-$string['forumreset'] = 'The "{$a}" forum was reset.';
-
-$string['programcommittee'] = 'Program committee';
-$string['programcommittee_help'] = 'Select the Moodle group containing the Program Committee. If selected, this group will also be given access to the forums, activities or resources that are created by this tool.';
-
-$string['missingforumactivityname'] = 'Please give a name for the new forum.';
-
-$string['warning_help'] = 'If you proceed without setting up the items in this list, the automatic feedback to presenters regarding the revision deadline or/and the registration database will not be generated.';
-$string['warning'] = 'Warning';
-$string['missingrevisetime'] = 'The deadline for revising submissions is missing.';
-$string['missingregistercmid'] = 'The registration database is missing (or not specified).';
-$string['missingconfig'] = 'Before proceeding, please <a href="{$a}">add the following settings</a>:';
-
-$string['vettingresults'] = 'Vetting results';
-$string['newactivityskipped'] = 'Creation of new activity skipped: {$a}';
-$string['newresourcecreated'] = 'New resource created: {$a}';
-$string['newresourceskipped'] = 'Creation of new resource skipped: {$a}';
-
-$string['duplicateauthors'] = '{$a} authors already had workshop submissions, and were excluded from the pool of anonymous authors.';
-$string['duplicaterecords'] = '{$a->count} duplicate records were found in the submissions database and were not transferred to the workshop: {$a->list}.';
-$string['duplicatesubmissions'] = '{$a->count} submissions already exist in the workshop, and were not transferred from the submissions database: {$a->list}';
+$string['selectrooms'] = 'Select days and rooms';
+$string['selectitems'] = 'Select presentations';

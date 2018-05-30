@@ -217,7 +217,8 @@
     content: " ";
 }
 
-.schedule .category {
+.schedule .category,
+.schedule .topic {
     display: none;
 }
 

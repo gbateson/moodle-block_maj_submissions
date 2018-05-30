@@ -53,16 +53,16 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
         'displayoptions' => array('printheading' => 0, 'printintro' => 0)
     );
 
-    // caches for the menu items
-    protected $schedule_event     = array();
+    // caches for the menu items   = array();
     protected $schedule_day       = null;
     protected $schedule_time      = null;
     protected $schedule_duration  = null;
     protected $schedule_roomname  = null;
     protected $schedule_roomseats = null;
     protected $schedule_roomtype  = null;
-    protected $presentation_type  = null;
     protected $presentation_category = null;
+    protected $presentation_type  = null;
+    protected $presentation_topic = null;
 
     const TEMPLATE_NONE     = 0;
     const TEMPLATE_ACTIVITY = 1;
@@ -78,20 +78,24 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
     public function definition() {
         global $PAGE;
 
-        if (method_exists($PAGE->requires, 'jquery')) {
+		if (method_exists($PAGE->requires, 'js_call_amd')) {
+			// Moodle >= 2.9
+            $PAGE->requires->js_call_amd('block_maj_submissions/tool_setupschedule', 'init');
+            $PAGE->requires->jquery_plugin('ui-css');
+		} else if (method_exists($PAGE->requires, 'jquery')) {
             // Moodle >= 2.5
             $PAGE->requires->jquery();
             $PAGE->requires->jquery_plugin('ui');
             $PAGE->requires->jquery_plugin('ui-css');
+            $PAGE->requires->js('/blocks/maj_submissions/tools/setupschedule/jquery.js', true);
         } else {
-            // Moodle <= 2.4
+            // Moodle <= 2.4 - not needed?
             $jquery = '/blocks/maj_submissions/jquery';
             $PAGE->requires->css($jquery.'/jquery-ui.css');
             $PAGE->requires->js($jquery.'/jquery.js', true);
             $PAGE->requires->js($jquery.'/jquery-ui.js', true);
-        }
-
-        $PAGE->requires->js('/blocks/maj_submissions/tools/setupschedule/jquery.js', true);
+            $PAGE->requires->js('/blocks/maj_submissions/tools/setupschedule/jquery.js', true);
+		}
 
         $mform = $this->_form;
         $config = $this->instance->config;
@@ -263,10 +267,13 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $name = 'schedule_roomtype';
             $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
 
-            $name = 'presentation_type';
+            $name = 'presentation_category'; // individual, sponsored, plenary, etc
             $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
 
-            $name = 'presentation_category';
+            $name = 'presentation_type'; // lightning talk, show-and-tell, poster, etc
+            $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
+
+            $name = 'presentation_topic'; // development, administration, methodology, etc
             $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $this->$name);
 
             $name = 'schedule_html';
@@ -360,8 +367,9 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                        'schedule_roomname',
                        'schedule_roomseats',
                        'schedule_roomtype',
+                       'presentation_category',
                        'presentation_type',
-                       'presentation_category');
+                       'presentation_topic');
 
         foreach ($types as $type) {
             if ($type=='event') {
@@ -424,10 +432,11 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
      * @return boolean TRUE if this is a "menu" field; otherwise FALSE
      */
     static public function is_menu_field($field) {
+        $types = array('menu', 'radio', 'checkbox');
         if ($field->type=='admin') {
-            return ($field->param10=='menu');
+            return in_array($field->param10, $types);
         } else {
-            return ($field->type=='menu');
+            return in_array($field->type, $types);
         }
     }
 
@@ -467,8 +476,9 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                                     'schedule_roomseats' => null,
                                     'schedule_topic'     => null,
                                     'schedule_roomtype'  => null,
+                                    'presentation_category' => null,
                                     'presentation_type'  => null,
-                                    'presentation_category' => null);
+                                    'presentation_topic' => null);
                     foreach ($fields as $name => $content) {
                         if (isset($data->$name)) {
                             if ($name=='schedule_event') {
@@ -561,15 +571,16 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
 
                     // map CSS class names to database fields
                     $fieldids = array();
-                    $fields = array('day'         => 'schedule_day',
+                    $fields = array('day'       => 'schedule_day',
                                     'startfinish' => 'schedule_time',
-                                    'duration'    => 'schedule_duration',
-                                    'roomname'    => 'schedule_roomname',
-                                    'roomseats'   => 'schedule_roomseats',
-                                    'roomtopic'   => 'schedule_topic', // does not exist yet
-                                    'title'       => 'presentation_title',
-                                    'type'        => 'presentation_type',
-                                    'category'    => 'presentation_category',
+                                    'duration'  => 'schedule_duration',
+                                    'roomname'  => 'schedule_roomname',
+                                    'roomseats' => 'schedule_roomseats',
+                                    'roomtopic' => 'schedule_topic', // does not exist yet
+                                    'title'     => 'presentation_title',
+                                    'category'  => 'presentation_category',
+                                    'type'      => 'presentation_type',
+                                    'topic'     => 'presentation_topic',
                                     'schedulenumber' => 'schedule_number');
                     foreach ($fields as $name => $field) {
                         if ($name=='title') {
@@ -887,7 +898,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $dataid = get_fast_modinfo($this->course)->get_cm($cmid)->instance;
             $categories = $this->get_menufield_options($dataid, 'presentation_category', true);
             $types = $this->get_menufield_options($dataid, 'presentation_type', true);
-            $topics = $this->get_menufield_options($dataid, 'presentation_topics', true);
+            $topics = $this->get_menufield_options($dataid, 'presentation_topic', true);
     	} else {
 			$categories = array('Individual session',
 								'Sponsored session',
@@ -902,6 +913,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
 
         $countcategories = (count($categories) - 1);
         $counttypes = (count($types) - 1);
+        $counttopics = (count($topics) - 1);
 
         $rooms = array();
         for ($i=0; $i<=$numberofrooms; $i++) {
@@ -1153,8 +1165,8 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                             // finish authors DIV
                             $session .= html_writer::end_tag('div');
 
-                            // category and type
-                            $session .= html_writer::start_tag('div', array('class' => 'categorytype'));
+                            // category, type and topic
+                            $session .= html_writer::start_tag('div', array('class' => 'categorytypetopic'));
 
                             $category = $categories[rand(0, $countcategories)];
                             $category = self::convert_to_multilang($category, $config);
@@ -1164,7 +1176,11 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                             $type = self::convert_to_multilang($type, $config);
                             $session .= html_writer::tag('span', $type, array('class' => 'type'));
 
-                            $session .= html_writer::end_tag('div'); // end categorytype DIV
+                            $topic = $topics[rand(0, $counttopics)];
+                            $topic = self::convert_to_multilang($topic, $config);
+                            $session .= html_writer::tag('span', $topic, array('class' => 'topic'));
+
+                            $session .= html_writer::end_tag('div'); // end categorytypetopic DIV
 
                             // summary
                             $summary = array();
