@@ -974,6 +974,7 @@ class block_maj_submissions extends block_base {
      * @return string representation of $date
      */
     public function multilang_userdate($date, $formatstring, $plugin='', $removetime=false, $removedate=self::REMOVE_NONE) {
+        global $CFG;
 
         if ($this->multilang==false) {
             $format = get_string($formatstring, $plugin);
@@ -990,6 +991,14 @@ class block_maj_submissions extends block_base {
             moodle_setlocale($locale);
             force_current_language($lang);
             $format = get_string($formatstring, $plugin);
+            if (substr($lang, 0, 2)=='en') {
+                // add ordinal suffix using date('S', $date)
+                $format = str_replace('%d', date('dS', $date), $format);
+                $format = str_replace('%e', date('jS', $date), $format);
+            } else {
+                // remove leading space from %e
+                $format = str_replace('%e', date('j', $date), $format);
+            }
             $dates[$lang] = userdate($date, $format);
             //$dates[$lang] = $this->userdate($date, $format, $removetime, $removedate);
         }
@@ -1213,7 +1222,7 @@ class block_maj_submissions extends block_base {
      * get_string
      *
      * @return string, if $this->multilang is set, return the "multilang" verison of the required string;
-     *                 i.e. <span lang="xx" class="multilang">...></span><span...>...</span>
+     *                 i.e. <span lang="xx" class="multilang">...</span><span...>...</span>
      *                 otherwise, return Moodle's standard get_string() output
      */
     public function get_string($identifier, $component='', $a=null, $returnarray=false) {
@@ -1310,21 +1319,31 @@ class block_maj_submissions extends block_base {
      * appear before child langs (length > 2)
      */
     public function usort_langs($a, $b) {
+
+    	// put "en" first
         if ($a=='en') {
             return -1;
         }
         if ($b=='en') {
             return 1;
         }
+
         // compare parent langs
         $a_parent = substr($a, 0, 2);
         $b_parent = substr($b, 0, 2);
+        if ($a_parent=='en' && $b_parent!='en') {
+            return -1;
+        }
+        if ($b_parent=='en' && $a_parent!='en') {
+            return -1;
+        }
         if ($a_parent < $b_parent) {
             return -1;
         }
         if ($b_parent < $a_parent) {
             return 1;
         }
+
         // same parent lang, compare lengths
         $a_len = strlen($a);
         $b_len = strlen($b);
@@ -1334,6 +1353,7 @@ class block_maj_submissions extends block_base {
         if ($b_len < $a_len) {
             return 1;
         }
+
         // sibling langs, compare values
         if ($a < $b) {
             return -1;
@@ -1341,6 +1361,7 @@ class block_maj_submissions extends block_base {
         if ($b < $a) {
             return 1;
         }
+
         return 0; // shouldn't happen !!
     }
 

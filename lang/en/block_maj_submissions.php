@@ -210,6 +210,7 @@ $string['invalidcourseid'] = 'Invalid instanceid in course context record: id={$
 $string['invalidimportfile'] = 'Import file was missing, empty or invalid';
 $string['invalidinstanceid'] = 'Invalid block instance id: id = {$a}';
 $string['isinlist'] = 'is in list';
+$string['keyword'] = 'Keyword';
 $string['largeroom'] = 'Large room';
 $string['last'] = 'Last';
 $string['linkenrol'] = 'Enrol in this Moodle course';
@@ -495,6 +496,8 @@ $string['schedulenumber'] = 'Schedule number';
 $string['schedulesessiontime'] = '%H:%M';
 $string['scheduleupdated'] = 'Schedule was updated: {$a}';
 $string['seatsavailable'] = 'Seats available';
+$string['selectitems'] = 'Select presentations';
+$string['selectrooms'] = 'Select days and rooms';
 $string['selecttemplateactivity'] = 'Select a template activity';
 $string['selecttemplatefilename'] = 'Select a template file';
 $string['senderemail'] = 'Sender email';
@@ -622,6 +625,3 @@ $string['workshopsrecord'] = 'a workshop proposal';
 $string['workshopstime'] = 'Conference workshops';
 $string['workshopstime_help'] = 'The start and finish dates of the conference workshops.';
 $string['youwillbenotified'] = 'When the changes have been made, they will be reviewed and you will be notified of the new acceptance status.';
-
-$string['selectrooms'] = 'Select days and rooms';
-$string['selectitems'] = 'Select presentations';

@@ -45,7 +45,7 @@ define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doe
     TOOL.sessioncontent = ".title, .authors, .categorytypetopic, .summary, .scheduleinfo";
 
     // define the selectors for room content
-    TOOL.details = {"roomname" : null, "roomseats" : null, "roomtopic" : null};
+    TOOL.details = {"roomname": null, "roomseats": null, "roomtopic": null};
 
     // the DOM id of the dialog box
     TOOL.dialogid = "dialog";
@@ -110,10 +110,10 @@ define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doe
         });
 
         // create Tools area
-        var tools = $("<div></div>", {"id" : "tools"}).insertAfter("#id_sessioninfo");
+        var tools = $("<div></div>", {"id": "tools"}).insertAfter("#id_sessioninfo");
 
         // populate Tools area
-        var p = {"id" : TOOL.pageid, "action" : "loadtools"};
+        var p = {"id": TOOL.pageid, "action": "loadtools"};
         tools.load(TOOL.toolroot + "/action.php", p, function(r, s, x){
             // r : response text
             // s : status text ("success" or "error")
@@ -127,10 +127,10 @@ define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doe
         });
 
         // create Schedule area
-        var schedule = $("<div></div>", {"id" : "schedule"}).insertAfter("#tools");
+        var schedule = $("<div></div>", {"id": "schedule"}).insertAfter("#tools");
 
         // populate Schedule area
-        var p = {"id" : TOOL.pageid, "action" : "loadschedule"};
+        var p = {"id": TOOL.pageid, "action": "loadschedule"};
         schedule.load(TOOL.toolroot + "/action.php", p, function(r, s, x){
             // r : response text
             // s : status text ("success" or "error")
@@ -144,10 +144,10 @@ define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doe
         });
 
         // create Items area
-        var items = $("<div></div>", {"id" : "items", "class" : "schedule"}).insertAfter("#schedule");
+        var items = $("<div></div>", {"id": "items", "class": "schedule"}).insertAfter("#schedule");
 
         // populate Items area
-        var p = {"id" : TOOL.pageid, "action" : "loaditems"};
+        var p = {"id": TOOL.pageid, "action": "loaditems"};
         items.load(TOOL.toolroot + "/action.php", p, function(r, s, x){
             // r : response text
             // s : status text ("success" or "error")
@@ -308,43 +308,43 @@ define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doe
 
     TOOL.make_sessions_droppable = function(container, session) {
         TOOL.get_items(container, session, "td.session").droppable({
-            "accept" : ".session",
-            "drop" : function() {
+            "accept": ".session",
+            "drop": function() {
                 $(this).removeClass("ui-dropping");
                 TOOL.click_session(this);
             },
-            "out" : function() {
+            "out": function() {
                 $(this).removeClass("ui-dropping");
             },
-            "over" : function() {
+            "over": function() {
                 $(this).addClass("ui-dropping");
             },
-            "tolerance" : "pointer"
+            "tolerance": "pointer"
         });
     };
 
     TOOL.make_sessions_draggable = function(container, session) {
         TOOL.get_items(container, session, ".session").draggable({
-            "cursor" : "move",
-            "scroll" : true,
-            "stack" : ".session",
-            "start" : function() {
+            "cursor": "move",
+            "scroll": true,
+            "stack": ".session",
+            "start": function() {
                 TOOL.sourcesession = this;
                 $(this).addClass("ui-dragging");
                 $(this).removeClass("ui-selected");
                 $(this).data("startposition", {
-                    "top" : $(this).css("top"),
-                    "left" : $(this).css("left")
+                    "top": $(this).css("top"),
+                    "left": $(this).css("left")
                 });
             },
-            "stop" : function() {
+            "stop": function() {
                 $(this).removeClass("ui-dragging");
                 var p = $(this).data("startposition");
                 if (p) {
                     $(this).addClass("ui-dropping");
                     $(this).animate({
-                        "top" : p.top,
-                        "left" : p.left
+                        "top": p.top,
+                        "left": p.left
                     }, function(){
                         $(this).removeClass("ui-dropping");
                     });
@@ -505,20 +505,25 @@ define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doe
                      "selectitems": "",
                      "category": "categories",
                      "type":     "types",
-                     "topic":    "topics"};
+                     "topic":    "topics",
+                     "time":     "times",
+                     "keyword":  "keywords"};
         for (var name in menus) {
             var create_menu = TOOL[menus[name]]; // TOOL method to create menu
             if (TOOL.empty(create_menu)) {
                 // heading
                 var heading = HTML.tag("h4", TOOL.str[name]);
                 html += HTML.starttag("tr", {"valign": "top"})
-                     + HTML.tag("td", heading, {"colspan" : "3"})
+                     + HTML.tag("td", heading, {"colspan": "3"})
                      + HTML.endtag("tr");
             } else {
-                html += HTML.starttag("tr", {"valign": "top"})
-                     + HTML.tag("th", TOOL.str[name])
-                     + HTML.tag("td", create_menu(name, "", {"size": 3}), {"colspan" : "2"})
-                     + HTML.endtag("tr");
+                var menu = create_menu(name, "", {"size": 3});
+                if (menu) {
+                    html += HTML.starttag("tr", {"valign": "top"})
+                         + HTML.tag("th", TOOL.str[name])
+                         + HTML.tag("td", menu, {"colspan": "2"})
+                         + HTML.endtag("tr");
+                }
             }
         }
 
@@ -532,6 +537,8 @@ define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doe
             var categories = TOOL.form_values(this, "category");
             var types = TOOL.form_values(this, "type");
             var topics = TOOL.form_values(this, "topic");
+            var times = TOOL.form_values(this, "time");
+            var keywords = TOOL.form_values(this, "keyword");
 
             // construct days selector
             if (days===undefined || days===null || days==="") {
@@ -611,17 +618,54 @@ define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doe
                 topics = topics.join(", ");
             }
 
+            // construct times selector
+            if (times===undefined || times===null || times==="") {
+                times = "";
+            } else if (typeof(times)=="string") {
+                times = ".times .text:contains('" + times + "')";
+            } else {
+                for (var i=0; i<times.length; i++) {
+                    times[i] = ".times .text:contains('" + times[i] + "')";
+                }
+                times = times.join(", ");
+            }
+
+            // construct keywords selector
+            if (keywords===undefined || keywords===null || keywords==="") {
+                keywords = "";
+            } else if (typeof(keywords)=="string") {
+                keywords = ".keywords .text:contains('" + keywords + "')";
+            } else {
+                for (var i=0; i<keywords.length; i++) {
+                    keywords[i] = ".keywords .text:contains('" + keywords[i] + "')";
+                }
+                keywords = keywords.join(", ");
+            }
+
             // extract target items (to be inserted)
             var items = $("#items .session");
+window.console.log("Start: " + items.length);
             if (categories) {
                 items = items.find(categories).closest(".session");
+window.console.log("Categories: (" + items.length + ") " + categories);
             }
             if (types) {
                 items = items.find(types).closest(".session");
+window.console.log("Types: (" + items.length + ") " + types);
             }
             if (topics) {
                 items = items.find(topics).closest(".session");
+window.console.log("Topics: (" + items.length + ") " + topics);
             }
+            if (times) {
+                items = items.find(times).closest(".session");
+window.console.log("Times: (" + items.length + ") " + times);
+            }
+            if (keywords) {
+                items = items.find(keywords).closest(".session");
+window.console.log("Keywords: (" + items.length + ") " + keywords);
+            }
+window.console.log("Finish: " + items.length);
 
             var added = false;
 
@@ -781,7 +825,7 @@ define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doe
         TOOL.scheduleinfo_remove();
 
         // request scheduling info from server: "loadinfo"
-        var p = {"id" : TOOL.pageid, "action" : "loadinfo"};
+        var p = {"id": TOOL.pageid, "action": "loadinfo"};
         $.getJSON(TOOL.toolroot + "/action.php", p, function(info){
             TOOL.info = info;
             TOOL.icons = {};
@@ -811,12 +855,12 @@ define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doe
                         }
                         var scheduleinfo = session.find(".scheduleinfo");
                         if (scheduleinfo.length==0) {
-                            scheduleinfo = HTML.tag("div", "", {"class" : "scheduleinfo"});
+                            scheduleinfo = HTML.tag("div", "", {"class": "scheduleinfo"});
                             scheduleinfo = $(scheduleinfo).appendTo(session);
                         }
                         var div = scheduleinfo.find("." + type);
                         if (div.length==0) {
-                            div = HTML.tag("div", "", {"class" : type});
+                            div = HTML.tag("div", "", {"class": type});
                             div = $(div).appendTo(scheduleinfo);
                         }
                         var span = false;
@@ -827,8 +871,8 @@ define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doe
                             }
                         });
                         if (span==false) {
-                            span = HTML.tag("span", icon, {"class" : "icon",}) + HTML.tag("span", value, {"class" : "text"});
-                            span = HTML.tag("span", span, {"class" : "icontext"});
+                            span = HTML.tag("span", icon, {"class": "icon",}) + HTML.tag("span", value, {"class": "text"});
+                            span = HTML.tag("span", span, {"class": "icontext"});
                             $(span).appendTo(div);
                         }
                     }
@@ -1347,7 +1391,7 @@ define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doe
                         }
                     });
 
-                    var html = HTML.tag("td", "", {"class" : "session emptysession"});
+                    var html = HTML.tag("td", "", {"class": "session emptysession"});
                     $(this).find(".slot").each(function(){
                         var added = false;
                         $(this).find(".session").each(function(){
@@ -2617,11 +2661,11 @@ define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doe
 
     TOOL.html_day = function(day, daytext, roomcount, slotcount, slotstart, slotlength, slotinterval) {
         var html = "";
-        html += HTML.starttag("tbody", {"class" : "day day" + day});
+        html += HTML.starttag("tbody", {"class": "day day" + day});
 
         // day text
-        html += HTML.starttag("tr", {"class" : "date"});
-        html += HTML.tag("td", daytext, {"colspan" : roomcount});
+        html += HTML.starttag("tr", {"class": "date"});
+        html += HTML.tag("td", daytext, {"colspan": roomcount});
         html += HTML.endtag("tr");
 
         // room headings
@@ -2678,10 +2722,10 @@ define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doe
     };
 
     TOOL.html_roomheading = function(r, roomname, roomseats, roomtopic) {
-        return HTML.starttag("th", {"class" : "roomheading room" + r})
-             + HTML.tag("span", roomname,  {"class" : "roomname"})
-             + HTML.tag("span", roomseats, {"class" : "roomseats"})
-             + HTML.tag("div",  roomtopic, {"class" : "roomtopic"})
+        return HTML.starttag("th", {"class": "roomheading room" + r})
+             + HTML.tag("span", roomname,  {"class": "roomname"})
+             + HTML.tag("span", roomseats, {"class": "roomseats"})
+             + HTML.tag("div",  roomtopic, {"class": "roomtopic"})
              + HTML.endtag("th");
     };
 
@@ -2690,8 +2734,8 @@ define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doe
             roomcount = TOOL.extract_roomcount(day);
         }
         var html = "";
-        html += HTML.starttag("tr", {"class" : "roomheadings"});
-        html += HTML.tag("th", "", {"class" : "timeheading"});
+        html += HTML.starttag("tr", {"class": "roomheadings"});
+        html += HTML.tag("th", "", {"class": "timeheading"});
         for (var r=1; r<=roomcount; r++) {
             if (TOOL.empty(rooms) || TOOL.empty(rooms[r]) || rooms[r]=="0") {
                 var roomname = TOOL.str.roomname + " (" + r + ")";
@@ -2715,9 +2759,9 @@ define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doe
     TOOL.html_time = function(day, slot) {
         var startfinish = TOOL.extract_startfinish_html(day, slot);
         var duration = TOOL.extract_duration_html(day, slot);
-        var html = HTML.tag("span", startfinish, {"class" : "startfinish"})
-                 + HTML.tag("span", duration, {"class" : "duration"});
-        return HTML.tag("div", html, {"class" : "time"});
+        var html = HTML.tag("span", startfinish, {"class": "startfinish"})
+                 + HTML.tag("span", duration, {"class": "duration"});
+        return HTML.tag("div", html, {"class": "time"});
     };
 
     TOOL.html_room = function(day, room, roomtxt) {
@@ -2733,17 +2777,17 @@ define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doe
             var roomseats = TOOL.extract_roomseats_txt(roomtxt);
             var roomtopic = "";
         }
-        var html = HTML.tag("span", roomname, {"class" : "roomname"})
-                 + HTML.tag("span", roomseats, {"class" : "roomseats"})
-                 + HTML.tag("div", roomtopic, {"class" : "roomtopic"});
-        return HTML.tag("div", html, {"class" : "room"});
+        var html = HTML.tag("span", roomname, {"class": "roomname"})
+                 + HTML.tag("span", roomseats, {"class": "roomseats"})
+                 + HTML.tag("div", roomtopic, {"class": "roomtopic"});
+        return HTML.tag("div", html, {"class": "room"});
     };
 
     TOOL.html_item = function(id, classes) {
         if (TOOL.empty(classes)) {
             classes = "session";
         }
-        var attr = {"class" : classes};
+        var attr = {"class": classes};
         if (id) {
             attr.id = id;
         }
@@ -2753,7 +2797,7 @@ define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doe
     TOOL.html_sessions = function(r_min, r_max) {
         var html = "";
         for (var r=r_min; r<=r_max; r++) {
-            html += HTML.tag("td", "", {"class" : "session emptysession"});
+            html += HTML.tag("td", "", {"class": "session emptysession"});
         }
         return html;
     };
@@ -2761,10 +2805,10 @@ define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doe
     TOOL.html_slot = function(day, startfinish, duration) {
         var html = "";
         var durationtxt = TOOL.get_string("durationtxt", duration);
-        html += HTML.starttag("tr", {"class" : "slot duration" + duration});
-        html += HTML.starttag("td", {"class" : "timeheading"});
-        html += HTML.tag("span", startfinish, {"class" : "startfinish"});
-        html += HTML.tag("span", durationtxt, {"class" : "duration"});
+        html += HTML.starttag("tr", {"class": "slot duration" + duration});
+        html += HTML.starttag("td", {"class": "timeheading"});
+        html += HTML.tag("span", startfinish, {"class": "startfinish"});
+        html += HTML.tag("span", durationtxt, {"class": "duration"});
         html += HTML.endtag("td");
         html += TOOL.html_sessions(1, TOOL.extract_roomcount(day));
         html += HTML.endtag("tr");
@@ -2888,7 +2932,7 @@ define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doe
             if (TOOL.empty(type)) {
                 positions[i] = i;
             } else {
-                var a = {"type" : type, "num" : i};
+                var a = {"type": type, "num": i};
                 positions[i] = TOOL.get_string("positionbefore", a);
             }
         }
@@ -2921,11 +2965,11 @@ define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doe
             var day = TOOL.extract_parent_day(this);
             var dayname = name + "_" + day;
             var daytext = TOOL.extract_parent_daytext(this);
-            daytext = HTML.tag("label", daytext, {"for" : "id_" + dayname});
+            daytext = HTML.tag("label", daytext, {"for": "id_" + dayname});
             daytext = HTML.checkbox(dayname, (day==checked)) + " " + daytext;
             html += HTML.starttag("tr", {"valign": "top"})
                  + HTML.tag("th", heading)
-                 + HTML.tag("td", daytext, {"colspan" : "2"})
+                 + HTML.tag("td", daytext, {"colspan": "2"})
                  + HTML.endtag("tr");
             heading = "";
         });
@@ -2954,61 +2998,117 @@ define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doe
 
     TOOL.clone_menu = function(menuname, name, value, attr) {
         var menu = $("select[name=" + menuname + "]");
-        if (menu.length) {
-            menu = menu.first().clone();
-            menu.prop("name", name);
-            menu.prop("id", "id_" + name);
-            if (value) {
-                value = value.replace(new RegExp(' style="[^"]*"', "g"), "");
-                value = value.replace(new RegExp("[\\r\\n]+", "g"), "");
-                value = TOOL.trim(value);
-                var found = false;
-                menu.find("option").each(function(){
-                    if (found || $(this).val().indexOf(value) < 0) {
-                        this.selected = false;
-                        this.removeAttribute("selected");
-                    } else {
-                        found = true;
-                        this.selected = true;
-                        this.setAttribute("selected", "selected");
-                    }
-                });
-            }
-            if (attr) {
-                if (attr.size) {
-                    var size = menu.find("option:not(:empty)").length;
-                    size = Math.min(size, attr.size);
-                    if (size <= 1) {
-                        delete(attr.size);
-                        delete(attr.multiple);
-                    } else {
-                        attr.size = size;
-                        attr.multiple = "multiple";
-                        menu.find("option:empty").remove();
-                    }
-                }
-                for (var a in attr) {
-                    menu.prop(a, attr[a]);
-                }
-            }
-            menu.find("option").each(function(){
-                var txt = $(this).text();
-                $(this).prop("title", txt);
-                $(this).text(UNICODE.shorten(txt));
-            });
-            return menu.prop('outerHTML');
+        if (menu.length==0) {
+            return "";
         }
-        return '';
+        menu = menu.first().clone();
+        return TOOL.dialog_menu(menu, name, value, attr);
+    };
+
+    TOOL.times = function(name, value, attr) {
+        return TOOL.generate_menu("times", name, value, attr);
+    };
+
+    TOOL.keywords = function(name, value, attr) {
+        return TOOL.generate_menu("keywords", name, value, attr);
+    };
+
+    TOOL.generate_menu = function(selector, name, value, attr) {
+        var i = 0;
+        var count = {};
+        $("#items .scheduleinfo ." + selector + " .text").each(function(){
+            var txt = $(this).text();
+            if (count[txt]) {
+                count[txt]++;
+            } else {
+                count[txt] = 1;
+            }
+            i++;
+        });
+        if (i==0) {
+            return "";
+        }
+        // prepare menu for sorting
+        var menu = [];
+        for (var txt in count) {
+            menu.push([txt, count[txt]]);
+        }
+        // sort by count DESC, txt ASC
+        menu.sort(function(a, b) {
+            return (a[1] < b[1] ? 1 : (a[1] > b[1] ? -1 : (a[0] < b[0] ? -1 : (a[0] > b[0] ? 1 : 0))));
+        });
+        // generate OPTION tags
+        for (var i=0; i<menu.length; i++) {
+            var txt = menu[i][0] + " (" + menu[i][1] + ")";
+            menu[i] = HTML.tag("option", txt, {"value": txt});
+        }
+        // generate SELECT element
+        menu = $(HTML.tag("select", menu.join("")));
+        return TOOL.dialog_menu(menu, name, value, attr);
+    };
+
+    TOOL.dialog_menu = function(menu, name, value, attr) {
+        menu.prop("name", name);
+        menu.prop("id", "id_" + name);
+        var info = new RegExp("\\([^()]*\\)$");
+        menu.find("option").each(function(){
+            var v = $(this).val().replace(info, "");
+            this.setAttribute("value", TOOL.trim(v));
+        });
+        if (value) {
+            value = value.replace(new RegExp(' style="[^"]*"', "g"), "");
+            value = value.replace(new RegExp("[\\r\\n]+", "g"), "");
+            value = TOOL.trim(value);
+            var found = false;
+            menu.find("option").each(function(){
+                if (found || $(this).val().indexOf(value) < 0) {
+                    this.selected = false;
+                    this.removeAttribute("selected");
+                } else {
+                    found = true;
+                    this.selected = true;
+                    this.setAttribute("selected", "selected");
+                }
+            });
+        }
+        if (attr) {
+            if (attr.size) {
+                var size = menu.find("option:not(:empty)").length;
+                size = Math.min(size, attr.size);
+                if (size <= 1) {
+                    delete(attr.size);
+                    delete(attr.multiple);
+                } else {
+                    attr.size = size;
+                    attr.multiple = "multiple";
+                    menu.find("option:empty").remove();
+                }
+            }
+            for (var a in attr) {
+                menu.prop(a, attr[a]);
+            }
+        }
+        var i = 0;
+        menu.find("option").each(function(){
+            var txt = $(this).text();
+            $(this).prop("title", txt);
+            $(this).text(UNICODE.shorten(txt));
+            i++;
+        });
+        if (i==0) {
+            return "";
+        }
+        return menu.prop("outerHTML");
     };
 
     TOOL.boldcenter =function(tag, content) {
-        var attr = {"align" : "center"};
+        var attr = {"align": "center"};
         return HTML.tag("td", HTML.tag("b", content), attr);
     };
 
     TOOL.multilang =function(content, lang) {
-        var attr = {"class" : "multilang",
-                    "lang" : lang};
+        var attr = {"class": "multilang",
+                    "lang": lang};
         return HTML.tag("span", content, attr);
     };
 
