@@ -278,7 +278,7 @@ switch ($action) {
             switch ($name) {
                 case 'durationtxt';
                     $string = $instance->multilang_format_time(300);
-                    $string = str_replace('5', '{a}', $string);
+                    $string = str_replace('5', '{$a}', $string);
                     break;
             }
             $html .= 'MAJ.str.'.$name.' = '.json_encode($string).';'."\n";
@@ -382,31 +382,31 @@ switch ($action) {
         // cache certain strings
         $strnotattending = get_string('notattending', $plugin);
 
-		// cache the modinfo for this $course
+        // cache the modinfo for this $course
         $modinfo = get_fast_modinfo($course);
 
         // ignore these fieldtypes
         $fieldtypes = array('action',
-        					'constant',
-        					'file',
-        					'picture',
-        					'template',
-        					'url');
+                            'constant',
+                            'file',
+                            'picture',
+                            'template',
+                            'url');
         list($fieldignore, $fieldparams) = $DB->get_in_or_equal($fieldtypes, SQL_PARAMS_QM, '', false);
         $fieldignore = ' AND df.type '.$fieldignore;
         unset($fieldtypes);
 
-		// ignore record ids that are already in the schedule
-		$ridignore = '';
+        // ignore record ids that are already in the schedule
+        $ridignore = '';
         $ridparams = array();
         if ($cmid = $config->publishcmid) {
             $cm = $modinfo->get_cm($cmid);
             if ($cm->modname=='page') {
                 $content = $DB->get_field('page', 'content', array('id' => $cm->instance));
                 if (preg_match_all('/(?<=id_recordid_)\d+/', $content, $recordids)) {
-                	$recordids = array_unique($recordids[0]);
-                	list($ridignore, $ridparams) = $DB->get_in_or_equal($recordids, SQL_PARAMS_QM, '', false);
-					$ridignore = ' AND dc.recordid '.$ridignore;
+                    $recordids = array_unique($recordids[0]);
+                    list($ridignore, $ridparams) = $DB->get_in_or_equal($recordids, SQL_PARAMS_QM, '', false);
+                    $ridignore = ' AND dc.recordid '.$ridignore;
                 }
                 unset($content, $recordids);
             }
@@ -707,7 +707,7 @@ switch ($action) {
             $html .= html_writer::tag('span', $authornames, array('class' => 'authornames'));
             $html .= html_writer::end_tag('div');
 
-            // category and type
+            // category, type and topic
             $html .= html_writer::start_tag('div', array('class' => 'categorytypetopic'));
             $html .= html_writer::tag('span', $presentationcategory, array('class' => 'category'));
             $html .= html_writer::tag('span', $presentationtype, array('class' => 'type'));

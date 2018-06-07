@@ -656,7 +656,11 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                                         if ($name=='day') {
                                             $values[$name] = $daytext;
                                         } else if (preg_match($search->$name, $cells[2][$c], $value)) {
-                                            $values[$name] = $value[2];
+                                            if (strpos($value[2], '##')===false) {
+                                                $values[$name] = $value[2];
+                                            } else {
+                                                $values[$name] = explode('##', $value[2]);
+                                            }
                                         }
                                     }
                                     if (array_key_exists('roomname', $values) && array_key_exists('roomseats', $values)) {
@@ -690,15 +694,27 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                                             $values['roomname'] = implode('', $langs);
                                         }
                                     }
-
                                     foreach ($fields as $name => $field) {
                                         if (array_key_exists($name, $values)) {
                                             $value = $values[$name];
+                                            if (is_scalar($value)) {
+                                                if (empty($value)) {
+                                                    $value = array();
+                                                } else {
+                                                    $value = array($value);
+                                                }
+                                            } else {
+                                                $value = array_filter($value);
+                                            }
                                             if (isset($this->$field)) {
-                                                if (! array_key_exists($value, $this->$field)) {
-                                                    $this->$field[$value] = '';
+                                                // add this value, if it is not already present
+                                                foreach ($value as $v) {
+                                                    if (! array_key_exists($v, $this->$field)) {
+                                                        $this->$field[$v] = '';
+                                                    }
                                                 }
                                             }
+                                            $value = implode('##', $value);
                                             if ($fieldid = $fieldids[$field]) {
                                                 $params = array('fieldid' => $fieldid, 'recordid' => $recordid);
                                                 $DB->set_field('data_content', 'content', $value, $params);

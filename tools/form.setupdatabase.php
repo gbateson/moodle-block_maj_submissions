@@ -43,7 +43,7 @@ class block_maj_submissions_tool_setupdatabase extends block_maj_submissions_too
         'comments'        => 0,
         'timeavailablefrom' => 0,
         'timeavailableto' => 0,
-        'requiredentries' => 10,
+        'requiredentries' => 0,
         'requiredentriestoview' => 10,
         'maxentries'      => 1,
         'approval'        => 1,

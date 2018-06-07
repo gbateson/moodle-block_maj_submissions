@@ -33,9 +33,10 @@ define([], function() {
     UNICODE.singlechars = new RegExp(UNICODE.character, "g");
 
     UNICODE.strlen = function(str) {
-        str = (str || "");
-        var m = (str.match(UNICODE.singlechars) || []);
-        return m.length;
+        if (str===undefined || str===null || str==="") {
+            return 0;
+        }
+        return (str.match(UNICODE.singlechars) || []).length;
     };
 
     UNICODE.substr = function(str, start, length) {

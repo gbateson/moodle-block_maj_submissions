@@ -59,10 +59,7 @@ function xmldb_block_maj_submissions_upgrade($oldversion=0) {
             $names[$old] = preg_replace($search, $replace, $old);
         }
 
-        $templates = array('singletemplate',
-                           'listtemplate', 'listtemplateheader', 'listtemplatefooter',
-                           'addtemplate',  'csstemplate',        'jstemplate',
-                           'rsstemplate',  'rsstitletemplate',   'asearchtemplate');
+        $templates = block_maj_submissions_upgrade_templates();
 
         foreach ($names as $old => $new) {
 
@@ -179,7 +176,14 @@ function xmldb_block_maj_submissions_upgrade($oldversion=0) {
     if ($oldversion < $newversion) {
         $fieldnames = array('presentation_topics' => 'presentation_topic');
         block_maj_submissions_upgrade_fieldnames($fieldnames);
-        upgrade_block_savepoint($result, "$newversion", 'maj_submissions');        
+        upgrade_block_savepoint($result, "$newversion", 'maj_submissions');
+    }
+
+    $newversion = 2018060796;
+    if ($oldversion < $newversion) {
+        $fieldnames = array('presentation_topic');
+        block_maj_submissions_upgrade_checkboxes($fieldnames);
+        upgrade_block_savepoint($result, "$newversion", 'maj_submissions');
     }
 
     return $result;
@@ -273,118 +277,72 @@ function block_maj_submissions_upgrade_property_names($names=null) {
 
 function block_maj_submissions_upgrade_multiroom() {
     global $CFG, $DB;
+    require_once($CFG->dirroot.'/blocks/maj_submissions/block_maj_submissions.php');
 
-	$blockname = 'maj_submissions';
-	$plugin = "block_$blockname";
+    $blockname = 'maj_submissions';
+    $plugin = "block_$blockname";
 
-	$dataids = array();
-	$pageids = array();
+    $oldtext = '';
+    $oldmenu = array();
 
-	$oldtext = '';
-	$oldmenu = array();
+    $newtext = '';
+    $newmenu = array();
 
-	$newtext = '';
-	$newmenu = array();
+    list($dataids, $pageids) = block_maj_submissions_upgrade_cmids();
 
-    if ($instances = $DB->get_records('block_instances', array('blockname' => 'maj_submissions'))) {
-
-		// cache id of "data" and "page" modules
-		$datamoduleid = $DB->get_field('modules', 'id', array('name' => 'data'));
-		$pagemoduleid = $DB->get_field('modules', 'id', array('name' => 'page'));
-
-        foreach ($instances as $instance) {
-
-            if (empty($instance->configdata)) {
-                continue;
-            }
-
-            $config = unserialize(base64_decode($instance->configdata));
-
-            if (empty($config)) {
-                continue;
-            }
-
-			if ($newtext=='') {
-				$block_instance = block_instance($blockname, $instance);
-				$block_instance->set_multilang(true);
-				$newtext = $block_instance->get_string('schedule_roomtype', $plugin);
-				$newmenu[] = $block_instance->get_string('normalroom', $plugin);
-				$newmenu[] = $block_instance->get_string('largeroom', $plugin);
-				$newmenu[] = $block_instance->get_string('multiplerooms', $plugin);
-				$block_instance = null;
-			}
-
-            $names = array_keys(get_object_vars($config));
-            $names = preg_grep('/^(collect|publish|register).*cmid$/', $names);
-            // we expect the following settings:
-            // - collect(presentations|sponsoreds|workshops)cmid
-            // - register(delegates|presenters)cmid
-            // - publishcmid (the schedule)
-
-            foreach ($names as $name) {
-                if (empty($config->$name)) {
-                    continue;
-                }
-                if (substr($name, 0, 7)=='publish') {
-					$params = array('id' => $config->$name,
-									'module' => $pagemoduleid);
-					$pageids[] = $DB->get_field('course_modules', 'instance', $params);
-                } else {
-					$params = array('id' => $config->$name,
-									'module' => $datamoduleid);
-					$dataids[] = $DB->get_field('course_modules', 'instance', $params);
-                }
-            }
-        }
-        $dataids = array_filter($dataids);
-        $pageids = array_filter($pageids);
+    $select = array('blockname = ? AND configdata IS NOT NULL AND configdata != ?');
+    $params = array($blockname, '');
+    if ($instance = $DB->get_records_select('block_instances', $select, $params)) {
+        $instance = reset($instance); // just the first block instance
+        $instance = block_instance($blockname, $instance);
+        $instance->set_multilang(true);
+        $newtext = $instance->get_string('schedule_roomtype', $plugin);
+        $newmenu[] = $instance->get_string('normalroom', $plugin);
+        $newmenu[] = $instance->get_string('largeroom', $plugin);
+        $newmenu[] = $instance->get_string('multiplerooms', $plugin);
+    } else {
+        $newtext = get_string('schedule_roomtype', $plugin);
+        $newmenu[] = get_string('normalroom', $plugin);
+        $newmenu[] = get_string('largeroom', $plugin);
+        $newmenu[] = get_string('multiplerooms', $plugin);
     }
 
-	if ($newtext=='') {
-		$newtext = get_string('schedule_roomtype', $plugin);
-	}
+    foreach ($pageids as $id) {
+        if ($content = $DB->get_field('page', 'content', array('id' => $id))) {
+            $content = str_replace('allrooms', 'multiroom', $content);
+            $DB->set_field('page', 'content', $content, array('id' => $id));
+        }
+    }
 
-	foreach ($pageids as $id) {
-		if ($content = $DB->get_field('page', 'content', array('id' => $id))) {
-			$content = str_replace('allrooms', 'multiroom', $content);
-			$DB->set_field('page', 'content', $content, array('id' => $id));
-		}
-	}
+    $templates = block_maj_submissions_upgrade_templates();
 
-	$templates = array('singletemplate',
-					   'listtemplate',
-					   'listtemplateheader',
-					   'listtemplatefooter',
-					   'addtemplate',
-					   'asearchtemplate');
+    $oldname = 'schedule_audience';
+    $newname = 'schedule_roomtype';
 
-	$oldname = 'schedule_audience';
-	$newname = 'schedule_roomtype';
+    foreach ($dataids as $id) {
+        if ($data = $DB->get_record('data', array('id' => $id))) {
+            $params = array('dataid' => $id, 'name' => $oldname);
+            if ($field = $DB->get_record('data_fields', $params)) {
 
-	foreach ($dataids as $id) {
-		if ($data = $DB->get_record('data', array('id' => $id))) {
-			$params = array('dataid' => $id, 'name' => $oldname);
-			if ($field = $DB->get_record('data_fields', $params)) {
+                $field->name = $newname;
+                $oldtext = $field->description;
+                $field->description = $newtext;
 
-				$field->name = $newname;
-				$oldtext = $field->description;
-				$field->description = $newtext;
+                if ($field->type=='menu' || ($field->type=='admin' && $field->param10=='menu')) {
+                    $oldmenu = $field->param1;
+                    $field->param1 = implode("\n", $newmenu);
+                    $oldmenu = preg_split('/[\r\n]+/', $oldmenu);
+                    $oldmenu = array_filter($oldmenu);
+                } else {
+                    $oldmenu = array();
+                }
+                $DB->update_record('data_fields', $field);
 
-				if ($field->type=='menu' || ($field->type=='admin' && $field->param10=='menu')) {
-					$oldmenu = $field->param1;
-					$field->param1 = implode("\n", $newmenu);
-					$oldmenu = preg_split('/[\r\n]+/', $oldmenu);
-					$oldmenu = array_filter($oldmenu);
-				} else {
-					$oldmenu = array();
-				}
-				$DB->update_record('data_fields', $field);
-
-				foreach ($templates as $template) {
-					$data->$template = str_replace($oldname, $newname, $data->$template);
-					$data->$template = str_replace($oldtext, $newtext, $data->$template);
-				}
-				$DB->update_record('data', $data);
+                foreach ($templates as $template) {
+                    $data->$template = str_replace($oldname, $newname, $data->$template);
+                    $data->$template = str_replace($oldtext, $newtext, $data->$template);
+                }
+                $DB->update_record('data', $data);
 
                 $content = array();
 
@@ -411,189 +369,150 @@ function block_maj_submissions_upgrade_multiroom() {
 
                 // the following line is commented out because it caused a fatal MySQL error :-(
                 // Error: Truncated incorrect DOUBLE value
- 				//$DB->execute('UPDATE {data_content} SET content = '.$content.' WHERE fieldid = ?', $params);
-			}
-		}
-	}
+                 //$DB->execute('UPDATE {data_content} SET content = '.$content.' WHERE fieldid = ?', $params);
+            }
+        }
+    }
 }
 
 function block_maj_submissions_upgrade_multilang() {
     global $CFG, $DB;
     require_once($CFG->dirroot.'/blocks/maj_submissions/tools/form.php');
 
-    // cache id of "data" activity module
-    $moduleid = $DB->get_field('modules', 'id', array('name' => 'data'));
+    list($dataids, $pageids) = block_maj_submissions_upgrade_cmids();
 
-    if ($instances = $DB->get_records('block_instances', array('blockname' => 'maj_submissions'))) {
+    if (empty($dataids)) {
+        return;
+    }
+    // cache search/replace strings for templates
+    $templatesearchreplace = array('"multilang ' => '"',
+                                   ' multilang"' => '"');
 
-        $dataids = array();
-        foreach ($instances as $instance) {
+    // cache names of template fields in a data record
+    $templates = block_maj_submissions_upgrade_templates();
 
-            if (empty($instance->configdata)) {
+    // cache names of field types with fixed values params
+    $fixedvaluetypes = array('checkbox',
+                             'menu',
+                             'multimenu',
+                             'radiobutton');
+
+    // cache names of field types with multiline content
+    $multilinetypes = array('checkbox',
+                            'multimenu');
+
+    // cache names of fields containing a money value
+    $moneyfields = array('membership_fees',
+                         'conference_fees',
+                         'dinner_attend',
+                         'dinner_attend_2',
+                         'dinner_attend_3',
+                         'dinner_attend_4',
+                         'dinner_attend_5');
+
+    // cache search string to match newlines before closing </span>
+    $newlinesearch = array('/[\r\n]+(?=<\/span>)/s', '/[\r\n]+/s');
+    $newlinereplace = array('', "\n");
+
+    // cache special search/replace strings for presentation_topics
+    // because these include some low-ascii chars within the Japanese
+    $topicsearch = '\\x{0000}-\\x{007F}'; // low-ascii chars
+    $topicsearch = '/^(.*?[^'.$topicsearch.']) (['.$topicsearch.']+)$/mu';
+    $topicreplace = '<span class="multilang" lang="en">$2</span>'.
+                    '<span class="multilang" lang="ja">$1</span>';
+
+    // these fields will be converted to multilang SPANs
+    $params = array('description', 'param1',
+                         'param2', 'param3',
+                         'param4', 'param5');
+
+    foreach ($dataids as $dataid) {
+        $fields = $DB->get_records('data_fields', array('dataid' => $dataid));
+        if (empty($fields)) {
+            continue; // unexpected !!
+        }
+        $data = $DB->get_record('data', array('id' => $dataid));
+        if (empty($data)) {
+            continue; // shouldn't happen !!
+        }
+        foreach ($templates as $template) {
+            if (empty($data->$template)) {
                 continue;
             }
-
-            $config = unserialize(base64_decode($instance->configdata));
-
-            if (empty($config)) {
-                continue;
-            }
-
-            $names = array_keys(get_object_vars($config));
-            $names = preg_grep('/^(collect|register).*cmid$/', $names);
-            // we expect the following settings:
-            // - collect(presentations|sponsoreds|workshops)cmid
-            // - register(delegates|presenters)cmid
-
-            foreach ($names as $name) {
-                if (empty($config->$name)) {
-                    continue;
+            $text = strtr($data->$template, $templatesearchreplace);
+            if ($template=='addtemplate') {
+                $name = 'fixmultilangvalues';
+                if (! $DB->record_exists('data_fields', array('dataid' => $dataid, 'name' => $name))) {
+                    $field = new stdClass();
+                    $field->dataid = $dataid;
+                    $field->name = $name;
+                    $field->type = 'admin';
+                    $field->description = '<span class="multilang" lang="en">Fix multilang values</span><span class="multilang" lang="ja">多言語値修正</span>';
+                    $field->param10 = 'number';
+                    $DB->insert_record('data_fields', $field);
                 }
-                $params = array('id' => $config->$name,
-                                'module' => $moduleid);
-                $dataids[] = $DB->get_field('course_modules', 'instance', $params);
+                $pos = strpos($text, '[['.$name.']]');
+                if ($pos===false) {
+                    $search = '[[setdefaultvalues]]';
+                    $insert = "\n\n";
+                    $insert .= '<!-- =============================================='."\n";
+                    $insert .= ' The "fixmultilangvalues" field is required to fix'."\n";
+                    $insert .= ' multilang values in "menu", "radio" and "text" fields.'."\n";
+                    $insert .= '=============================================== -->'."\n";
+                    $insert .= '[['.$name.']]';
+                    $pos = strpos($text, $search);
+                    if ($pos===false) {
+                        $pos = strlen($text);
+                    } else {
+                        $pos += strlen($search);
+                    }
+                    $text = substr_replace($text, $insert, $pos, 0);
+                }
+            }
+            if (strcmp($text, $data->$template)) {
+                $DB->set_field('data', $template, $text, array('id' => $dataid));
             }
         }
+        foreach ($fields as $fieldid => $field) {
 
-        $dataids = array_filter($dataids);
-        $dataids = array_unique($dataids);
-        sort($dataids);
-
-        // cache search/replace strings for templates
-        $templatesearchreplace = array('"multilang ' => '"',
-                                       ' multilang"' => '"');
-
-        // cache names of template fields in a data record
-        $templates = array('singletemplate',
-                           'listtemplate',
-                           'listtemplateheader',
-                           'listtemplatefooter',
-                           'addtemplate',
-                           'asearchtemplate');
-
-        // cache names of field types with fixed values params
-        $fixedvaluetypes = array('checkbox',
-                                 'menu',
-                                 'multimenu',
-                                 'radiobutton');
-
-        // cache names of field types with multiline content
-        $multilinetypes = array('checkbox',
-                                'multimenu');
-
-        // cache names of fields containing a money value
-        $moneyfields = array('membership_fees',
-                             'conference_fees',
-                             'dinner_attend',
-                             'dinner_attend_2',
-                             'dinner_attend_3',
-                             'dinner_attend_4',
-                             'dinner_attend_5');
-
-        // cache search string to match newlines before closing </span>
-        $newlinesearch = array('/[\r\n]+(?=<\/span>)/s', '/[\r\n]+/s');
-        $newlinereplace = array('', "\n");
-
-        // cache special search/replace strings for presentation_topics
-        // because these include some low-ascii chars within the Japanese
-        $topicsearch = '\\x{0000}-\\x{007F}'; // low-ascii chars
-        $topicsearch = '/^(.*?[^'.$topicsearch.']) (['.$topicsearch.']+)$/mu';
-        $topicreplace = '<span class="multilang" lang="en">$2</span>'.
-                        '<span class="multilang" lang="ja">$1</span>';
-
-        // these fields will be converted to multilang SPANs
-        $params = array('description', 'param1',
-                             'param2', 'param3',
-                             'param4', 'param5');
-
-        foreach ($dataids as $dataid) {
-            $fields = $DB->get_records('data_fields', array('dataid' => $dataid));
-            if (empty($fields)) {
-                continue; // unexpected !!
+            $name = $field->name;
+            if ($field->type=='admin') {
+                $type = $field->param10;
+            } else {
+                $type = $field->type;
             }
-            $data = $DB->get_record('data', array('id' => $dataid));
-            if (empty($data)) {
-                continue; // shouldn't happen !!
+
+            $is_money_field = in_array($name, $moneyfields);
+            $is_topics_field = ($name=='presentation_topics');
+            $is_fixedvalue = in_array($type, $fixedvaluetypes);
+            $is_multiline = in_array($type, $multilinetypes);
+
+            foreach ($params as $param) {
+                $is_topics_param = ($is_topics_field && $param=='param1');
+                block_maj_submissions_upgrade_multilang_text(
+                               'data_fields', $field, $param,
+                                              $config, false,
+                           $is_money_field, $is_topics_param,
+                                 $topicsearch, $topicreplace,
+                             $newlinesearch, $newlinereplace);
             }
-            foreach ($templates as $template) {
-                if (empty($data->$template)) {
-                    continue;
-                }
-                $text = strtr($data->$template, $templatesearchreplace);
-                if ($template=='addtemplate') {
-                	$name = 'fixmultilangvalues';
-                	if (! $DB->record_exists('data_fields', array('dataid' => $dataid, 'name' => $name))) {
-                		$field = new stdClass();
-                		$field->dataid = $dataid;
-                		$field->name = $name;
-                		$field->type = 'admin';
-                		$field->description = '<span class="multilang" lang="en">Fix multilang values</span><span class="multilang" lang="ja">多言語値修正</span>';
-                		$field->param10 = 'number';
-                		$DB->insert_record('data_fields', $field);
-                	}
-                	$pos = strpos($text, '[['.$name.']]');
-                	if ($pos===false) {
-						$search = '[[setdefaultvalues]]';
-						$insert = "\n\n";
-						$insert .= '<!-- =============================================='."\n";
-						$insert .= ' The "fixmultilangvalues" field is required to fix'."\n";
-						$insert .= ' multilang values in "menu", "radio" and "text" fields.'."\n";
-						$insert .= '=============================================== -->'."\n";
-						$insert .= '[['.$name.']]';
-						$pos = strpos($text, $search);
-                		if ($pos===false) {
-                			$pos = strlen($text);
-                		} else {
-                			$pos += strlen($search);
-                		}
-						$text = substr_replace($text, $insert, $pos, 0);
-                	}
-                }
-                if (strcmp($text, $data->$template)) {
-                    $DB->set_field('data', $template, $text, array('id' => $dataid));
-                }
+
+            if ($is_fixedvalue) {
+                $contents = $DB->get_records('data_content', array('fieldid' => $fieldid));
+            } else {
+                $contents = false;
             }
-            foreach ($fields as $fieldid => $field) {
+            if ($contents===false) {
+                $contents = array();
+            }
 
-                $name = $field->name;
-                if ($field->type=='admin') {
-                    $type = $field->param10;
-                } else {
-                    $type = $field->type;
-                }
-
-                $is_money_field = in_array($name, $moneyfields);
-                $is_topics_field = ($name=='presentation_topics');
-                $is_fixedvalue = in_array($type, $fixedvaluetypes);
-                $is_multiline = in_array($type, $multilinetypes);
-
-                foreach ($params as $param) {
-                    $is_topics_param = ($is_topics_field && $param=='param1');
-                    block_maj_submissions_upgrade_multilang_text(
-                                   'data_fields', $field, $param,
-                                                  $config, false,
-                               $is_money_field, $is_topics_param,
-                                     $topicsearch, $topicreplace,
-                                 $newlinesearch, $newlinereplace);
-                }
-
-                if ($is_fixedvalue) {
-                    $contents = $DB->get_records('data_content', array('fieldid' => $fieldid));
-                } else {
-                    $contents = false;
-                }
-                if ($contents===false) {
-                    $contents = array();
-                }
-
-                foreach ($contents as $contentid => $content) {
-                    block_maj_submissions_upgrade_multilang_text(
-                             'data_content', $content, 'content',
-                                          $config, $is_multiline,
-                               $is_money_field, $is_topics_field,
-                                     $topicsearch, $topicreplace,
-                                 $newlinesearch, $newlinereplace);
-                }
+            foreach ($contents as $contentid => $content) {
+                block_maj_submissions_upgrade_multilang_text(
+                         'data_content', $content, 'content',
+                                      $config, $is_multiline,
+                           $is_money_field, $is_topics_field,
+                                 $topicsearch, $topicreplace,
+                             $newlinesearch, $newlinereplace);
             }
         }
     }
@@ -617,7 +536,7 @@ function block_maj_submissions_upgrade_multilang_text($table, $record, $field, $
     if ($is_topics) {
         $text = preg_replace($topicsearch, $topicreplace, $text);
     } else if ($is_money) {
-    	$search = '/^(.*?)( *\(.*?\))$/';
+        $search = '/^(.*?)( *\(.*?\))$/';
         $lines = explode("\n", $text);
         $lines = array_map('trim', $lines);
         $lines = array_filter($lines);
@@ -648,54 +567,14 @@ function block_maj_submissions_upgrade_multilang_text($table, $record, $field, $
 }
 
 function block_maj_submissions_upgrade_fieldnames($fieldnames) {
-    global $CFG, $DB;
+    global $DB;
 
-	$blockname = 'maj_submissions';
-	$plugin = "block_$blockname";
+    $blockname = 'maj_submissions';
+    $plugin = "block_$blockname";
 
-	$dataids = array();
-    if ($instances = $DB->get_records('block_instances', array('blockname' => 'maj_submissions'))) {
+    list($dataids, $pageids) = block_maj_submissions_upgrade_cmids();
 
-		// cache id of "data" and "page" modules
-		$datamoduleid = $DB->get_field('modules', 'id', array('name' => 'data'));
-		$pagemoduleid = $DB->get_field('modules', 'id', array('name' => 'page'));
-
-        foreach ($instances as $instance) {
-
-            if (empty($instance->configdata)) {
-                continue;
-            }
-
-            $config = unserialize(base64_decode($instance->configdata));
-
-            if (empty($config)) {
-                continue;
-            }
-
-            $names = array_keys(get_object_vars($config));
-            $names = preg_grep('/^(collect|register).*cmid$/', $names);
-            // we expect the following settings:
-            // - collect(presentations|sponsoreds|workshops)cmid
-            // - register(delegates|presenters)cmid
-
-            foreach ($names as $name) {
-                if (empty($config->$name)) {
-                    continue;
-                }
-                $params = array('id' => $config->$name,
-                                'module' => $datamoduleid);
-                $dataids[] = $DB->get_field('course_modules', 'instance', $params);
-            }
-        }
-        $dataids = array_filter($dataids);
-    }
-
-	$templates = array('singletemplate',
-					   'listtemplate',
-					   'listtemplateheader',
-					   'listtemplatefooter',
-					   'addtemplate',
-					   'asearchtemplate');
+    $templates = block_maj_submissions_upgrade_templates();
 
     foreach ($dataids as $id) {
         if ($data = $DB->get_record('data', array('id' => $id))) {
@@ -707,14 +586,126 @@ function block_maj_submissions_upgrade_fieldnames($fieldnames) {
                     $field->description = get_string($newname, $plugin);
                     $DB->update_record('data_fields', $field);
 
-                    $search = "/\\b$oldname\\b/";
-                    $replace = "/\\b$newname\\b/";
+                    $search = "/\\b(id_)?$oldname\\b/";
                     foreach ($templates as $template) {
-                        $data->$template = preg_replace($search, $replace, $data->$template);
+                        $data->$template = preg_replace($search, '$1'.$newname, $data->$template);
                     }
                 }
             }
             $DB->update_record('data', $data);
         }
     }
+}
+
+function block_maj_submissions_upgrade_checkboxes($fieldnames) {
+    global $DB;
+
+    list($dataids, $pageids) = block_maj_submissions_upgrade_cmids();
+
+    foreach ($dataids as $dataid) {
+        foreach ($fieldnames as $name) {
+            $select = 'dataid = ? AND name = ? AND (type = ? OR (type = ? AND param10 = ?))';
+            $params = array($dataid, $name, 'checkbox', 'admin', 'checkbox');
+            $field = $DB->get_record_select('data_fields', $select, $params);
+            if (empty($field)) {
+                continue;
+            }
+            if ($field->type=='admin') {
+                $type = 'param10';
+            } else {
+                $type = 'type';
+            }
+            $DB->set_field('data_fields', $type, 'radiobutton', array('id' => $field->id));
+            $search = 'fieldid = ? AND '.$DB->sql_like('content', '?');
+            $params = array($field->id, '%##%');
+            if ($contents = $DB->get_records('data_content', array('fieldid' => $field->id))) {
+                foreach ($contents as $id => $content) {
+                    $content = explode('##', $content->content);
+                    $content = array_filter($content);
+                    $content = preg_grep('/^\d+$/', $content,  PREG_GREP_INVERT); // remove '0'
+                    $content = reset($content); // first non-blank item
+                    $DB->set_field('data_content', 'content', $content, array('id' => $id));
+                }
+            }
+        }
+    }
+}
+
+/**
+ * return data-ids and page-ids used by maj_submissions blocks on this Moodle site
+ */
+function block_maj_submissions_upgrade_cmids() {
+    global $DB;
+
+    static $dataids = null;
+    static $pageids = null;
+
+    if ($dataids===null || $pageids===null) {
+
+        $dataids = array();
+        $pageids = array();
+
+        if ($instances = $DB->get_records('block_instances', array('blockname' => 'maj_submissions'))) {
+
+            // cache id of "data" and "page" modules
+            $datamoduleid = $DB->get_field('modules', 'id', array('name' => 'data'));
+            $pagemoduleid = $DB->get_field('modules', 'id', array('name' => 'page'));
+
+            foreach ($instances as $instance) {
+
+                if (empty($instance->configdata)) {
+                    continue;
+                }
+
+                $config = unserialize(base64_decode($instance->configdata));
+
+                if (empty($config)) {
+                    continue;
+                }
+
+                $names = array_keys(get_object_vars($config));
+                $names = preg_grep('/^(collect|publish|register).*cmid$/', $names);
+                // we expect the following settings:
+                // - collect(presentations|sponsoreds|workshops)cmid
+                // - register(delegates|presenters)cmid
+                // - publishcmid (the schedule)
+
+                foreach ($names as $name) {
+                    if (empty($config->$name)) {
+                        continue;
+                    }
+                    if (substr($name, 0, 7)=='publish') {
+                        $params = array('id' => $config->$name, 'module' => $pagemoduleid);
+                        $pageids[] = $DB->get_field('course_modules', 'instance', $params);
+                    } else {
+                        $params = array('id' => $config->$name, 'module' => $datamoduleid);
+                        $dataids[] = $DB->get_field('course_modules', 'instance', $params);
+                    }
+                }
+            }
+
+            $dataids = array_filter($dataids);
+            $dataids = array_unique($dataids);
+            sort($dataids);
+
+            $pageids = array_filter($pageids);
+            $pageids = array_unique($pageids);
+            sort($pageids);
+        }
+    }
+
+    return array($dataids, $pageids);
+}
+
+/**
+ * return an array of templates fieldnames used by mod_data
+ */
+function block_maj_submissions_upgrade_templates() {
+    return array('listtemplate', 'listtemplateheader', 'listtemplatefooter',
+                 'singletemplate',
+                 'asearchtemplate',
+                 'addtemplate',
+                 'rsstemplate', 'rsstitletemplate',
+                 'csstemplate',
+                 'jstemplate');
 }

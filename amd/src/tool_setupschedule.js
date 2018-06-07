@@ -1883,7 +1883,7 @@ window.console.log("Finish: " + items.length);
         html += "<tr>" + HTML.tag("th", TOOL.str.category)       + HTML.tag("td", category)       + "</tr>";
         html += "<tr>" + HTML.tag("th", TOOL.str.type)           + HTML.tag("td", type)           + "</tr>";
         html += "<tr>" + HTML.tag("th", TOOL.str.topic)          + HTML.tag("td", topic)          + "</tr>";
-        if ($(this).parent().hasClass("slot")) {
+        if (session.parent().hasClass("slot")) {
             html += "<tr>" + HTML.tag("th", TOOL.str.rowspan)    + HTML.tag("td", rowspan)        + "</tr>";
             html += "<tr>" + HTML.tag("th", TOOL.str.colspan)    + HTML.tag("td", colspan)        + "</tr>";
         }
@@ -2509,6 +2509,7 @@ window.console.log("Finish: " + items.length);
             $(session).remove();
         } else {
             $(session).children().remove();
+            TOOL.insert_timeroom(session);
             $(session).removeAttr("id colspan")
                       .removeClass("demo attending multiroom")
                       .addClass("emptysession");
@@ -3050,27 +3051,38 @@ window.console.log("Finish: " + items.length);
     TOOL.dialog_menu = function(menu, name, value, attr) {
         menu.prop("name", name);
         menu.prop("id", "id_" + name);
+
+        // tidy up option values
         var info = new RegExp("\\([^()]*\\)$");
         menu.find("option").each(function(){
-            var v = $(this).val().replace(info, "");
-            this.setAttribute("value", TOOL.trim(v));
+            var v = TOOL.trim($(this).val().replace(info, ""));
+            if (v==="0") {
+                v = "";
+            }
+            this.setAttribute("value", v);
         });
+
+        // set selected item, if any
         if (value) {
             value = value.replace(new RegExp(' style="[^"]*"', "g"), "");
             value = value.replace(new RegExp("[\\r\\n]+", "g"), "");
             value = TOOL.trim(value);
             var found = false;
             menu.find("option").each(function(){
-                if (found || $(this).val().indexOf(value) < 0) {
-                    this.selected = false;
-                    this.removeAttribute("selected");
-                } else {
+                var v = $(this).val();
+                window.console.log("v="+v+", value="+value);
+                if (found==false && v && (v.indexOf(value)==0 || value.indexOf(v)==0)) {
                     found = true;
                     this.selected = true;
                     this.setAttribute("selected", "selected");
+                } else {
+                    this.selected = false;
+                    this.removeAttribute("selected");
                 }
             });
         }
+
+        // set attributes
         if (attr) {
             if (attr.size) {
                 var size = menu.find("option:not(:empty)").length;
@@ -3088,16 +3100,22 @@ window.console.log("Finish: " + items.length);
                 menu.prop(a, attr[a]);
             }
         }
+
+        // shorten displayed text
         var i = 0;
         menu.find("option").each(function(){
             var txt = $(this).text();
             $(this).prop("title", txt);
             $(this).text(UNICODE.shorten(txt));
-            i++;
+            if (txt) {
+                i++;
+            }
         });
+
         if (i==0) {
             return "";
         }
+
         return menu.prop("outerHTML");
     };
 
