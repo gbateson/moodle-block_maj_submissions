@@ -8,7 +8,7 @@
 <maxentries>0</maxentries>
 <rssarticles>0</rssarticles>
 <approval>0</approval>
-<manageapproved>1</manageapproved>
+<manageapproved>0</manageapproved>
 <defaultsortdir>0</defaultsortdir>
 <defaultsort>0</defaultsort>
 </settings>
@@ -32,52 +32,52 @@
 <field>
 <type>text</type>
 <name>building_en</name>
-<description>ビル名（英語） Building (en)</description>
+<description>館名（英語） Building name (en)</description>
 <required>0</required>
 </field>
 
 <field>
 <type>text</type>
 <name>building_ja</name>
-<description>ビル名（日本語） Building (ja)</description>
+<description>館名（日本語） Building name (ja)</description>
 <required>0</required>
 </field>
 
 <field>
 <type>text</type>
 <name>floor_en</name>
-<description>階名（英語） Floor (en)</description>
+<description>階名（英語） Floor name (en)</description>
 <required>0</required>
 </field>
 
 <field>
 <type>text</type>
 <name>floor_ja</name>
-<description>階名（日本語） Floor (ja)</description>
+<description>階名（日本語） Floor name (ja)</description>
 <required>0</required>
 </field>
 
 <field>
 <type>text</type>
 <name>capacity_en</name>
-<description>定員（英語） Capacity (en)</description>
+<description>室の定員（英語） Room capacity (en)</description>
 <required>0</required>
 </field>
 
 <field>
 <type>text</type>
 <name>capacity_ja</name>
-<description>定員（日本語） Capacity (ja)</description>
+<description>室の定員（日本語） Room capacity (ja)</description>
 <required>0</required>
 </field>
 
 <field>
 <type>menu</type>
 <name>room_type</name>
-<description>用途 Room type</description>
+<description>室の用途 Room type</description>
 <required>0</required>
 <param1>講義室 Lecture hall
-ゼミ室 Seminar room
+セミナー室 Seminar room
 コンピュータ室 Computer lab
 玄関・ロビー Hall / Foyer</param1>
 </field>
@@ -85,7 +85,7 @@
 <field>
 <type>checkbox</type>
 <name>equipment</name>
-<description>設備 Equipment</description>
+<description>室の設備 Room equipment</description>
 <required>0</required>
 <param1>プロジェクター Projector
 DVD
@@ -107,10 +107,27 @@ LAN</param1>
 
 <field>
 <type>picture</type>
-<name>photo</name>
-<description>写真 Photo</description>
+<name>image_small</name>
+<description>画像（小） Image (small)</description>
 <required>0</required>
 <param3>0</param3>
+</field>
+
+<field>
+<type>picture</type>
+<name>image_large</name>
+<description>画像（大） Image (large)</description>
+<required>0</required>
+<param3>0</param3>
+</field>
+
+<field>
+<type>template</type>
+<name>equipment_list</name>
+<description>設備リスト Equipment list</description>
+<required>0</required>
+<param1>[[COMMALIST equipment]]</param1>
+<param2>0</param2>
 </field>
 
 </preset>

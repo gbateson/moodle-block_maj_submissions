@@ -1,8 +1,28 @@
-<tr class="room_data">
-    <th class="template-token cell actions" style="border-left: #cccccc 2px dotted; text-align: center;">##edit##  ##more##  ##delete##  ##disapprove##</th>
-    <td class="template-token cell c1 lastcol" style="border-left: #cccccc 2px dotted; text-align: center;">[[room_name_ja]] [[room_name_en]]</td>
-    <td class="template-token cell c1 lastcol" style="border-left: #cccccc 2px dotted; text-align: center;">[[building_ja]] [[building_en]]</td>
-    <td class="template-token cell c1 lastcol" style="border-left: #cccccc 2px dotted; text-align: center;">[[floor_ja]] [[floor_en]]</td>
-    <td class="template-token cell c1 lastcol" style="border-left: #cccccc 2px dotted; text-align: center;">[[capacity_ja]] [[capacity_en]]</td>
-    <td class="template-token cell c1 lastcol" style="border-left: #cccccc 2px dotted; text-align: center;">[[room_type]]</td>
-</tr>
+<div style="float: left; vertical-align: top; width: 550px;">
+    <p style="display: inline-block; margin-left: 12px; margin-top: 0px; vertical-align: top;">[[image_small]]</p>
+    <dl style="display: inline-block; margin-left: 12px; margin-top: 0px; max-width: 340px;">
+        <dt><span class="multilang" lang="en">[[room_name_en]]</span><span class="multilang" lang="ja">[[room_name_ja]]</span></dt>
+        <dd style="margin-top: 6px;">
+            <span class="multilang" lang="en">[[building_en]]<small> ([[floor_en]])</small></span>
+            <span class="multilang" lang="ja">[[building_ja]]<small>（[[floor_ja]]）</small></span>
+            <small><i><a href="../page/view.php?id=1390" target="MAJ">
+                <span class="multilang" lang="en">Campus map</span>
+                <span class="multilang" lang="ja">キャンパス地図</span>
+            </a></i></small>
+        </dd>
+        <dd style="margin-top: 6px;">
+            <span class="room_type">[[room_type]]</span>
+            <span class="multilang" lang="en"><small> ([[capacity_en]])</small></span>
+            <span class="multilang" lang="ja"><small>（[[capacity_ja]]）</small></span>
+        </dd>
+        <dd style="margin-top: 6px;">
+            <span class="multilang" lang="en">Equipment: </span>
+            <span class="multilang" lang="ja">設備：</span>
+            <small><i><span class="equipment_list">[[equipment_list]]</span></i></small>
+        </dd>
+        <dd style="margin-top: 6px;"><small><a href="##moreurl##">
+            <span class="multilang" lang="en">More information...</span>
+            <span class="multilang" lang="ja">詳しくは…</span>
+        </a></small> &nbsp; ##edit## ##delete##</dd>
+    </dl>
+</div>

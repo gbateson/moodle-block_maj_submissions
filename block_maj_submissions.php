@@ -628,6 +628,7 @@ class block_maj_submissions extends block_base {
             $this->content->text .= html_writer::tag('p', '', array('class' => 'tooldivider'));
             $this->content->text .= $this->get_tool_link($plugin, 'workshop2data');
             $this->content->text .= $this->get_tool_link($plugin, 'setupevents');
+            $this->content->text .= $this->get_tool_link($plugin, 'setuprooms');
             $this->content->text .= $this->get_tool_link($plugin, 'setupschedule');
             $this->content->text .= html_writer::tag('p', '', array('class' => 'tooldivider'));
             $this->content->text .= $this->get_tool_link($plugin, 'authorsgroup');
@@ -675,8 +676,8 @@ class block_maj_submissions extends block_base {
             $removefinish = false;
             $removetime   = false;
         } else {
-            $removestart  = ($this->config->$timestart && (strftime('%H:%M', $this->config->$timestart)=='00:00'));
-            $removefinish = ($this->config->$timefinish && (strftime('%H:%M', $this->config->$timefinish)=='23:55'));
+            $removestart  = ($this->config->$timestart && preg_match('/^00:0[01234]$/', strftime('%H:%M', $this->config->$timestart)));
+            $removefinish = ($this->config->$timefinish && preg_match('/^23:5[56789]$/', strftime('%H:%M', $this->config->$timefinish)));
             $removetime   = ($removestart && $removefinish);
         }
 
@@ -696,20 +697,20 @@ class block_maj_submissions extends block_base {
 
         $date = '';
         if ($this->config->$timestart && $this->config->$timefinish) {
-            $date = (object)array(
-                'open'  => $this->userdate($this->config->$timestart, $dateformat, $removetime, $removeyear),
-                'close' => $this->userdate($this->config->$timefinish, $dateformat, $removetime, $removedate)
-            );
+			$date = (object)array(
+				'open'  => $this->multilang_userdate($this->config->$timestart, $dateformat, $plugin, $removetime, $removeyear),
+				'close' => $this->multilang_userdate($this->config->$timefinish, $dateformat, $plugin, $removetime, $removedate)
+			);
             $date = $this->get_string('dateopenclose', $plugin, $date);
         } else if ($this->config->$timestart) {
-            $date = $this->userdate($this->config->$timestart, $dateformat, $removestart, $removeyear);
+			$date = $this->multilang_userdate($this->config->$timestart, $dateformat, $plugin, $removestart, $removeyear);
             if ($this->config->$timestart < $timenow) {
                 $date = $this->get_string('dateopenedon', $plugin, $date);
             } else {
                 $date = $this->get_string('dateopenson', $plugin, $date);
             }
         } else if ($this->config->$timefinish) {
-            $date = $this->userdate($this->config->$timefinish, $dateformat, $removefinish, $removeyear);
+			$date = $this->multilang_userdate($this->config->$timefinish, $dateformat, $plugin, $removefinish, $removeyear);
             if ($this->config->$timefinish < $timenow) {
                 $date = $this->get_string('dateclosedon', $plugin, $date);
             } else {
@@ -968,16 +969,20 @@ class block_maj_submissions extends block_base {
      * multilang_userdate
      *
      * @param integer $date
-     * @param string  $format
+     * @param string  $formatstring
      * @param boolean $removetime (optional, default = false)
-     * @param boolean $removedate (optional, default = REMOVE_NONE)
+     * @param integer $removedate (optional, default = REMOVE_NONE)
      * @return string representation of $date
      */
     public function multilang_userdate($date, $formatstring, $plugin='', $removetime=false, $removedate=self::REMOVE_NONE) {
         global $CFG;
 
         if ($this->multilang==false) {
-            $format = get_string($formatstring, $plugin);
+            if (strpos($formatstring, '%')===false) {
+				$format = get_string($formatstring, $plugin);
+            } else {
+				$format = $formatstring;
+            }
             return $this->userdate($date, $format, $removetime, $removedate);
         }
 
@@ -988,9 +993,14 @@ class block_maj_submissions extends block_base {
 
         $dates = array();
         foreach ($locales as $lang => $locale) {
-            moodle_setlocale($locale);
+            // "moodle_setlocale($locale)";
             force_current_language($lang);
-            $format = get_string($formatstring, $plugin);
+            $this->check_date_fixes();
+            if (strpos($formatstring, '%')===false) {
+				$format = get_string($formatstring, $plugin);
+            } else {
+				$format = $formatstring;
+            }
             if (substr($lang, 0, 2)=='en') {
                 // add ordinal suffix using date('S', $date)
                 $format = str_replace('%d', date('dS', $date), $format);
@@ -999,30 +1009,31 @@ class block_maj_submissions extends block_base {
                 // remove leading space from %e
                 $format = str_replace('%e', date('j', $date), $format);
             }
-            $dates[$lang] = userdate($date, $format);
-            //$dates[$lang] = $this->userdate($date, $format, $removetime, $removedate);
+            //$dates[$lang] = userdate($date, $format);
+            $dates[$lang] = $this->userdate($date, $format, $removetime, $removedate);
         }
 
         if ($lang = $currentlanguage) {
-            $locale = $locales[$lang];
-            moodle_setlocale($locale);
+            // $locale = $locales[$lang];
+            // "moodle_setlocale($locale)";
             force_current_language($lang);
+            $this->check_date_fixes();
         }
 
         return $this->multilang_string($dates);
     }
 
     /**
-     * multilang_userdate
+     * multilang_format_time
      *
      * @param integer $secs
      * @return string representation of $date
      */
     public function multilang_format_time($secs) {
 
-		if (empty($secs) || $secs==='0') {
-			return '';
-		}
+        if (empty($secs) || $secs==='0') {
+            return '';
+        }
 
         if ($this->multilang==false) {
             return format_time($secs);
@@ -1053,9 +1064,9 @@ class block_maj_submissions extends block_base {
      * userdate
      *
      * @param integer $date
-     * @param string  $format
+     * @param string  $format string as used by strftime
      * @param boolean $removetime
-     * @param boolean $removedate (optional, default = REMOVE_NONE)
+     * @param integer $removedate (optional, default = REMOVE_NONE)
      * @return string representation of $date
      */
     protected function userdate($date, $format, $removetime, $removedate=self::REMOVE_NONE) {
@@ -1186,7 +1197,7 @@ class block_maj_submissions extends block_base {
             case 'ja': return array('年', '月', '日'); // Japanese
             case 'ko': return array('년', '월', '일'); // Korean
             case 'zh': return array('年', '月', '日'); // Chinese
-            default  : return array('',  '',   '');
+            default : return array('', '', '');
         }
     }
 
@@ -1320,7 +1331,7 @@ class block_maj_submissions extends block_base {
      */
     public function usort_langs($a, $b) {
 
-    	// put "en" first
+        // put "en" first
         if ($a=='en') {
             return -1;
         }
