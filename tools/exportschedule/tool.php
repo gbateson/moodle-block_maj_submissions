@@ -84,48 +84,9 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
         'speaker_organisation' => 'affiliation_en'
     );
 
-    $ids = array();
-    if ($cmid = $instance->config->collectpresentationscmid) {
-        $ids[] = $DB->get_field('course_modules', 'instance', array('id' => $cmid));
-    }
-    if ($cmid = $instance->config->collectsponsoredscmid) {
-        $ids[] = $DB->get_field('course_modules', 'instance', array('id' => $cmid));
-    }
-    if ($cmid = $instance->config->collectworkshopscmid) {
-        $ids[] = $DB->get_field('course_modules', 'instance', array('id' => $cmid));
-    }
-    $ids = array_filter($ids);
-    if (empty($ids)) {
-        $datawhere = '?';
-        $dataparams = array(0);
-    } else {
-        list($datawhere, $dataparams) = $DB->get_in_or_equal($ids);
-    }
-
-    list($where, $params) = $DB->get_in_or_equal($fields);
-    $select = 'dc.id, df.name, dc.recordid, dc.content';
-    $from   = '{data_content} dc '.
-              'LEFT JOIN {data_fields} df ON dc.fieldid = df.id';
-    $where  = "df.dataid $datawhere AND df.name $where";
-    $params = array_merge($dataparams, $params);
-    $order  = 'dc.recordid';
-
-    $records = array();
-    $fieldnames = array();
-    if ($values = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
-        foreach ($values as $value) {
-            if (empty($value->content)) {
-                continue;
-            }
-            $rid = $value->recordid;
-            $fieldname = $value->name;
-            $fieldnames[$fieldname] = true;
-            if (empty($records[$rid])) {
-                $records[$rid] = new stdClass();
-            }
-            $records[$rid]->$fieldname = $value->content;
-        }
-    }
+	$records = array();
+	$fieldnames = array();
+	list($records, $fieldnames) = $instance->get_submission_records($fields);
 
     // cache some useful regular expressions
     $timesearch = '/^ *(\d+) *: *(\d+) *- *(\d+) *: *(\d+) *$/';
@@ -144,6 +105,7 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
     foreach ($records as $record) {
         $line = array();
 
+		// count the number of required fields present in this record
         $required = 0;
 
         foreach ($fields as $name => $field) {

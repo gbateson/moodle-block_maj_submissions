@@ -697,20 +697,20 @@ class block_maj_submissions extends block_base {
 
         $date = '';
         if ($this->config->$timestart && $this->config->$timefinish) {
-			$date = (object)array(
-				'open'  => $this->multilang_userdate($this->config->$timestart, $dateformat, $plugin, $removetime, $removeyear),
-				'close' => $this->multilang_userdate($this->config->$timefinish, $dateformat, $plugin, $removetime, $removedate)
-			);
+            $date = (object)array(
+                'open'  => $this->multilang_userdate($this->config->$timestart, $dateformat, $plugin, $removetime, $removeyear),
+                'close' => $this->multilang_userdate($this->config->$timefinish, $dateformat, $plugin, $removetime, $removedate)
+            );
             $date = $this->get_string('dateopenclose', $plugin, $date);
         } else if ($this->config->$timestart) {
-			$date = $this->multilang_userdate($this->config->$timestart, $dateformat, $plugin, $removestart, $removeyear);
+            $date = $this->multilang_userdate($this->config->$timestart, $dateformat, $plugin, $removestart, $removeyear);
             if ($this->config->$timestart < $timenow) {
                 $date = $this->get_string('dateopenedon', $plugin, $date);
             } else {
                 $date = $this->get_string('dateopenson', $plugin, $date);
             }
         } else if ($this->config->$timefinish) {
-			$date = $this->multilang_userdate($this->config->$timefinish, $dateformat, $plugin, $removefinish, $removeyear);
+            $date = $this->multilang_userdate($this->config->$timefinish, $dateformat, $plugin, $removefinish, $removeyear);
             if ($this->config->$timefinish < $timenow) {
                 $date = $this->get_string('dateclosedon', $plugin, $date);
             } else {
@@ -966,6 +966,68 @@ class block_maj_submissions extends block_base {
     }
 
     /**
+     * get_submission_records
+     *
+     * @param array $fields ('externalname' => 'internalname')
+     * @return`array ($records, $fieldsnames)
+     */
+    public function get_submission_records($fields) {
+    	global $DB;
+
+		$ids = array();
+		if ($cmid = $this->config->collectpresentationscmid) {
+			$ids[] = $DB->get_field('course_modules', 'instance', array('id' => $cmid));
+		}
+		if ($cmid = $this->config->collectsponsoredscmid) {
+			$ids[] = $DB->get_field('course_modules', 'instance', array('id' => $cmid));
+		}
+		if ($cmid = $this->config->collectworkshopscmid) {
+			$ids[] = $DB->get_field('course_modules', 'instance', array('id' => $cmid));
+		}
+		$ids = array_filter($ids);
+		if (empty($ids)) {
+			$datawhere = '?';
+			$dataparams = array(0);
+		} else {
+			list($datawhere, $dataparams) = $DB->get_in_or_equal($ids);
+		}
+
+		list($where, $params) = $DB->get_in_or_equal($fields);
+		$select = 'dc.id, df.name, dc.recordid, dc.content';
+		$from   = '{data_content} dc '.
+				  'LEFT JOIN {data_fields} df ON dc.fieldid = df.id';
+		$where  = "df.dataid $datawhere AND df.name $where";
+		$params = array_merge($dataparams, $params);
+		$order  = 'dc.recordid';
+
+		$records = array();
+		$fieldnames = array();
+		if ($values = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
+			foreach ($values as $value) {
+				if (empty($value->content)) {
+					continue;
+				}
+				$rid = $value->recordid;
+				$fieldname = $value->name;
+				$fieldnames[$fieldname] = true;
+				if (empty($records[$rid])) {
+					$records[$rid] = new stdClass();
+				}
+
+				// remove HTML comments, script/style blocks, and HTML tags
+				// and standardize white space to a single one-byte space
+				$value = $value->content;
+				$value = preg_replace('/<!-.*?->\s*/us', '', $value);
+				$value = preg_replace('/<(script|style)[^>]*>.*?<\/\1>\s*/ius', '', $value);
+				$value = preg_replace('/<.*?>\s*/us', ' ', $value);
+				$value = preg_replace('/(\x3000|\s)+/us', ' ', $value);
+				$records[$rid]->$fieldname = trim($value);
+			}
+		}
+		return array($records, $fieldnames);
+    }
+
+    /**
      * multilang_userdate
      *
      * @param integer $date
@@ -979,9 +1041,9 @@ class block_maj_submissions extends block_base {
 
         if ($this->multilang==false) {
             if (strpos($formatstring, '%')===false) {
-				$format = get_string($formatstring, $plugin);
+                $format = get_string($formatstring, $plugin);
             } else {
-				$format = $formatstring;
+                $format = $formatstring;
             }
             return $this->userdate($date, $format, $removetime, $removedate);
         }
@@ -997,9 +1059,9 @@ class block_maj_submissions extends block_base {
             force_current_language($lang);
             $this->check_date_fixes();
             if (strpos($formatstring, '%')===false) {
-				$format = get_string($formatstring, $plugin);
+                $format = get_string($formatstring, $plugin);
             } else {
-				$format = $formatstring;
+                $format = $formatstring;
             }
             if (substr($lang, 0, 2)=='en') {
                 // add ordinal suffix using date('S', $date)

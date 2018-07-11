@@ -64,8 +64,139 @@ if (! isset($block->version)) {
     $block->version = $DB->get_field('config_plugins', 'value', $params);
 }
 
-$html = 'Sorry exporting the handbook is not possible yet';
+$html = '';
 if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
+
+    $fields = array(
+        'name'       => 'presentation_title',
+        'start_time' => 'schedule_time',
+        'start_date' => 'schedule_day',
+        'end_time'   => 'schedule_time',
+        'end_date'   => 'schedule_day',
+        'reference'  => 'schedule_number',
+        'text'       => 'presentation_abstract',
+        'type'       => 'presentation_type',
+        'location'   => 'schedule_roomname',
+        'track'      => 'schedule_roomtopic',
+        'speaker_name' => 'name_given',
+        'speaker_surname' => 'name_surname',
+        'speaker_bio_1' => 'biography',
+        'speaker_bio_2' => 'biography_2',
+        'speaker_bio_3' => 'biography_3',
+        'speaker_bio_4' => 'biography_4',
+        'speaker_bio_5' => 'biography_5',
+        'speaker_organisation' => 'affiliation'
+    );
+
+    $records = array();
+    $fieldnames = array();
+    list($records, $fieldnames) = $instance->get_submission_records($fields);
+
+    // sort $records by ('schedule_day', 'schedule_time', 'schedule_roomname')
+    uasort($records, function($a, $b) {
+        $fields = array('schedule_day', 'schedule_time', 'presentation_type', 'schedule_roomname');
+        foreach ($fields as $field) {
+            if (isset($a->$field) && isset($b->$field)) {
+                if ($a->$field > $b->$field) {
+                    return 1;
+                }
+                if ($a->$field < $b->$field) {
+                    return -1;
+                }
+            } else if (isset($a->$field)) {
+                return -1; // $field missing from $b !!
+            } else if (isset($b->$field)) {
+                return 1; // $field missing from $a !!
+            }
+        }
+        return 0; // equal values  - unexpected ?!
+    });
+
+    $day = '';
+    $type = '';
+    foreach ($records as $record) {
+        //if (empty($record->schedule_day) || empty($record->schedule_time) || empty($record->schedule_room)) {
+        //    continue;
+        //}
+        if (empty($record->schedule_day)) {
+        	$record->schedule_day = '';
+        }
+        if ($day && $day==$record->schedule_day) {
+            // same day - do nothing
+        } else {
+            if ($day) {
+                // finish previous day
+            }
+            // start new day
+            $day = $record->schedule_day;
+            $html .= html_writer::tag('h2', $record->schedule_day);
+            // TODO: day description (Pre-conference Workshops, Conference Day 1, etc)
+        }
+        if ($type && $type==$record->presentation_type) {
+            // same type - do nothing
+        } else {
+            if ($type) {
+                // finish previous type
+            }
+            // start new type
+            $type = $record->presentation_type;
+            $html .= html_writer::tag('h3', $record->presentation_type);
+            // TODO: type description (Concurrent Sessions, Symposiums)
+        }
+
+		// schedule day, time and room
+        $text = '';
+        if (isset($record->schedule_day) && $record->schedule_day) {
+			$text .= html_writer::tag('span', $record->schedule_day, array('style' => 'font-size: 1.6em; color: #999;')).' ';
+        }
+        if (isset($record->schedule_time) && $record->schedule_time) {
+			$text .= html_writer::tag('span', $record->schedule_time, array('style' => 'font-size: 1.6em;')).' &nbsp; ';
+        }
+        if (isset($record->schedule_roomname) && $record->schedule_roomname) {
+			$text .= html_writer::tag('span', '('.$record->schedule_roomname.')', array('style' => 'font-size: 1.2em;'));
+        }
+        if ($text) {
+			$html .= html_writer::tag('h4', $text, array('style' => 'margin: 12px 0px;'));
+        }
+
+		// schedule number and presentation title
+		$text = '';
+        if (isset($record->schedule_number) && $record->schedule_number) {
+            $text = html_writer::tag('span', '['.$record->schedule_number.']', array('style' => 'color: #f60; font-size: 0.8em;')).' ';
+        }
+        if (isset($record->presentation_title) && $record->presentation_title) {
+            $text .= html_writer::tag('span', $record->presentation_title);
+        }
+        if ($text) {
+        	$text = html_writer::tag('b', $text);
+			$html .= html_writer::tag('p', $text, array('style' => 'margin: 6px 0px; font-size: 24px;'));
+        }
+
+		// abstract
+		if (isset($record->presentation_abstract) && $record->presentation_abstract) {
+			$html .= html_writer::tag('p', $record->presentation_abstract, array('style' => 'margin: 6px 0px; text-indent: 24px;'));
+		}
+
+		// biography information
+        $text = '';
+        for ($i=1; $i<=5; $i++) {
+            $field = 'biography';
+            if ($i >= 2) {
+                $field .= "_$i";
+            }
+            if (isset($record->$field) && $record->$field) {
+				$text .= html_writer::tag('p', $record->$field, array('style' => 'margin: 6px 0px;'));
+            }
+        }
+        if ($text) {
+			$html .= html_writer::tag('h5', get_string('biodata', $plugin), array('style' => 'font-size: 1.1em; margin: 12px 0px;'));
+			$html .= html_writer::tag('div', $text, array('style' => 'font-style: italic;'));
+        }
+    }
+}
+
+if ($html) {
+    $html = html_writer::tag('div', $html, array('style' => 'max-width: 720px; text-align: justify;'));
 }
 
 if (empty($instance->config->title)) {
@@ -75,4 +206,6 @@ if (empty($instance->config->title)) {
     $filename = clean_filename(strip_tags($filename).'.html');
 }
 $filename = preg_replace('/[ \.]/', '.', $filename);
+
 send_file($html, $filename, 0, 0, true, true);
+//echo $html;

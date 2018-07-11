@@ -38,7 +38,7 @@ define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doe
 
     // TODO: initialize this array from the PHP script on the server
     //       blocks/maj_submissions/tools/setupschedule/action.php
-    TOOL.sessiontypes = "case|lightning|presentation|showcase|workshop";
+    TOOL.sessiontypes = "case|lightning|paper|presentation|showcase|workshop";
 
     // define selectors for session child nodes
     TOOL.sessiontimeroom = ".time, .room";

@@ -222,6 +222,10 @@
     display: none;
 }
 
+.schedule .type {
+    color:             #666;
+    font-size:        0.8em;
+}
 .schedule .lightning .category {
     display: inline;
 }

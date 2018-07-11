@@ -44,6 +44,7 @@ $string['autoincrementsettings_help'] = 'These settings define the starting valu
 When a new record is added to the registration database, each of the auto-increment fields in the new record is automatically assigned a value that is one higher than the highest value of that field in any other record in the database. Thus, each record will have a unique value for each of these settings.';
 $string['badgenumber'] = 'Badge number';
 $string['badgenumber_help'] = 'The starting value for the auto-increment badge numbers.';
+$string['biodata'] = 'Bio-data';
 $string['blockdescription'] = 'This block facilitates administration of a conference registration and submissions system based on a set of Database and Workshop activities.';
 $string['blockname'] = 'MAJ Submissions';
 $string['blocknameplural'] = 'MAJ Submissions';
