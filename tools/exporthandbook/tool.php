@@ -65,28 +65,36 @@ if (! isset($block->version)) {
 }
 
 $html = '';
+$presenters = array();
+
 if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
 
     $fields = array(
-        'name'       => 'presentation_title',
-        'start_time' => 'schedule_time',
-        'start_date' => 'schedule_day',
-        'end_time'   => 'schedule_time',
-        'end_date'   => 'schedule_day',
-        'reference'  => 'schedule_number',
-        'text'       => 'presentation_abstract',
-        'type'       => 'presentation_type',
-        'location'   => 'schedule_roomname',
-        'track'      => 'schedule_roomtopic',
-        'speaker_name' => 'name_given',
-        'speaker_surname' => 'name_surname',
-        'speaker_bio_1' => 'biography',
-        'speaker_bio_2' => 'biography_2',
-        'speaker_bio_3' => 'biography_3',
-        'speaker_bio_4' => 'biography_4',
-        'speaker_bio_5' => 'biography_5',
-        'speaker_organisation' => 'affiliation'
+        'presentation_title',
+        'schedule_time',
+        'schedule_day',
+        'schedule_time',
+        'schedule_day',
+        'schedule_number',
+        'presentation_abstract',
+        'presentation_type',
+        'schedule_roomname',
+        'schedule_roomtopic',
+        'submission_status',
+        'name_given',
+        'name_surname',
+        'name_order',
+        'email',
+        'biography',
+        'biography_2',
+        'biography_3',
+        'biography_4',
+        'biography_5',
+        'affiliation',
+        'affiliation_state',
+        'affiliation_country'
     );
+    $fields = array_combine($fields, $fields);
 
     $records = array();
     $fieldnames = array();
@@ -114,13 +122,31 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
 
     $day = '';
     $type = '';
-    foreach ($records as $record) {
+    foreach ($records as $recordid => $record) {
         //if (empty($record->schedule_day) || empty($record->schedule_time) || empty($record->schedule_room)) {
         //    continue;
         //}
-        if (empty($record->schedule_day)) {
-        	$record->schedule_day = '';
+        if (empty($record->submission_status)) {
+            unset($records[$recordid]);
+            continue;
         }
+        if (is_numeric(strpos($record->submission_status, 'Not accepted'))) {
+            unset($records[$recordid]);
+            continue;
+        }
+        if (is_numeric(strpos($record->submission_status, 'Cancelled'))) {
+            unset($records[$recordid]);
+            continue;
+        }
+
+        // ensure all $fields exist
+        foreach ($fields as $field) {
+            if (empty($record->$field)) {
+                $record->$field = '';
+            }
+        }
+        $records[$recordid] = $record;
+
         if ($day && $day==$record->schedule_day) {
             // same day - do nothing
         } else {
@@ -146,13 +172,13 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
 
 		// schedule day, time and room
         $text = '';
-        if (isset($record->schedule_day) && $record->schedule_day) {
+        if ($record->schedule_day) {
 			$text .= html_writer::tag('span', $record->schedule_day, array('style' => 'font-size: 1.6em; color: #999;')).' ';
         }
-        if (isset($record->schedule_time) && $record->schedule_time) {
+        if ($record->schedule_time) {
 			$text .= html_writer::tag('span', $record->schedule_time, array('style' => 'font-size: 1.6em;')).' &nbsp; ';
         }
-        if (isset($record->schedule_roomname) && $record->schedule_roomname) {
+        if ($record->schedule_roomname) {
 			$text .= html_writer::tag('span', '('.$record->schedule_roomname.')', array('style' => 'font-size: 1.2em;'));
         }
         if ($text) {
@@ -161,10 +187,10 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
 
 		// schedule number and presentation title
 		$text = '';
-        if (isset($record->schedule_number) && $record->schedule_number) {
+        if ($record->schedule_number) {
             $text = html_writer::tag('span', '['.$record->schedule_number.']', array('style' => 'color: #f60; font-size: 0.8em;')).' ';
         }
-        if (isset($record->presentation_title) && $record->presentation_title) {
+        if ($record->presentation_title) {
             $text .= html_writer::tag('span', $record->presentation_title);
         }
         if ($text) {
@@ -173,7 +199,7 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
         }
 
 		// abstract
-		if (isset($record->presentation_abstract) && $record->presentation_abstract) {
+		if ($record->presentation_abstract) {
 			$html .= html_writer::tag('p', $record->presentation_abstract, array('style' => 'margin: 6px 0px; text-indent: 24px;'));
 		}
 
@@ -193,6 +219,79 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
 			$html .= html_writer::tag('div', $text, array('style' => 'font-style: italic;'));
         }
     }
+
+    foreach ($records as $recordid => $record) {
+        $NAME = strtoupper($record->name_surname);
+        if (strpos($record->name_order, 'SURNAME')===0) {
+            $name = array($NAME, $record->name_given);
+        } else {
+            $name = array($record->name_given, $NAME);
+        }
+        $name = array_filter($name);
+        if ($name = implode(' ', $name)) {
+            $NAME = strtoupper($record->name_surname.' '.$record->name_given);
+            if (! array_key_exists($NAME, $presenters)) {
+                $presenter = (object)array('name' => $name,
+                                           'email' => $record->email,
+                                           'affiliation' => $record->affiliation,
+                                           'presentations' => array());
+                if ($text = $record->affiliation_country) {
+                    $presenter->affiliation .= ' ('.ucwords(strtolower($text)).')';
+                }
+                if ($presenter->email=='') {
+                    $select = '(firstname = ? AND lastname = ?) OR (firstnamephonetic = ? AND lastnamephonetic = ?)';
+                    $params = array($record->name_given,
+                                    $record->name_surname,
+                                    $record->name_given,
+                                    $record->name_surname);
+                    if ($users = $DB->get_records_select('user', $select, $params)) {
+                        $presenter->email = reset($users)->email;
+                    }
+                }
+                $presenters[$NAME] = $presenter;
+            }
+            if ($text = $record->schedule_number) {
+                $url = new moodle_url('/mod/data/view.php', array('rid' => $recordid));
+                $presenter->presentations[] = html_writer::link($url, $text, array('target' => 'MAJ'));
+            }
+        }
+    }
+
+    // sort $presenters by name
+    ksort($presenters);
+}
+
+if (count($presenters)) {
+    $html .= html_writer::tag('h2', get_string('listofpresenters', $plugin));
+
+    $html .= html_writer::start_tag('table', array('border' => 0,
+                                                   'cellpadding' => 8,
+                                                   'cellspacing' => 0,
+                                                   'width' => '100%'));
+    $html .= html_writer::start_tag('tbody');
+
+    $params = array('align' => 'left', 'style' => 'padding: 12px 8px;');
+    $html .= html_writer::start_tag('tr', array('style' => 'background-color: #ffe4cc; font-size: 1.2em;'));
+    $html .= html_writer::tag('th', get_string('name',         'moodle'), $params);
+    $html .= html_writer::tag('th', get_string('affiliation',   $plugin), $params);
+    $html .= html_writer::tag('th', get_string('email',        'moodle'), $params);
+    $html .= html_writer::tag('th', get_string('presentations', $plugin), $params);
+    $html .= html_writer::end_tag('tr');
+
+    $odd = 0;
+    foreach ($presenters as $presenter) {
+        $odd = ($odd ? 0 : 1);
+        $params =  array('valign' => 'top', 'style' => 'background-color: '.($odd ? '#f0f0f0' : '#ddd').';');
+        $html .= html_writer::start_tag('tr', $params);
+        $html .= html_writer::tag('th', $presenter->name, array('align' => 'left'));
+        $html .= html_writer::tag('td', $presenter->affiliation);
+        $html .= html_writer::tag('td', $presenter->email);
+        $html .= html_writer::tag('td', implode(', ', $presenter->presentations));
+        $html .= html_writer::end_tag('tr');
+    }
+
+    $html .= html_writer::end_tag('tbody');
+    $html .= html_writer::end_tag('table');
 }
 
 if ($html) {
