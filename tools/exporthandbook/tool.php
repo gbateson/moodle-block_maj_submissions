@@ -71,28 +71,23 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
 
     $fields = array(
         'presentation_title',
+        'presentation_abstract',
+        'presentation_type',
         'schedule_time',
         'schedule_day',
         'schedule_time',
         'schedule_day',
         'schedule_number',
-        'presentation_abstract',
-        'presentation_type',
         'schedule_roomname',
         'schedule_roomtopic',
         'submission_status',
-        'name_given',
-        'name_surname',
-        'name_order',
-        'email',
-        'biography',
-        'biography_2',
-        'biography_3',
-        'biography_4',
-        'biography_5',
-        'affiliation',
-        'affiliation_state',
-        'affiliation_country'
+        'email', 'biography',
+        'name_given', 'name_surname', 'name_order',
+        'affiliation', 'affiliation_state', 'affiliation_country',
+        'email_2', 'biography_2', 'affiliation_2', 'name_given_2', 'name_surname_2',
+        'email_3', 'biography_3', 'affiliation_3', 'name_given_3', 'name_surname_3',
+        'email_4', 'biography_4', 'affiliation_4', 'name_given_4', 'name_surname_4',
+        'email_5', 'affiliation_5', 'biography_5', 'name_given_5', 'name_surname_5'
     );
     $fields = array_combine($fields, $fields);
 
@@ -120,12 +115,13 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
         return 0; // equal values  - unexpected ?!
     });
 
-    $day = '';
-    $type = '';
+    // check fields and format info about presenters
     foreach ($records as $recordid => $record) {
+
         //if (empty($record->schedule_day) || empty($record->schedule_time) || empty($record->schedule_room)) {
         //    continue;
         //}
+
         if (empty($record->submission_status)) {
             unset($records[$recordid]);
             continue;
@@ -145,7 +141,94 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
                 $record->$field = '';
             }
         }
+
+        // append country to affiliation of main presenter
+        if ($text = $record->affiliation_country) {
+            $record->affiliation .= ' ('.ucwords(strtolower($text)).')';
+        }
+
+        // create link to this record in submissions database
+        if ($text = $record->schedule_number) {
+            $link = new moodle_url('/mod/data/view.php', array('rid' => $recordid));
+            $link = html_writer::link($link, $text, array('target' => 'MAJ'));
+        } else {
+            $link = '';
+        }
+
+        // get name, email, affiliation of ALL presenters
+        $names = array();
+        for ($i=1; $i<=5; $i++) {
+            $email = 'email';
+            $affiliation = 'affiliation';
+            $biography = 'biography';
+            $givenname = 'name_given';
+            $surname = 'name_surname';
+            if ($i > 1) {
+                $email .= "_$i";
+                $affiliation .= "_$i";
+                $biography .= "_$i";
+                $givenname .= "_$i";
+                $surname .= "_$i";
+            }
+            $SURNAME = strtoupper($record->$surname);
+            if (strpos($record->name_order, 'SURNAME')===0) {
+                $name = array($SURNAME, $record->$givenname);
+            } else {
+                $name = array($record->$givenname, $SURNAME);
+            }
+            $name = array_filter($name);
+            if ($name = implode(' ', $name)) {
+
+                // format author name + affiliation
+                $text = html_writer::tag('b', $name);
+                if ($record->$affiliation) {
+                    $text .= ' '.html_writer::tag('i', $record->$affiliation);
+                }
+                $names[] = html_writer::tag('dd', $text, array('style' => 'margin: 8px 18px;'));
+
+                // create key for presenters array
+                $NAME = trim($record->$surname.' '.$record->$givenname);
+                $NAME = strtoupper($NAME);
+
+                // add to presenters list, if necessary
+                if (! array_key_exists($NAME, $presenters)) {
+
+                    // initialize presenter object
+                    $presenter = (object)array('name' => $name,
+                                               'email' => $record->$email,
+                                               'affiliation' => $record->$affiliation,
+                                               'presentations' => array());
+
+                    // lookup email address, if necessary
+                    if ($presenter->email=='') {
+                        $select = '(firstname = ? AND lastname = ?) OR (firstnamephonetic = ? AND lastnamephonetic = ?)';
+                        $params = array($record->$givenname,
+                                        $record->$surname,
+                                        $record->$givenname,
+                                        $record->$surname);
+                        if ($users = $DB->get_records_select('user', $select, $params)) {
+                            $presenter->email = reset($users)->email;
+                        }
+                    }
+
+                    // append presenter object to list
+                    $presenters[$NAME] = $presenter;
+                }
+
+                // add link to submission database, if necessary
+                if ($link) {
+                    $presenters[$NAME]->presentations[] = $link;
+                }
+            }
+        }
+
+        $record->presenters = implode('', $names);
         $records[$recordid] = $record;
+    }
+
+    $day = '';
+    $type = '';
+    foreach ($records as $recordid => $record) {
 
         if ($day && $day==$record->schedule_day) {
             // same day - do nothing
@@ -158,6 +241,7 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
             $html .= html_writer::tag('h2', $record->schedule_day);
             // TODO: day description (Pre-conference Workshops, Conference Day 1, etc)
         }
+
         if ($type && $type==$record->presentation_type) {
             // same type - do nothing
         } else {
@@ -170,23 +254,23 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
             // TODO: type description (Concurrent Sessions, Symposiums)
         }
 
-		// schedule day, time and room
+        // schedule day, time and room
         $text = '';
         if ($record->schedule_day) {
-			$text .= html_writer::tag('span', $record->schedule_day, array('style' => 'font-size: 1.6em; color: #999;')).' ';
+            $text .= html_writer::tag('span', $record->schedule_day, array('style' => 'font-size: 1.6em; color: #999;')).' ';
         }
         if ($record->schedule_time) {
-			$text .= html_writer::tag('span', $record->schedule_time, array('style' => 'font-size: 1.6em;')).' &nbsp; ';
+            $text .= html_writer::tag('span', $record->schedule_time, array('style' => 'font-size: 1.6em;')).' &nbsp; ';
         }
         if ($record->schedule_roomname) {
-			$text .= html_writer::tag('span', '('.$record->schedule_roomname.')', array('style' => 'font-size: 1.2em;'));
+            $text .= html_writer::tag('span', '('.$record->schedule_roomname.')', array('style' => 'font-size: 1.2em;'));
         }
         if ($text) {
-			$html .= html_writer::tag('h4', $text, array('style' => 'margin: 12px 0px;'));
+            $html .= html_writer::tag('h4', $text, array('style' => 'margin: 12px 0px;'));
         }
 
-		// schedule number and presentation title
-		$text = '';
+        // schedule number and presentation title
+        $text = '';
         if ($record->schedule_number) {
             $text = html_writer::tag('span', '['.$record->schedule_number.']', array('style' => 'color: #f60; font-size: 0.8em;')).' ';
         }
@@ -194,16 +278,23 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
             $text .= html_writer::tag('span', $record->presentation_title);
         }
         if ($text) {
-        	$text = html_writer::tag('b', $text);
-			$html .= html_writer::tag('p', $text, array('style' => 'margin: 6px 0px; font-size: 24px;'));
+            $text = html_writer::tag('b', $text);
+            $html .= html_writer::tag('p', $text, array('style' => 'margin: 6px 0px; font-size: 24px;'));
         }
 
-		// abstract
-		if ($record->presentation_abstract) {
-			$html .= html_writer::tag('p', $record->presentation_abstract, array('style' => 'margin: 6px 0px; text-indent: 24px;'));
-		}
+        // presenters
+        if ($text = $record->presenters) {
+            $html .= html_writer::tag('dl', $text);
+        }
 
-		// biography information
+        // abstract
+        if ($text = $record->presentation_abstract) {
+            $text = html_writer::tag('dd', $text, array('style' => 'margin: 8px 18px; text-indent: 24px;'));
+            $text = html_writer::tag('dt', get_string('abstract', $plugin), array('style' => 'font-weight: bold;')).$text;
+            $html .= html_writer::tag('dl', $text);
+        }
+
+        // biography information
         $text = '';
         for ($i=1; $i<=5; $i++) {
             $field = 'biography';
@@ -211,54 +302,14 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
                 $field .= "_$i";
             }
             if (isset($record->$field) && $record->$field) {
-				$text .= html_writer::tag('p', $record->$field, array('style' => 'margin: 6px 0px;'));
+                $text .= html_writer::tag('dd', $record->$field, array('style' => 'font-style: italic; margin: 8px 18px; text-indent: 24px;'));
             }
         }
         if ($text) {
-			$html .= html_writer::tag('h5', get_string('biodata', $plugin), array('style' => 'font-size: 1.1em; margin: 12px 0px;'));
-			$html .= html_writer::tag('div', $text, array('style' => 'font-style: italic;'));
+            $text = html_writer::tag('dt', get_string('biodata', $plugin), array('style' => 'font-weight: bold;')).$text;
+            $html .= html_writer::tag('dl', $text);
         }
     }
-
-    foreach ($records as $recordid => $record) {
-        $NAME = strtoupper($record->name_surname);
-        if (strpos($record->name_order, 'SURNAME')===0) {
-            $name = array($NAME, $record->name_given);
-        } else {
-            $name = array($record->name_given, $NAME);
-        }
-        $name = array_filter($name);
-        if ($name = implode(' ', $name)) {
-            $NAME = strtoupper($record->name_surname.' '.$record->name_given);
-            if (! array_key_exists($NAME, $presenters)) {
-                $presenter = (object)array('name' => $name,
-                                           'email' => $record->email,
-                                           'affiliation' => $record->affiliation,
-                                           'presentations' => array());
-                if ($text = $record->affiliation_country) {
-                    $presenter->affiliation .= ' ('.ucwords(strtolower($text)).')';
-                }
-                if ($presenter->email=='') {
-                    $select = '(firstname = ? AND lastname = ?) OR (firstnamephonetic = ? AND lastnamephonetic = ?)';
-                    $params = array($record->name_given,
-                                    $record->name_surname,
-                                    $record->name_given,
-                                    $record->name_surname);
-                    if ($users = $DB->get_records_select('user', $select, $params)) {
-                        $presenter->email = reset($users)->email;
-                    }
-                }
-                $presenters[$NAME] = $presenter;
-            }
-            if ($text = $record->schedule_number) {
-                $url = new moodle_url('/mod/data/view.php', array('rid' => $recordid));
-                $presenter->presentations[] = html_writer::link($url, $text, array('target' => 'MAJ'));
-            }
-        }
-    }
-
-    // sort $presenters by name
-    ksort($presenters);
 }
 
 if (count($presenters)) {
@@ -277,6 +328,9 @@ if (count($presenters)) {
     $html .= html_writer::tag('th', get_string('email',        'moodle'), $params);
     $html .= html_writer::tag('th', get_string('presentations', $plugin), $params);
     $html .= html_writer::end_tag('tr');
+
+    // sort $presenters by name
+    ksort($presenters);
 
     $odd = 0;
     foreach ($presenters as $presenter) {

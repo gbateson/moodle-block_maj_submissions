@@ -635,6 +635,8 @@ $string['workshopstime'] = 'Conference workshops';
 $string['workshopstime_help'] = 'The start and finish dates of the conference workshops.';
 $string['youwillbenotified'] = 'When the changes have been made, they will be reviewed and you will be notified of the new acceptance status.';
 
+$string['abstract'] = 'Abstract';
 $string['affiliation'] = 'Affiliation';
-$string['presentations'] = 'Presentations';
 $string['listofpresenters'] = 'List of Presenters';
+$string['presentations'] = 'Presentations';
+$string['presenters'] = 'Presenters';
