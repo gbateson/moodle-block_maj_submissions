@@ -481,10 +481,8 @@ switch ($action) {
         foreach ($items as $recordid => $item) {
 
             $name = 'submission_status';
-            if (array_key_exists($name, $item)) {
-                if (strpos($item[$name], 'Not accepted') || strpos($item[$name], 'Cancelled')) {
-                    continue;
-                }
+            if (array_key_exists($name, $item) && preg_match('/Cancelled|(Not accepted)/', $item[$name])) {
+                continue;
             }
 
             $sessionclass = 'session';
