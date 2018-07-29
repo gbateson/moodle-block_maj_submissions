@@ -699,54 +699,65 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                                             $values['roomname'] = implode('', $langs);
                                         }
                                     }
-                                    foreach ($fields as $name => $field) {
-                                        if (array_key_exists($name, $values)) {
-                                            $value = $values[$name];
-                                            if (is_scalar($value)) {
-                                                if (empty($value)) {
-                                                    $value = array();
-                                                } else {
-                                                    $value = array($value);
-                                                }
-                                            } else {
-                                                $value = array_filter($value);
-                                            }
-                                            if (isset($this->$field)) {
-                                                // add this value, if it is not already present
-                                                foreach ($value as $v) {
-                                                    if (! array_key_exists($v, $this->$field)) {
-                                                        $this->$field[$v] = '';
-                                                    }
-                                                }
-                                            }
-                                            $value = implode('##', $value);
-                                            if ($fieldid = $fieldids[$field]) {
-                                                $params = array('fieldid' => $fieldid, 'recordid' => $recordid);
-                                                if (! $DB->record_exists('data_content', $params)) {
-                                                    // Oops, wrong recordid. This can happen in a restored course/activity
-                                                    // we can try to locate the correct recordid using the $record->presentation_title
-                                                    list($where, $params) = $DB->get_in_or_equal($this->dataids);
-                                                    $select = 'dc.id, dc.recordid';
-                                                    $from   = '{data_content} dc, {data_fields} df';
-                                                    $where  = "df.dataid $where ".
-                                                              'AND df.name = ? '.
-                                                              'AND dc.fieldid = df.id '.
-                                                              'AND dc.content = ?';
-                                                    array_push($params, 'presentation_title', $values['title']);
-                                                    if ($ids = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
-                                                        $html = preg_replace("/(?<=id_recordid_)$recordid\\b/u", reset($ids)->recordid, $html);
-                                                        $update = true;
-                                                        $recordid = reset($ids)->recordid;
-                                                    } else {
-                                                        $recordid = 0;
-                                                    }
-                                                    $params = array('fieldid' => $fieldid, 'recordid' => $recordid);
-                                                }
-                                                $DB->set_field('data_content', 'content', $value, $params);
-                                            }
+
+                                    // ensure $recordid is valid
+                                    list($select, $params) = $DB->get_in_or_equal($this->dataids);
+                                    $select = "id = ? AND dataid $select";
+                                    array_unshift($params, $recordid);
+                                    if (! $DB->record_exists_select('data_records', $select, $params)) {
+                                        // Oops, wrong recordid. This can happen in a restored course/activity
+                                        // we can try to locate the correct recordid using the $record->presentation_title
+                                        list($where, $params) = $DB->get_in_or_equal($this->dataids);
+                                        $select = 'dc.id, dc.recordid';
+                                        $from   = '{data_content} dc, {data_fields} df';
+                                        $where  = "df.dataid $where ".
+                                                  'AND df.name = ? '.
+                                                  'AND dc.fieldid = df.id '.
+                                                  'AND dc.content = ?';
+                                        array_push($params, 'presentation_title', $values['title']);
+                                        if ($ids = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
+                                            $html = preg_replace("/(?<=id_recordid_)$recordid\\b/u", reset($ids)->recordid, $html);
+                                            $update = true;
+                                            $recordid = reset($ids)->recordid;
+                                        } else {
+                                            $recordid = 0;
                                         }
-                                        if ($recordid==0) {
-                                            break; // don't bother trying to update more $fields
+                                    }
+
+                                    if ($recordid) {
+                                        foreach ($fields as $name => $field) {
+                                            if (array_key_exists($name, $values)) {
+                                                $value = $values[$name];
+                                                if (is_scalar($value)) {
+                                                    if (empty($value)) {
+                                                        $value = array();
+                                                    } else {
+                                                        $value = array($value);
+                                                    }
+                                                } else {
+                                                    $value = array_filter($value);
+                                                }
+                                                if (isset($this->$field)) {
+                                                    // add this value, if it is not already present
+                                                    foreach ($value as $v) {
+                                                        if (! array_key_exists($v, $this->$field)) {
+                                                            $this->$field[$v] = '';
+                                                        }
+                                                    }
+                                                }
+                                                // add/update the content of this data field in the Moodle DB
+                                                $value = implode('##', $value);
+                                                if ($fieldid = $fieldids[$field]) {
+                                                    $params = array('fieldid' => $fieldid, 'recordid' => $recordid);
+                                                    if ($DB->record_exists('data_content', $params)) {
+                                                        $DB->set_field('data_content', 'content', $value, $params);
+                                                    } else {
+                                                        // an "incomplete" record, e.g. created during import
+                                                        $params['content'] = $value;
+                                                        $params['id'] = $DB->insert_record('data_content', $params);
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
