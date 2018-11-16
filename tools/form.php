@@ -472,6 +472,7 @@ abstract class block_maj_submissions_tool_form extends moodleform {
      * @return object newly added $cm object; otherwise false
      */
     public function get_cm(&$msg, $data, $time, $name, $a=null) {
+        global $DB;
 
         $cm = false;
         if (empty($data->$name)) {
@@ -482,19 +483,9 @@ abstract class block_maj_submissions_tool_form extends moodleform {
             $activityname = $name.'name';
             $activityname = (empty($data->$activityname) ? '' : $data->$activityname);
 
-            if ($activityname=='') {
-                if ($this->defaultname=='') {
-                    $activityname = $this->instance->get_string('pluginname', $this->modulename);
-                } else {
-                    $activityname = $this->instance->get_string($this->defaultname, $this->plugin, $a);
-                }
-            }
-
-            $activitynametext = block_maj_submissions::filter_text($activityname);
-            $activitynametext = strip_tags($activitynametext);
-
             $sectionnum   = (empty($data->coursesectionnum) ? 0 : $data->coursesectionnum);
             $sectionname  = (empty($data->coursesectionname) ? '' : $data->coursesectionname);
+
         } else {
             $activitynum = $data->$name;
         }
@@ -503,6 +494,35 @@ abstract class block_maj_submissions_tool_form extends moodleform {
 
             if ($activitynum==self::CREATE_NEW) {
 
+                // if activityname is empty, try to set it from the template (data2workshop)
+                if ($activityname=='' && method_exists($this, 'get_template')) {
+                    if ($template = $this->get_template($data)) {
+                        $activityname = $template->name;
+
+                        // check there isn't another activity with this name in this course
+                        $i = 1;
+                        $params = array('course' => $this->course->id, 'name' => $activityname);
+                        while ($DB->record_exists($this->modulename, $params)) {
+                            $i++;
+                            $params['name'] = "$activityname ($i)";
+                        }
+                        $activityname = $params['name'];
+                    }
+                }
+
+                // if activityname is empty, set it to the default
+                if ($activityname=='') {
+                    if ($this->defaultname=='') {
+                        $activityname = $this->instance->get_string('pluginname', $this->modulename);
+                    } else {
+                        $activityname = $this->instance->get_string($this->defaultname, $this->plugin, $a);
+                    }
+                }
+
+                $activitynametext = block_maj_submissions::filter_text($activityname);
+                $activitynametext = strip_tags($activitynametext);
+
+                // create new section, if required
                 if ($sectionnum==self::CREATE_NEW) {
                     $section = self::get_section($this->course, $sectionname);
                 } else {
@@ -521,12 +541,6 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                     $cm = self::get_coursemodule($this->course, $section, $modname, $activityname, $defaultvalues);
 
                     if ($cm) {
-                        $permissions = $this->get_permissions($data);
-                        self::set_cm_permissions($cm, $permissions);
-
-                        $restrictions = $this->get_restrictions($data);
-                        self::set_cm_restrictions($cm, $restrictions);
-
                         if ($this->type) {
                             if ($this->cmid==0) {
                                 $this->cmid = $cm->id;
@@ -556,6 +570,14 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                 }
             } else {
                 $cm = get_fast_modinfo($this->course)->get_cm($activitynum);
+            }
+
+            if ($cm) {
+                $permissions = $this->get_permissions($data);
+                self::set_cm_permissions($cm, $permissions);
+
+                $restrictions = $this->get_restrictions($data);
+                self::set_cm_restrictions($cm, $restrictions);
             }
         }
 

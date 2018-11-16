@@ -104,6 +104,11 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
         $this->add_field($mform, $this->plugin, $name, 'text', PARAM_TEXT);
         $mform->disabledIf($name, 'targetworkshop', 'eq', 0);
 
+        $name = 'reviewdeadline';
+        $default = $this->instance->config->reviewtimefinish;
+        $this->add_field($mform, $this->plugin, $name, 'date_time_selector', PARAM_INT, null, $default);
+        $mform->disabledIf($name, 'targetworkshop', 'eq', 0);
+
         $this->add_action_buttons();
     }
 
@@ -346,8 +351,8 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                 $msg[] = get_string('datarecordsreset', $this->plugin, $a);
             }
 
-            // switch workshop to EVALUATION phase
-            $workshop->switch_phase(workshop::PHASE_EVALUATION);
+            // switch workshop to ASSESSMENT phase
+            $workshop->switch_phase(workshop::PHASE_ASSESSMENT);
 
             if (empty($data->reviewspersubmission)) {
                 $countreviews = $countreviewers;
@@ -392,6 +397,10 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
             if (empty($data->senderemail)) {
                 $data->senderemail = $USER->email;
             }
+            if (empty($data->reviewdeadline)) {
+                $data->reviewdeadline = $config->reviewtimefinish;
+            }
+
             if (empty($config->reviewteamname)) {
                 $config->reviewteamname = get_string('reviewteamname', $this->plugin);
             }
@@ -406,7 +415,7 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                 'workshopurl'    => $workshop->view_url()->out(),
                 'username'       => '', // added later
                 'password'       => '', // added later
-                'deadline'       => userdate($config->reviewtimefinish),
+                'deadline'       => userdate($data->reviewdeadline),
                 'sendername'     => $data->sendername,
                 'senderemail'    => $data->senderemail,
                 'conferencename' => $config->conferencename,
@@ -486,11 +495,7 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                     $messagehtml = format_text($messagetext, FORMAT_MOODLE);
                     email_to_user($reviewer->realuser, $noreply, $subject, $messagetext, $messagehtml);
                 }
-
-				// TODO: setup a reviewers forum
-				// TODO: subscribe all reviewers to the forum
-				// (this is done by separate tool, reviewersforum)
-	            }
+            }
 
             // create a page resource
             if (count($table->data)) {

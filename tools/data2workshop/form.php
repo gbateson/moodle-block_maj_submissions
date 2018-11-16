@@ -248,6 +248,9 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
             if (! $cm = $DB->get_record('course_modules', array('id' => $data->$name))) {
                 return $this->template;
             }
+            if (! $module = $DB->get_record('modules', array('id' => $cm->module, 'name' => $this->modulename))) {
+                return $this->template;
+            }
             if (! $instance = $DB->get_record($this->modulename, array('id' => $cm->instance))) {
                 return $this->template;
             }

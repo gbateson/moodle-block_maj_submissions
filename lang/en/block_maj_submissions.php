@@ -640,3 +640,6 @@ $string['affiliation'] = 'Affiliation';
 $string['listofpresenters'] = 'List of Presenters';
 $string['presentations'] = 'Presentations';
 $string['presenters'] = 'Presenters';
+
+$string['reviewdeadline'] = 'Review deadline';
+$string['reviewdeadline_help'] = 'The deadline for reviewers to complete their task. This date is used in the email that is sent to reviewers.';
