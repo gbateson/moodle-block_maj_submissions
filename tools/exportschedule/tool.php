@@ -194,5 +194,5 @@ if (empty($instance->config->title)) {
     $filename = format_string($instance->config->title, true);
     $filename = clean_filename(strip_tags($filename).'.csv');
 }
-$filename = preg_replace('/[ \.]/', '.', $filename);
+$filename = preg_replace('/[ \.]+/', '.', $filename);
 send_file($lines, $filename, 0, 0, true, true);

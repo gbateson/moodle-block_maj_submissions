@@ -348,8 +348,8 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
 						unset($records[$id]);
 					} else {
 						$duplicaterecords[$title] = 0;
+						$records[$id]->title = $title;
 					}
-					$records[$id]->title = $title;
 				}
 
 				// remove duplicate authors and submissions
