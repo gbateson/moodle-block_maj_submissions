@@ -122,7 +122,7 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                          $name => array('helpbutton' => array($name, $this->plugin)));
         $addstring = get_string('add'.$name, $this->plugin, 1);
         $this->repeat_elements($elements, $repeats, $options, 'count'.$name, 'add'.$name, 1, $addstring, true);
-        $mform->disabledIf('add'.$name, 'targetdatabase', 'eq', 0);
+        $mform->disabledIf('add'.$name, 'targetdatabasenum', 'eq', 0);
 
         $name = 'targetdatabase';
         $this->add_field_cm($mform, $this->course, $this->plugin, $name, $this->cmid);

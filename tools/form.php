@@ -623,7 +623,13 @@ abstract class block_maj_submissions_tool_form extends moodleform {
 			$options = array_filter($options);
 			$options = array_flip($options);
 			foreach (array_keys($options) as $option) {
-				$options[$option] = preg_replace($search, $replace, $option);
+			    if (strpos($option, 'multilang')===false) {
+			        // no multilang spans, so extract double/single byte string
+                    $options[$option] = preg_replace($search, $replace, $option);
+			    } else {
+			        // reduce multilang spans to a single string
+                    $options[$option] = format_string($option);
+			    }
 			}
 		}
         if ($numerickeys) {
