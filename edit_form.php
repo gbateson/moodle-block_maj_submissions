@@ -41,7 +41,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
     /**
      * set_data
      *
-     * @param object $defaults
+     * @param object $data
      * @return void, but will update $mform
      */
     function set_data($data) {
@@ -146,13 +146,12 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $this->add_header($mform, $plugin, 'registerparticipation');
         //-----------------------------------------------------------------------------
 
-        $this->add_time_startfinish($mform, $plugin, 'registerearly');
-
-        $this->add_time_startfinish($mform, $plugin, 'registerdelegates');
         $this->add_cmid($mform, $plugin, 'data,page,resource', 'registerdelegatescmid');
-
-        $this->add_time_startfinish($mform, $plugin, 'registerpresenters');
         $this->add_cmid($mform, $plugin, 'data,page,resource', 'registerpresenterscmid');
+
+        $this->add_time_startfinish($mform, $plugin, 'registerearly');
+        $this->add_time_startfinish($mform, $plugin, 'registerdelegates');
+        $this->add_time_startfinish($mform, $plugin, 'registerpresenters');
 
         $this->add_cmid($mform, $plugin, 'page,resource', 'membershipinfocmid');
         $this->add_cmid($mform, $plugin, 'page,resource', 'paymentinfocmid');
@@ -496,21 +495,32 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $groupname = 'group_'.$name;
         $label = get_string($name, $plugin);
 
-        $dateoptions = array('optional' => true);
-        $timestart = html_writer::tag('b', get_string('timestart', $plugin).' ');
-        $timefinish = html_writer::tag('b', get_string('timefinish', $plugin).' ');
+        $startdefault = $this->get_original_value($name.'start', 0);
+        $finishdefault = $this->get_original_value($name.'finish', 0);
+
+        if ($startdefault==0) {
+            $time = ($finishdefault ? $finishdefault : time());
+            $startdefault = mktime(0, 0, 0, date('n', $time), date('j', $time), date('Y', $time));
+        }
+        if ($finishdefault==0) {
+            $time = ($startdefault ? $startdefault : time());
+            $finishdefault = mktime(23, 55, 0, date('n', $time), date('j', $time), date('Y', $time));
+        }
+
+        $startoptions = array('optional' => true, 'defaulttime' => $startdefault);
+        $finishoptions = array('optional' => true, 'defaulttime' => $finishdefault);
+
+        $startlabel = html_writer::tag('b', get_string('timestart', $plugin).' ');
+        $finishlabel = html_writer::tag('b', get_string('timefinish', $plugin).' ');
 
         $elements = array(
-            $mform->createElement('static', '', '', $timestart),
-            $mform->createElement('date_time_selector', $configname.'start', '', $dateoptions),
+            $mform->createElement('static', '', '', $startlabel),
+            $mform->createElement('date_time_selector', $configname.'start', '', $startoptions),
             $mform->createElement('static', '', '', html_writer::empty_tag('br')),
-            $mform->createElement('static', '', '', $timefinish),
-            $mform->createElement('date_time_selector', $configname.'finish', '', $dateoptions)
+            $mform->createElement('static', '', '', $finishlabel),
+            $mform->createElement('date_time_selector', $configname.'finish', '', $finishoptions)
         );
-
         $mform->addGroup($elements, $groupname, $label, '', false);
-        $mform->setDefault($configname.'start', $this->get_original_value($name.'start'));
-        $mform->setDefault($configname.'finish', $this->get_original_value($name.'finish'));
         $mform->addHelpButton($groupname, $name, $plugin);
     }
 
