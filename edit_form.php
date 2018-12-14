@@ -389,6 +389,10 @@ class block_maj_submissions_edit_form extends block_edit_form {
             $help = html_writer::tag('a', get_string('help'), array('href' => $help, 'target' => '_blank'));
             $help = html_writer::tag('small', $help);
 
+            // cache field labels
+            $valuelabel = get_string('typevalue', 'grades');
+            $formatlabel = get_string('format');
+
             $textoptions = array('size' => 10);
             foreach ($fieldnames as $fieldname => $name) {
 
@@ -402,13 +406,13 @@ class block_maj_submissions_edit_form extends block_edit_form {
                 $defaultformat = $this->get_constant_value($dataid, $fieldname, 'param3');
                 $this->set_original_value($name.'format', $defaultformat);
 
-                $elements = array();
-                $elements[] = $mform->createElement('static', '', '', get_string('typevalue', 'grades'));
-                $elements[] = $mform->createElement('text', $configname, '', $textoptions);
-                $elements[] = $mform->createElement('static', '', '', get_string('format'));
-                $elements[] = $mform->createElement('text', $configname.'format', '', $textoptions);
-                $elements[] = $mform->createElement('static', '', '', $help);
-
+                $elements = array(
+                    $mform->createElement('static', '', '', $valuelabel),
+                    $mform->createElement('text', $configname, '', $textoptions),
+                    $mform->createElement('static', '', '', $formatlabel),
+                    $mform->createElement('text', $configname.'format', '', $textoptions),
+                    $mform->createElement('static', '', '', $help),
+                );
                 $mform->addGroup($elements, $groupname, $label, ' ', false);
                 $mform->addHelpButton($groupname, $name, $plugin);
 

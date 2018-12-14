@@ -141,10 +141,13 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
 }
 
 if (empty($instance->config->title)) {
-    $filename = $block->name.'.html';
+    $filename = $block->name;
 } else {
     $filename = format_string($instance->config->title, true);
-    $filename = clean_filename(strip_tags($filename).'.html');
+    $filename = clean_filename(strip_tags($filename));
 }
-$filename = preg_replace('/[ \.]/', '.', $filename);
+if (empty($filename)) {
+    $filename = get_string('exportdates', $plugin);
+}
+$filename = preg_replace('/[ \.]/', '-', $filename).'.html';
 send_file($content, $filename, 0, 0, true, true);

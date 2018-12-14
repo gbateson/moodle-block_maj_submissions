@@ -1063,15 +1063,6 @@ class block_maj_submissions extends block_base {
             } else {
                 $format = $formatstring;
             }
-            if (substr($lang, 0, 2)=='en') {
-                // add ordinal suffix using date('S', $date)
-                $format = str_replace('%d', date('dS', $date), $format);
-                $format = str_replace('%e', date('jS', $date), $format);
-            } else {
-                // remove leading space from %e
-                $format = str_replace('%e', date('j', $date), $format);
-            }
-            //$dates[$lang] = userdate($date, $format);
             $dates[$lang] = $this->userdate($date, $format, $removetime, $removedate);
         }
 
@@ -1156,6 +1147,9 @@ class block_maj_submissions extends block_base {
             $search = '/[ :,\-\.\/]*[\[\{\(]*?%['.$search.'][\)\}\]]?/';
             $format = preg_replace($search, '', $format);
         }
+
+        // replace the unreliable %e, which misbehaves on Windows
+        $format = str_replace('%e', '%d', $format);
 
         // set the $year, $month and $day characters for CJK languages
         list($year, $month, $day) = $this->get_date_chars();
