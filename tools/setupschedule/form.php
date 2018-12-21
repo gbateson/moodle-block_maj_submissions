@@ -825,7 +825,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
      * @param integer $time
      */
     protected function get_defaultvalues($data, $time) {
-        global $CFG;
+        global $CFG, $DB;
 
         $defaultvalues = parent::get_defaultvalues($data, $time);
 
@@ -837,11 +837,22 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
         // search string to detect leading and trailing <body> tags in HTML file/snippet
         $search = '/(^.*?<body[^>]*>\s*)|(\s*<\/body>.*?)$/su';
 
+        $template = null;
         switch ($data->templatetype) {
 
             case self::TEMPLATE_ACTIVITY:
-                $template = $DB->get_record('course_modules', array('id' => $data->templateactivity));
-                $template = $DB->get_record($this->modulename, array('id' => $template->instance));
+                if ($template = $DB->get_record('course_modules', array('id' => $data->templateactivity))) {
+                    $template = $DB->get_record($this->modulename, array('id' => $template->instance));
+
+                    // remove all presentation data, but maintain attributes in <td> tag
+                    $search = array('/<td([^>]*? )class="[^"]*session[^"]*"([^>]*) id=".*?"([^>]*)>.*?<\/td>/uis',
+                                    '/<td([^>]*? )class="[^"]*session[^"]*"([^>]*)>\s*<div([^>]*? )id="id_recordid_.*?"([^>]*)>.*?<\/div>\s*<\/td>/uis',
+                                    '/<td([^>]*? )class="[^"]*session multiroom[^"]*"([^>]*)>.*?<\/td>/uis');
+                    $replace = array('<td$1class="session emptysession"$2$3></td>',
+                                     '<td$1class="session emptysession"$2></td>',
+                                     '<td$1class="session multiroom emptysession"$2></td>');
+                    $template->content = preg_replace($search, $replace, $template->content);
+                }
                 break;
 
             case self::TEMPLATE_FILENAME:
@@ -871,7 +882,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
 
         if ($template) {
             foreach ($template as $name => $value) {
-                if ($name=='id' || $name=='name' || $name=='timemodified') {
+                if ($name=='id' || $name=='course' || $name=='name' || $name=='timemodified') {
                     continue; // skip these fields
                 }
                 if (is_scalar($value)) {
