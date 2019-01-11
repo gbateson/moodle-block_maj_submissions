@@ -828,10 +828,10 @@ window.console.log("Finish: " + items.length);
         var p = {"id": TOOL.pageid, "action": "loadinfo"};
         $.getJSON(TOOL.toolroot + "/action.php", p, function(info){
             TOOL.info = info;
-            TOOL.icons = {};
+            TOOL.infoicons = {};
             //var multilang = new RegExp('<span[^>]*class="multilang"[^>]*>(.*?)</span>', "g");
             for (var type in TOOL.info.icons) {
-                TOOL.icons[type] = {};
+                TOOL.infoicons[type] = {};
                 for (var value in TOOL.info[type]) {
                     var i_max = TOOL.info[type][value].length;
                     for (var i=0; i<i_max; i++) {
@@ -840,10 +840,10 @@ window.console.log("Finish: " + items.length);
                         if (session.length==0) {
                             continue; // shouldn't happen !!
                         }
-                        var icon = TOOL.icons[type][value];
+                        var icon = TOOL.infoicons[type][value];
                         if (TOOL.empty(icon)) {
                             var count = 0;
-                            for (icon in TOOL.icons[type]) {
+                            for (icon in TOOL.infoicons[type]) {
                                 count++;
                             }
                             if (count >= TOOL.info.icons[type].length) {
@@ -851,7 +851,7 @@ window.console.log("Finish: " + items.length);
                             } else {
                                 icon = TOOL.info.icons[type][count];
                             }
-                            TOOL.icons[type][value] = icon;
+                            TOOL.infoicons[type][value] = icon;
                         }
                         var scheduleinfo = session.find(".scheduleinfo");
                         if (scheduleinfo.length==0) {
