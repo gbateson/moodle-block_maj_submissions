@@ -919,18 +919,22 @@ abstract class block_maj_submissions_tool_form extends moodleform {
         }
         set_coursemodule_visible($newrecord->id, $newrecord->visible);
 
-        // Trigger mod_updated event with information about this module.
-        $event = (object)array(
-            'courseid'   => $newrecord->course,
-            'cmid'       => $newrecord->id,
-            'modulename' => $newrecord->modulename,
-            'name'       => $newrecord->name,
-            'userid'     => $USER->id
-        );
-        if (function_exists('events_trigger_legacy')) {
-            events_trigger_legacy('mod_updated', $event);
+        if (class_exists('\\core\\event\\course_module_created')) {
+            \core\event\course_module_created::create_from_cm($newrecord)->trigger();
         } else {
-            events_trigger('mod_updated', $event);
+            // Trigger mod_updated event with information about this module.
+            $event = (object)array(
+                'courseid'   => $newrecord->course,
+                'cmid'       => $newrecord->id,
+                'modulename' => $newrecord->modulename,
+                'name'       => $newrecord->name,
+                'userid'     => $USER->id
+            );
+            if (function_exists('events_trigger_legacy')) {
+                events_trigger_legacy('mod_created', $event);
+            } else {
+                events_trigger('mod_created', $event);
+            }
         }
 
         // rebuild_course_cache

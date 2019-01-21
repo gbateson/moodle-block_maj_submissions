@@ -685,12 +685,14 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                                             $i_max = count($value[0]);
                                             for ($i=0; $i<$i_max; $i++) {
                                                 $lang = $value[2][$i];
+                                                $text = $value[3][$i];
+                                                $text = block_maj_submissions::textlib('entities_to_utf8', $text);
                                                 if (! array_key_exists($lang, $langs)) {
                                                     $langs[$lang] = $i;
                                                 } else if (preg_match($search->ascii, $value[3][$i])) {
-                                                    $value[3][$langs[$lang]] .= ' ('.$value[3][$i].')';
+                                                    $value[3][$langs[$lang]] .= ' ('.$text.')';
                                                 } else {
-                                                    $value[3][$langs[$lang]] .= "\u{FF08}".$value[3][$i]."\u{FF09}";
+                                                    $value[3][$langs[$lang]] .= "\u{FF08}".$text."\u{FF09}";
                                                 }
                                             }
                                             foreach ($langs as $lang => $i) {
