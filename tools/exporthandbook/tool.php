@@ -69,10 +69,25 @@ $presenters = array();
 
 if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
 
-    $fields = array(
+    // each submission may have more than one user each of whom has info in more than one language
+    // e.g. name_given_en, name_given_2_en
+    $userfields = array(
+        'name_given',
+        'name_surname',
+        'name_order',
+        'email',
+        'biography',
+        'affiliation',
+        'affiliation_state',
+        'affiliation_country'
+    );
+
+    // the schedule fields should appear at most once for each submission
+    $schedulefields = array(
         'presentation_title',
         'presentation_abstract',
         'presentation_type',
+        'presentation_language',
         'schedule_time',
         'schedule_day',
         'schedule_time',
@@ -80,15 +95,47 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
         'schedule_number',
         'schedule_roomname',
         'schedule_roomtopic',
-        'submission_status',
-        'email', 'biography',
-        'name_given', 'name_surname', 'name_order',
-        'affiliation', 'affiliation_state', 'affiliation_country',
-        'email_2', 'biography_2', 'affiliation_2', 'name_given_2', 'name_surname_2',
-        'email_3', 'biography_3', 'affiliation_3', 'name_given_3', 'name_surname_3',
-        'email_4', 'biography_4', 'affiliation_4', 'name_given_4', 'name_surname_4',
-        'email_5', 'affiliation_5', 'biography_5', 'name_given_5', 'name_surname_5'
+        'submission_status'
     );
+
+    // get multilang versions of the user fields
+    $fields = $instance->get_multilang_fieldnames($userfields);
+
+    $nums = array();
+    $userfields = array();
+
+    // regex to extract (name)_(num)_(lang) from a field name
+    $search = '/^(.+?)('.'(?:_[0-9]+)?'.')('.'(?:_[a-z]{2})?'.')$/';
+
+    foreach ($fields as $field) {
+        if (preg_match($search, $field, $match)) {
+            list($field, $name, $num, $lang) = $match;
+            if (empty($num)) {
+                $num = '1';
+            } else {
+                $num = substr($num, 1);
+            }
+            if (empty($lang)) {
+                $lang = 'en';
+            } else {
+                $lang = substr($lang, 1);
+            }
+            if (empty($userfields[$name])) {
+                $userfields[$name] = array();
+            }
+            if (empty($userfields[$name][$num])) {
+                $userfields[$name][$num] = array();
+                ksort($userfields[$name]);
+                $nums[intval($num)] = 1;
+            }
+            $userfields[$name][$num][$lang] = $field;
+        }
+    }
+
+    // set value of maximum name index
+    $i_max = max(array_keys($nums));
+
+    $fields = array_merge($fields, $schedulefields);
     $fields = array_combine($fields, $fields);
 
     $records = array();
@@ -114,6 +161,24 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
         }
         return 0; // equal values  - unexpected ?!
     });
+
+    // setup ascii search and replace strings
+    //  - $ascii is all low ascii chars
+    //  - $chars is ascii chars excluding numbers: 0-9 (=hex 30-39)
+    $ascii = block_maj_submissions_tool_form::low_ascii_substring();
+    $chars = '\\x{0000}-\\x{0029}\\x{0040}-\\x{007F}';
+    $asciisearch = '/^(['.$chars.']['.$ascii.']+) *([^'.$chars.']+?)$/mu';
+    $roomsearch = '/^(.+?) *\(.*?\) (.+?) *[(\\x{FF08}].*?[\\x{FF09})]$/mu';
+    $daysearch = '/^(.*?\)) (.*?\)).*$/mu';
+    if (block_maj_submissions_tool_form::is_low_ascii_language()) {
+        $asciireplace = '$1';
+        $roomreplace = '$1';
+        $dayreplace = '$1';
+    } else {
+        $asciireplace = '$2';
+        $roomreplace = '$2';
+        $dayreplace = '$2';
+    }
 
     // check fields and format info about presenters
     foreach ($records as $recordid => $record) {
@@ -142,9 +207,60 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
             }
         }
 
-        // append country to affiliation of main presenter
-        if ($text = $record->affiliation_country) {
-            $record->affiliation .= ' ('.ucwords(strtolower($text)).')';
+        foreach ($userfields as $name => $nums) {
+            foreach ($nums as $num => $langs) {
+
+                $values = array();
+                foreach ($langs as $lang => $field) {
+                    if (isset($record->$field)) {
+                        if ($record->$field) {
+                            $values[$lang] = $record->$field;
+                        }
+                        // remove this lang version of the field
+                        unset($record->$field);
+                    }
+                }
+
+                // remove the unnumbered version of this field
+                if (isset($record->$name)) {
+                    unset($record->$name);
+                }
+
+                // set the numbered version of the field
+                $field = $name.'_'.$num;
+                $record->$field = $instance->multilang_string($values);
+
+                // reduce multilang spans to a single string
+                if (strpos($record->$field, 'multilang')) {
+                    $record->$field = format_string($record->$field, true);
+                }
+
+                // append country to affiliation
+                if ($name=='affiliation_country') {
+                    if ($text = $record->$field) {
+                        $text = block_maj_submissions::textlib('strtolower', $text);
+                        $record->{"affiliation_$num"} .= ' ('.ucwords($text).')';
+                    }
+                }
+            }
+        }
+
+        foreach ($schedulefields as $field) {
+            if ($text = $record->$field) {
+                switch ($field) {
+                    case 'presentation_abstract':
+                        $record->$field = format_text($text);
+                        break;
+                    case 'schedule_roomname':
+                        $record->$field = preg_replace($roomsearch, $roomreplace, $text);
+                        break;
+                    case 'schedule_day':
+                        $record->$field = preg_replace($daysearch, $dayreplace, $text);
+                        break;
+                    default:
+                        $record->$field = preg_replace($asciisearch, $asciireplace, $text);
+                }
+            }
         }
 
         // create link to this record in submissions database
@@ -157,21 +273,18 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
 
         // get name, email, affiliation of ALL presenters
         $names = array();
-        for ($i=1; $i<=5; $i++) {
-            $email = 'email';
-            $affiliation = 'affiliation';
-            $biography = 'biography';
-            $givenname = 'name_given';
-            $surname = 'name_surname';
-            if ($i > 1) {
-                $email .= "_$i";
-                $affiliation .= "_$i";
-                $biography .= "_$i";
-                $givenname .= "_$i";
-                $surname .= "_$i";
-            }
-            $SURNAME = strtoupper($record->$surname);
-            if (strpos($record->name_order, 'SURNAME')===0) {
+        for ($i=1; $i<=$i_max; $i++) {
+
+            $givenname = "name_given_$i";
+            $surname = "name_surname_$i";
+            $nameorder = "name_order_$i";
+            $affiliation = "affiliation_$i";
+            $biography = "biography_$i";
+            $email = "email_$i";
+
+            // get multilang name and affiliation
+            $SURNAME = block_maj_submissions::textlib('strtoupper', $record->$surname);
+            if (isset($record->$nameorder) && strpos($record->$nameorder, 'SURNAME')===0) {
                 $name = array($SURNAME, $record->$givenname);
             } else {
                 $name = array($record->$givenname, $SURNAME);
@@ -188,19 +301,24 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
 
                 // create key for presenters array
                 $NAME = trim($record->$surname.' '.$record->$givenname);
-                $NAME = strtoupper($NAME);
+                $NAME = block_maj_submissions::textlib('strtoupper', $NAME);
 
                 // add to presenters list, if necessary
                 if (! array_key_exists($NAME, $presenters)) {
 
                     // initialize presenter object
                     $presenter = (object)array('name' => $name,
-                                               'email' => $record->$email,
-                                               'affiliation' => $record->$affiliation,
+                                               'email' => '',
+                                               'affiliation' => '',
                                                'presentations' => array());
-
-                    // lookup email address, if necessary
-                    if ($presenter->email=='') {
+                    if (isset($record->$affiliation)) {
+                        $presenter->affiliation = $record->$affiliation;
+                    }
+                    if (isset($record->$email)) {
+                        $presenter->email = $record->$email;
+                    }
+                    if (empty($presenter->email)) {
+                        // lookup email address
                         $select = '(firstname = ? AND lastname = ?) OR (firstnamephonetic = ? AND lastnamephonetic = ?)';
                         $params = array($record->$givenname,
                                         $record->$surname,
@@ -263,7 +381,10 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
             $text .= html_writer::tag('span', $record->schedule_time, array('style' => 'font-size: 1.6em;')).' &nbsp; ';
         }
         if ($record->schedule_roomname) {
-            $text .= html_writer::tag('span', '('.$record->schedule_roomname.')', array('style' => 'font-size: 1.2em;'));
+            if (strpos($record->schedule_roomname, '(')===false) {
+                $record->schedule_roomname = '('.$record->schedule_roomname.')';
+            }
+            $text .= html_writer::tag('span', $record->schedule_roomname, array('style' => 'font-size: 1.2em;'));
         }
         if ($text) {
             $html .= html_writer::tag('h4', $text, array('style' => 'margin: 12px 0px;'));
@@ -353,11 +474,12 @@ if ($html) {
 }
 
 if (empty($instance->config->title)) {
-    $filename = $block->name.'.html';
+    $filename = $block->name;
 } else {
     $filename = format_string($instance->config->title, true);
-    $filename = clean_filename(strip_tags($filename).'.html');
+    $filename = clean_filename(strip_tags($filename));
 }
+$filename .= '_'.current_language().'.html';
 $filename = preg_replace('/[ \.]/', '.', $filename);
 
 send_file($html, $filename, 0, 0, true, true);

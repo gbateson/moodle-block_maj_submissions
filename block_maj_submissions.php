@@ -966,12 +966,11 @@ class block_maj_submissions extends block_base {
     }
 
     /**
-     * get_submission_records
+     * get_dataids_sql
      *
-     * @param array $fields ('externalname' => 'internalname')
-     * @return`array ($records, $fieldsnames)
+     * @return`array (string of SQL, array of SQL params)
      */
-    public function get_submission_records($fields) {
+    public function get_dataids_sql() {
     	global $DB;
 
 		$ids = array();
@@ -986,11 +985,47 @@ class block_maj_submissions extends block_base {
 		}
 		$ids = array_filter($ids);
 		if (empty($ids)) {
-			$datawhere = '?';
-			$dataparams = array(0);
+			return array('?', array(0));
 		} else {
-			list($datawhere, $dataparams) = $DB->get_in_or_equal($ids);
+			return $DB->get_in_or_equal($ids);
 		}
+    }
+
+    /**
+     * get_multilang_fieldnames
+     *
+     * @param array $fields the basenames (i.e. without lang suffix) of required fields
+     * @return`array ($records, $fieldsnames)
+     */
+    public function get_multilang_fieldnames($fields) {
+    	global $DB;
+
+        // get SQL to match ids of database activities connected with this block
+        list($datawhere, $params) = $this->get_dataids_sql();
+
+        // build SQL to extract field names
+    	$where = array();
+    	foreach ($fields as $field) {
+    	    $where[] = $DB->sql_like('name', '?');
+    	    $params[] = $field.'%';
+    	}
+
+        $where = implode(' OR ', $where);
+        $where = "dataid $datawhere AND ($where)";
+        return $DB->get_records_select_menu('data_fields', $where, $params, 'name', 'id,name');
+    }
+
+    /**
+     * get_submission_records
+     *
+     * @param array $fields ('externalname' => 'internalname')
+     * @return`array ($records, $fieldsnames)
+     */
+    public function get_submission_records($fields) {
+    	global $DB;
+
+        // get SQL to match ids of database activities connected with this block
+        list($datawhere, $dataparams) = $this->get_dataids_sql();
 
 		list($where, $params) = $DB->get_in_or_equal($fields);
 		$select = 'dc.id, df.name, dc.recordid, dc.content';
@@ -1364,7 +1399,7 @@ class block_maj_submissions extends block_base {
             }
         }
 
-        // special case - this item is unique in only one language pack
+        // special case - this item is unique in only one language
         if (count($items)==1) {
             return reset($items);
         }
@@ -1376,6 +1411,27 @@ class block_maj_submissions extends block_base {
         }
 
         return implode('', $items);
+    }
+
+    /**
+     * reduce_multilang_string
+     *
+     * @param string $lang optional(default = "en")
+     * @return string
+     */
+    public function reduce_multilang_string($text, $lang='en') {
+        $search = '/<span[^>]*lang="(\w*)"[^>]*>(.*?)<\/span>/isu';
+        if (preg_match_all($search, $text, $matches)) {
+            $i_max = count($matches[0]);
+            for ($i=0; $i<$i_max; $i++) {
+                if ($lang==$matches[1][$i]) {
+                    return $matches[2][$i];
+                }
+            }
+            return $matches[2][0];
+        } else {
+            return $text;
+        }
     }
 
     /**
