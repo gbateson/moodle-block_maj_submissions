@@ -163,21 +163,21 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
     });
 
     // setup ascii search and replace strings
-    //  - $ascii is all low ascii chars
-    //  - $chars is ascii chars excluding numbers: 0-9 (=hex 30-39)
+    //  - $ascii matches all low ascii chars
+    //  - $chars matches ascii chars excluding numbers: 0-9 (=hex 30-39)
     $ascii = block_maj_submissions_tool_form::low_ascii_substring();
     $chars = '\\x{0000}-\\x{0029}\\x{0040}-\\x{007F}';
-    $asciisearch = '/^(['.$chars.']['.$ascii.']+) *([^'.$chars.']+?)$/mu';
-    $roomsearch = '/^(.+?) *\(.*?\) (.+?) *[(\\x{FF08}].*?[\\x{FF09})]$/mu';
     $daysearch = '/^(.*?\)) (.*?\)).*$/mu';
+    $roomsearch = '/^(.+?) *\(.*?\) (.+?) *[(\\x{FF08}].*?[\\x{FF09})]$/mu';
+    $asciisearch = '/^(['.$chars.']['.$ascii.']+) *([^'.$chars.']+?)$/mu';
     if (block_maj_submissions_tool_form::is_low_ascii_language()) {
-        $asciireplace = '$1';
-        $roomreplace = '$1';
         $dayreplace = '$1';
+        $roomreplace = '$1';
+        $asciireplace = '$1';
     } else {
-        $asciireplace = '$2';
-        $roomreplace = '$2';
         $dayreplace = '$2';
+        $roomreplace = '$2';
+        $asciireplace = '$2';
     }
 
     // check fields and format info about presenters
@@ -251,11 +251,11 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
                     case 'presentation_abstract':
                         $record->$field = format_text($text);
                         break;
-                    case 'schedule_roomname':
-                        $record->$field = preg_replace($roomsearch, $roomreplace, $text);
-                        break;
                     case 'schedule_day':
                         $record->$field = preg_replace($daysearch, $dayreplace, $text);
+                        break;
+                    case 'schedule_roomname':
+                        $record->$field = preg_replace($roomsearch, $roomreplace, $text);
                         break;
                     default:
                         $record->$field = preg_replace($asciisearch, $asciireplace, $text);
