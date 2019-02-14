@@ -436,6 +436,9 @@ define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doe
         // standardize attribute order in multilang SPANs
         html = html.replace(new RegExp('(lang="[^"]*") (class="multilang")', "g"), "$2 $1");
 
+        // remove added attributes e.g. style="", from multilang SPANs
+        html = html.replace(new RegExp('(class="multilang") (lang="[^"]*")[^>]*', "g"), "$1 $2");
+
         // remove info about xml namespaces
         html = html.replace(new RegExp(' *\\bxml:\\w+="[^"]*"', "g"), "");
 
@@ -644,28 +647,21 @@ define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doe
 
             // extract target items (to be inserted)
             var items = $("#items .session");
-window.console.log("Start: " + items.length);
             if (categories) {
                 items = items.find(categories).closest(".session");
-window.console.log("Categories: (" + items.length + ") " + categories);
             }
             if (types) {
                 items = items.find(types).closest(".session");
-window.console.log("Types: (" + items.length + ") " + types);
             }
             if (topics) {
                 items = items.find(topics).closest(".session");
-window.console.log("Topics: (" + items.length + ") " + topics);
             }
             if (times) {
                 items = items.find(times).closest(".session");
-window.console.log("Times: (" + items.length + ") " + times);
             }
             if (keywords) {
                 items = items.find(keywords).closest(".session");
-window.console.log("Keywords: (" + items.length + ") " + keywords);
             }
-window.console.log("Finish: " + items.length);
 
             var added = false;
 

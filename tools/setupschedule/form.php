@@ -576,7 +576,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                                     'duration'  => 'schedule_duration',
                                     'roomname'  => 'schedule_roomname',
                                     'roomseats' => 'schedule_roomseats',
-                                    'roomtopic' => 'schedule_topic', // does not exist yet
+                                    'roomtopic' => 'schedule_topic',
                                     'title'     => 'presentation_title',
                                     'category'  => 'presentation_category',
                                     'type'      => 'presentation_type',

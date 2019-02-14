@@ -32,23 +32,23 @@
 }
 
 .schedule .scheduletitle {
-    font-size: xx-large;
-    font-weight: 400;
-    text-align: left;
+    font-size:  xx-large;
+    font-weight:     400;
+    text-align:     left;
     padding-bottom: 12px;
 }
 
 .schedule .schedulechooser {
     background-color: #f8f8f8;
-    border: 2px solid #999;
-    border-radius: 3px;
+    border:    2px solid #999;
+    border-radius:        3px;
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2),
                 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-    font-size: initial;
-    margin: 4px 0px;
-    padding-top: 4px;
-    padding-bottom: 4px;
-    width: max-content;
+    font-size:        initial;
+    margin:           4px 0px;
+    padding-top:          4px;
+    padding-bottom:       4px;
+    width:        max-content;
 }
 
 .schedule .schedulechooser span {
@@ -81,10 +81,10 @@
 .schedule .session {
     background-color: #fff;
     border: 1px solid #aaa;
-    border-radius: 4px;
-    padding: 3px 6px;
-    margin: 6px 0px;
-    overflow: auto;
+    border-radius:     4px;
+    padding:       3px 6px;
+    margin:        6px 0px;
+    overflow:         auto;
 }
 
 .schedule .session.presentation {
@@ -120,15 +120,15 @@
 
 .schedule .sharedsession .item {
     margin-bottom: 12px;
-    overflow: auto;
-    position: relative;
+    overflow:      auto;
+    position:  relative;
 }
 
 .schedule .time,
 .schedule .room,
 .schedule .title,
 .schedule .authors {
-    overflow: hidden;
+    overflow:        hidden;
     text-overflow: ellipsis;
 }
 
@@ -185,11 +185,11 @@
 }
 
 .schedule .title {
-    clear: left;
-    font-size: 1.2em;
-    overflow: hidden;
+    clear:             left;
+    font-size:        1.2em;
+    overflow:        hidden;
     text-overflow: ellipsis;
-    white-space: normal;
+    white-space:     normal;
 }
 
 .schedule .authors {
@@ -197,8 +197,8 @@
 }
 
 .schedule .schedulenumber {
-    font-style: normal;
-    font-weight: 400;
+    font-style:     normal;
+    font-weight:       400;
 }
 
 .schedule .schedulenumber:not(:empty):before {
@@ -213,18 +213,27 @@
     font-size: small;
 }
 
-.schedule .category:not(:empty) + .type:not(:empty):before {
-    content: " ";
-}
-
 .schedule .category,
 .schedule .topic {
     display: none;
 }
 
+/** special case to highlight MAJ grant reports */
+.schedule .session.maj .category {
+    display:          block;
+    color:             #f44;
+    font-size:         12px;
+    font-weight:        500;
+}
+
 .schedule .type {
     color:             #666;
     font-size:        0.8em;
+}
+
+/** white space between category and type */
+.schedule .category:not(:empty) + .type:not(:empty):before {
+    content: " ";
 }
 
 .schedule .summary {
@@ -286,7 +295,7 @@
 .schedule .emptyseats {
     color:           purple;
     height:            17px;
-    margin:         1px 6px;
+    margin:     1px 4px 0px;
 }
 
 .schedule .scheduleinfo {
@@ -409,7 +418,7 @@
 
     .schedule .attending,
     .schedule .notattending {
-        padding-bottom:   1.8em;
+        padding-bottom:   2.8em;
     }
 
     .schedule.myschedule .notattending {
@@ -492,7 +501,7 @@
     }
 
     .schedule .emptyseats {
-        display:           none;
+        font-size:        0.9em;
     }
 }
 
