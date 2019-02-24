@@ -22,8 +22,9 @@
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since       2.9
  */
-define(["jquery", "jqueryui", "core/str", // split this line because "grunt" doesn't like long lines
-        "block_maj_submissions/html", "block_maj_submissions/unicode"], function($, JUI, STR, HTML, UNICODE) {
+define(["jquery", "jqueryui", "core/str", // split this define statement because
+        "block_maj_submissions/html", // "grunt" doesn't like long lines of code
+        "block_maj_submissions/unicode"], function($, JUI, STR, HTML, UNICODE) {
 
     /** @alias module:block_maj_submissions/tool_setupschedule */
     var TOOL = {};

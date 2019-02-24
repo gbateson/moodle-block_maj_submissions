@@ -27,6 +27,9 @@
 // disable direct access to this block
 defined('MOODLE_INTERNAL') || die();
 
+// get parent class, "block_base"
+require_once($CFG->dirroot.'/blocks/moodleblock.class.php');
+
 /**
  * block_maj_submissions
  *
@@ -1853,6 +1856,27 @@ class block_maj_submissions extends block_base {
     }
 
     /**
+     * plain_text
+     *
+     * @param string $text string possibly containing HTML and/or unicode chars
+     * @return single-line, plain-text version of $text
+     */
+    static public function plain_text($text) {
+        // remove single-byte spaces before HTML tags
+        $search = '/(?: |\t|\r|\n|\x{00A0}|\x{3000}|&nbsp;|(?:<[^>]*>))+/us';
+        $text = preg_replace($search, ' ', $text);
+        // remove single-byte spaces following double-byte char
+        $search = '/(?<=[\x{3001}-\x{3002},\x{FF01}-\x{FF1F}]) +/u';
+        $text = preg_replace($search, '', $text);
+        // ensure there is no space before punctuation
+        // and exactly one space after (but don't touch numbers)
+        $search = array('/ +(?=[,.?!:;])/us', '/([,.])(?=[^0-9 ])\s*/us', '/([?!:;])\s*/us');
+        $replace = array('', '$1 ', '$1 ');
+        $text = preg_replace($search, $replace, $text);
+        return trim($text);
+    }
+
+    /**
      * context
      *
      * a wrapper method to offer consistent API to get contexts
@@ -2071,5 +2095,288 @@ class block_maj_submissions extends block_base {
             $info[$rid] = get_string($string, $plugin, $seats);
         }
         return $info;
+    }
+
+    /**
+     * Format a submission record as HTML suitable for adding to the conference schedule
+     * This method is used by the setupschedule tool in this block_base
+     * and also by the "setup_schedule" subplugin in datafield_action
+     *
+     * @param object $instance a block instance object
+     * @param integer $recordid
+     * @param array $item
+     * @return string of HTML to represent this submission in the conference schedule
+     */
+    static public function format_item($instance, $recordid, $item, $formatcontainer=true) {
+        $html = '';
+
+        $name = 'submission_status';
+        if (array_key_exists($name, $item) && preg_match('/Cancelled|(Not accepted)/', $item[$name])) {
+            return $html;
+        }
+
+        // search/replace strings to extract CSS class from field param1
+        $multilangsearch = array('/<(span|lang)\b[^>]*>([ -~]*?)<\/\1>/u',
+                                 '/<(span|lang)\b[^>]*>.*?<\/\1>/u');
+        $multilangreplace = array('$2', '');
+
+        $firstwordsearch = array('/[^a-zA-Z0-9 ]/u', '/ .*$/u');
+        $firstwordreplace = array('', '');
+
+        $durationsearch = array('/(^.*\()|(\).*$)/u', '/[^0-9]/', '/^.*$/');
+        $durationreplace = array('', '', 'duration$0');
+
+        $sessionclass = 'session';
+
+        // extract category
+        //     個人の発表 Individual presentation
+        //     スポンサー提供の発表 Sponsored presentation
+        //     日本ムードル協会の補助金報告 MAJ R&D grant report
+        if (empty($item['presentation_category'])) {
+            $presentationcategory = '';
+        } else {
+            $presentationcategory = $item['presentation_category'];
+            if (empty($classes['category'][$presentationcategory])) {
+                $class = $presentationcategory;
+                if (strpos($class, '</span>') || strpos($class, '</lang>')) {
+                    $class = preg_replace($multilangsearch, $multilangreplace, $class);
+                }
+                $class = preg_replace($firstwordsearch, $firstwordreplace, $class);
+                $classes['category'][$presentationcategory] = strtolower(trim($class));
+            }
+            $sessionclass .= ' '.$classes['category'][$presentationcategory];
+        }
+
+        // extract type
+        //     ライトニング・トーク（１０分） Lightning talk (10 mins)
+        //     ケース・スタディー（２０分） Case study (20 mins)
+        //     プレゼンテーション（２０分） Presentation (20 mins)
+        //     プレゼンテーション（４０分） Presentation (40 mins)
+        //     プレゼンテーション（９０分） Presentation (90 mins)
+        //     ショーケース（９０分） Showcase (90 mins)
+        //     商用ライトニング・トーク（１０分） Commercial lightning talk (10 mins)
+        //     商用プレゼンテーション（４０分） Commercial presentation (40 mins)
+        //     商用プレゼンテーション（９０分） Commercial presentation (90 mins)
+        if (empty($item['presentation_type'])) {
+            $presentationtype = '';
+        } else {
+            $presentationtype = $item['presentation_type'];
+            if (empty($classes['type'][$presentationtype])) {
+                $class = $presentationtype;
+                if (strpos($class, '</span>') || strpos($class, '</lang>')) {
+                    $class = preg_replace($multilangsearch, $multilangreplace, $class);
+                }
+                $class = preg_replace($firstwordsearch, $firstwordreplace, $class);
+                $classes['type'][$presentationtype] = strtolower(trim($class));
+            }
+            $sessionclass .= ' '.$classes['type'][$presentationtype];
+        }
+
+        if (empty($item['presentation_topic'])) {
+            $presentationtopic = '';
+        } else {
+            $presentationtopic = $item['presentation_topic'];
+        }
+
+        // extract duration CSS class e.g. duration40mins
+        if (empty($item['schedule_duration'])) {
+            $scheduleduration = $presentationtype;
+        } else {
+            $scheduleduration = $item['schedule_duration'];
+        }
+        if ($scheduleduration) {
+            if (isset($classes['duration'][$scheduleduration])) {
+                $class = $classes['duration'][$scheduleduration];
+            } else {
+                $class = $scheduleduration;
+                if (strpos($class, '</span>') || strpos($class, '</lang>')) {
+                    $class = preg_replace($multilangsearch, $multilangreplace, $class);
+                }
+                $class = preg_replace($durationsearch, $durationreplace, $class);
+                if (preg_match('/^\s*duration\d+\s*$/i', $class)) {
+                    $class = strtolower(trim($class));
+                } else {
+                    $class = ''; // no duration specfied
+                }
+                $classes['duration'][$scheduleduration] = $class;
+            }
+            if ($class) {
+                $sessionclass .= ' '.$class;
+            }
+        }
+
+        // extract duration
+        if (empty($item['schedule_duration'])) {
+            $duration = $item['presentation_type'];
+            $duration = preg_match('/[^0-9]/', '', $duration);
+            $duration = $instance->multilang_format_time($duration);
+        } else {
+            $duration = $item['schedule_duration'];
+        }
+
+        if ($formatcontainer) {
+            // start session DIV
+            $html .= html_writer::start_tag('div', array('id' => 'id_recordid_'.$recordid,
+                                                         'class' => $sessionclass,
+                                                         'style' => 'display: inline-block;'));
+        }
+        // time and duration
+        $html .= html_writer::start_tag('div', array('class' => 'time'));
+        $html .= html_writer::tag('span', $item['schedule_time'], array('class' => 'startfinish'));
+        $html .= html_writer::tag('span', $duration, array('class' => 'duration'));
+        $html .= html_writer::end_tag('div');
+
+        // room
+        $html .= html_writer::start_tag('div', array('class' => 'room'));
+        $html .= html_writer::tag('span', $item['schedule_roomname'], array('class' => 'roomname'));
+        $html .= html_writer::tag('span', '', array('class' => 'roomseats'));
+        $html .= html_writer::tag('span', '', array('class' => 'roomtopic'));
+        $html .= html_writer::end_tag('div');
+
+        // title
+        $html .= html_writer::tag('div', $item['presentation_title'], array('class' => 'title'));
+
+        // format authornames
+        $authornames = array();
+        $fields = preg_grep('/^name_(surname)(.*)$/', array_keys($item));
+        foreach ($fields as $field) {
+            if (empty($item[$field])) {
+                continue;
+            }
+            if (trim($item[$field])=='') {
+                continue;
+            }
+            $i = 0;
+            $name = '';
+            $type = '';
+            $lang = 'xx';
+            $parts = explode('_', $field);
+            switch (count($parts)) {
+                case 2:
+                    list($name, $type) = $parts;
+                    break;
+                case 3:
+                    if (is_numeric($parts[2])) {
+                        list($name, $type, $i) = $parts;
+                    } else {
+                        list($name, $type, $lang) = $parts;
+                    }
+                    break;
+                case 4:
+                    if (is_numeric($parts[2])) {
+                        list($name, $type, $i, $lang) = $parts;
+                    } else {
+                        list($name, $type, $lang, $i) = $parts;
+                    }
+                    break;
+            }
+            if (empty($authornames[$i])) {
+                $authornames[$i] = array();
+            }
+            if (empty($authornames[$i][$lang])) {
+                $authornames[$i][$lang] = array();
+            }
+            $authornames[$i][$lang][$type] = self::textlib('strtotitle', $item[$field]);
+        }
+
+        ksort($authornames);
+        foreach ($authornames as $i => $langs) {
+            // remove names with no surname
+            foreach ($langs as $lang => $name) {
+                if (empty($name['surname'])) {
+                    unset($langs[$lang]);
+                }
+            }
+            // format names as multilang if necessary
+            $count = count($langs);
+            if ($count==0) {
+                $authornames[$i] = '';
+                continue;
+            }
+            if ($count==1) {
+                $authornames[$i] = reset($langs);
+                $authornames[$i] = $authornames[$i]['surname'];
+                continue;
+            }
+            foreach ($langs as $lang => $name) {
+                $name = $name['surname'];
+                $params = array('class' => 'multilang', 'lang' => $lang);
+                $authornames[$i][$lang] = html_writer::tag('span', $name, $params);
+            }
+            $authornames[$i] = implode('', $authornames[$i]);
+        }
+        $authornames = array_filter($authornames);
+        $authornames = implode(', ', $authornames);
+
+        if ($authornames=='') {
+            $authornames = 'Tom, Dick, Harry';
+        }
+
+        // for commercial presentations, we append the (Company name) too
+        if (strpos($presentationcategory, 'Sponsored')) {
+            $affiliation = array();
+            $fields = preg_grep('/^affiliation(.*)$/', array_keys($item));
+            foreach ($fields as $field) {
+                if (empty($item[$field])) {
+                    continue;
+                }
+                if (trim($item[$field])=='') {
+                    continue;
+                }
+                $parts = explode('_', $field);
+                if (count($parts) > 1) {
+                    $lang = end($parts);
+                } else {
+                    $lang = 'xx';
+                }
+                $affiliation[$lang] = $item[$field];
+            }
+            if (count($affiliation) > 2) {
+                foreach ($affiliation as $lang => $name) {
+                    $params = array('class' => 'multilang', 'lang' => $lang);
+                    $affiliation[$lang] = html_writer::tag('span', $name, $params);
+                }
+            }
+            if ($affiliation = implode('', $affiliation)) {
+                $authornames .= " ($affiliation)";
+            }
+        }
+
+        // schedule number and authornames
+        $html .= html_writer::start_tag('div', array('class' => 'authors'));
+        $html .= html_writer::tag('span', $item['schedule_number'], array('class' => 'schedulenumber'));
+        $html .= html_writer::tag('span', $authornames, array('class' => 'authornames'));
+        $html .= html_writer::end_tag('div');
+
+        // category, type and topic
+        $html .= html_writer::start_tag('div', array('class' => 'categorytypetopic'));
+        $html .= html_writer::tag('span', $presentationcategory, array('class' => 'category'));
+        $html .= html_writer::tag('span', $presentationtype, array('class' => 'type'));
+        $html .= html_writer::tag('span', $presentationtopic, array('class' => 'topic'));
+
+        $html .= html_writer::end_tag('div'); // end categorytypetopic DIV
+
+        // summary (remove all tags and nbsp)
+        $text = self::plain_text($item['presentation_abstract']);
+        $html .= html_writer::tag('div', $text, array('class' => 'summary'));
+
+        // capacity
+        $html .= html_writer::start_tag('div', array('class' => 'capacity'));
+        $html .= html_writer::tag('div', '', array('class' => 'emptyseats'));
+        $html .= html_writer::start_tag('div', array('class' => 'attendance'));
+        $html .= html_writer::empty_tag('input', array('id' => 'id_attend_'.$recordid,
+                                                       'name' => 'attend['.$recordid.']',
+                                                       'type' => 'checkbox',
+                                                       'value' => '1'));
+        $text = get_string('notattending', 'block_maj_submissions');
+        $html .= html_writer::tag('label', $text, array('for' => 'id_attend_'.$recordid));
+        $html .= html_writer::end_tag('div'); // end attendance DIV
+        $html .= html_writer::end_tag('div'); // end capacity DIV
+
+        if ($formatcontainer) {
+            $html .= html_writer::end_tag('div'); // end session DIV
+        }
+
+        return $html;
     }
 }

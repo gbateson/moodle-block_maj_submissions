@@ -668,27 +668,6 @@ abstract class block_maj_submissions_tool_form extends moodleform {
     }
 
     /**
-     * plain_text
-     *
-     * @param string $text string possibly containing HTML and/or unicode chars
-     * @return single-line, plain-text version of $text
-     */
-    static public function plain_text($text) {
-        // remove single-byte spaces before HTML tags
-        $search = '/(?: |\t|\r|\n|\x{00A0}|\x{3000}|&nbsp;|(?:<[^>]*>))+/us';
-        $text = preg_replace($search, ' ', $text);
-        // remove single-byte spaces following double-byte char
-        $search = '/(?<=[\x{3001}-\x{3002},\x{FF01}-\x{FF1F}]) +/u';
-        $text = preg_replace($search, '', $text);
-        // ensure there is no space before punctuation
-        // and exactly one space after (but don't touch numbers)
-        $search = array('/ +(?=[,.?!:;])/us', '/([,.])(?=[^0-9 ])\s*/us', '/([?!:;])\s*/us');
-        $replace = array('', '$1 ', '$1 ');
-        $text = preg_replace($search, $replace, $text);
-        return trim($text);
-    }
-
-    /**
      * Return a regexp sub-string to match a sequence of low ascii chars.
      */
     static public function low_ascii_substring() {
