@@ -825,6 +825,7 @@ abstract class block_maj_submissions_tool_form extends moodleform {
             'course'        => $course->id,
             'section'       => $section->section,
             'module'        => $moduleid,
+            'modname'       => $modulename,
             'modulename'    => $modulename,
             'add'           => $modulename,
             'update'        => 0,
