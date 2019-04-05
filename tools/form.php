@@ -900,6 +900,7 @@ abstract class block_maj_submissions_tool_form extends moodleform {
         set_coursemodule_visible($newrecord->id, $newrecord->visible);
 
         if (class_exists('\\core\\event\\course_module_created')) {
+            // Moodle >= 2.6
             \core\event\course_module_created::create_from_cm($newrecord)->trigger();
         } else {
             // Trigger mod_updated event with information about this module.
@@ -911,8 +912,10 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                 'userid'     => $USER->id
             );
             if (function_exists('events_trigger_legacy')) {
+                // Moodle 2.6 - 3.0 ... so not used here anymore
                 events_trigger_legacy('mod_created', $event);
             } else {
+                // Moodle <= 2.5
                 events_trigger('mod_created', $event);
             }
         }
