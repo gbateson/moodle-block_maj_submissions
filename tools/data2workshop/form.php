@@ -344,7 +344,7 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
 					if (empty($record->title)) {
 						$title = get_string('notitle', $this->plugin, $record->recordid);
 					} else {
-						$title = self::plain_text($record->title);
+						$title = block_maj_submissions::plain_text($record->title);
 					}
 					if (array_key_exists($title, $duplicaterecords)) {
 						$duplicaterecords[$title]++;
@@ -463,7 +463,7 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
                         if (empty($record->$name)) {
                             $record->$name = get_string('noabstract', $this->plugin);
                         } else {
-                            $record->$name = self::plain_text($record->$name);
+                            $record->$name = block_maj_submissions::plain_text($record->$name);
                             if (substr_count($record->abstract, ' ') > 2) {
                                 $record->wordcount = str_word_count($record->abstract);
                             }
@@ -487,7 +487,7 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
                                 } else {
                                     $fieldname = self::convert_to_multilang($field, $config);
                                     $fieldname = html_writer::tag('b', $fieldname.': ');
-                                    $fieldvalue = self::plain_text($record->$name);
+                                    $fieldvalue = block_maj_submissions::plain_text($record->$name);
                                     $fieldvalue = self::convert_to_multilang($fieldvalue, $config);
                                     $content .= html_writer::tag('p', $fieldname.$fieldvalue);
                                 }

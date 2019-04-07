@@ -125,7 +125,7 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
                     $value = block_maj_submissions::textlib('strtotitle', $value);
                     break;
                 case 'text':
-                    $value = block_maj_submissions_tool_form::plain_text($value);
+                    $value = block_maj_submissions::plain_text($value);
                     $value = block_maj_submissions::trim_text($value, 100, 100, 0);
                     break;
                 case 'start_date':
@@ -158,7 +158,7 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
                         $value = preg_replace($mainlangsearch, '$1', $value);
                         $value = preg_replace($multilangsearch, '', $value);
                     }
-                    $value = block_maj_submissions_tool_form::plain_text($value);
+                    $value = block_maj_submissions::plain_text($value);
             }
 			$line[] = '"'.str_replace('"', '""', $value).'"';
         }

@@ -455,7 +455,7 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
 
                                     // CSS class for feedback
                                     $params = array('class' => 'feedback');
-                                    if ($feedback = self::plain_text($assessment->feedbackauthor)) {
+                                    if ($feedback = block_maj_submissions::plain_text($assessment->feedbackauthor)) {
                                         $feedback = html_writer::tag('b', get_string('feedback')).' '.$feedback;
                                         $feedback = html_writer::tag('p', $feedback, $params);
                                         $content .= $feedback;
