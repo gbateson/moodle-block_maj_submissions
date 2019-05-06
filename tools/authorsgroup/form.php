@@ -94,10 +94,7 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
         $mform->disabledIf('add'.$name, 'sourcedatabase', 'eq', 0);
         $mform->disabledIf('add'.$name, 'sourcedatabase', 'eq', self::CREATE_NEW);
 
-		foreach ($this->groupfieldnames as $name) {
-			$options = $this->get_group_options();
-			$this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options);
-		}
+        $this->add_group_fields($mform);
 
         $name = 'resetgroup';
         $this->add_field($mform, $this->plugin, $name, 'selectyesno', PARAM_INT);

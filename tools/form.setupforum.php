@@ -75,9 +75,8 @@ class block_maj_submissions_tool_setupforum extends block_maj_submissions_tool_f
             $sectionnum = 0;
         }
 
+        $this->add_group_fields($mform);
         foreach ($this->groupfieldnames as $name) {
-            $options = $this->get_group_options();
-            $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options);
             $mform->disabledIf($name, $this->forumfieldname, 'eq', 0);
         }
 

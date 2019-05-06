@@ -379,7 +379,7 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                     $author = $DB->get_record('user', array('id' => $record->userid));
 
                     // NOTE: $cm is now the WORKSHOP cm record
-                    $databaseurl = array('id' => $database->cmid, 'rid' => $record->recordid);
+                    $databaseurl = array('id' => $database->cmid, 'rid' => $record->recordid, 'mode' => 'single');
                     $databaseurl = new moodle_url('/mod/data/view.php', $databaseurl);
 
                     // add author info to email parameters
@@ -590,14 +590,6 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                         $messagehtml = format_text($messagetext, FORMAT_MOODLE);
                         email_to_user($author, $noreply, $subject, $messagetext, $messagehtml);
                     }
-
-                    // TODO: allow $USER to select a presenters group in the form
-                    // TODO: mention the presenters group in the email message
-                    // TODO: add the $author to the presenters group
-                    // TODO: add the co-authors to the presenters group
-
-                    // TODO: setup a presenters forum
-                    // TODO: subscribe all presenters to the forum
                 }
                 unset($records, $record);
             }

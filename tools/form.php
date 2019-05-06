@@ -357,7 +357,21 @@ abstract class block_maj_submissions_tool_form extends moodleform {
     }
 
     /**
-     * get_field_options
+     * add_group_fields
+     *
+     * @param object $mform
+     * @param string $plugin
+     * @return void, but will modify $mform
+     */
+    protected function add_group_fields($mform) {
+        foreach ($this->groupfieldnames as $name) {
+            $options = $this->get_group_options();
+            $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options);
+        }
+    }
+
+    /**
+     * get_group_options
      *
      * @uses $DB
      * @return array of database fieldnames
@@ -452,13 +466,23 @@ abstract class block_maj_submissions_tool_form extends moodleform {
         $restrictions = $this->restrictions;
         foreach ($this->groupfieldnames as $name) {
             if (isset($data->$name) && is_numeric($data->$name)) {
-                $restrictions[] = (object)array(
-                    'type' => 'group',
-                    'id' => intval($data->$name)
-                );
+                $restrictions[] = $this->get_group_restriction($data->$name);
             }
         }
         return $restrictions;
+    }
+
+    /**
+     * get_restrictions for a new activity created with this form
+     *
+     * @param object containing newly submitted form $data
+     * @return array of stdClass()
+     */
+    public function get_group_restriction($groupid) {
+        return (object)array(
+            'type' => 'group',
+            'id' => intval($groupid)
+        );
     }
 
     /**
@@ -515,7 +539,9 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                     if ($this->defaultname=='') {
                         $activityname = $this->instance->get_string('pluginname', $this->modulename);
                     } else {
+                        // get default name without empty brackets (single byte, or double byte)
                         $activityname = $this->instance->get_string($this->defaultname, $this->plugin, $a);
+                        $activityname = preg_replace('/\s*((\(\))|(\x{FF08}\x{FF09}))/u', '', $activityname);
                     }
                 }
 
@@ -812,7 +838,12 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                   'JOIN {course_sections} cs ON cm.section = cs.id '.
                   'JOIN {'.$modulename.'} x ON cm.module = ? AND cm.instance = x.id';
         $where  = 'cs.course = ? AND cs.section = ? AND x.name = ?';
-        $params = array($moduleid, $course->id, $section->section, $instancename);
+        $params = array($moduleid, $course->id, $section->section, $instancename, 0);
+        if (class_exists('cm_info') && property_exists('cm_info', 'deletioninprogress')) {
+            // Moodle >= 3.2
+            $where .= ' AND deletioninprogress = ?';
+            $params[] = 0;
+        }
         $order  = 'cm.visible DESC, cm.added DESC'; // newest, visible cm first
         if ($cm = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $order", $params, 0, 1)) {
             return reset($cm);
@@ -1072,7 +1103,7 @@ abstract class block_maj_submissions_tool_form extends moodleform {
             }
         }
 
-        // add new $restrictions if they do not exists in $structure
+        // add new $restrictions if they do not exist in $structure
         foreach ($restrictions as $i => $new) {
             $found = false;
             foreach ($structure->c as $old) {

@@ -382,7 +382,7 @@ $string['resetgroup_help'] = 'This setting specifies whether or not to reset the
 **Yes**
 : Any existing members of the group will be removed, and then the newly selected presenters will be added.';
 $string['resetpasswords'] = 'Regenerate passwords';
-$string['resetpasswords_help'] = 'If this setting is enabled, the passwords for the anonymous users will be regenerated and included in the report of which real reviewer was assigned as which anonymous reviewer.';
+$string['resetpasswords_help'] = 'If this setting is enabled, the passwords for the anonymous reviewers will be regenerated and included in the report of which real reviewer was assigned as which anonymous reviewer.';
 $string['resetsubmissions'] = 'Reset submissions';
 $string['resetsubmissions_help'] = 'This setting specifies whether or not to reset the target workshop before transferring submissions from the source database.
 

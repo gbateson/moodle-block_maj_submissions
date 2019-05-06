@@ -138,10 +138,7 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
         $mform->disabledIf($name, 'targetworkshopnum', 'eq', 0);
         $mform->disabledIf($name, 'targetworkshopnum', 'eq', self::CREATE_NEW);
 
-        foreach ($this->groupfieldnames as $name) {
-            $options = $this->get_group_options();
-            $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options);
-        }
+        $this->add_group_fields($mform);
 
         $this->add_action_buttons();
     }

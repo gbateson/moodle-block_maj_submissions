@@ -58,10 +58,12 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
     );
 
     /**
-     * The name of the form field containing
-     * the id of a group of anonymous reviewers
+     * The names of the form fields containing an id of a group of users
+     *
+     * Note that programcommittee and anonymousauthors
+     * have already been added by the data2workshop tool
      */
-    protected $groupfieldnames = 'programcommittee,anonymousreviewers';
+    protected $groupfieldnames = 'programcommittee,reviewers,anonymousreviewers';
 
     /**
      * definition
@@ -73,14 +75,8 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
         $options = self::get_cmids($mform, $this->course, $this->plugin, 'workshop');
         $this->add_field($mform, $this->plugin, $name, 'selectgroups', PARAM_INT, $options, 0);
 
-        $name = 'reviewers';
-        $options = $this->get_group_options();
-        $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options);
-        $mform->disabledIf($name, 'targetworkshop', 'eq', 0);
-
+        $this->add_group_fields($mform);
 		foreach ($this->groupfieldnames as $name) {
-			$options = $this->get_group_options();
-			$this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options);
 			$mform->disabledIf($name, 'targetworkshop', 'eq', 0);
 		}
 
@@ -528,13 +524,22 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                     'content' => html_writer::table($table),
                     'visible' => 0
                 );
+                // restrict access to program committee, if available
+                // otherwise, hide from students
 				$name = 'programcommittee';
 				if (isset($data->$name) && is_numeric($data->$name)) {
 					$pagedata->$name = $data->$name;
+                    $restrictions = array($this->get_group_restriction($data->$name));
 				} else {
 					$pagedata->visible = 0; // hide from students
+                    $restrictions = false;
 				}
-                $this->get_cm($msg, $pagedata, $time, 'page', $a);
+				if ($page = $this->get_cm($msg, $pagedata, $time, 'page', $a)) {
+                    if ($restrictions) {
+                        self::set_cm_restrictions($page, $restrictions);
+                    }
+				}
+
             }
         }
 
