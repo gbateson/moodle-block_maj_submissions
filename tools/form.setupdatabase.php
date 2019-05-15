@@ -31,7 +31,7 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot.'/blocks/maj_submissions/tools/form.php');
 require_once($CFG->dirroot.'/mod/data/lib.php');
 
-class block_maj_submissions_tool_setupdatabase extends block_maj_submissions_tool_form {
+abstract class block_maj_submissions_tool_setupdatabase extends block_maj_submissions_tool_form {
 
     protected $type = '';
     protected $defaultpreset = '';

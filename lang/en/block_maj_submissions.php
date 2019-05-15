@@ -6,6 +6,7 @@ $string['pluginname'] = 'MAJ Submissions';
 $string['maj_submissions:addinstance'] = 'Add a new MAJ Submissions block';
 
 // more strings
+$string['abstract'] = 'Abstract';
 $string['accepted'] = 'Your proposal has been <u>accepted</u>.';
 $string['acceptedfarewell'] = 'We look forward to seeing you at the conference in {$a}.';
 $string['add'] = 'Add';
@@ -22,6 +23,7 @@ $string['addroom'] = 'Add a new room';
 $string['addroomheadings'] = 'Add room headings';
 $string['addslot'] = 'Add a new slot';
 $string['addstatusfilter'] = 'Add a status filter';
+$string['affiliation'] = 'Affiliation';
 $string['after'] = 'After';
 $string['alldays'] = 'All days';
 $string['allheadingsalldays'] = 'All room headings on all days';
@@ -102,6 +104,7 @@ $string['createnewsection'] = 'Create new section';
 $string['currentheadings'] = 'These room headings only';
 $string['currentstate'] = 'Current state';
 $string['currentstate_help'] = 'The current state of the submission process.';
+$string['custom'] = 'Custom';
 $string['customdatefmt'] = 'Custom date format string';
 $string['customdatefmt_help'] = 'If you specify a date format here, it will be used in preference to any of the standard Moodle date formats.';
 $string['databaseactivity'] = 'Database activity';
@@ -138,6 +141,8 @@ $string['displaylangs'] = 'Display languages';
 $string['displaylangs_help'] = 'Enter the language codes, separated by commas, for languages you wish to use on this conference system.';
 $string['displaylinks'] = 'Display links';
 $string['displaylinks_help'] = 'If this setting is enabled, this block will display a list of links - one to each section in this course.';
+$string['displayperpage'] = 'Entries per page';
+$string['displayperpage_help'] = 'Select the number of entries to display per page when using this tool.';
 $string['displaystats'] = 'Display statistics';
 $string['displaystats_help'] = 'If this setting is enabled, the number of submissions and registrations received so far will be displayed in this MAJ Submissions block on the course page.';
 $string['duplicateauthors'] = '{$a} authors already had workshop submissions, and were excluded from the pool of anonymous authors.';
@@ -156,10 +161,10 @@ $string['editroom'] = 'Edit room';
 $string['editroomheadings'] = 'Edit room headings';
 $string['editsession'] = 'Edit session';
 $string['editslot'] = 'Edit slot';
+$string['emailmessage'] = 'Email message';
+$string['emailmessage_help'] = 'Select the email message template that will be sent to the owners of the selected records. If you select "Custom", you should add a custom message.';
 $string['emptyschedule'] = 'Empty<br />schedule';
 $string['emptyseatsx'] = '{$a} seats left';
-$string['events'] = 'Conference event [{no}]';
-$string['events_help'] = 'Enter the name of an event that can be added to the schedule.';
 $string['exportdates'] = 'Export dates';
 $string['exporthandbook'] = 'Export handbook';
 $string['exportschedule'] = 'Export schedule';
@@ -218,6 +223,7 @@ $string['last'] = 'Last';
 $string['linkenrol'] = 'Enrol in this Moodle course';
 $string['linklogin'] = 'Login to this Moodle site';
 $string['linksignup'] = 'Create an account on this Moodle site';
+$string['listofpresenters'] = 'List of Presenters';
 $string['lunch'] = 'Lunch';
 $string['lunchsummary'] = 'Lunch will be served in the cafetria on the 2nd floor of main building.';
 $string['lunchtime'] = 'Lunch time';
@@ -245,12 +251,19 @@ $string['multiplerooms'] = 'Multiple rooms';
 $string['myschedule'] = 'My schedule';
 $string['newactivitycreated'] = 'New activity created: {$a}';
 $string['newactivityskipped'] = 'Creation of new activity skipped: {$a}';
+$string['newfeedback'] = 'New feedback';
+$string['newfeedback_help'] = 'Select the new feedback for the selected records. If you select "Custom", you should add custom feedback.';
 $string['newgroupcreated'] = 'New group created: {$a}';
 $string['newgroupmembers'] = '{$a->count} member(s) added to group: {$a->name}';
 $string['newresourcecreated'] = 'New resource created: {$a}';
 $string['newresourceskipped'] = 'Creation of new resource skipped: {$a}';
+$string['newscore'] = 'New score';
+$string['newscore_help'] = 'If a value is specified here, it will be set as the "Review score" for the selected records.';
 $string['newsectioncreated'] = 'New section created: {$a}';
+$string['newstatus'] = 'New status';
+$string['newstatus_help'] = 'Select the new status for the selected records.';
 $string['noabstract'] = 'Oops - no abstract found for this presentation.';
+$string['norecordsfound'] = 'No records found matching these search conditions.';
 $string['normalroom'] = 'Normal room';
 $string['notaccepted'] = 'Unfortunately, your proposal has <u>NOT</u> been accepted.';
 $string['notattending'] = 'Not attending';
@@ -288,8 +301,10 @@ $string['presentation_topic'] = 'Presentation topic';
 $string['presentation_topic_help'] = 'The presentation topic, if any, of this event.';
 $string['presentation_type'] = 'Presentation type';
 $string['presentation_type_help'] = 'The presentation type, if any, of this event.';
+$string['presentations'] = 'Presentations';
 $string['presentationsprocess'] = 'the proposal submission process';
 $string['presentationsrecord'] = 'a presentation proposal';
+$string['presenters'] = 'Presenters';
 $string['presentersadded'] = 'Added {$a->added} out of {$a->presenters} presenters (from {$a->selected} out of {$a->submissions} submissions) to the "{$a->group}" group';
 $string['preset'] = 'Database preset';
 $string['preset_help'] = 'A "preset" is a template for creating a Moodle database activity. It includes specifications of the database fields, and the layout of the webpages to edit and display records. However, it does not include any actual data.
@@ -327,9 +342,6 @@ $string['registerearlytime_help'] = 'The dates and times at which the early-bird
 $string['registereventscmid'] = 'Conference events database';
 $string['registereventscmid_help'] = 'Select the database of conference events, such as registration and food breaks, that can be added to the schedule.';
 $string['registereventsname'] = 'Conference events';
-$string['registerroomscmid'] = 'Conference rooms database';
-$string['registerroomscmid_help'] = 'Select the database of conference rooms where conference presentations and events will take place.';
-$string['registerroomsname'] = 'Conference rooms';
 $string['registerparticipation'] = 'Register participation';
 $string['registerpresenterscmid'] = 'Presenter registrations';
 $string['registerpresenterscmid_help'] = 'The database activity where presenters register their intention to attend and participate in the conference.';
@@ -337,6 +349,9 @@ $string['registerpresenterssectionnum'] = 'Registration section';
 $string['registerpresenterssectionnum_help'] = 'The course section in which to create the new registration database.';
 $string['registerpresenterstime'] = 'Registration for presenters';
 $string['registerpresenterstime_help'] = 'The dates and times at which the online registration for presenters starts and finshes.';
+$string['registerroomscmid'] = 'Conference rooms database';
+$string['registerroomscmid_help'] = 'Select the database of conference rooms where conference presentations and events will take place.';
+$string['registerroomsname'] = 'Conference rooms';
 $string['registration'] = 'Registration';
 $string['registrationsprocess'] = 'the conference registration process';
 $string['registrationsrecord'] = 'your registration details';
@@ -393,6 +408,8 @@ $string['resetsubmissions_help'] = 'This setting specifies whether or not to res
 : All old submissions will be removed from the target workshop before new submissions are transferred from the source database. In addition, any links from other databases to the target workshop will be removed.';
 $string['reviewcmids'] = 'Review activity [{no}]';
 $string['reviewcmids_help'] = 'A workshop activity that is used to peer review submissions.';
+$string['reviewdeadline'] = 'Review deadline';
+$string['reviewdeadline_help'] = 'The deadline for reviewers to complete their task. This date is used in the email that is sent to reviewers.';
 $string['reviewerinstructions'] = 'Dear {$a->reviewer},
 
 Thank you so much for offering to be a part of the presentation vetting process. {$a->organization} is grateful for your assistance. We are happy to report that from today, you can begin vetting the presentations that have been assigned to you.
@@ -454,9 +471,30 @@ $string['reviewspersubmission'] = 'Reviews per submission';
 $string['reviewspersubmission_help'] = 'The number of reviews required for each submission. If this number if zero, then ALL reviewers will be assigned to ALL submissions. Otherwise, the system will try to assign this number of reviewers to each submission, and try to assign the same number of submissions to each anonymous reviewer.';
 $string['reviewstransferred'] = 'Reviews for the following submissions were transfered to the target database.';
 $string['reviewsubmissions'] = 'Review submissions';
+$string['reviewsupdated'] = 'The the following submissions were updated in the source database.';
 $string['reviewteamname'] = 'Submission review team';
 $string['reviewtime'] = 'Selection of submissions';
 $string['reviewtime_help'] = 'The start and finish dates of the submission selection period.';
+$string['reviewupdatemessage'] = 'Dear {$a->fullname},
+
+Greetings from the organizers of {$a->conferencename}.
+
+We would like to inform you the status of your submission for this conference has been updated. Details of the new status are as follows:
+
+Submission ID: {$a->recordid}
+Submission title: {$a->title}
+Submission status: {$a->submission_status}
+
+After logging in, you can view full details of your submission via the following link:
+URL: {$a->databaseurl}
+
+Best regards,
+{$a->sendername}
+{$a->senderemail}
+
+{$a->conferencename}
+{$a->reviewteamname}';
+$string['reviewupdatesubject'] = '{$a->conferencename}: Submission Status Update [{$a->author}, #{$a->recordid}]';
 $string['revisecmids'] = 'Revision activity [{no}]';
 $string['revisecmids_help'] = 'A database activity that is used to revise submissions after they have been peer reviewed. Usually this is the same database that was used to collect submissions initially.';
 $string['revisesectionnum'] = 'Revision section';
@@ -501,6 +539,8 @@ $string['scheduleinfo'] = 'Scheduling<br />information';
 $string['schedulenumber'] = 'Schedule number';
 $string['schedulesessiontime'] = '%H:%M';
 $string['scheduleupdated'] = 'Schedule was updated: {$a}';
+$string['search'] = 'Search';
+$string['search_help'] = 'If text is entered here, then any records that have this text in at least one of their fields will be selected.';
 $string['seatsavailable'] = 'Seats available';
 $string['selectitems'] = 'Select presentations';
 $string['selectrooms'] = 'Select days and rooms';
@@ -526,10 +566,13 @@ $string['slotinterval'] = 'Interval between time slots';
 $string['slotinterval_help'] = 'The interval between time slots';
 $string['slotlength'] = 'Length of each time slot';
 $string['slotstart'] = 'Start of first time slot';
+$string['sort'] = 'Sort';
+$string['sort_help'] = 'If a field is selected here, then the selected records will be sorted by that field. The directtion of the sort, asending or descending, can also be specified.';
 $string['sourcedatabase'] = 'Source database';
 $string['sourcedatabase_help'] = 'Select the database which contains the submissions to be vetted.';
 $string['sourceworkshop'] = 'Source workshop';
 $string['sourceworkshop_help'] = 'Select the workshop activity which contains the submissions that have been vetted.';
+$string['standard'] = 'Standard';
 $string['starttime'] = 'Start time';
 $string['state'] = 'State';
 $string['statusfilter'] = 'Status filter [{no}]';
@@ -538,6 +581,7 @@ $string['statusfilter2'] = ', set status to';
 $string['statusfilter3'] = '.';
 $string['statusfilter_help'] = 'Select a minimum grade for submissions in the source workshop and the corresponding status for proposals in the target database.';
 $string['submissiongradesreset'] = '<b>Grade and assessment data was reset</b> for {$a->count} workshop submission(s).<br />Submission id list: <i>{$a->ids}</i>';
+$string['submissions'] = 'Submissions';
 $string['submissionscount'] = 'Number of submissions';
 $string['submissionsdeleted'] = 'Workshop was reset and {$a} old submission(s) were removed.';
 $string['submissionslist'] = 'List of submissions';
@@ -592,13 +636,12 @@ $string['toolsetup_help'] = 'On this page you can set up a database for a confer
 **To create a new database**, give a name for the new database and specify the section in which it should be created. This can be an existing section, or a new section. If you specify a new section you will need to give a name for the new section.';
 $string['toolsetupevents'] = 'Add conference events';
 $string['toolsetupevents_desc'] = 'Setup a database of conference events';
-$string['toolsetuprooms'] = 'Add conference rooms';
-$string['toolsetuprooms_desc'] = 'Setup a database of conference rooms';
 $string['toolsetuppresentations'] = 'Collect presentation proposals';
 $string['toolsetuppresentations_desc'] = 'Setup a database for presentations';
 $string['toolsetupregistrations'] = 'Collect registration data';
 $string['toolsetupregistrations_desc'] = 'Setup a database for registrations';
 $string['toolsetuprooms'] = 'Add conference rooms';
+$string['toolsetuprooms_desc'] = 'Setup a database of conference rooms';
 $string['toolsetupschedule'] = 'Setup the schedule';
 $string['toolsetupschedule_desc'] = 'Assign time slots in the schedule';
 $string['toolsetupschedule_help'] = 'On this page you can specify when and where each event, workshop and presentation will be held at the conference.';
@@ -607,6 +650,9 @@ $string['toolsetupvetting_desc'] = 'Assign users to vet submissions';
 $string['toolsetupvetting_help'] = 'On this page you can designate which group of anonymous users will vet and review the submissions in a specified workshop activity.';
 $string['toolsetupworkshops'] = 'Collect workshop proposals';
 $string['toolsetupworkshops_desc'] = 'Setup a database for workshops';
+$string['toolupdatevetting'] = 'Update vetting results';
+$string['toolupdatevetting_desc'] = 'Change submission statuses';
+$string['toolupdatevetting_help'] = 'Select records from the submissions database and change their status.';
 $string['toolworkshop2data'] = 'Publish vetting results';
 $string['toolworkshop2data_desc'] = 'Convert Workshops -> Database';
 $string['toolworkshop2data_help'] = 'On this page you can copy reviewers\' feedback and scores from a workshop activity to a database activity. Usually, the target database will be the database in which the submissions were originally collected, but you can also choose to create a new database.
@@ -634,12 +680,3 @@ $string['workshopsrecord'] = 'a workshop proposal';
 $string['workshopstime'] = 'Conference workshops';
 $string['workshopstime_help'] = 'The start and finish dates of the conference workshops.';
 $string['youwillbenotified'] = 'When the changes have been made, they will be reviewed and you will be notified of the new acceptance status.';
-
-$string['abstract'] = 'Abstract';
-$string['affiliation'] = 'Affiliation';
-$string['listofpresenters'] = 'List of Presenters';
-$string['presentations'] = 'Presentations';
-$string['presenters'] = 'Presenters';
-
-$string['reviewdeadline'] = 'Review deadline';
-$string['reviewdeadline_help'] = 'The deadline for reviewers to complete their task. This date is used in the email that is sent to reviewers.';

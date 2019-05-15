@@ -154,8 +154,7 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
      * @return array of database fieldnames
      */
     protected function get_statuslevel_options() {
-        if ($cmid = optional_param('targetdatabasenum', null, PARAM_INT)) {
-            $dataid = get_fast_modinfo($this->course)->get_cm($cmid)->instance;
+        if ($dataid = $this->get_dataid('targetdatabasenum')) {
             $options = $this->get_menufield_options($dataid, 'submission_status');
     	} else {
     		$options = array();
@@ -216,74 +215,10 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
             $course = $DB->get_record('course', array('id' => $instance->course));
             $workshop = new workshop($instance, $cm, $course);
 
-            // get ids of fields to transfer to, or set in, the submissions DB
-            // NOTE: the order of these items is important
-            $reviewfields = array(
-                'peer_review_details', // set $submission->grade (must come 1st)
-                'submission_status',   // set $status from $submission->grade
-                'peer_review_score',   // requires $submission->grade
-                'peer_review_notes',   // requires $status
-                'presentation_original'
-            );
-            $reviewfields = array_flip($reviewfields);
-            foreach (array_keys($reviewfields) as $name) {
-                $params = array('dataid' => $database->id, 'name' => $name);
-                $reviewfields[$name] = $DB->get_field('data_fields', 'id', $params);
-            }
-
-            // get formatted deadline for revisions
-            if (! $dateformat = $config->customdatefmt) {
-                if (! $dateformat = $config->moodledatefmt) {
-                    $dateformat = 'strftimerecent'; // default: 11 Nov, 10:12
-                }
-                $dateformat = get_string($dateformat);
-            }
-
-            if (empty($config->revisetimefinish)) {
-                // no deadline has been set for the revisions, so we give them a week
-                $revisetimefinish = strtotime('today midnight') + WEEKSECS - (5 * MINSECS);
-            } else {
-                $revisetimefinish = $config->revisetimefinish;
-            }
-            $revisetimefinish = userdate($revisetimefinish, $dateformat);
-
-            $registrationlink = '';
-            if (! empty($config->registerdelegatescmid)) {
-                $registrationlink = 'registerdelegatescmid';
-            }
-            if (! empty($config->registerpresenterscmid)) {
-                $registrationlink = 'registerpresenterscmid';
-            }
-            if ($registrationlink) {
-                $params = array('id' => $config->$registrationlink);
-                $registrationlink = html_writer::link(new moodle_url('/mod/data/view.php', $params),
-                                                      get_string($registrationlink, $this->plugin),
-                                                      array('target' => '_blank'));
-            }
-
-            if (empty($config->conferencetimestart)) {
-                $conferencemonth = '';
-            } else {
-                $conferencemonth = $config->conferencetimestart;
-                $conferencemonth = userdate($conferencemonth, '%B');
-            }
-
             // get workshop submissions
             $submissions = $DB->get_records('workshop_submissions', array('workshopid' => $workshop->id));
             if ($submissions===false) {
                 $submissions = array();
-            }
-
-            // setup $statusfilters which maps a submission grade to a data record status
-            $statusfilters = array(self::NOT_GRADED => null); // may get overwritten
-            if (isset($data->statusfiltergrade) && isset($data->statusfilterstatus)) {
-                foreach ($data->statusfiltergrade as $i => $grade) {
-                    if (array_key_exists($i ,$data->statusfilterstatus)) {
-                        $statusfilters[intval($grade)] = $data->statusfilterstatus[$i];
-                    }
-                }
-                // sort from highest grade to lowest grade
-                krsort($statusfilters);
             }
 
             // ids of data records that get updated
@@ -327,274 +262,18 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                 $criteria = array();
             }
 
-            // get reply address for email message
-            if (class_exists('core_user')) {
-                // Moodle >= 2.6
-                $noreply = core_user::get_noreply_user();
-            } else {
-                // Moodle <= 2.5
-                $noreply = generate_email_supportuser();
-            }
-
-            // initialize parameters for email message
-            $a = new stdClass();
-
-            if (empty($config->conferencename)) {
-                $a->conferencename = $config->conferencenameen;
-            } else {
-                $a->conferencename = $config->conferencename;
-            }
-
-            if (empty($config->reviewteamname)) {
-                $a->reviewteamname = get_string('reviewteamname', $this->plugin);
-            } else {
-                $a->reviewteamname = $config->reviewteamname;
-            }
-
-            if (empty($data->sendername)) {
-                $a->sendername = fullname($USER);
-            } else {
-                $a->sendername = $data->sendername;
-            }
-
-            if (empty($data->senderemail)) {
-                $a->senderemail = $USER->email;
-            } else {
-                $a->senderemail = $data->senderemail;
-            }
-
             foreach ($submissions as $sid => $submission) {
 
-                // add submission title to email parameters
-                $a->title = $submission->title;
-
-                // get database records that link to this submission
+                // Get database records that link to this submission.
+                // We only expect one record - but there may be more!
                 if ($records = self::get_database_records($workshop, $sid, $database->id)) {
-
-                    // we only expect one record
                     $record = reset($records);
-
-                    // fetch information about $author
-                    // i.e. the creator of the original database record
-                    $author = $DB->get_record('user', array('id' => $record->userid));
-
-                    // NOTE: $cm is now the WORKSHOP cm record
-                    $databaseurl = array('id' => $database->cmid, 'rid' => $record->recordid, 'mode' => 'single');
-                    $databaseurl = new moodle_url('/mod/data/view.php', $databaseurl);
-
-                    // add author info to email parameters
-                    $a->author = $author->lastname;
-                    $a->recordid = $record->recordid;
-                    $a->fullname = fullname($author);
-                    $a->databaseurl = $databaseurl->out(false);
-
-                    // initialize review details for email message
-                    $a->submission_status = '';
-                    $a->peer_review_score = '';
-                    $a->peer_review_notes = '';
-
-                    // initialize the status - it should be reset from $statusfilters
-                    $status = '';
-
-                    // format and transfer each of the peer review fields
-                    foreach ($reviewfields as $name => $fieldid) {
-                        if (empty($fieldid)) {
-                            continue; // shouldn't happen !!
-                        }
-                        $content = '';
-                        $format = null; // textareas set this to FORMAT_HTML
-                        switch ($name) {
-
-                            case 'peer_review_details';
-                                $assessments = $DB->get_records('workshop_assessments', array('submissionid' => $sid));
-                                if ($assessments===false) {
-                                    $assessments = array();
-                                }
-                                $assessmentgrades = array();
-
-                                $i = 1; // peer review number
-                                foreach ($assessments as $aid => $assessment) {
-                                    if ($grades = $DB->get_records('workshop_grades', array('assessmentid' => $aid))) {
-
-                                        $content .= html_writer::tag('h4', get_string('peerreviewnumber', $this->plugin, $i++))."\n";
-
-                                        $content .= html_writer::start_tag('table');
-                                        $content .= html_writer::start_tag('tbody')."\n";
-
-                                        $content .= html_writer::start_tag('tr');
-                                        $content .= html_writer::tag('th', get_string('criteria', 'workshopform_rubric'));
-                                        $content .= html_writer::tag('th', get_string('assessment', 'workshop'), array('style' => 'text-align:center;'));
-                                        $content .= html_writer::end_tag('tr')."\n";
-
-                                        // CSS class for criteria grades
-                                        $params = array('class' => 'criteriagrade');
-
-                                        // the assessment grade is the sum of the criteria $grades
-                                        $assessmentgrade = 0;
-                                        foreach ($grades as $grade) {
-                                            $id = $grade->dimensionid;
-                                            $content .= html_writer::start_tag('tr');
-                                            $content .= html_writer::tag('td', $criteria[$id]->description);
-                                            $content .= html_writer::tag('td', intval($grade->grade).' / '.$criteria[$id]->maxgrade, $params);
-                                            $content .= html_writer::end_tag('tr')."\n";
-                                            $assessmentgrade += intval($grade->grade);
-                                        }
-                                        $assessmentgrades[] = $assessmentgrade;
-
-                                        // CSS class for submission grade
-                                        $params = array('class' => 'submissiongrade');
-
-                                        $content .= html_writer::start_tag('tr');
-                                        $content .= html_writer::tag('td', ' ');
-                                        $content .= html_writer::tag('td', $assessmentgrade.' / '.$maxgrade, $params);
-                                        $content .= html_writer::end_tag('tr')."\n";
-
-                                        $content .= html_writer::end_tag('tbody');
-                                        $content .= html_writer::end_tag('table')."\n";
-                                    }
-
-                                    // CSS class for feedback
-                                    $params = array('class' => 'feedback');
-                                    if ($feedback = block_maj_submissions::plain_text($assessment->feedbackauthor)) {
-                                        $feedback = html_writer::tag('b', get_string('feedback')).' '.$feedback;
-                                        $feedback = html_writer::tag('p', $feedback, $params);
-                                        $content .= $feedback;
-                                    }
-                                }
-
-                                if ($content) {
-                                    $format = FORMAT_HTML;
-                                }
-
-                                // set submission grade, if necessary
-                                // only required if $submission has no grade
-                                // e.g. if the workshop is not in "grading" phase yet
-                                if (is_numeric($submission->grade)) {
-                                    $submission->grade = intval($submission->grade);
-                                } else if (empty($assessmentgrades)) {
-                                    $submission->grade = 0;
-                                } else {
-                                    $submission->grade = array_sum($assessmentgrades);
-                                    $submission->grade /= count($assessmentgrades);
-                                    $submission->grade = intval($submission->grade);
-                                }
-                                break;
-
-                            case 'submission_status';
-                                if (is_numeric($submission->grade)) {
-                                    $content = round($submission->grade, 0);
-                                    foreach ($statusfilters as $grade => $status) {
-                                        if ($content >= $grade) {
-                                            $content = $status;
-                                            break;
-                                        }
-                                    }
-                                } else {
-                                    $content = $statusfilters[self::NOT_GRADED];
-                                }
-                                $a->$name = $content;
-                                break;
-
-                            case 'peer_review_score';
-                                if (is_numeric($submission->grade)) {
-                                    $content = round($submission->grade, 0);
-                                }
-                                $a->$name = $content;
-                                break;
-
-                            case 'peer_review_notes';
-                                $params = array('class' => 'thanks');
-                                $content .= html_writer::tag('p', get_string('peerreviewgreeting', $this->plugin), $params)."\n";
-
-                                switch (true) {
-                                    case is_numeric(strpos($status, 'Conditionally accepted')):
-                                        $content .= html_writer::tag('p', get_string('conditionallyaccepted', $this->plugin), array('class' => 'status'))."\n";
-                                        $advice = array(
-                                            get_string('pleasemakechanges', $this->plugin, $revisetimefinish),
-                                            get_string('youwillbenotified', $this->plugin)
-                                        );
-                                        $content .= html_writer::alist($advice, array('class' => 'advice'))."\n";
-                                        break;
-
-                                    case is_numeric(strpos($status, 'Not accepted')):
-                                        $content .= html_writer::tag('p', get_string('notaccepted', $this->plugin), array('class' => 'status'))."\n";
-                                        break;
-
-                                    case is_numeric(strpos($status, 'Accepted')):
-                                        $content .= html_writer::tag('p', get_string('accepted', $this->plugin), array('class' => 'status'))."\n";
-                                        if ($registrationlink) {
-                                            $advice = array(
-                                                get_string('pleaseregisteryourself', $this->plugin, $registrationlink),
-                                                get_string('pleaseregistercopresenters', $this->plugin)
-                                            );
-                                            $content .= html_writer::alist($advice, array('class' => 'advice'))."\n";
-                                        }
-                                        $content .= html_writer::tag('p', get_string('acceptedfarewell', $this->plugin, $conferencemonth), array('class' => 'farewell'));
-                                        break;
-
-                                    case is_numeric(strpos($status, 'Waiting for review')):
-                                        $content .= html_writer::tag('p', get_string('waitingforreview', $this->plugin), array('class' => 'status'))."\n";
-                                        break;
-                                }
-                                if ($content) {
-                                    $format = FORMAT_HTML;
-                                }
-                                $a->$name = html_to_text($content, 0, false);
-                                $a->$name = preg_replace('/[\r\n]+/', "\n", $a->$name);
-                                $a->$name = preg_replace('/[ \t]+(?=\*)/', '', $a->$name);
-                                $a->$name = trim($a->$name);
-                                break;
-
-                            case 'presentation_original':
-                                $content = $submission->content;
-                                $format = FORMAT_HTML;
-                                break;
-
-                        }
-
-                        $params = array('fieldid'  => $fieldid,
-                                        'recordid' => $record->recordid);
-                        if ($DB->record_exists('data_content', $params)) {
-                            $DB->set_field('data_content', 'content', $content, $params);
-                        } else {
-                            $content = (object)array(
-                                'fieldid'  => $fieldid,
-                                'recordid' => $record->recordid,
-                                'content'  => $content,
-                                'content1'  => $format
-                            );
-                            $content->id = $DB->insert_record('data_content', $content);
-                        }
-                    }
-
-                    // URL to this data record
-                    $params = array('d' => $database->id, 'rid' => $record->recordid);
-                    $datarecord = new moodle_url('/mod/data/view.php', $params);
-
-                    // link to this data record
-                    $params = array('target' => '_blank');
-                    $datarecord = html_writer::link($datarecord, $record->recordid, $params);
-
-                    // message text for this data record
-                    $datarecord = "[$datarecord] ($submission->grade%) ".$submission->title;
-
-                    // cache the message text and index by grade for sorting later
-                    // (append recordid to key to ensure uniqueness)
-                    $datarecords[$submission->grade.'_'.$record->recordid] = $datarecord;
-                    $counttransferred++;
-
-                    // send email to the author regarding review results
-                    if (empty($CFG->noemailever) && $status) {
-                        $subject = get_string('reviewresultsubject', $this->plugin, $a);
-                        $messagetext = get_string('reviewresultmessage', $this->plugin, $a);
-                        $messagehtml = format_text($messagetext, FORMAT_MOODLE);
-                        email_to_user($author, $noreply, $subject, $messagetext, $messagehtml);
-                    }
+                    self::send_confirmation_email($this->plugin, $config, $data, $record, $submission, 'reviewresult', $datarecords);
                 }
                 unset($records, $record);
             }
 
-            if ($counttransferred) {
+            if ($counttransferred = count($datarecords)) {
 
                 // format list of reviewed submissions
                 uksort($datarecords, 'strnatcmp'); // natural sort by grade (low -> high)
@@ -635,5 +314,365 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
         }
 
         return $this->form_postprocessing_msg($msg);
+    }
+
+    /**
+     * send_confirmation_email
+     *
+     * @uses $DB
+     * @param string $emailtype "reviewresult" or "reviewupdate"
+     */
+    static public function send_confirmation_email($plugin, $config, $data, $record, $submission, $emailtype, &$datarecords) {
+        global $DB, $USER;
+
+        static $a = null; // email parameters
+        static $reviewfields     = null;
+        static $revisetimefinish = null;
+        static $registrationlink = null;
+        static $conferencemonth  = null;
+        static $statusfilters    = null;
+        static $noreply          = null;
+
+        // set up static variables
+        if ($a===null) {
+            $a = new stdClass();
+
+            if (empty($config->conferencename)) {
+                $a->conferencename = $config->conferencenameen;
+            } else {
+                $a->conferencename = $config->conferencename;
+            }
+
+            if (empty($config->reviewteamname)) {
+                $a->reviewteamname = get_string('reviewteamname', $plugin);
+            } else {
+                $a->reviewteamname = $config->reviewteamname;
+            }
+
+            if (empty($data->sendername)) {
+                $a->sendername = fullname($USER);
+            } else {
+                $a->sendername = $data->sendername;
+            }
+
+            if (empty($data->senderemail)) {
+                $a->senderemail = $USER->email;
+            } else {
+                $a->senderemail = $data->senderemail;
+            }
+
+            // get reply address for email message
+            if (class_exists('core_user')) {
+                // Moodle >= 2.6
+                $noreply = core_user::get_noreply_user();
+            } else {
+                // Moodle <= 2.5
+                $noreply = generate_email_supportuser();
+            }
+
+            // get ids of fields to transfer to, or set in, the submissions DB
+            // NOTE: the order of these items is important
+            $reviewfields = array('peer_review_details', // set $submission->grade (must come 1st)
+                                  'submission_status',   // set $status from $submission->grade
+                                  'peer_review_score',   // requires $submission->grade
+                                  'peer_review_notes',   // requires $status
+                                  'presentation_original');
+            $reviewfields = array_flip($reviewfields);
+            foreach (array_keys($reviewfields) as $name) {
+                $params = array('dataid' => $record->dataid, 'name' => $name);
+                $reviewfields[$name] = $DB->get_field('data_fields', 'id', $params);
+            }
+
+            // get formatted deadline for revisions
+            if (! $dateformat = $config->customdatefmt) {
+                if (! $dateformat = $config->moodledatefmt) {
+                    $dateformat = 'strftimerecent'; // default: 11 Nov, 10:12
+                }
+                $dateformat = get_string($dateformat);
+            }
+
+            if (empty($config->revisetimefinish)) {
+                // no deadline has been set for the revisions, so we give them a week
+                $revisetimefinish = strtotime('today midnight') + WEEKSECS - (5 * MINSECS);
+            } else {
+                $revisetimefinish = $config->revisetimefinish;
+            }
+            $revisetimefinish = userdate($revisetimefinish, $dateformat);
+
+            $registrationlink = '';
+            if (! empty($config->registerdelegatescmid)) {
+                $registrationlink = 'registerdelegatescmid';
+            }
+            if (! empty($config->registerpresenterscmid)) {
+                $registrationlink = 'registerpresenterscmid';
+            }
+            if ($registrationlink) {
+                $params = array('id' => $config->$registrationlink);
+                $registrationlink = html_writer::link(new moodle_url('/mod/data/view.php', $params),
+                                                      get_string($registrationlink, $plugin),
+                                                      array('target' => '_blank'));
+            }
+
+            if (empty($config->conferencetimestart)) {
+                $conferencemonth = '';
+            } else {
+                $conferencemonth = $config->conferencetimestart;
+                $conferencemonth = userdate($conferencemonth, '%B');
+            }
+
+            // setup $statusfilters which maps a submission grade to a data record status
+            if (isset($data->statusfiltergrade) && isset($data->statusfilterstatus)) {
+                $statusfilters = array(self::NOT_GRADED => null); // may get overwritten
+                foreach ($data->statusfiltergrade as $i => $grade) {
+                    if (array_key_exists($i ,$data->statusfilterstatus)) {
+                        $statusfilters[intval($grade)] = $data->statusfilterstatus[$i];
+                    }
+                }
+                // sort from highest grade to lowest grade
+                krsort($statusfilters);
+            }
+        }
+
+        // fetch information about $author
+        // i.e. the creator of the original database record
+        $author = $DB->get_record('user', array('id' => $record->userid));
+
+        // set URL of submissions database
+        $databaseurl = array('d' => $record->dataid, 'rid' => $record->recordid, 'mode' => 'single');
+        $databaseurl = new moodle_url('/mod/data/view.php', $databaseurl);
+
+        // add submission title to email parameters
+        $a->title = $submission->title;
+
+        // add author info to email parameters
+        $a->author = $author->lastname;
+        $a->recordid = $record->recordid;
+        $a->fullname = fullname($author);
+        $a->databaseurl = $databaseurl->out(false);
+
+        // initialize review details for email message
+        $a->submission_status = '';
+        $a->peer_review_score = '';
+        $a->peer_review_notes = '';
+
+        // format and transfer each of the peer review fields
+        foreach ($reviewfields as $name => $fieldid) {
+
+            if (empty($fieldid)) {
+                continue; // shouldn't happen !!
+            }
+
+            $content = '';
+            $format = null; // textareas set this to FORMAT_HTML
+            switch ($name) {
+
+                case 'peer_review_details';
+                    if ($submission->id) {
+                        $assessments = $DB->get_records('workshop_assessments', array('submissionid' => $submission->id));
+                    } else {
+                        $assessments = false;
+                    }
+                    if ($assessments===false) {
+                        $assessments = array();
+                    }
+                    $assessmentgrades = array();
+
+                    $i = 1; // peer review number
+                    foreach ($assessments as $aid => $assessment) {
+                        if ($grades = $DB->get_records('workshop_grades', array('assessmentid' => $aid))) {
+
+                            $content .= html_writer::tag('h4', get_string('peerreviewnumber', $plugin, $i++))."\n";
+
+                            $content .= html_writer::start_tag('table');
+                            $content .= html_writer::start_tag('tbody')."\n";
+
+                            $content .= html_writer::start_tag('tr');
+                            $content .= html_writer::tag('th', get_string('criteria', 'workshopform_rubric'));
+                            $content .= html_writer::tag('th', get_string('assessment', 'workshop'), array('style' => 'text-align:center;'));
+                            $content .= html_writer::end_tag('tr')."\n";
+
+                            // CSS class for criteria grades
+                            $params = array('class' => 'criteriagrade');
+
+                            // the assessment grade is the sum of the criteria $grades
+                            $assessmentgrade = 0;
+                            foreach ($grades as $grade) {
+                                $id = $grade->dimensionid;
+                                $content .= html_writer::start_tag('tr');
+                                $content .= html_writer::tag('td', $criteria[$id]->description);
+                                $content .= html_writer::tag('td', intval($grade->grade).' / '.$criteria[$id]->maxgrade, $params);
+                                $content .= html_writer::end_tag('tr')."\n";
+                                $assessmentgrade += intval($grade->grade);
+                            }
+                            $assessmentgrades[] = $assessmentgrade;
+
+                            // CSS class for submission grade
+                            $params = array('class' => 'submissiongrade');
+
+                            $content .= html_writer::start_tag('tr');
+                            $content .= html_writer::tag('td', ' ');
+                            $content .= html_writer::tag('td', $assessmentgrade.' / '.$maxgrade, $params);
+                            $content .= html_writer::end_tag('tr')."\n";
+
+                            $content .= html_writer::end_tag('tbody');
+                            $content .= html_writer::end_tag('table')."\n";
+                        }
+
+                        // CSS class for feedback
+                        $params = array('class' => 'feedback');
+                        if ($feedback = block_maj_submissions::plain_text($assessment->feedbackauthor)) {
+                            $feedback = html_writer::tag('b', get_string('feedback')).' '.$feedback;
+                            $feedback = html_writer::tag('p', $feedback, $params);
+                            $content .= $feedback;
+                        }
+                    }
+
+                    if ($content) {
+                        $format = FORMAT_HTML;
+                    }
+
+                    // set submission grade, if necessary
+                    // only required if $submission has no grade
+                    // e.g. if the workshop is not in "grading" phase yet
+                    if (is_numeric($submission->grade)) {
+                        $submission->grade = intval($submission->grade);
+                    } else if (empty($assessmentgrades)) {
+                        $submission->grade = 0;
+                    } else {
+                        $submission->grade = array_sum($assessmentgrades);
+                        $submission->grade /= count($assessmentgrades);
+                        $submission->grade = intval($submission->grade);
+                    }
+                    break;
+
+                case 'submission_status';
+                    if (! empty($data->newstatus)) {
+                        $content = $data->newstatus;
+                    } else if (! empty($statusfilters)) {
+                        if (is_numeric($submission->grade)) {
+                            $content = round($submission->grade, 0);
+                            foreach ($statusfilters as $filtergrade => $filterstatus) {
+                                if ($content >= $filtergrade) {
+                                    $content = $filterstatus;
+                                    break;
+                                }
+                            }
+                        } else {
+                            $content = $statusfilters[self::NOT_GRADED];
+                        }
+                    } else if (! empty($record->$name)) {
+                        $content = $record->$name;
+                    }
+                    $a->$name = $content;
+                    $record->$name = $content;
+                    $submission->status = $content;
+                    break;
+
+                case 'peer_review_score';
+                    if (! empty($data->newscore)) {
+                        $content = $data->newscore;
+                    } else if (! empty($submission->grade)) {
+                        $content = $submission->grade;
+                    } else if (! empty($record->$name)) {
+                        $content = $record->$name;
+                    } else {
+                        $content = '';
+                    }
+                    if (is_numeric($content)) {
+                        $content = round($content, 0);
+                    }
+                    $a->$name = $content;
+                    $record->$name = $content;
+                    $submission->grade = $content;
+                    break;
+
+                case 'peer_review_notes';
+                    $params = array('class' => 'thanks');
+                    $content .= html_writer::tag('p', get_string('peerreviewgreeting', $plugin), $params)."\n";
+
+                    switch (true) {
+                        case is_numeric(strpos($submission->status, 'Conditionally accepted')):
+                            $content .= html_writer::tag('p', get_string('conditionallyaccepted', $plugin), array('class' => 'status'))."\n";
+                            $advice = array(
+                                get_string('pleasemakechanges', $plugin, $revisetimefinish),
+                                get_string('youwillbenotified', $plugin)
+                            );
+                            $content .= html_writer::alist($advice, array('class' => 'advice'))."\n";
+                            break;
+
+                        case is_numeric(strpos($submission->status, 'Not accepted')):
+                            $content .= html_writer::tag('p', get_string('notaccepted', $plugin), array('class' => 'status'))."\n";
+                            break;
+
+                        case is_numeric(strpos($submission->status, 'Accepted')):
+                            $content .= html_writer::tag('p', get_string('accepted', $plugin), array('class' => 'status'))."\n";
+                            if ($registrationlink) {
+                                $advice = array(
+                                    get_string('pleaseregisteryourself', $plugin, $registrationlink),
+                                    get_string('pleaseregistercopresenters', $plugin)
+                                );
+                                $content .= html_writer::alist($advice, array('class' => 'advice'))."\n";
+                            }
+                            $content .= html_writer::tag('p', get_string('acceptedfarewell', $plugin, $conferencemonth), array('class' => 'farewell'));
+                            break;
+
+                        case is_numeric(strpos($submission->status, 'Waiting for review')):
+                            $content .= html_writer::tag('p', get_string('waitingforreview', $plugin), array('class' => 'status'))."\n";
+                            break;
+                    }
+                    if ($content) {
+                        $format = FORMAT_HTML;
+                    }
+                    $a->$name = html_to_text($content, 0, false);
+                    $a->$name = preg_replace('/[\r\n]+/', "\n", $a->$name);
+                    $a->$name = preg_replace('/[ \t]+(?=\*)/', '', $a->$name);
+                    $a->$name = trim($a->$name);
+                    break;
+
+                case 'presentation_original':
+                    $content = $submission->content;
+                    $format = FORMAT_HTML;
+                    break;
+
+            }
+
+            // update this review field
+            $params = array('fieldid'  => $fieldid,
+                            'recordid' => $record->recordid);
+            if ($DB->record_exists('data_content', $params)) {
+                $DB->set_field('data_content', 'content', $content, $params);
+            } else {
+                $content = (object)array(
+                    'fieldid'  => $fieldid,
+                    'recordid' => $record->recordid,
+                    'content'  => $content,
+                    'content1'  => $format
+                );
+                $content->id = $DB->insert_record('data_content', $content);
+            }
+        } // end foreach $reviewfields
+
+        // URL to this data record
+        $params = array('d' => $record->dataid, 'rid' => $record->recordid, 'mode' => 'single');
+        $datarecord = new moodle_url('/mod/data/view.php', $params);
+
+        // link to this data record
+        $params = array('target' => '_blank');
+        $datarecord = html_writer::link($datarecord, $record->recordid, $params);
+
+        // message text for this data record
+        $datarecord = "[$datarecord] ($submission->grade%) ".$submission->title;
+
+        // cache the message text and index by grade for sorting later
+        // (append recordid to key to ensure uniqueness)
+        $datarecords[$submission->grade.'_'.$record->recordid] = $datarecord;
+
+        // send email to the author regarding review results
+        if (empty($CFG->noemailever) && $submission->status) {
+            $subject = get_string($emailtype.'subject', $plugin, $a);
+            $messagetext = get_string($emailtype.'message', $plugin, $a);
+            $messagehtml = format_text($messagetext, FORMAT_MOODLE);
+            email_to_user($author, $noreply, $subject, $messagetext, $messagehtml);
+        }
     }
 }

@@ -28,7 +28,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 // get required files
-require_once($CFG->dirroot.'/blocks/maj_submissions/tools/form.php');
+require_once($CFG->dirroot.'/blocks/maj_submissions/tools/form.filterconditions.php');
 
 /**
  * block_maj_submissions_tool_data2workshop
@@ -37,7 +37,7 @@ require_once($CFG->dirroot.'/blocks/maj_submissions/tools/form.php');
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since     Moodle 2.0
  */
-class block_maj_submissions_tool_data2workshop extends block_maj_submissions_tool_form {
+class block_maj_submissions_tool_data2workshop extends block_maj_submissions_tool_filterconditions {
 
     protected $type = '';
     protected $modulename = 'workshop';
@@ -73,20 +73,6 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
      */
     protected $groupfieldnames = 'programcommittee,anonymousauthors';
 
-    const FILTER_NONE           = 0;
-    const FILTER_CONTAINS       = 1;
-    const FILTER_NOT_CONTAINS   = 2;
-    const FILTER_EQUALS         = 3;
-    const FILTER_NOT_EQUALS     = 4;
-    const FILTER_STARTSWITH     = 5;
-    const FILTER_NOT_STARTSWITH = 6;
-    const FILTER_ENDSWITH       = 7;
-    const FILTER_NOT_ENDSWITH   = 8;
-    const FILTER_EMPTY          = 9;
-    const FILTER_NOT_EMPTY      = 10;
-    const FILTER_IN             = 11;
-    const FILTER_NOT_IN         = 12;
-
     /**
      * definition
      */
@@ -102,31 +88,9 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
             $sectionnum = 0;
         }
 
-        $name = 'sourcedatabase';
-        $options = self::get_cmids($mform, $this->course, $this->plugin, 'data');
-        $this->add_field($mform, $this->plugin, $name, 'selectgroups', PARAM_INT, $options, 0);
-
-        $name = 'filterconditions';
-        $label = get_string($name, $this->plugin);
-
-        // create the $elements for a single filter condition
-        $elements = array();
-        $elements[] = $mform->createElement('select', $name.'field',    null, $this->get_field_options());
-        $elements[] = $mform->createElement('select', $name.'operator', null, $this->get_operator_options());
-        $elements[] = $mform->createElement('text',   $name.'value',    null, array('size' => self::TEXT_FIELD_SIZE));
-
-        // prepare the parameters to pass to the "repeat_elements()" method
-        $elements = array($mform->createElement('group', $name, $label, $elements, ' ', false));
-        $repeats = optional_param('count'.$name, 0, PARAM_INT);
-        $options = array($name.'field'    => array('type' => PARAM_INT),
-                         $name.'operator' => array('type' => PARAM_INT),
-                         $name.'value'    => array('type' => PARAM_TEXT),
-                         $name => array('helpbutton' => array($name, $this->plugin)));
-        $addstring = get_string('add'.$name, $this->plugin, 1);
-        $this->repeat_elements($elements, $repeats, $options, 'count'.$name, 'add'.$name, 1, $addstring, true);
-
-        $mform->disabledIf('add'.$name, 'sourcedatabase', 'eq', 0);
-        $mform->disabledIf('add'.$name, 'sourcedatabase', 'eq', self::CREATE_NEW);
+		$name = 'sourcedatabase';
+		$this->add_field_sourcedatabase($mform, $name);
+		$this->add_field_filterconditions($mform, 'filterconditions', $name);
 
         $name = 'targetworkshop';
         $this->add_field_cm($mform, $this->course, $this->plugin, $name, $this->cmid);
@@ -141,72 +105,6 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
         $this->add_group_fields($mform);
 
         $this->add_action_buttons();
-    }
-
-    /**
-     * get_field_options
-     *
-     * @uses $DB
-     * @return array of database fieldnames
-     */
-    protected function get_field_options() {
-        global $DB;
-        if ($cmid = optional_param('sourcedatabase', null, PARAM_INT)) {
-            $dataid = get_fast_modinfo($this->course)->get_cm($cmid)->instance;
-            $select = 'dataid = ? AND type NOT IN (?, ?, ?, ?, ?, ?)';
-            $params = array($dataid, 'action', 'admin', 'constant', 'template', 'report', 'file');
-            $fields = 'id,name,description';
-            if ($options = $DB->get_records_select('data_fields', $select, $params, null, $fields)) {
-                $search = self::bilingual_string();
-                if (self::is_low_ascii_language()) {
-                    $replace = '$2'; // low-ascii language e.g. English
-                } else {
-                    $replace = '$1'; // high-ascii/multibyte language
-                }
-                $params = array('dataid' => $dataid, 'name' => 'submission_status');
-                if ($option = $DB->get_record('data_fields', $params, $fields)) {
-                	$options[$option->id] = $option;
-                }
-                foreach ($options as $id => $option) {
-                    if (preg_match('/_\d+(_[a-z]{2})?$/', $option->name)) {
-                        unset($options[$id]);
-                    } else {
-                        $option->description = preg_replace($search, $replace, $option->description);
-                        $options[$id] = $option->description.' ['.$option->name.']';
-                    }
-                }
-            }
-        } else {
-            $options = false;
-        }
-        if ($options==false) {
-            $options = array();
-        }
-        return $this->format_select_options($this->plugin, $options);
-    }
-
-    /**
-     * get_operator_options
-     *
-     * see mod/taskchain/form/helper/records.php
-     * "get_filter()" method (around line 662)
-     *
-     * @uses $DB
-     * @return array of database fieldnames
-     */
-    protected function get_operator_options() {
-        return array(self::FILTER_CONTAINS       => get_string('contains',       'filters'),
-                     self::FILTER_NOT_CONTAINS   => get_string('doesnotcontain', 'filters'),
-                     self::FILTER_EQUALS         => get_string('isequalto',      'filters'),
-                     self::FILTER_NOT_EQUALS     => get_string('notisequalto',   $this->plugin),
-                     self::FILTER_STARTSWITH     => get_string('startswith',     'filters'),
-                     self::FILTER_NOT_STARTSWITH => get_string('notstartswith',  $this->plugin),
-                     self::FILTER_ENDSWITH       => get_string('endswith',       'filters'),
-                     self::FILTER_NOT_ENDSWITH   => get_string('notendswith',    $this->plugin),
-                     self::FILTER_EMPTY          => get_string('isempty',        'filters'),
-                     self::FILTER_NOT_EMPTY      => get_string('notisempty',     $this->plugin),
-                     self::FILTER_IN             => get_string('isinlist',       $this->plugin),
-                     self::FILTER_NOT_IN         => get_string('notisinlist',    $this->plugin));
     }
 
     /**
@@ -303,34 +201,17 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
             $params = array('groupid' => $data->anonymousauthors);
             $anonymous = $DB->get_records_menu('groups_members', $params, null, 'id,userid');
 
-            // basic SQL to fetch records from database activity
-            $select = array('dr.id AS recordid, dr.dataid');
-            $from   = array('{data_records} dr');
-            $where  = array('dr.dataid = ?');
-            $params = array($dataid);
+			// specifiy the presentation fields that we want
+			$fields = array('presentation_title' => '',
+							'presentation_type' => '',
+							'presentation_language' => '',
+							'presentation_keywords' => '',
+							'charcount' => 0,
+							'wordcount' => 0,
+							'presentation_abstract' => '');
 
-            if (empty($data->filterconditionsfield)) {
-                $data->filterconditionsfield = array();
-            }
-
-            // add SQL to fetch only required records
-            $this->add_filter_sql($data, $select, $from, $where, $params);
-
-            // add SQL to fetch presentation content
-            $fields = array('title' => '',
-                            'type' => '',
-                            'language' => '',
-                            'keywords' => '',
-                            'charcount' => 0,
-                            'wordcount' => 0,
-                            'abstract' => '');
-            $this->add_content_sql($data, $select, $from, $where, $params, $fields, $dataid);
-
-            $select = implode(', ', $select);
-            $from   = implode(' LEFT JOIN ', $from);
-            $where  = implode(' AND ', $where);
-
-            if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
+			// get all records matching the filters (may update $data and $fields)
+            if ($records = $this->get_filtered_records($dataid, $data, $fields)) {
 
 				$duplicaterecords = array();
 				$duplicateauthors = array();
@@ -536,161 +417,6 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
         }
 
         return $this->form_postprocessing_msg($msg);
-    }
-
-    /**
-     * add_filter_sql
-     *
-     * @param object $data   (passed by reference)
-     * @param string $select (passed by reference)
-     * @param string $from   (passed by reference)
-     * @param string $where  (passed by reference)
-     * @param array  $params (passed by reference)
-     * @return void, but may modify $data, $select, $from $where, and $params
-     */
-    protected function add_filter_sql(&$data, &$select, &$from, &$where, &$params) {
-        global $DB;
-
-        foreach ($data->filterconditionsfield as $i => $fieldid) {
-
-            // skip empty filters
-            if (empty($fieldid)) {
-                continue;
-            }
-
-            // define an SQL alias for the "data_content" table
-            $alias = 'dc'.$i;
-
-            array_push($select, "$alias.recordid AS recordid$i",
-                                "$alias.fieldid AS fieldid$i",
-                                "$alias.content AS content$i");
-
-            $from[] = '{data_content}'." $alias ON $alias.recordid = dr.id";
-
-            if (isset($data->filterconditionsvalue[$i])) {
-                $value = $data->filterconditionsvalue[$i];
-            } else {
-                $value = null;
-            }
-
-            switch ($data->filterconditionsoperator[$i]) {
-
-                case self::FILTER_CONTAINS:
-                    $where[] = "$alias.fieldid = ? AND ".$DB->sql_like("$alias.content", '?');
-                    array_push($params, $fieldid, '%'.$value.'%');
-                    break;
-
-                case self::FILTER_NOT_CONTAINS:
-                    $where[] = "$alias.fieldid = ? AND ".$DB->sql_like("$alias.content", '?', false, false, true);
-                    array_push($params, $fieldid, '%'.$value.'%');
-                    break;
-                    break;
-
-                case self::FILTER_EQUALS:
-                    $where[] = "$alias.fieldid = ? AND $alias.content = ?";
-                    array_push($params, $fieldid, $value);
-                    break;
-
-                case self::FILTER_NOT_EQUALS:
-                    $where[] = "$alias.fieldid = ? AND $alias.content != ?";
-                    array_push($params, $fieldid, $value);
-                    break;
-
-                case self::FILTER_STARTSWITH:
-                    $where[] = "$alias.fieldid = ? AND ".$DB->sql_like('$alias.content', '?');
-                    array_push($params, $fieldid, $value.'%');
-                    break;
-
-                case self::FILTER_NOT_STARTSWITH:
-                    $where[] = "$alias.fieldid = ? AND ".$DB->sql_like('$alias.content', '?', false, false, true);
-                    array_push($params, $fieldid, $value.'%');
-                    break;
-
-                case self::FILTER_ENDSWITH:
-                    $where[] = "$alias.fieldid = ? AND ".$DB->sql_like('$alias.content', '?');
-                    array_push($params, $fieldid, '%'.$value);
-                    break;
-
-                case self::FILTER_NOT_ENDSWITH:
-                    $where[] = "$alias.fieldid = ? AND ".$DB->sql_like('$alias.content', '?', false, false, true);
-                    array_push($params, $fieldid, '%'.$value);
-                    break;
-
-                case self::FILTER_EMPTY:
-                    $where[] = "($alias.fieldid IS NULL OR ($alias.fieldid = ? AND ($alias.content IS NULL OR $alias.content = ?)))";
-                    array_push($params, $fieldid, '');
-                    break;
-
-                case self::FILTER_NOT_EMPTY:
-                    $where[] = "$alias.fieldid = ? AND $alias.content IS NOT NULL AND $alias.content != ?";
-                    array_push($params, $fieldid, '');
-                    break;
-
-                case self::FILTER_IN:
-                    $value = explode(',', $value);
-                    $value = array_map('trim', $value);
-                    if (count($value)) {
-                        $value = $DB->get_in_or_equal($value);
-                        $params[] = $fieldid;
-                        $params = array_merge($params, $value[1]);
-                        $where[] = "$alias.fieldid = ? AND content ".$value[0];
-                    }
-                    break;
-
-                case self::FILTER_NOT_IN:
-                    $value = explode(',', $value);
-                    $value = array_map('trim', $value);
-                    if (count($value)) {
-                        $value = $DB->get_in_or_equal($value, SQL_PARAMS_QM, 'param', false);
-                        $params[] = $fieldid;
-                        $params = array_merge($params, $value[1]);
-                        $where[] = "$alias.fieldid = ? AND content ".$value[0];
-                    }
-                    break;
-            }
-        }
-    }
-
-    /**
-     * add_content_sql
-     *
-     * generate SQL to fetch presentation_(title|abstract|type|language|keywords)
-     *
-     * @param object  $data   (passed by reference)
-     * @param string  $select (passed by reference)
-     * @param string  $from   (passed by reference)
-     * @param string  $where  (passed by reference)
-     * @param array   $params (passed by reference)
-     * @param array   $fields (passed by reference)
-     * @param integer $dataid
-     * @return void, but may modify $data, $select, $from $where, and $params
-     */
-    protected function add_content_sql(&$data, &$select, &$from, &$where, &$params, &$fields, $dataid) {
-        global $DB;
-
-        $i = count($data->filterconditionsfield);
-        foreach (array_keys($fields) as $name) {
-            if ($name=='charcount' || $name=='wordcount') {
-                continue;
-            }
-            $fieldparams = array('dataid' => $dataid,
-                                 'name' => "presentation_$name");
-            if ($field = $DB->get_record('data_fields', $fieldparams)) {
-                $fields[$name] = $field->description;
-
-                $alias = 'dc'.$i;
-                array_push($select, "$alias.recordid AS recordid$i",
-                                    "$alias.fieldid AS fieldid$i",
-                                    "$alias.content AS $name");
-                $from[] = '{data_content}'." $alias ON $alias.recordid = dr.id";
-                $where[] = "$alias.fieldid = ?";
-                $params[] = $field->id;
-                $i++;
-            } else {
-                // $name field does not exist in this database
-                unset($fields[$name]);
-            }
-        }
     }
 
     /**

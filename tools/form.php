@@ -627,6 +627,50 @@ abstract class block_maj_submissions_tool_form extends moodleform {
     }
 
     /**
+     * get_dataid
+     *
+     * @param $name of field in database activity
+     * @return integer id of database activity
+     */
+    protected function get_dataid($name, $formonly=false) {
+        if ($name) {
+            $cmid = optional_param($name, 0, PARAM_INT);
+        } else {
+            $cmid = 0;
+        }
+        if ($cmid==0 && $formonly==false) {
+            $cmid = $this->instance->config->collectpresentationscmid;
+        }
+        if ($cmid==0) {
+            return 0;
+        }
+        return get_fast_modinfo($this->course)->get_cm($cmid)->instance;
+    }
+
+    /**
+     * get_fullname
+     */
+    protected function fullname($userid) {
+        if (class_exists('core_user')) {
+            // Moodle >= 2.6
+            $user = core_user::get_user($userid);
+        } else {
+            // Moodle <= 2.5
+            $user = $DB->get_record('user', array('id' => $userid));
+        }
+        if (empty($user)) {
+            $strman = get_string_manager();
+            if ($strman->string_exists('invaliduserid', 'notes')) {
+                // Moodle >= 3.0 (Invalid user id)
+                return get_string('invaliduserid', 'error').": $userid";
+            }
+            // Moodle >= 2.0 (No such user!)
+            return get_string('nousers', 'error')." id=$userid";
+        }
+        return fullname($user);
+    }
+
+    /**
      * get_menufield_options
      *
      * @uses $DB
