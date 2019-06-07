@@ -58,7 +58,9 @@ abstract class block_maj_submissions_tool_setupforum extends block_maj_submissio
      */
     public function definition() {
         global $DB;
+
         $mform = $this->_form;
+        $this->set_form_id($mform);
 
         $maxbytes = array(get_config(null, 'maxbytes'),
                           $this->course->maxbytes,

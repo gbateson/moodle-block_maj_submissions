@@ -69,7 +69,9 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
      * definition
      */
     public function definition() {
+
         $mform = $this->_form;
+        $this->set_form_id($mform);
 
         $name = 'targetworkshop';
         $options = self::get_cmids($mform, $this->course, $this->plugin, 'workshop');

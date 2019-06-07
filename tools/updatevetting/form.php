@@ -43,8 +43,16 @@ class block_maj_submissions_tool_updatevetting extends block_maj_submissions_too
      * definition
      */
     public function definition() {
+        global $PAGE;
+
+		if (method_exists($PAGE->requires, 'js_call_amd')) {
+			// Moodle >= 2.9
+            $PAGE->requires->js_call_amd('block_maj_submissions/tool_updatevetting', 'init');
+            $PAGE->requires->jquery_plugin('ui-css');
+		}
 
         $mform = $this->_form;
+        $this->set_form_id($mform);
 
         // fetch default form values
         $default = $this->get_default_formvalues();
@@ -203,7 +211,12 @@ class block_maj_submissions_tool_updatevetting extends block_maj_submissions_too
     protected function get_submissions($mform, $name) {
         if (optional_param('submitbutton', '', PARAM_TEXT)) {
             $dataid = $this->get_dataid('sourcedatabase');
-            $data = null; // $this->get_data is not available until AFTER the form has been setup
+
+            // We want to know the form data, if any, that was submitted, but
+            // $this->get_data is not available until AFTER the form has been setup.
+            // Instead, is is initialized here and then filled out in "get_filtered_records()" 
+            $data = null;
+
             $fields = array('submission_status' => '',
                             'peer_review_score' => '',
                             'presentation_type' => '',
@@ -215,12 +228,16 @@ class block_maj_submissions_tool_updatevetting extends block_maj_submissions_too
                 // add titles
                 $text = '';
                 $text .= html_writer::tag('div', 'Submission ID', array('class' => 'submissionid', 'style' => $style));
-                $text .= html_writer::tag('div', $fields['submission_status'], array('class' => 'subissionstatus', 'style' => $style));
                 $text .= html_writer::tag('div', $fields['peer_review_score'], array('class' => 'peerreviewscore', 'style' => $style));
-                $text .= html_writer::tag('div', $fields['presentation_type'], array('class' => 'presentationtype', 'style' => $style));
+                $text .= html_writer::tag('div', $fields['submission_status'], array('class' => 'submissionstatus', 'style' => $style));
+                $text .= html_writer::tag('div', get_string('timemodified', 'data'), array('class' => 'timemodified', 'style' => $style));
                 $text .= html_writer::tag('div', get_string('user'), array('class' => 'user', 'style' => $style));
+                $text .= html_writer::tag('div', $fields['presentation_type'], array('class' => 'presentationtype', 'style' => $style));
                 $text .= html_writer::tag('div', $fields['presentation_title'], array('class' => 'presentationtitle', 'style' => $style));
                 $elements[] = $mform->createElement('checkbox', $name."[0]", '', $text);
+
+                // cache date format
+                $dateformat = block_maj_submissions::get_date_format($this->instance->config);
 
                 // add selected submission records
                 foreach ($records as $recordid => $record) {
@@ -241,18 +258,33 @@ class block_maj_submissions_tool_updatevetting extends block_maj_submissions_too
                         $record->peer_review_score .= '%';
                     }
 
-                    // prepare link to user profile
+                    // format short version of submission status
+                    $record->submission_status = block_maj_submissions::trim_text($record->submission_status, 32, 16, 12);
+
+                    // format the time modified (remove year if it is current year)
+                    if (strftime('%Y', $record->timemodified)==strftime('%Y')) {
+                        $removedate = block_maj_submissions::REMOVE_YEAR;
+                    } else {
+                        $removedate = block_maj_submissions::REMOVE_NONE;
+                    }
+                    $record->timemodified = $this->instance->userdate($record->timemodified, $dateformat, true, $removedate);
+
+                    // format link to user profile
                     $url = new moodle_url('/user/view.php', array('id' => $record->userid,
                                                                   'course' => $this->course->id));
                     $record->fullname = html_writer::link($url, $this->fullname($record->userid), array('target' => '_blank'));
 
+                    // format short version of presentation title
+                    $record->presentation_title = block_maj_submissions::trim_text($record->presentation_title);
+
                     // prepare $text summary for this submission
                     $text = '';
                     $text .= html_writer::tag('div', $record->submissionid, array('class' => 'submissionid', 'style' => $style));
-                    $text .= html_writer::tag('div', $record->submission_status, array('class' => 'subissionstatus', 'style' => $style));
                     $text .= html_writer::tag('div', $record->peer_review_score, array('class' => 'peerreviewscore', 'style' => $style));
-                    $text .= html_writer::tag('div', $record->presentation_type, array('class' => 'presentationtype', 'style' => $style));
+                    $text .= html_writer::tag('div', $record->submission_status, array('class' => 'submissionstatus', 'style' => $style));
+                    $text .= html_writer::tag('div', $record->timemodified, array('class' => 'timemodified', 'style' => $style));
                     $text .= html_writer::tag('div', $record->fullname, array('class' => 'fullname', 'style' => $style));
+                    $text .= html_writer::tag('div', $record->presentation_type, array('class' => 'presentationtype', 'style' => $style));
                     $text .= html_writer::tag('div', $record->presentation_title, array('class' => 'presentationtitle', 'style' => $style));
 
                     // add submission

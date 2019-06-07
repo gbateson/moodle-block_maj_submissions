@@ -518,11 +518,9 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $finishlabel = html_writer::tag('b', get_string('timefinish', $plugin).' ');
 
         $elements = array(
-            $mform->createElement('static', '', '', $startlabel),
-            $mform->createElement('date_time_selector', $configname.'start', '', $startoptions),
+            $mform->createElement('date_time_selector', $configname.'start', $startlabel, $startoptions),
             $mform->createElement('static', '', '', html_writer::empty_tag('br')),
-            $mform->createElement('static', '', '', $finishlabel),
-            $mform->createElement('date_time_selector', $configname.'finish', '', $finishoptions)
+            $mform->createElement('date_time_selector', $configname.'finish', $finishlabel, $finishoptions)
         );
         $mform->addGroup($elements, $groupname, $label, '', false);
         $mform->addHelpButton($groupname, $name, $plugin);

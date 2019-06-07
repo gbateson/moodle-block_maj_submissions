@@ -98,6 +98,8 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
 		}
 
         $mform = $this->_form;
+        $this->set_form_id($mform);
+
         $config = $this->instance->config;
 
         $start = array(

@@ -57,7 +57,9 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
      * definition
      */
     public function definition() {
+
         $mform = $this->_form;
+        $this->set_form_id($mform);
 
         // extract the module context and course section, if possible
         if ($this->cmid) {

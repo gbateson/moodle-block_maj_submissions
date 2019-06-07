@@ -258,7 +258,9 @@ $string['newgroupmembers'] = '{$a->count} member(s) added to group: {$a->name}';
 $string['newresourcecreated'] = 'New resource created: {$a}';
 $string['newresourceskipped'] = 'Creation of new resource skipped: {$a}';
 $string['newscore'] = 'New score';
-$string['newscore_help'] = 'If a value is specified here, it will be set as the "Review score" for the selected records.';
+$string['newscore_help'] = 'If a value is specified here, it will be set as the "Review score" for the selected records.
+
+Usually, this field is only used when updating submissions that have not been reviewed before, such as late submissions.';
 $string['newsectioncreated'] = 'New section created: {$a}';
 $string['newstatus'] = 'New status';
 $string['newstatus_help'] = 'Select the new status for the selected records.';

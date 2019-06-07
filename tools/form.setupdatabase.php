@@ -66,7 +66,9 @@ abstract class block_maj_submissions_tool_setupdatabase extends block_maj_submis
      */
     public function definition() {
         global $DB;
+
         $mform = $this->_form;
+        $this->set_form_id($mform);
 
         // extract the module context and course section, if possible
         if ($this->cmid) {

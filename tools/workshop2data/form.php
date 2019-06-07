@@ -66,7 +66,9 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
      * definition
      */
     public function definition() {
+
         $mform = $this->_form;
+        $this->set_form_id($mform);
 
         // extract the module context and course section, if possible
         if ($this->cmid) {
@@ -384,12 +386,7 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
             }
 
             // get formatted deadline for revisions
-            if (! $dateformat = $config->customdatefmt) {
-                if (! $dateformat = $config->moodledatefmt) {
-                    $dateformat = 'strftimerecent'; // default: 11 Nov, 10:12
-                }
-                $dateformat = get_string($dateformat);
-            }
+            $dateformat = block_maj_submissions::get_date_format($config);
 
             if (empty($config->revisetimefinish)) {
                 // no deadline has been set for the revisions, so we give them a week
@@ -630,25 +627,29 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                     break;
 
                 case 'presentation_original':
-                    $content = $submission->content;
-                    $format = FORMAT_HTML;
+                    if (empty($record->$name)) {
+                        $content = $submission->content;
+                        $format = FORMAT_HTML;
+                    }
                     break;
 
             }
 
             // update this review field
-            $params = array('fieldid'  => $fieldid,
-                            'recordid' => $record->recordid);
-            if ($DB->record_exists('data_content', $params)) {
-                $DB->set_field('data_content', 'content', $content, $params);
-            } else {
-                $content = (object)array(
-                    'fieldid'  => $fieldid,
-                    'recordid' => $record->recordid,
-                    'content'  => $content,
-                    'content1'  => $format
-                );
-                $content->id = $DB->insert_record('data_content', $content);
+            if ($content) {
+                $params = array('fieldid'  => $fieldid,
+                                'recordid' => $record->recordid);
+                if ($DB->record_exists('data_content', $params)) {
+                    $DB->set_field('data_content', 'content', $content, $params);
+                } else {
+                    $content = (object)array(
+                        'fieldid'  => $fieldid,
+                        'recordid' => $record->recordid,
+                        'content'  => $content,
+                        'content1'  => $format
+                    );
+                    $content->id = $DB->insert_record('data_content', $content);
+                }
             }
         } // end foreach $reviewfields
 

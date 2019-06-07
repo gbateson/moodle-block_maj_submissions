@@ -48,6 +48,7 @@ class block_maj_submissions extends block_base {
     protected $fixmonthchar = false;
     protected $fixdaychar   = false;
     protected $multilang    = false;
+    protected $dateformat   = null;
 
     protected $requiredfields = array();
 
@@ -465,12 +466,7 @@ class block_maj_submissions extends block_base {
         $countlinks = 0;
 
         // get $dateformat
-        if (! $dateformat = $this->config->customdatefmt) {
-            if (! $dateformat = $this->config->moodledatefmt) {
-                $dateformat = 'strftimerecent'; // default: 11 Nov, 10:12
-            }
-            $dateformat = get_string($dateformat);
-        }
+        $dateformat = self::get_date_format($this->config);
         $timenow = time();
 
         $course = $this->page->course;
@@ -1162,7 +1158,7 @@ class block_maj_submissions extends block_base {
      * @param integer $removedate (optional, default = REMOVE_NONE)
      * @return string representation of $date
      */
-    protected function userdate($date, $format, $removetime, $removedate=self::REMOVE_NONE) {
+    public function userdate($date, $format, $removetime, $removedate=self::REMOVE_NONE) {
 
         $currentlanguage = substr(current_language(), 0, 2);
 
@@ -1260,13 +1256,7 @@ class block_maj_submissions extends block_base {
      */
     protected function check_date_fixes() {
 
-        if (! $dateformat = $this->config->customdatefmt) {
-            if (! $dateformat = $this->config->moodledatefmt) {
-                $dateformat = 'strftimerecent'; // default: 11 Nov, 10:12
-            }
-            $dateformat = get_string($dateformat);
-        }
-
+        $dateformat = self::get_date_format($this->config);
         $date = strftime($dateformat, time());
 
         // set the $year, $month and $day characters for CJK languages
@@ -1281,6 +1271,22 @@ class block_maj_submissions extends block_base {
         if ($day && ! preg_match("/[0-9]+$day/", $date)) {
             $this->fixdaychar = true;
         }
+    }
+
+    /**
+     * get_date_format
+     */
+    static public function get_date_format($config) {
+        static $dateformat = null;
+        if ($dateformat===null) {
+            if (! $dateformat = $config->customdatefmt) {
+                if (! $dateformat = $config->moodledatefmt) {
+                    $dateformat = 'strftimerecent'; // default: 11 Nov, 10:12
+                }
+                $dateformat = get_string($dateformat);
+            }
+        }
+        return $dateformat;
     }
 
     /**

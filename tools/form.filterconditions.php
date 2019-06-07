@@ -204,7 +204,7 @@ abstract class block_maj_submissions_tool_filterconditions extends block_maj_sub
         global $DB;
 
         // basic SQL to fetch records from database activity
-        $select = array('dr.id AS recordid, dr.dataid, dr.userid');
+        $select = array('dr.id AS recordid, dr.dataid, dr.userid, dr.timemodified');
         $from   = array('{data_records} dr');
         $where  = array('dr.dataid = ?');
         $order  = '';
@@ -229,7 +229,8 @@ abstract class block_maj_submissions_tool_filterconditions extends block_maj_sub
                 'filterconditionsvalue' => optional_param_array('filterconditionsvalue', null, PARAM_TEXT),
                 'sortfield' => optional_param('sortfield', 0, PARAM_INT),
                 'sortdirection' => optional_param('sortdirection', '', PARAM_ALPHA),
-                'displayperpage' => optional_param('displayperpage', 0, PARAM_INT)
+                'displayperpage' => optional_param('displayperpage', 0, PARAM_INT),
+                'submissions' => optional_param_array('submissions', null, PARAM_INT)
             );
         }
         if (empty($data->filterconditionsfield)) {

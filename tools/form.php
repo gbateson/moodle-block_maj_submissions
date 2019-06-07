@@ -157,6 +157,19 @@ abstract class block_maj_submissions_tool_form extends moodleform {
     }
 
     /**
+     * set_form_id
+     *
+     * @param  object $mform
+     * @param  string form $id
+     * @return void, but will update specified form attribute 
+     */
+    protected function set_form_id($mform, $id='') {
+        $attributes = $mform->getAttributes();
+        $attributes['id'] = ($id ? $id : get_class($this));
+        $mform->setAttributes($attributes);
+    }
+
+    /**
      * add_field_template
      *
      * create a list of activities of the required type
