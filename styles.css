@@ -33,6 +33,11 @@
     max-width: 480px;
 }
 
+/** ensure multilang strings appear on separate rows in a flex-layout theme such as Boost */
+#block_maj_submissions_edit_form.mform #id_conferencestrings .felement[data-fieldtype=group] .fitem {
+    width: calc(100% - 120px);
+}
+
 /** ensure start/finish times appear on separate rows in a flex-layout theme such as Boost */
 #block_maj_submissions_edit_form.mform .form-group.fitem[data-groupname^=config_][data-groupname$=timestart] {
     width: 100%;
