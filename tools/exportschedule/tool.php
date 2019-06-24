@@ -15,184 +15,86 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * blocks/maj_submissions/export.schedule.php
+ * blocks/maj_submissions/tools/exportschedule/tool.php
  *
  * @package    blocks
  * @subpackage maj_submissions
- * @copyright  2016 Gordon Bateson <gordon.bateson@gmail.com>
+ * @copyright  2016 Gordon Bateson (gordon.bateson@gmail.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since      Moodle 2.3
  */
 
 /** Include required files */
 require_once('../../../../config.php');
-require_once($CFG->dirroot.'/blocks/moodleblock.class.php'); // class block_base
-require_once($CFG->dirroot.'/blocks/maj_submissions/block_maj_submissions.php');
-require_once($CFG->dirroot.'/blocks/maj_submissions/tools/form.php');
-require_once($CFG->dirroot.'/lib/filelib.php'); // function send_file()
+require_once($CFG->dirroot.'/blocks/maj_submissions/tools/exportschedule/form.php');
 
-// cache the plugin name  - because it is quite long ;-)
-$plugin = 'block_maj_submissions';
+$blockname = 'maj_submissions';
+$plugin = "block_$blockname";
+$tool = 'toolexportschedule';
 
-// get the incoming block_instance id
-$id = required_param('id', PARAM_INT);
+$id = required_param('id', PARAM_INT); // block_instance id
 
 if (! $block_instance = $DB->get_record('block_instances', array('id' => $id))) {
-    print_error('invalidinstanceid', $plugin, '', $id);
+    print_error('invalidinstanceid', $plugin);
 }
 if (! $block = $DB->get_record('block', array('name' => $block_instance->blockname))) {
-    print_error('invalidblockname', $plugin, '', $block_instance);
+    print_error('invalidblockid', $plugin, $block_instance->blockid);
 }
-if (! $context = $DB->get_record('context', array('id' => $block_instance->parentcontextid))) {
-    print_error('invalidcontextid', $plugin, '', $block_instance);
+if (class_exists('context')) {
+    $context = context::instance_by_id($block_instance->parentcontextid);
+} else {
+    $context = get_context_instance_by_id($block_instance->parentcontextid);
 }
 if (! $course = $DB->get_record('course', array('id' => $context->instanceid))) {
-    print_error('invalidcourseid', $plugin, '', $context);
+    print_error('invalidcourseid', $plugin, $block_instance->pageid);
 }
+$course->context = $context;
 
 require_login($course->id);
+require_capability('moodle/course:manageactivities', $context);
 
-if (class_exists('context')) {
-    $context = context::instance_by_id($context->id);
+// $SCRIPT is set by initialise_fullme() in 'lib/setuplib.php'
+// It is the path below $CFG->wwwroot of this script
+$url = new moodle_url($SCRIPT, array('id' => $id));
+
+$strblockname = get_string('blockname', $plugin);
+$strpagetitle = get_string($tool, $plugin);
+
+$PAGE->set_url($url);
+$PAGE->set_title($strpagetitle);
+$PAGE->set_heading($course->fullname);
+$PAGE->set_pagelayout('incourse');
+$PAGE->navbar->add($strblockname);
+$PAGE->navbar->add($strpagetitle, $url);
+
+// initialize the form
+$customdata = array('course'   => $course,
+                    'plugin'   => $plugin,
+                    'instance' => $block_instance);
+$mform = 'block_maj_submissions_tool_exportschedule';
+$mform = new $mform($url->out(false), $customdata);
+
+if ($mform->is_cancelled()) {
+    $url = new moodle_url('/course/view.php', array('id' => $course->id));
+    redirect($url);
+}
+
+if ($mform->is_submitted()) {
+    $message = $mform->form_postprocessing();
 } else {
-    $context = get_context_instance_by_id($context->id);
-}
-require_capability('moodle/site:manageblocks', $context);
-
-if (! isset($block->version)) {
-    $params = array('plugin' => 'block_maj_submissions', 'name' => 'version');
-    $block->version = $DB->get_field('config_plugins', 'value', $params);
+    $message = '';
 }
 
-$lines = '';
-if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
+echo $OUTPUT->header();
+echo $OUTPUT->heading($strpagetitle);
 
-    $fields = array(
-        'name'       => 'presentation_title',
-        'start_time' => 'schedule_time',
-        'start_date' => 'schedule_day',
-        'end_time'   => 'schedule_time',
-        'end_date'   => 'schedule_day',
-        'reference'  => 'schedule_number',
-        'text'       => 'presentation_abstract',
-        'location'   => 'schedule_roomname',
-        'track'      => 'schedule_roomtopic',
-        'speaker_name'  => 'name_surname_en',
-        //'speaker_email' => 'email',
-        //'speaker_bio'   => 'bio',
-        //'speaker_title' => 'name_title',
-        'speaker_organisation' => 'affiliation_en'
-    );
+echo html_writer::tag('p', get_string($tool.'_desc', $plugin).
+                           $OUTPUT->help_icon($tool, $plugin));
 
-	$records = array();
-	$fieldnames = array();
-	list($records, $fieldnames) = $instance->get_submission_records($fields);
-
-    // cache some useful regular expressions
-    $timesearch = '/^ *(\d+) *: *(\d+) *- *(\d+) *: *(\d+) *$/';
-    $mainlangsearch = '/<span[^>]*lang="en"[^>]*>(.*?)<\/span>/';
-    $multilangsearch = '/<span[^>]*lang="[^""]*"[^>]*>.*?<\/span>/';
-
-    $th = array('st ' => ' ',
-    			'nd ' => ' ',
-    			'rd ' => ' ',
-    			'th ' => ' ',
-    			' '   => '-');
-    $dates = array();
-
-    // add fields from each record
-    $lines = array();
-    foreach ($records as $record) {
-        $line = array();
-
-		// count the number of required fields present in this record
-        $required = 0;
-
-        foreach ($fields as $name => $field) {
-            if (! array_key_exists($field, $fieldnames)) {
-                continue;
-            }
-            if (empty($record->$field)) {
-                $line[] = '';
-                continue;
-            }
-            if ($name=='name' || $name=='start_time' || $name=='start_date' || $name=='end_time' || $name=='end_date') {
-                $required++;
-            }
-			$value = $record->$field;
-            switch ($name) {
-                case 'speaker_name':
-                    $value = block_maj_submissions::textlib('strtotitle', $value);
-                    break;
-                case 'text':
-                    $value = block_maj_submissions::plain_text($value);
-                    $value = block_maj_submissions::trim_text($value, 100, 100, 0);
-                    break;
-                case 'start_date':
-                case 'end_date':
-                    if (isset($dates[$value])) {
-						$value = $dates[$value];
-                    } else {
-						$value = preg_replace($mainlangsearch, '$1', $value);
-						$value = preg_replace($multilangsearch, '', $value);
-						// "Feb 23rd (Fri)"
-						$value = strtr($value, $th);
-						if ($pos = strpos($value, ' (')) {
-							$value = substr($value, 0, $pos);
-						}
-						// Start/End date - must be DD-MM-YY, e.g. 15-10-15
-						$value = date('d-m-y', strtotime(date('Y').'-'.$value));
-						$dates[$record->$field] = $value;
-                    }
-                    break;
-                case 'start_time':
-                    // Start time - must be HH:MM
-                    $value = preg_replace($timesearch, '$1:$2', $value);
-                    break;
-                case 'end_time':
-                    // End time - must be HH:MM
-                    $value = preg_replace($timesearch, '$3:$4', $value);
-                    break;
-                default:
-                    if (strpos($value, 'multilang')) {
-                        $value = preg_replace($mainlangsearch, '$1', $value);
-                        $value = preg_replace($multilangsearch, '', $value);
-                    }
-                    $value = block_maj_submissions::plain_text($value);
-            }
-			$line[] = '"'.str_replace('"', '""', $value).'"';
-        }
-        if ($required >= 5 && count($line)) {
-            $lines[] = implode(',', $line);
-        }
-    }
-
-    // create data lines
-    if (empty($lines)) {
-        $lines = '';
-    } else {
-        $lines = implode("\n", $lines);
-    }
-
-    // create heading line
-    $line = array();
-    foreach ($fields as $name => $field) {
-        if (array_key_exists($field, $fieldnames)) {
-            $line[] = $name;
-        }
-    }
-    if ($line = implode(',', $line)) {
-        $line .= "\n";
-    }
-
-    $lines = $line.$lines;
+if ($message) {
+    echo $OUTPUT->notification($message, 'notifysuccess');
 }
 
-if (empty($instance->config->title)) {
-    $filename = $block->name.'.csv';
-} else {
-    $filename = format_string($instance->config->title, true);
-    $filename = clean_filename(strip_tags($filename).'.csv');
-}
-$filename = preg_replace('/[ \.]+/', '.', $filename);
-send_file($lines, $filename, 0, 0, true, true);
+$mform->display();
+
+echo $OUTPUT->footer($course);

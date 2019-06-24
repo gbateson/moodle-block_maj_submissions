@@ -309,14 +309,14 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $params = array('id' => $this->block->instance->id);
         $params = array('href' => new moodle_url('/blocks/'.$blockname.'/tools/exportsettings/tool.php', $params));
 
-        $text .= ' '.html_writer::tag('a', get_string('exportsettings', $plugin), $params);
-        $text .= $OUTPUT->help_icon('exportsettings', $plugin);
+        $text .= ' '.html_writer::tag('a', get_string('toolexportsettings', $plugin), $params);
+        $text .= $OUTPUT->help_icon('toolexportsettings', $plugin);
 
         $params = array('id' => $this->block->instance->id);
         $params = array('href' => new moodle_url('/blocks/'.$blockname.'/tools/importsettings/tool.php', $params));
 
-        $text .= ' '.html_writer::tag('a', get_string('importsettings', $plugin), $params);
-        $text .= $OUTPUT->help_icon('importsettings', $plugin);
+        $text .= ' '.html_writer::tag('a', get_string('toolimportsettings', $plugin), $params);
+        $text .= $OUTPUT->help_icon('toolimportsettings', $plugin);
 
         $text = html_writer::tag('div', $text, array('id' => 'id_description_text'));
         $mform->addElement('static', $name, $label, $text);

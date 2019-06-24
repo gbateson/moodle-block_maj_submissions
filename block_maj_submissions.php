@@ -951,12 +951,12 @@ class block_maj_submissions extends block_base {
      *
      * @param string $plugin
      * @param string $action "import" or "export"
-     * @param string $action "content" or "settings"
-     * @param string $dir within "pix" dir where icon file is located
+     * @param string $type "content" or "settings"
+     * @param string $icon within "pix" dir
      * @return array
      */
     protected function get_exportimport_link($plugin, $action, $type, $icon) {
-        $title = get_string($action.$type, $plugin);
+        $title = get_string('tool'.$action.$type, $plugin);
         $params = array('id' => $this->instance->id, 'sesskey' => sesskey());
         $href = new moodle_url("/blocks/maj_submissions/tools/$action$type/tool.php", $params);
         $icon = $this->get_icon($icon, $title, $href, $action.$type.'icon');

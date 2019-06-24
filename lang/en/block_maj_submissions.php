@@ -165,13 +165,12 @@ $string['emailmessage'] = 'Email message';
 $string['emailmessage_help'] = 'Select the email message template that will be sent to the owners of the selected records. If you select "Custom", you should add a custom message.';
 $string['emptyschedule'] = 'Empty<br />schedule';
 $string['emptyseatsx'] = '{$a} seats left';
-$string['exportdates'] = 'Export dates';
-$string['exporthandbook'] = 'Export handbook';
-$string['exportschedule'] = 'Export schedule';
-$string['exportsettings'] = 'Export settings';
-$string['exportsettings_help'] = 'This link allows you export the configuration settings for this block to a file that you can import into a similar block in another course.';
 $string['feereceiptnumber'] = 'Fee receipt number';
 $string['feereceiptnumber_help'] = 'The starting value for the auto-increment fee receipt numbers.';
+$string['filecsvshowgizmo'] = 'CSV file (ShowGizmo)';
+$string['fileexcel'] = 'Excel file';
+$string['filehtml'] = 'HTML file';
+$string['filepdf'] = 'PDF file';
 $string['files'] = 'Conference files';
 $string['files_help'] = 'You can upload images and other files to this file area, from where they can be shared by activities and resources in this course.';
 $string['fileslink'] = 'Base URL for these conference files:';
@@ -206,10 +205,6 @@ $string['howtosignup'] = 'If you do NOT already have a username for this Moodle 
 $string['howtoswitchrole'] = '<b style="color: red;">Note:</b> The role you are currently using is <i>a different role from your usual role</i>. The messages below are those that would appear if you were actually logged in as a user with this role. The messages are displayed for testing purposes, and they may not strictly be relevant to your actual registration status.';
 $string['importantdates'] = 'Important dates';
 $string['importcontent'] = 'Import content';
-$string['importsettings'] = 'Import settings';
-$string['importsettings_help'] = 'This link takes you to a screen where you can import configuration settings from a MAJ submissions block configuration settings file.
-
-A settings file is created using the "Export settings" link on a MAJ submissions block configuration settings page.';
 $string['initializeschedule'] = 'Initialize<br />schedule';
 $string['invalidblockname'] = 'Invalid block name in block instance record: id={$a->id}, blockname={$a->blockname}';
 $string['invalidcontextid'] = 'Invalid parentcontextid in block instance record: id = {$a->id}, parentcontextid = {$a->parentcontextid}';
@@ -627,6 +622,17 @@ $string['tooldata2workshop_help'] = 'On this page you can select records from a 
 **To use an existing workshop** in this course, select it from the "Target workshop" menu below.
 
 **To create a new workshop**, give a name for the new workshop and specify the section in which it should be created. This can be an existing section, or a new section. If you specify a new section you will need to give a name for the new section.';
+$string['toolexportdates'] = 'Export dates';
+$string['toolexporthandbook'] = 'Export handbook';
+$string['toolexportschedule'] = 'Export schedule';
+$string['toolexportschedule_desc'] = 'Download the schedule as CSV, Excel or PDF file.';
+$string['toolexportschedule_help'] = 'This tool allows you export the schedule in a file format that is easy to print or import into other event management systems.';
+$string['toolexportsettings'] = 'Export settings';
+$string['toolexportsettings_help'] = 'This link allows you export the configuration settings for this block to a file that you can import into a similar block in another course.';
+$string['toolimportsettings'] = 'Import settings';
+$string['toolimportsettings_help'] = 'This link takes you to a screen where you can import configuration settings from a MAJ submissions block configuration settings file.
+
+A settings file is created using the "Export settings" link on a MAJ submissions block configuration settings page.';
 $string['toolreviewersforum'] = 'Setup reviewers forum';
 $string['toolreviewersforum_desc'] = 'Setup a forum for reviewers';
 $string['toolreviewersforum_help'] = 'On this page, you can setup a Moodle forum that is accessible only to users who belong to the specified group of reviewers.';

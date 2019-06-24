@@ -40,7 +40,6 @@ $string['dateopenclose'] = '{$a->open}〜{$a->close}';
 $string['dateopenedon'] = '{$a} に開始した';
 $string['dateopenson'] = '{$a} に開始する';
 $string['emptyseatsx'] = '残り{$a}席';
-$string['exportsettings'] = '設定をエキスポートする';
 $string['files'] = '大会関係のファイル';
 $string['fileslink'] = 'この大会関係のファイルのベースURL：';
 $string['howtoadd'] = '新しい{$a->record}を提出するため、下記の「エントリを追加する」リンクをクリックし、次のページの書式を入力してください。';
@@ -53,7 +52,6 @@ $string['howtosetupevents'] = 'このデータベースのエントリーは大�
 $string['howtosignup'] = 'まだ本ウェッブサイトのユーザ名をお持ちではない方は 下記のリンクを使ってムードルコース登録の手順をこなしてから、 このページに戻り、{$a->process}をお進めください。';
 $string['howtoswitchrole'] = '<b style="color: red;">注意：</b> 只今使用されているロールは<i>通常と違うロール</i>です。 下記に表示されているメッセージは実際にそのロールのユーザとしてログインされたら、表示されるものです。 只今のロ登録状態に無関係の場合でも、サイトの通常動きを確認するため、メッセージが表示されます。ご了承ください。';
 $string['importantdates'] = '重要日時一覧';
-$string['importsettings'] = '設定をインポートする';
 $string['largeroom'] = '大きな部屋';
 $string['linkenrol'] = 'このコースに登録する';
 $string['linklogin'] = 'このムードルサイトにログイン';
@@ -267,14 +265,12 @@ $string['editslot'] = 'Edit slot';
 $string['emailmessage'] = 'Email message';
 $string['emailmessage_help'] = 'Select the email message template that will be sent to the owners of the selected records. If you select "Custom", you should add a custom message.';
 $string['emptyschedule'] = 'Empty<br />schedule';
-$string['events'] = 'Conference event [{no}]';
-$string['events_help'] = 'Enter the name of an event that can be added to the schedule.';
-$string['exportdates'] = 'Export dates';
-$string['exporthandbook'] = 'Export handbook';
-$string['exportschedule'] = 'Export schedule';
-$string['exportsettings_help'] = 'This link allows you export the configuration settings for this block to a file that you can import into a similar block in another course.';
 $string['feereceiptnumber'] = 'Fee receipt number';
 $string['feereceiptnumber_help'] = 'The starting value for the auto-increment fee receipt numbers.';
+$string['filecsvshowgizmo'] = 'CSV file (ShowGizmo)';
+$string['fileexcel'] = 'Excel file';
+$string['filehtml'] = 'HTML file';
+$string['filepdf'] = 'PDF file';
 $string['files_help'] = 'You can upload images and other files to this file area, from where they can be shared by activities and resources in this course.';
 $string['filterconditions'] = 'Filter condition [{no}]';
 $string['filterconditions_help'] = 'This filter is used to decide which submissions from the source database should be transferred to the target workshop activity for vetting.';
@@ -297,9 +293,6 @@ $string['groupnamecount'] = '{$a->name} [{$a->count} users]';
 $string['groupreset'] = 'All members were removed from the "{$a}" group.';
 $string['howtosetuprooms'] = 'This database contains information about rooms that will be used during the conference. This information is linked to from the online conference schedule.';
 $string['importcontent'] = 'Import content';
-$string['importsettings_help'] = 'This link takes you to a screen where you can import configuration settings from a MAJ submissions block configuration settings file.
-
-A settings file is created using the "Export settings" link on a MAJ submissions block configuration settings page.';
 $string['initializeschedule'] = 'Initialize<br />schedule';
 $string['invalidblockname'] = 'Invalid block name in block instance record: id={$a->id}, blockname={$a->blockname}';
 $string['invalidcontextid'] = 'Invalid parentcontextid in block instance record: id = {$a->id}, parentcontextid = {$a->parentcontextid}';
@@ -344,7 +337,9 @@ $string['newgroupmembers'] = '{$a->count} member(s) added to group: {$a->name}';
 $string['newresourcecreated'] = 'New resource created: {$a}';
 $string['newresourceskipped'] = 'Creation of new resource skipped: {$a}';
 $string['newscore'] = 'New score';
-$string['newscore_help'] = 'If a value is specified here, it will be set as the "Review score" for the selected records.';
+$string['newscore_help'] = 'If a value is specified here, it will be set as the "Review score" for the selected records.
+
+Usually, this field is only used when updating submissions that have not been reviewed before, such as late submissions.';
 $string['newsectioncreated'] = 'New section created: {$a}';
 $string['newstatus'] = 'New status';
 $string['newstatus_help'] = 'Select the new status for the selected records.';
@@ -639,6 +634,17 @@ $string['tooldata2workshop_help'] = 'On this page you can select records from a 
 **To use an existing workshop** in this course, select it from the "Target workshop" menu below.
 
 **To create a new workshop**, give a name for the new workshop and specify the section in which it should be created. This can be an existing section, or a new section. If you specify a new section you will need to give a name for the new section.';
+$string['toolexportdates'] = 'Export dates';
+$string['toolexporthandbook'] = 'Export handbook';
+$string['toolexportschedule'] = 'Export schedule';
+$string['toolexportschedule_desc'] = 'Download the schedule as CSV, Excel or PDF.';
+$string['toolexportschedule_help'] = 'This tool allows you export the schedule in a file format that is easy to print or import into other event management systems.';
+$string['toolexportsettings'] = 'Export settings';
+$string['toolexportsettings_help'] = 'This link allows you export the configuration settings for this block to a file that you can import into a similar block in another course.';
+$string['toolimportsettings'] = 'Import settings';
+$string['toolimportsettings_help'] = 'This link takes you to a screen where you can import configuration settings from a MAJ submissions block configuration settings file.
+
+A settings file is created using the "Export settings" link on a MAJ submissions block configuration settings page.';
 $string['toolreviewersforum'] = 'Setup reviewers forum';
 $string['toolreviewersforum_desc'] = 'Setup a forum for reviewers';
 $string['toolreviewersforum_help'] = 'On this page, you can setup a Moodle forum that is accessible only to users who belong to the specified group of reviewers.';

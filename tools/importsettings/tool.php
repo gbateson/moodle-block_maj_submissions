@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * blocks/maj_submissions/import.php
+ * blocks/maj_submissions/tools/importsettings/tool.php
  *
  * @package    blocks
  * @subpackage maj_submissions
@@ -29,33 +29,31 @@ require_once('../../../../config.php');
 require_once($CFG->dirroot.'/lib/xmlize.php');
 require_once($CFG->dirroot.'/blocks/maj_submissions/tools/importsettings/form.php');
 
-// cache the plugin name  - because it is quite long ;-)
-$plugin = 'block_maj_submissions';
+$blockname = 'maj_submissions';
+$plugin = "block_$blockname";
+$tool = 'toolimportsettings';
 
 // get the incoming block_instance id
 $id = required_param('id', PARAM_INT);
 
 if (! $block_instance = $DB->get_record('block_instances', array('id' => $id))) {
-    print_error('invalidinstanceid', $plugin, '', $id);
+    print_error('invalidinstanceid', $plugin);
 }
 if (! $block = $DB->get_record('block', array('name' => $block_instance->blockname))) {
-    print_error('invalidblockname', $plugin, '', $block_instance);
+    print_error('invalidblockid', $plugin, $block_instance->blockid);
 }
-if (! $context = $DB->get_record('context', array('id' => $block_instance->parentcontextid))) {
-    print_error('invalidcontextid', $plugin, '', $block_instance);
+if (class_exists('context')) {
+    $context = context::instance_by_id($block_instance->parentcontextid);
+} else {
+    $context = get_context_instance_by_id($block_instance->parentcontextid);
 }
 if (! $course = $DB->get_record('course', array('id' => $context->instanceid))) {
-    print_error('invalidcourseid', $plugin, '', $context);
+    print_error('invalidcourseid', $plugin, $block_instance->pageid);
 }
+$course->context = $context;
 
 require_login($course->id);
-
-if (class_exists('context')) {
-    $context = context::instance_by_id($context->id);
-} else {
-    $context = get_context_instance_by_id($context->id);
-}
-require_capability('moodle/site:manageblocks', $context);
+require_capability('moodle/course:manageactivities', $context);
 
 // $SCRIPT is set by initialise_fullme() in 'lib/setuplib.php'
 // It is the path below $CFG->wwwroot of this script

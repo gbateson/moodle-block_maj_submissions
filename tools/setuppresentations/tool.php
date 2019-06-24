@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * blocks/maj_submissions/tools/setuppresentations.php
+ * blocks/maj_submissions/tools/setuppresentations/tool.php
  *
  * @package    blocks
  * @subpackage maj_submissions
@@ -37,17 +37,14 @@ $id = required_param('id', PARAM_INT); // block_instance id
 if (! $block_instance = $DB->get_record('block_instances', array('id' => $id))) {
     print_error('invalidinstanceid', $plugin);
 }
-
 if (! $block = $DB->get_record('block', array('name' => $block_instance->blockname))) {
     print_error('invalidblockid', $plugin, $block_instance->blockid);
 }
-
 if (class_exists('context')) {
     $context = context::instance_by_id($block_instance->parentcontextid);
 } else {
     $context = get_context_instance_by_id($block_instance->parentcontextid);
 }
-
 if (! $course = $DB->get_record('course', array('id' => $context->instanceid))) {
     print_error('invalidcourseid', $plugin, $block_instance->pageid);
 }

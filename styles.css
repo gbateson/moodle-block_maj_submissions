@@ -83,7 +83,8 @@
     height:      auto;
 }
 
-form[id^=block_maj_submissions] [data-fieldtype=group] br {
+/** only Boost based themes have ".col.md.9" */
+form[id^=block_maj_submissions] .col-md-9[data-fieldtype=group] br {
     display:     none;
 }
 

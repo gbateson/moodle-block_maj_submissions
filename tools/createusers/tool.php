@@ -15,11 +15,13 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Search and createusers strings throughout all texts in the whole database
+ * blocks/maj_submissions/tools/createusers/tool.php
  *
- * @package    tool_createusers
- * @copyright  1999 onwards Martin Dougiamas (http://dougiamas.com)
+ * @package    blocks
+ * @subpackage maj_submissions
+ * @copyright  2016 Gordon Bateson (gordon.bateson@gmail.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.3
  */
 
 /** Include required files */
@@ -35,24 +37,21 @@ $id = required_param('id', PARAM_INT); // block_instance id
 if (! $block_instance = $DB->get_record('block_instances', array('id' => $id))) {
     print_error('invalidinstanceid', $plugin);
 }
-
 if (! $block = $DB->get_record('block', array('name' => $block_instance->blockname))) {
     print_error('invalidblockid', $plugin, $block_instance->blockid);
 }
-
 if (class_exists('context')) {
     $context = context::instance_by_id($block_instance->parentcontextid);
 } else {
     $context = get_context_instance_by_id($block_instance->parentcontextid);
 }
-
 if (! $course = $DB->get_record('course', array('id' => $context->instanceid))) {
     print_error('invalidcourseid', $plugin, $block_instance->pageid);
 }
 $course->context = $context;
 
 require_login($course->id);
-require_capability('moodle/user:create', $context);
+require_capability('moodle/course:manageactivities', $context);
 
 // $SCRIPT is set by initialise_fullme() in 'lib/setuplib.php'
 // It is the path below $CFG->wwwroot of this script
