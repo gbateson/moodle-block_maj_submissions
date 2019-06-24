@@ -91,35 +91,35 @@ form[id^=block_maj_submissions] [data-fieldtype=group] br {
  * styles for the maj_submissions block
  */
 
-.block_maj_submissions.block p.editsettings {
+.block_maj_submissions p.editsettings {
     font-size:  0.8em;
     text-align: right;
     margin:       0px;
 }
-.block_maj_submissions.block h4.importantdates,
-.block_maj_submissions.block h4.quicklinks,
-.block_maj_submissions.block h4.toollinks {
+.block_maj_submissions h4.importantdates,
+.block_maj_submissions h4.quicklinks,
+.block_maj_submissions h4.toollinks {
     color:    #cc3333;
     margin:  0px auto;
 }
-.block_maj_submissions.block h4.importantdates a.icon,
-.block_maj_submissions.block h4.quicklinks a.icon,
-.block_maj_submissions.block h4.toollinks a.icon {
+.block_maj_submissions h4.importantdates a.icon,
+.block_maj_submissions h4.quicklinks a.icon,
+.block_maj_submissions h4.toollinks a.icon {
     float:      right;
 }
-.block_maj_submissions.block h4.importantdates a.icon img,
-.block_maj_submissions.block h4.quicklinks a.icon img,
-.block_maj_submissions.block h4.toollinks a.icon img {
+.block_maj_submissions h4.importantdates a.icon img,
+.block_maj_submissions h4.quicklinks a.icon img,
+.block_maj_submissions h4.toollinks a.icon img {
     margin-right: 4px;
     margin-top:  -4px;
 }
-.block_maj_submissions.block ul.importantdates,
-.block_maj_submissions.block ul.quicklinks {
+.block_maj_submissions ul.importantdates,
+.block_maj_submissions ul.quicklinks {
     list-style:  none;
     margin:   8px 0px;
     padding:      0px;
 }
-.block_maj_submissions.block ul.quicklinks a {
+.block_maj_submissions ul.quicklinks a {
     background-color: #dcefef;
     border: 1px solid #07889b;
     border-radius:        4px;
@@ -132,13 +132,13 @@ form[id^=block_maj_submissions] [data-fieldtype=group] br {
     padding:          4px 8px;
     width:  calc(100% - 16px);
 }
-.block_maj_submissions.block ul.quicklinks a:hover {
+.block_maj_submissions ul.quicklinks a:hover {
     background-color: #07889b;
     color:               #fff;
     text-decoration:     none;
 }
-.block_maj_submissions.block ul.importantdates li.divider,
-.block_maj_submissions.block p.tooldivider {
+.block_maj_submissions ul.importantdates li.divider,
+.block_maj_submissions p.tooldivider {
     background: #b94a48; /* For browsers that do not support gradients */
     background: -webkit-linear-gradient(left, #b94a48, #f5f5f5); /* For Safari 5.1 to 6.0  */
     background: -o-linear-gradient(right, #b94a48, #f5f5f5);    /* For Opera 11.1 to 12.0 */
@@ -149,65 +149,65 @@ form[id^=block_maj_submissions] [data-fieldtype=group] br {
     max-width:   210px;
     width:         80%;
 }
-.block_maj_submissions.block ul.importantdates li.date {
+.block_maj_submissions ul.importantdates li.date {
     margin:    4px 0px;
     position: relative;
 }
-.block_maj_submissions.block ul.importantdates li.date i {
+.block_maj_submissions ul.importantdates li.date i {
     position: absolute;
     top:           0px;
     right:         0px;
 }
-.block_maj_submissions.block ul.importantdates li.date span {
+.block_maj_submissions ul.importantdates li.date span {
 }
-.block_maj_submissions.block ul.importantdates li.date.early span {
+.block_maj_submissions ul.importantdates li.date.early span {
 }
-.block_maj_submissions.block ul.importantdates li.date.open span {
+.block_maj_submissions ul.importantdates li.date.open span {
 }
-.block_maj_submissions.block ul.importantdates li.date.late span {
+.block_maj_submissions ul.importantdates li.date.late span {
     color: #999999;
 }
-.block_maj_submissions.block ul.importantdates li.date.timeremaining1 span::before {
+.block_maj_submissions ul.importantdates li.date.timeremaining1 span::before {
     color:    #cc0000;
     content:   ">>> ";
     font-weight: bold;
 }
-.block_maj_submissions.block ul.importantdates li.date.timeremaining1 span::after {
+.block_maj_submissions ul.importantdates li.date.timeremaining1 span::after {
     color:    #cc0000;
     content:   " <<<";
     font-weight: bold;
 }
-.block_maj_submissions.block ul.importantdates li.date.timeremaining2 span::before {
+.block_maj_submissions ul.importantdates li.date.timeremaining2 span::before {
     color:    #cc0000;
     content:    ">> ";
     font-weight: bold;
 }
-.block_maj_submissions.block ul.importantdates li.date.timeremaining2 span::after {
+.block_maj_submissions ul.importantdates li.date.timeremaining2 span::after {
     color:    #cc0000;
     content:    " <<";
     font-weight: bold;
 }
-.block_maj_submissions.block ul.importantdates li.date.timeremaining3 span::before {
+.block_maj_submissions ul.importantdates li.date.timeremaining3 span::before {
     color:    #cc0000;
     content:    "> ";
     font-weight: bold;
 }
-.block_maj_submissions.block ul.importantdates li.date.timeremaining3 span::after {
+.block_maj_submissions ul.importantdates li.date.timeremaining3 span::after {
     color:    #cc0000;
     content:    " <";
     font-weight: bold;
 }
-.block_maj_submissions.block ul.importantdates li.date.timeremaining7 span::before {
+.block_maj_submissions ul.importantdates li.date.timeremaining7 span::before {
     color:    #cc0000;
     content:    "* ";
     font-weight: bold;
 }
-.block_maj_submissions.block ul.importantdates li.date.timeremaining7 span::after {
+.block_maj_submissions ul.importantdates li.date.timeremaining7 span::after {
     color:    #cc0000;
     content:    " *";
     font-weight: bold;
 }
-.block_maj_submissions.block p.toollink {
+.block_maj_submissions p.toollink {
     margin:   4px 0px;
 }
 
