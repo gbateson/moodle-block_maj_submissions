@@ -481,4 +481,3 @@ $filename .= '_'.current_language().'.html';
 $filename = preg_replace('/[ \.]/', '.', $filename);
 
 send_file($html, $filename, 0, 0, true, true);
-//echo $html;

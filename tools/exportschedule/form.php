@@ -48,13 +48,11 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
     public function definition() {
 
         $mform = $this->_form;
-        $config = $this->instance->config;
-
         $this->set_form_id($mform);
 
         $name = 'language';
         $label = get_string($name);
-        $options = $this->get_language_options($config);
+        $options = $this->get_language_options();
         if (count($options)==1) {
             $lang = key($options);
             $mform->addElement('hidden', $name, $lang);
@@ -66,16 +64,20 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
 
         $name = 'fileformat';
         $label = get_string($name, 'question');
-        $options = $this->get_fileformat_options($config);
+        $options = $this->get_fileformat_options();
         $mform->addElement('select', $name, $label, $options);
         $mform->setType($name, PARAM_ALPHANUM);
 
         $this->add_action_buttons(true, get_string('export', 'grades'));
     }
 
-    protected function get_language_options($config) {
-        $langs = get_string_manager()->get_list_of_languages();
+    protected function get_language_options() {
 
+        // get list of all langs
+        //$langs = get_string_manager()->get_list_of_languages();
+        $langs = get_string_manager()->get_list_of_translations(true);
+
+        $config = $this->instance->config;
         if (empty($config->displaylangs)) {
             $options = array();
         } else {
@@ -93,16 +95,17 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
             } else {
                 $text = get_string('unknownlanguage', $this->plugin);
             }
-            $options[$lang] = "$text ($lang)";
+            $options[$lang] = $text;
         }
         return $options;
     }
 
-    protected function get_fileformat_options($config) {
-        return array('csvshowgizmo' => get_string('filecsvshowgizmo', $this->plugin),
-                     'excel' => get_string('fileexcel', $this->plugin),
-                     'html' => get_string('filehtml', $this->plugin),
-                     'pdf' => get_string('filepdf', $this->plugin));
+    protected function get_fileformat_options() {
+        $plugin = $this->plugin;
+        return array('csvshowgizmo' => get_string('filecsvshowgizmo', $plugin),
+                     'excel' => get_string('fileexcel', $plugin),
+                     'html' => get_string('filehtml', $plugin),
+                     'pdf' => get_string('filepdf', $plugin));
     }
 
     /**
@@ -112,7 +115,6 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
      * @todo Finish documenting this function
      */
     public function form_postprocessing() {
-
         if ($data = $this->get_data()) {
 
             $lang = $data->language;
@@ -155,7 +157,6 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
         global $CFG;
 
         $msg = array();
-        $config = $this->instance->config;
 
         $fields = array(
             'name'       => 'presentation_title',
@@ -276,17 +277,8 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
         }
 
         $lines = $line.$lines;
-
-        if (empty($config->title)) {
-            $filename = $instance->blockname.'.csv';
-        } else {
-            $filename = format_string($config->title, true);
-            $filename = clean_filename(strip_tags($filename).'.csv');
-        }
-        $filename = preg_replace('/[ \.]+/', '.', $filename);
-        send_file($lines, $filename, 0, 0, true, true, '', true); // don't die
-
-        return $msg;
+        $this->send_file($lines, 'csv');
+        // script will die at end of send_file()
     }
 
     /**
@@ -299,7 +291,292 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
      */
     public function export_excel($lang) {
         global $CFG;
+        require_once($CFG->dirroot.'/lib/excellib.class.php');
+
+        require_once($CFG->dirroot.'/lib/phpexcel/PHPExcel/IComparable.php');
+        require_once($CFG->dirroot.'/lib/phpexcel/PHPExcel/RichText.php');
+
         $msg = array();
+
+        $html = $this->get_schedule($lang);
+
+        $workbook = null;
+        $worksheet = null;
+        $formats = null;
+
+        $search = (object)array(
+            'days' => '/(<tbody[^>]*>)(.*?)<\/tbody>/isu',
+            'rows' => '/(<tr[^>]*>)(.*?)<\/tr>/isu',
+            'cells' => '/(<t[hd][^>]*>)(.*?)<\/t[hd]>/isu',
+            'attributes' => '/(\w+)="([^"]*)"/isu',
+            'richtext' => '/<(b|i|u|s|strike|sub|sup|big|small)\b[^>]*>(.*?)<\/\\1>/isu',
+            // row classes
+            'date' => '/\bdate\b/',
+            'roomheadings' => '/\broomheadings\b/',
+            // cell classes
+            'timeheading' => '/\btimeheading\b/',
+            'multiroom' => '/\bmultiroom\b/',
+            'presentation' => '/\bpresentation\b/',
+            'lightning' => '/\blightning\b/',
+            'workshop' => '/\bworkshop\b/',
+            'keynote' => '/\bkeynote\b/'
+        );
+
+        $bgcolors = (object)array(
+            'timeheading' => '#ffffff',
+            'roomheading' => '#eeddee',
+            'presentation' => '#fffcf6',
+            'lightning' => '#f8ffff',
+            'workshop' => '#fff8ff',
+            'keynote' => '#f9f2ec',
+            'default' => '#ffffff'
+        );
+
+        $colwidth = (object)array('timeheadings' => 15,
+                                  'default' => 25);
+
+        $rowheight = (object)array('date' => 32,
+                                   'roomheadings' => 40,
+                                   'multiroom' => 45,
+                                   'default' => 80);
+
+        if (preg_match_all($search->days, $html, $days)) {
+
+            $countdays = count($days[0]);
+            for ($d=0; $d<$countdays; $d++) {
+
+                $dayname = '';
+                $worksheet = null;
+
+                if (preg_match_all($search->rows, $days[0][$d], $rows)) {
+
+                    $countcols = 0;
+                    $countrows = count($rows[0]);
+                    for ($r=0; $r<$countrows; $r++) {
+
+                        $rowclass = '';
+
+                        if (preg_match_all($search->attributes, $rows[1][$r], $attributes)) {
+
+                            $countattributes = count($attributes[0]);
+                            for ($a=0; $a<$countattributes; $a++) {
+
+                                switch ($attributes[1][$a]) {
+                                    case 'class': $rowclass = trim($attributes[2][$a]); break;
+                                    // ignore anything else
+                                }
+                            }
+                        }
+
+                        if (preg_match_all($search->cells, $rows[2][$r], $cells)) {
+
+                            $is_date = preg_match($search->date, $rowclass);
+                            $is_roomheading = preg_match($search->roomheadings, $rowclass);
+                            $is_multiroom = false;
+
+                            $countcells = count($cells[0]);
+                            for ($c=0; $c<$countcells; $c++) {
+
+                                $cellclass = '';
+                                $colspan = 1;
+                                $rowspan = 1;
+
+                                if (preg_match_all($search->attributes, $cells[1][$c], $attributes)) {
+
+                                    $countattributes = count($attributes[0]);
+                                    for ($a=0; $a<$countattributes; $a++) {
+
+                                        switch ($attributes[1][$a]) {
+                                            case 'class': $cellclass =  trim($attributes[2][$a]); break;
+                                            case 'colspan': $colspan = intval($attributes[2][$a]); break;
+                                            case 'rowspan': $rowspan = intval($attributes[2][$a]); break;
+                                            // ignore "id", "style" and anything else
+                                        }
+                                    }
+                                }
+
+                                if (preg_match($search->multiroom, $cellclass)) {
+                                    $is_multiroom = true;
+                                }
+                                $is_timeheading = preg_match($search->timeheading, $cellclass);
+
+                                if ($workbook===null) {
+                                    $filename = $this->make_filename('xlsx');
+                                    $workbook = new MoodleExcelWorkbook($filename);
+                                    $workbook->send($filename);
+                                    $formats = (object)array(
+                                        'date' => $workbook->add_format(['h_align' => 'left',
+                                                                         'v_align' => 'vcenter',
+                                                                         'size' => 18]),
+                                        'roomheading' => $workbook->add_format(['h_align' => 'center',
+                                                                                'v_align' => 'vcenter',
+                                                                                'size' => 12,
+                                                                                'text_wrap' => true,
+                                                                                'bg_color' => $bgcolors->roomheading]),
+                                        'timeheading' => $workbook->add_format(['h_align' => 'center',
+                                                                                'v_align' => 'top',
+                                                                                'size' => 10,
+                                                                                'text_wrap' => true,
+                                                                                'bg_color' => $bgcolors->timeheading]),
+                                        'session' => $workbook->add_format(['h_align' => 'left',
+                                                                            'v_align' => 'top',
+                                                                            'size' => 10,
+                                                                            'text_wrap' => true,
+                                                                            'bg_color' => $bgcolors->timeheading])
+                                    );
+                                }
+
+                                if ($worksheet===null) {
+                                    if (preg_match($search->date, $rowclass)) {
+                                        $dayname = $cells[2][$c];
+                                    } else {
+                                        $dayname = get_string('day', $this->plugin).': '.($d + 1);
+                                    }
+                                    $worksheet = $workbook->add_worksheet($dayname);
+                                    $worksheet->hide_gridlines();
+                                }
+
+                                $text = $cells[2][$c];
+                                $text = str_replace('<br>', chr(10), $text);
+
+                                // convert <big>, <small>, <b>, <i> and <u>, to richtext
+                                if (preg_match_all($search->richtext, $text, $strings, PREG_OFFSET_CAPTURE)) {
+
+                                    $richtext = new PHPExcel_RichText();
+                                    $i = 0; // index on chars in $text string
+
+                                    $countstrings = count($strings[0]);
+                                    for ($s=0; $s<$countstrings; $s++) {
+
+                                        // extract next match and start position
+                                        list($string, $start) = $strings[0][$s];
+                                        $length = block_maj_submissions::textlib('strlen', $string);
+
+                                        // append plain text, if any
+                                        if ($i < $start) {
+                                            // Because PREG_OFFSET_CAPTURE captures only the plain byte number,
+                                            // not the unicode character number, we use the plain "substr"
+                                            // function, and not the multibyte equivalent method in "core_text".
+                                            $richtext->createText(substr($text, $i, $start - $i));
+                                        }
+
+                                        // move $i(ndex) to end of current $string
+                                        $i = $start + $length;
+
+                                        // convert next $substr(ing) to richtext
+                                        $substr = $strings[2][$s][0];
+                                        $font = $richtext->createTextRun($substr)->getFont();
+
+                                        // add font format info, if necessary
+                                        switch ($strings[1][$s][0]) {
+                                            case 'b': $font->setBold(true); break;
+                                            case 'i': $font->setItalic(true); break;
+                                            case 'u': $font->setUnderline(true); break;
+                                            case 'sub': $font->setSubScript(true); break;
+                                            case 'sup': $font->setSuperScript(true); break;
+                                            case 'strike': $font->setStrikethrough(true); break;                                                
+                                            case 'big': $font->setSize(intval($font->getSize() * 1.2)); break;
+                                            case 'small': $font->setSize(intval($font->getSize() * 0.8)); break;
+                                        }
+                                    }
+
+                                    // append trailing plain text, if any
+                                    $plaintext = block_maj_submissions::textlib('substr', $text, $i);
+                                    $richtext->createText($plaintext);
+
+                                    $text = $richtext;
+                                }
+
+                                // set format for this cell
+                                switch (true) {
+
+                                    case $is_date:
+                                        $format = $formats->date;
+                                        break;
+
+                                    case ($is_timeheading):
+                                        $format = $formats->timeheading;
+                                        break;
+
+                                    case $is_roomheading:
+                                        $format = $formats->roomheading;
+                                        break;
+
+                                    default:
+                                        $format = $formats->session;
+                                        break;
+                                }
+
+                                // set BG color, according to presentation type
+                                switch (true) {
+                                    case preg_match($search->presentation, $cellclass):
+                                        $format->set_bg_color($bgcolors->presentation);
+                                        break;
+                                    case preg_match($search->lightning, $cellclass):
+                                        $format->set_bg_color($bgcolors->lightning);
+                                        break;
+                                    case preg_match($search->workshop, $cellclass):
+                                        $format->set_bg_color($bgcolors->workshop);
+                                        break;
+                                    case preg_match($search->keynote, $cellclass):
+                                        $format->set_bg_color($bgcolors->keynote);
+                                        break;
+                                    default:
+                                        $format->set_bg_color($bgcolors->default);
+                                }
+
+                                // todo: use $offset to get real row and column
+                                $worksheet->write_string($r, $c, $text, $format);
+
+                                if ($colspan || $rowspan) {
+                                    // this needs more work ...
+                                    $worksheet->merge_cells($r, $c, $r + ($rowspan - 1), $c + ($colspan - 1));
+                                }
+
+                                // Set thin border on all sides.
+                                //$format->set_border(1);
+
+                            }
+                            if ($countcells) {
+                                switch (true) {
+
+                                    case $is_date:
+                                        $height = $rowheight->date;
+                                        break;
+
+                                    case $is_roomheading:
+                                        $height = $rowheight->roomheadings;
+                                        break;
+
+                                    case $is_multiroom:
+                                        $height = $rowheight->multiroom;
+                                        break;
+
+                                    default:
+                                        $height = $rowheight->default;
+                                        break;
+                                }
+                                $worksheet->set_row($r, $height);
+
+                                if ($countcols < $countcells) {
+                                    $countcols = $countcells;
+                                }
+                            }
+                        }
+                    }
+                    if ($countcols) {
+                        $worksheet->set_column(0, 0, $colwidth->timeheadings);
+                        $worksheet->set_column(1, $countcols, $colwidth->default);
+                    }
+                }
+            }
+        }
+
+        if ($workbook) {
+            $workbook->close();
+            die;
+        }
+
         return $msg;
     }
 
@@ -326,8 +603,125 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
      * @todo Finish documenting this function
      */
     public function export_pdf($lang) {
-        global $CFG;
         $msg = array();
         return $msg;
+    }
+
+    /**
+     * export_pdf
+     *
+     * @uses $CFG
+     * @param string $lang
+     * @return array $msg
+     * @todo Finish documenting this function
+     */
+    protected function get_schedule($lang) {
+        global $DB;
+
+        $html = '';
+        $config = $this->instance->config;
+        if ($cmid = $config->publishcmid) {
+            $modinfo = get_fast_modinfo($this->course);
+            if (array_key_exists($cmid, $modinfo->cms)) {
+                $cm = $modinfo->get_cm($cmid);
+                if ($cm->modname=='page') {
+                    $html = $DB->get_field('page', 'content', array('id' => $cm->instance));
+
+                    // remove embedded SCRIPT and STYLE tags and THEAD
+                    $search = array('/<script[^>]*>.*<\/script>\s*/isu',
+                                    '/<style[^>]*>.*<\/style>\s*/isu',
+                                    '/<thead[^>]*>.*<\/thead>\s*/isu');
+                    $html = preg_replace($search, '', $html);
+
+                    // remove white space around HTML block elements
+                    $search = '/\s*(<\/?(table|thead|tbody|tr|th|td|div)[^>]*>)\s*/';
+                    $html = preg_replace($search, '$1', $html);
+
+                    // remove unwanted multilang strings
+                    $search = '/<span[^>]*class="multilang"[^>]*>(.*?)<\/span>\s*/isu';
+                    if (preg_match_all($search, $html, $matches, PREG_OFFSET_CAPTURE)) {
+                        $i_max = count($matches[0]) - 1;
+                        for ($i=$i_max; $i>=0; $i--) {
+                            list($match, $start) = $matches[0][$i];
+                            if (strpos($match, 'lang="'.$lang.'"')) {
+                                $replace = $matches[1][$i][0];
+                            } else {
+                                $replace = '';
+                            }
+                            $html = substr_replace($html, $replace, $start, strlen($match));
+                        }
+                    }
+
+                    // remove SPAN.category|topic (within DIV.categorytypetopic)
+                    // remove SPAN:empty
+                    // remove DIV.roomtopic (within DIV.room)
+                    // remove DIV.time|room|summary
+                    // remove DIV:empty
+                    $search = array('/<span[^>]*class="(category|topic)"[^>]*>.*?<\/span>\s*/',
+                                    '/<span[^>]*><\/span>\s*/',
+                                    '/<div[^>]*class="(roomtopic)"[^>]*>.*?<\/div>\s*/',
+                                    '/<div[^>]*class="(time|room|summary)"[^>]*>.*?<\/div>\s*/',
+                                    '/<div[^>]*><\/div>\s*/');
+                    $html = preg_replace($search, '', $html);
+
+                    // format certain non-empty cells
+                    $search = array('/<span[^>]*class="startfinish"[^>]*>(.*?)<\/span>\s*/',
+                                    '/<span[^>]*class="duration"[^>]*>(.*?)<\/span>\s*/',
+                                    '/<span[^>]*class="roomseats"[^>]*>(.*?)<\/span>\s*/',
+                                    '/<div[^>]*class="title"[^>]*>(.*?)<\/div>\s*/',
+                                    '/<span[^>]*class="schedulenumber"[^>]*>(.*?)<\/span>\s*/',
+                                    '/<span[^>]*class="authornames"[^>]*>(.*?)<\/span>\s*/',
+                                    '/<span[^>]*class="type"[^>]*>(.*?)<\/span>\s*/');
+                    $replace = array('<b>$1</b>', '<br><i>$1</i>', '<br>($1)', '$1<br>', '[$1]', ' <i>$1</i>', '<small>$1</small>');
+                    $html = preg_replace($search, $replace, $html);
+
+                    // reduce SPAN tags
+                    // reduce DIV tags
+                    // remove <br> at end of table data cell
+                    $search = array('/<span[^>]*>(.*?)<\/span>/',
+                                    '/<div[^>]*>(.*?)<\/div>/',
+                                    '/<br>(?=<\/td>)/');
+                    $replace = array('$1', '$1<br>', '');
+                    $html = preg_replace($search, $replace, $html);
+                }
+            }
+        }
+        return $html;
+    }
+
+    /**
+     * send_file
+     *
+     * @uses $CFG
+     * @param string $content
+     * @param string $filetype
+     * @return void
+     */
+    protected function send_file($content, $filetype) {
+        $filename = $this->make_filename($filetype);
+        send_file($content, $filename, 0, 0, true, true);
+        // script will die at end of send_file()
+    }
+
+    /**
+     * make_filename
+     *
+     * @param string $filetype
+     * @return void
+     */
+    protected function make_filename($filetype) {
+        $config = $this->instance->config;
+        if (empty($config->title)) {
+            $filename = '';
+        } else {
+            $filename = format_string($config->title, true);
+        }
+        if ($filename=='') {
+            $filename = $this->instance->blockname;
+        }
+        $filename .= ".$filetype";
+        $filename = preg_replace('/[ \.]+/', '.', $filename);
+        $filename = clean_filename(strip_tags($filename));
+        return $filename;
     }
 }
