@@ -292,7 +292,6 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
     public function export_excel($lang) {
         global $CFG;
         require_once($CFG->dirroot.'/lib/excellib.class.php');
-
         require_once($CFG->dirroot.'/lib/phpexcel/PHPExcel/IComparable.php');
         require_once($CFG->dirroot.'/lib/phpexcel/PHPExcel/RichText.php');
 
@@ -314,25 +313,27 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
             'date' => '/\bdate\b/',
             'roomheadings' => '/\broomheadings\b/',
             // cell classes
+            'roomheading' => '/\broomheading\b/',
             'timeheading' => '/\btimeheading\b/',
             'multiroom' => '/\bmultiroom\b/',
-            'presentation' => '/\bpresentation\b/',
-            'lightning' => '/\blightning\b/',
+            'keynote' => '/\bkeynote\b/',
             'workshop' => '/\bworkshop\b/',
-            'keynote' => '/\bkeynote\b/'
+            'lightning' => '/\blightning\b/',
+            'presentation' => '/\bpresentation\b/'
         );
 
-        $bgcolors = (object)array(
-            'timeheading' => '#ffffff',
-            'roomheading' => '#eeddee',
-            'presentation' => '#fffcf6',
-            'lightning' => '#f8ffff',
-            'workshop' => '#fff8ff',
-            'keynote' => '#f9f2ec',
-            'default' => '#ffffff'
+        $formats = (object)array(
+            'date'         => ['h_align' => 'left',   'v_align' => 'center', 'size' => 18],
+            'roomheading'  => ['h_align' => 'center', 'v_align' => 'center', 'size' => 14, 'bg_color' => '#eeddee'], // white
+            'timeheading'  => ['h_align' => 'center', 'v_align' => 'top',    'size' => 12, 'bg_color' => '#ffffff'], // purple
+            'presentation' => ['h_align' => 'left',   'v_align' => 'top',    'size' => 10, 'bg_color' => '#fffcf6'], // yellow
+            'lightning'    => ['h_align' => 'left',   'v_align' => 'top',    'size' => 10, 'bg_color' => '#f8ffff'], // blue
+            'workshop'     => ['h_align' => 'left',   'v_align' => 'top',    'size' => 10, 'bg_color' => '#fff8ff'], // purple
+            'keynote'      => ['h_align' => 'left',   'v_align' => 'top',    'size' => 10, 'bg_color' => '#f9f2ec'], // brown
+            'default'      => ['h_align' => 'left',   'v_align' => 'top',    'size' => 10, 'bg_color' => '#ffffff']
         );
 
-        $colwidth = (object)array('timeheadings' => 15,
+        $colwidth = (object)array('timeheading' => 15,
                                   'default' => 25);
 
         $rowheight = (object)array('date' => 32,
@@ -350,10 +351,14 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
 
                 if (preg_match_all($search->rows, $days[0][$d], $rows)) {
 
-                    $countcols = 0;
+                    $row = 0;
+                    $lastcol = 0;
+                    $offset = array();
+
                     $countrows = count($rows[0]);
                     for ($r=0; $r<$countrows; $r++) {
 
+                        $col = 0;
                         $rowclass = '';
 
                         if (preg_match_all($search->attributes, $rows[1][$r], $attributes)) {
@@ -371,10 +376,18 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                         if (preg_match_all($search->cells, $rows[2][$r], $cells)) {
 
                             $is_date = preg_match($search->date, $rowclass);
-                            $is_roomheading = preg_match($search->roomheadings, $rowclass);
+                            $is_roomheadings = preg_match($search->roomheadings, $rowclass);
                             $is_multiroom = false;
 
                             $countcells = count($cells[0]);
+                            if ($lastcol < $countcells) {
+                                $lastcol = $countcells;
+                            }
+
+                            if (empty($offset[$r])) {
+                                $offset[$r] = array_fill(0, $lastcol, 0);
+                            }
+
                             for ($c=0; $c<$countcells; $c++) {
 
                                 $cellclass = '';
@@ -398,32 +411,17 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                 if (preg_match($search->multiroom, $cellclass)) {
                                     $is_multiroom = true;
                                 }
-                                $is_timeheading = preg_match($search->timeheading, $cellclass);
 
                                 if ($workbook===null) {
                                     $filename = $this->make_filename('xlsx');
                                     $workbook = new MoodleExcelWorkbook($filename);
                                     $workbook->send($filename);
-                                    $formats = (object)array(
-                                        'date' => $workbook->add_format(['h_align' => 'left',
-                                                                         'v_align' => 'vcenter',
-                                                                         'size' => 18]),
-                                        'roomheading' => $workbook->add_format(['h_align' => 'center',
-                                                                                'v_align' => 'vcenter',
-                                                                                'size' => 12,
-                                                                                'text_wrap' => true,
-                                                                                'bg_color' => $bgcolors->roomheading]),
-                                        'timeheading' => $workbook->add_format(['h_align' => 'center',
-                                                                                'v_align' => 'top',
-                                                                                'size' => 10,
-                                                                                'text_wrap' => true,
-                                                                                'bg_color' => $bgcolors->timeheading]),
-                                        'session' => $workbook->add_format(['h_align' => 'left',
-                                                                            'v_align' => 'top',
-                                                                            'size' => 10,
-                                                                            'text_wrap' => true,
-                                                                            'bg_color' => $bgcolors->timeheading])
-                                    );
+                                    foreach ($formats as $f => $format) {
+                                        $format = $workbook->add_format($format);
+                                        $format->set_text_wrap();
+                                        $format->set_border(1); // 1=thin, 2=thick
+                                        $formats->$f = $format;
+                                    }
                                 }
 
                                 if ($worksheet===null) {
@@ -433,24 +431,63 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                         $dayname = get_string('day', $this->plugin).': '.($d + 1);
                                     }
                                     $worksheet = $workbook->add_worksheet($dayname);
-                                    $worksheet->hide_gridlines();
                                 }
 
-                                $text = $cells[2][$c];
+                                $text = html_entity_decode($cells[2][$c]);
                                 $text = str_replace('<br>', chr(10), $text);
+
+                                // set format for this cell
+                                switch (true) {
+
+                                    case $is_date:
+                                        $format = $formats->date;
+                                        break;
+
+                                    case preg_match($search->timeheading, $cellclass):
+                                        $format = $formats->timeheading;
+                                        break;
+
+                                    case preg_match($search->roomheading, $cellclass):
+                                        $format = $formats->roomheading;
+                                        break;
+
+                                    case preg_match($search->presentation, $cellclass):
+                                        $format = $formats->presentation;
+                                        break;
+
+                                    case preg_match($search->lightning, $cellclass):
+                                        $format = $formats->lightning;
+                                        break;
+
+                                    case preg_match($search->workshop, $cellclass):
+                                        $format = $formats->workshop;
+                                        break;
+
+                                    case preg_match($search->keynote, $cellclass):
+                                        $format = $formats->keynote;
+                                        break;
+
+                                    default:
+                                        $format = $formats->default;
+                                }
+
+                                // $i(ndex) on chars in $text string
+                                $i = 0;
 
                                 // convert <big>, <small>, <b>, <i> and <u>, to richtext
                                 if (preg_match_all($search->richtext, $text, $strings, PREG_OFFSET_CAPTURE)) {
 
                                     $richtext = new PHPExcel_RichText();
-                                    $i = 0; // index on chars in $text string
+
+                                    // fetch default font size for this cell
+                                    $fontsize = $format->get_format_array();
+                                    $fontsize = $fontsize['font']['size'];
 
                                     $countstrings = count($strings[0]);
                                     for ($s=0; $s<$countstrings; $s++) {
 
                                         // extract next match and start position
                                         list($string, $start) = $strings[0][$s];
-                                        $length = block_maj_submissions::textlib('strlen', $string);
 
                                         // append plain text, if any
                                         if ($i < $start) {
@@ -461,11 +498,14 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                         }
 
                                         // move $i(ndex) to end of current $string
-                                        $i = $start + $length;
+                                        $i = $start + strlen($string);
 
-                                        // convert next $substr(ing) to richtext
-                                        $substr = $strings[2][$s][0];
-                                        $font = $richtext->createTextRun($substr)->getFont();
+                                        // convert next $string to richtext
+                                        $string = $strings[2][$s][0];
+                                        $font = $richtext->createTextRun($string)->getFont();
+
+                                        // set font size to that of parent cell
+                                        $font->setSize($fontsize);
 
                                         // add font format info, if necessary
                                         switch ($strings[1][$s][0]) {
@@ -474,69 +514,63 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                             case 'u': $font->setUnderline(true); break;
                                             case 'sub': $font->setSubScript(true); break;
                                             case 'sup': $font->setSuperScript(true); break;
+                                            case 's': // alias for "strike"                                                
                                             case 'strike': $font->setStrikethrough(true); break;                                                
-                                            case 'big': $font->setSize(intval($font->getSize() * 1.2)); break;
-                                            case 'small': $font->setSize(intval($font->getSize() * 0.8)); break;
+                                            case 'big': $font->setSize(intval($fontsize * 1.2)); break;
+                                            case 'small': $font->setSize(intval($fontsize * 0.8)); break;
                                         }
                                     }
 
                                     // append trailing plain text, if any
-                                    $plaintext = block_maj_submissions::textlib('substr', $text, $i);
-                                    $richtext->createText($plaintext);
+                                    $richtext->createText(substr($text, $i));
 
                                     $text = $richtext;
                                 }
 
-                                // set format for this cell
-                                switch (true) {
-
-                                    case $is_date:
-                                        $format = $formats->date;
-                                        break;
-
-                                    case ($is_timeheading):
-                                        $format = $formats->timeheading;
-                                        break;
-
-                                    case $is_roomheading:
-                                        $format = $formats->roomheading;
-                                        break;
-
-                                    default:
-                                        $format = $formats->session;
-                                        break;
+                                $row = $r;
+                                $col = $c;
+                                if (isset($offset[0][$c])) {
+                                    $col += $offset[0][$c];
+                                } else {
+                                    $offset[0][$c] = 0;
                                 }
 
-                                // set BG color, according to presentation type
-                                switch (true) {
-                                    case preg_match($search->presentation, $cellclass):
-                                        $format->set_bg_color($bgcolors->presentation);
-                                        break;
-                                    case preg_match($search->lightning, $cellclass):
-                                        $format->set_bg_color($bgcolors->lightning);
-                                        break;
-                                    case preg_match($search->workshop, $cellclass):
-                                        $format->set_bg_color($bgcolors->workshop);
-                                        break;
-                                    case preg_match($search->keynote, $cellclass):
-                                        $format->set_bg_color($bgcolors->keynote);
-                                        break;
-                                    default:
-                                        $format->set_bg_color($bgcolors->default);
+                                $worksheet->write_string($row, $col, $text, $format);
+
+                                if ($colspan > 1 || $rowspan > 1) {
+                                    $rowoff = ($rowspan - 1);
+                                    $coloff = ($colspan - 1);
+                                    $rowmax = ($row + $rowoff);
+                                    $colmax = ($col + $coloff);
+                                    for ($r1=0; $r1<=$rowoff; $r1++) {
+                                        if (empty($offset[$r1])) {
+                                            $offset[$r1] = array_fill(0, $lastcol, 0);
+                                        }
+                                        if ($r1==0) {
+                                            // current row - clear cells to the right
+                                            $min = 1;
+                                            $add = $coloff;
+                                        } else {
+                                            // subsequent row - clear cells including current column
+                                            $min = 0;
+                                            $add = $colspan;
+                                        }
+                                        for ($c1=($c+$min); $c1<$lastcol; $c1++) {
+                                            if (empty($offset[$r1][$c1])) {
+                                                $offset[$r1][$c1] = $add;
+                                            } else {
+                                                $offset[$r1][$c1] += $add;
+                                            }
+                                        }
+                                        for ($c1=$min; $c1<=$coloff; $c1++) {
+                                            array_splice($offset, $c + $c1, 1);
+                                            $worksheet->write_blank($row + $r1, $col + $c1, $format);
+                                        }
+                                    }
+                                    $worksheet->merge_cells($row, $col, $rowmax, $colmax);
                                 }
+                            } // end loop through cells
 
-                                // todo: use $offset to get real row and column
-                                $worksheet->write_string($r, $c, $text, $format);
-
-                                if ($colspan || $rowspan) {
-                                    // this needs more work ...
-                                    $worksheet->merge_cells($r, $c, $r + ($rowspan - 1), $c + ($colspan - 1));
-                                }
-
-                                // Set thin border on all sides.
-                                //$format->set_border(1);
-
-                            }
                             if ($countcells) {
                                 switch (true) {
 
@@ -544,7 +578,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                         $height = $rowheight->date;
                                         break;
 
-                                    case $is_roomheading:
+                                    case $is_roomheadings:
                                         $height = $rowheight->roomheadings;
                                         break;
 
@@ -557,16 +591,17 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                         break;
                                 }
                                 $worksheet->set_row($r, $height);
-
-                                if ($countcols < $countcells) {
-                                    $countcols = $countcells;
-                                }
                             }
                         }
-                    }
-                    if ($countcols) {
-                        $worksheet->set_column(0, 0, $colwidth->timeheadings);
-                        $worksheet->set_column(1, $countcols, $colwidth->default);
+
+                        // remove offets for this row
+                        array_shift($offset);
+
+                    } // end loop through rows
+
+                    if ($lastcol) {
+                        $worksheet->set_column(0, 0, $colwidth->timeheading);
+                        $worksheet->set_column(1, $lastcol-1, $colwidth->default);
                     }
                 }
             }
@@ -634,7 +669,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                     $html = preg_replace($search, '', $html);
 
                     // remove white space around HTML block elements
-                    $search = '/\s*(<\/?(table|thead|tbody|tr|th|td|div)[^>]*>)\s*/';
+                    $search = '/\s*(<\/?(table|thead|tbody|tr|th|td|div)[^>]*>)\s*/s';
                     $html = preg_replace($search, '$1', $html);
 
                     // remove unwanted multilang strings
@@ -656,23 +691,28 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                     // remove SPAN:empty
                     // remove DIV.roomtopic (within DIV.room)
                     // remove DIV.time|room|summary
+                    // remove DIV.times|keywords
+                    // remove DIV.scheduleinfo
                     // remove DIV:empty
                     $search = array('/<span[^>]*class="(category|topic)"[^>]*>.*?<\/span>\s*/',
                                     '/<span[^>]*><\/span>\s*/',
                                     '/<div[^>]*class="(roomtopic)"[^>]*>.*?<\/div>\s*/',
                                     '/<div[^>]*class="(time|room|summary)"[^>]*>.*?<\/div>\s*/',
+                                    '/<div[^>]*class="(times|keywords)"[^>]*>.*?<\/div>\s*/',
+                                    '/<div[^>]*class="(scheduleinfo)"[^>]*>.*?<\/div>\s*/',
                                     '/<div[^>]*><\/div>\s*/');
                     $html = preg_replace($search, '', $html);
 
                     // format certain non-empty cells
                     $search = array('/<span[^>]*class="startfinish"[^>]*>(.*?)<\/span>\s*/',
                                     '/<span[^>]*class="duration"[^>]*>(.*?)<\/span>\s*/',
+                                    '/<span[^>]*class="roomname"[^>]*>(.*?)<\/span>\s*/',
                                     '/<span[^>]*class="roomseats"[^>]*>(.*?)<\/span>\s*/',
                                     '/<div[^>]*class="title"[^>]*>(.*?)<\/div>\s*/',
                                     '/<span[^>]*class="schedulenumber"[^>]*>(.*?)<\/span>\s*/',
                                     '/<span[^>]*class="authornames"[^>]*>(.*?)<\/span>\s*/',
                                     '/<span[^>]*class="type"[^>]*>(.*?)<\/span>\s*/');
-                    $replace = array('<b>$1</b>', '<br><i>$1</i>', '<br>($1)', '$1<br>', '[$1]', ' <i>$1</i>', '<small>$1</small>');
+                    $replace = array('<b>$1</b>', '<br><i>$1</i>', '<b>$1</b>', '<br>($1)', '$1<br>', '[$1]', ' <i>$1</i>', '<small>$1</small>');
                     $html = preg_replace($search, $replace, $html);
 
                     // reduce SPAN tags

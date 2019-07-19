@@ -44,6 +44,8 @@ class block_maj_submissions extends block_base {
     const REMOVE_MONTH = 2;
     const REMOVE_YEAR  = 4;
 
+    const MAX_NAME_LENGTH = 30;
+
     protected $fixyearchar  = false;
     protected $fixmonthchar = false;
     protected $fixdaychar   = false;
@@ -2116,6 +2118,10 @@ class block_maj_submissions extends block_base {
      * @return string of HTML to represent this submission in the conference schedule
      */
     static public function format_item($instance, $recordid, $item, $formatcontainer=true) {
+
+        // cache for CSS classes
+        static $classes = array();
+
         $html = '';
 
         $name = 'submission_status';
@@ -2242,11 +2248,106 @@ class block_maj_submissions extends block_base {
         $html .= html_writer::end_tag('div');
 
         // title
-        $html .= html_writer::tag('div', $item['presentation_title'], array('class' => 'title'));
+        $html .= self::format_title($recordid, $item);
 
-        // format authornames
+        // schedule number and authornames
+        $html .= html_writer::start_tag('div', array('class' => 'authors'));
+        $html .= html_writer::tag('span', $item['schedule_number'], array('class' => 'schedulenumber'));
+        $html .= self::format_authornames($recordid, $item);
+        $html .= html_writer::end_tag('div');
+
+        // category, type and topic
+        $html .= html_writer::start_tag('div', array('class' => 'categorytypetopic'));
+        $html .= html_writer::tag('span', $presentationcategory, array('class' => 'category'));
+        $html .= html_writer::tag('span', $presentationtype, array('class' => 'type'));
+        $html .= html_writer::tag('span', $presentationtopic, array('class' => 'topic'));
+        $html .= html_writer::end_tag('div'); // end categorytypetopic DIV
+
+        // summary (remove all tags and nbsp)
+        $html .= self::format_summary($recordid, $item);
+
+        // capacity
+        $html .= html_writer::start_tag('div', array('class' => 'capacity'));
+        $html .= html_writer::tag('div', '', array('class' => 'emptyseats'));
+        $html .= html_writer::start_tag('div', array('class' => 'attendance'));
+        $html .= html_writer::empty_tag('input', array('id' => 'id_attend_'.$recordid,
+                                                       'name' => 'attend['.$recordid.']',
+                                                       'type' => 'checkbox',
+                                                       'value' => '1'));
+        $text = get_string('notattending', 'block_maj_submissions');
+        $html .= html_writer::tag('label', $text, array('for' => 'id_attend_'.$recordid));
+        $html .= html_writer::end_tag('div'); // end attendance DIV
+        $html .= html_writer::end_tag('div'); // end capacity DIV
+
+        if ($formatcontainer) {
+            $html .= html_writer::end_tag('div'); // end session DIV
+        }
+
+        return $html;
+    }
+
+    /**
+     * Format presentation title as HTML suitable for adding to the conference schedule
+     *
+     * @param array $item
+     * @return string of HTML to represent the presentation title in the conference schedule
+     */
+    static public function format_title($recordid, $item) {
+        if (is_string($item)) {
+            $text = trim($item);
+        } else if (empty($item['presentation_title'])) {
+            $text = '';
+        } else {
+            $text = trim($item['presentation_title']);
+        }
+        if ($text=='') {
+            $text = get_string('notitle', 'block_maj_submissions', $recordid);
+        }
+        return html_writer::tag('div', $text, array('class' => 'title'));
+    }
+
+    /**
+     * Format presentation abstract as HTML suitable for adding to the conference schedule
+     *
+     * @param array $item
+     * @return string of HTML to represent the presentation abstract in the conference schedule
+     */
+    static public function format_summary($recordid, $item) {
+        if (is_string($item)) {
+            $text = trim($item);
+        } else if (empty($item['presentation_abstract'])) {
+            $text = '';
+        } else {
+            $text = trim($item['presentation_abstract']);
+            $text = self::plain_text($text);
+        }
+        if ($text=='') {
+            $text = get_string('noabstract', 'block_maj_submissions', $recordid);
+        }
+        return html_writer::tag('div', $text, array('class' => 'summary'));
+    }
+
+    /**
+     * Format the authornames as HTML suitable for adding to the conference schedule
+     *
+     * @param array $item
+     * @return string of HTML to represent the authornames in the conference schedule
+     */
+    static public function format_authornames($recordid, $item) {
+
+        if (isset($item['name_order'])) {
+            $nametemplate = $item['name_order'];
+            $pairs = array('Given name' => 'firstname',
+                           'SURNAME' => 'lastname');
+        } else {
+            $nametemplate = get_string('fullnamedisplay');
+            $pairs = array('{$a->firstname}' => 'firstname',
+                           '{$a->lastname}' => 'lastname');
+        }
+        $nametemplate = strtr($nametemplate, $pairs);
+
         $authornames = array();
-        $fields = preg_grep('/^name_(surname)(.*)$/', array_keys($item));
+        $fields = preg_grep('/^name_(given|surname)(.*)$/', array_keys($item));
         foreach ($fields as $field) {
             if (empty($item[$field])) {
                 continue;
@@ -2303,25 +2404,35 @@ class block_maj_submissions extends block_base {
             }
             if ($count==1) {
                 $authornames[$i] = reset($langs);
-                $authornames[$i] = $authornames[$i]['surname'];
+                $pairs = array('firstname' => $authornames[$i]['given'],
+                               'lastname' => $authornames[$i]['surname']);
+                $authornames[$i] = strtr($nametemplate, $pairs);
                 continue;
             }
             foreach ($langs as $lang => $name) {
-                $name = $name['surname'];
+                $pairs = array('firstname' => $name['given'],
+                               'lastname' => $name['surname']);
+                $name = strtr($nametemplate, $pairs);
                 $params = array('class' => 'multilang', 'lang' => $lang);
                 $authornames[$i][$lang] = html_writer::tag('span', $name, $params);
             }
             $authornames[$i] = implode('', $authornames[$i]);
         }
+        $authornames = array_map('trim', $authornames);
         $authornames = array_filter($authornames);
         $authornames = implode(', ', $authornames);
 
         if ($authornames=='') {
-            $authornames = 'Tom, Dick, Harry';
+            $authornames = get_string('noauthors', 'block_maj_submissions', $recordid);
         }
 
-        // for commercial presentations, we append the (Company name) too
-        if (strpos($presentationcategory, 'Sponsored')) {
+        // for commercial presentations, we append the affiliation too
+        if (empty($item['presentation_category'])) {
+            $category = '';
+        } else {
+            $category = $item['presentation_category'];
+        }
+        if (strpos($category, 'Sponsored')) {
             $affiliation = array();
             $fields = preg_grep('/^affiliation(.*)$/', array_keys($item));
             foreach ($fields as $field) {
@@ -2350,41 +2461,11 @@ class block_maj_submissions extends block_base {
             }
         }
 
-        // schedule number and authornames
-        $html .= html_writer::start_tag('div', array('class' => 'authors'));
-        $html .= html_writer::tag('span', $item['schedule_number'], array('class' => 'schedulenumber'));
-        $html .= html_writer::tag('span', $authornames, array('class' => 'authornames'));
-        $html .= html_writer::end_tag('div');
-
-        // category, type and topic
-        $html .= html_writer::start_tag('div', array('class' => 'categorytypetopic'));
-        $html .= html_writer::tag('span', $presentationcategory, array('class' => 'category'));
-        $html .= html_writer::tag('span', $presentationtype, array('class' => 'type'));
-        $html .= html_writer::tag('span', $presentationtopic, array('class' => 'topic'));
-
-        $html .= html_writer::end_tag('div'); // end categorytypetopic DIV
-
-        // summary (remove all tags and nbsp)
-        $text = self::plain_text($item['presentation_abstract']);
-        $html .= html_writer::tag('div', $text, array('class' => 'summary'));
-
-        // capacity
-        $html .= html_writer::start_tag('div', array('class' => 'capacity'));
-        $html .= html_writer::tag('div', '', array('class' => 'emptyseats'));
-        $html .= html_writer::start_tag('div', array('class' => 'attendance'));
-        $html .= html_writer::empty_tag('input', array('id' => 'id_attend_'.$recordid,
-                                                       'name' => 'attend['.$recordid.']',
-                                                       'type' => 'checkbox',
-                                                       'value' => '1'));
-        $text = get_string('notattending', 'block_maj_submissions');
-        $html .= html_writer::tag('label', $text, array('for' => 'id_attend_'.$recordid));
-        $html .= html_writer::end_tag('div'); // end attendance DIV
-        $html .= html_writer::end_tag('div'); // end capacity DIV
-
-        if ($formatcontainer) {
-            $html .= html_writer::end_tag('div'); // end session DIV
+        if (self::textlib('strlen', $authornames) > self::MAX_NAME_LENGTH) {
+            $authornames = explode(',', $authornames);
+            $authornames = reset($authornames).' '.get_string('etal', 'block_maj_submissions');
         }
 
-        return $html;
+        return html_writer::tag('span', $authornames, array('class' => 'authornames'));
     }
 }

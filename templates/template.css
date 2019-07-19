@@ -6,6 +6,13 @@
     display: none;
 }
 
+/* ensure schedule page container is maximum width, in order to 
+   reduce unnecessary horizontal scrolling of wide schedule  */
+.container-fluid {
+    max-width: 100%;
+    margin: 0;
+}
+
 .schedule * {
     box-sizing: border-box;
 }
@@ -23,7 +30,8 @@
     background-color: #fff;
 }
 
-.schedule, /* table */
+/* standardize display of <table class="schedule"> */
+.schedule,
 .schedule caption,
 .schedule tr,
 .schedule th,
@@ -85,6 +93,12 @@
     padding:       3px 6px;
     margin:        6px 0px;
     overflow:         auto;
+}
+
+/* ensure maximum readability for links inserted by database filter */
+.schedule .title a {
+    color: #000;
+    font-weight: 450;
 }
 
 .schedule .session.presentation {

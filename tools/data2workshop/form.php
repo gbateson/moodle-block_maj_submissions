@@ -341,7 +341,7 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
                         // sanitize submission abstract
                         $name = 'abstract';
                         if (empty($record->$name)) {
-                            $record->$name = get_string('noabstract', $this->plugin);
+                            $record->$name = get_string('noabstract', $this->plugin, $record->recordid);
                         } else {
                             $record->$name = block_maj_submissions::plain_text($record->$name);
                             if (substr_count($record->abstract, ' ') > 2) {

@@ -327,6 +327,11 @@ switch ($action) {
             'renumberschedule'    => $days,
             'scheduleinfo'    => array('add' => get_string('add', $plugin),
                                        'remove' => get_string('remove', $plugin)),
+            'update' => array('title' => get_string('titles', $plugin),
+                              'authornames' => get_string('authornames', $plugin),
+                              'summary' => get_string('summaries', $plugin),
+                              'sessiontypes'  => get_string('sessiontypes', $plugin),
+                              'all'  => get_string('all')),
             'add' => array('slot' => get_string('slot', $plugin),
                            'room' => get_string('room', $plugin),
                            'roomheadings' => get_string('roomheadings', $plugin),
@@ -704,6 +709,91 @@ switch ($action) {
             }
             $html = json_encode($info);
         }
+        break;
+
+    case 'update':
+
+        $records = array();
+
+        if ($cmid = $config->collectpresentationscmid) {
+            $cm = get_fast_modinfo($course)->get_cm($cmid);
+
+            // map each field's shortname => realname
+            $types = array('title'        => 'presentation_title',
+                           'authornames'  => 'name_',
+                           'abstract'     => 'presentation_abstract',
+                           'sessiontypes' => 'presentation_type');
+            $type = optional_param('type', 'all', PARAM_ALPHA);
+            if ($type && array_key_exists($type, $types)) {
+                $types = array($type => $types[$type]);
+            }
+
+            list($select, $params) = $DB->get_in_or_equal($types);
+            $select = "name $select";
+
+            if (in_array('name_', $types)) {
+                $select = '('.$select.' OR '.$DB->sql_like('name', '?').')';
+                $params[] = 'name_%';
+            }
+
+            $select = "dataid = ? AND $select";
+            $params = array_merge(array($cm->instance), $params);
+
+            if ($fieldnames = $DB->get_records_select_menu('data_fields', $select, $params, '', 'id,name')) {
+
+                list($select, $params) = $DB->get_in_or_equal(array_keys($fieldnames));
+                if ($contents = $DB->get_records_select('data_content', "fieldid $select", $params, 'recordid,fieldid')) {
+
+                    // map each field's realname => shortname
+                    $types = array_flip($types);
+
+                    foreach ($contents as $content) {
+                        $recordid = $content->recordid;
+                        $fieldid = $content->fieldid;
+                        $content = $content->content;
+                        if (empty($records[$recordid])) {
+                            $records[$recordid] = new stdClass();
+                        }
+                        // get real field name
+                        $fieldname = $fieldnames[$fieldid];
+                        if (substr($fieldname, 0, 5)=='name_') {
+                            if (empty($records[$recordid]->authornames)) {
+                                $records[$recordid]->authornames = array();
+                            }
+                            $records[$recordid]->authornames[$fieldname] = $content;
+                        } else {
+                            $fieldname = $types[$fieldname]; // short field name
+                            switch ($fieldname) {
+                                case 'title':
+                                    $content = block_maj_submissions::format_title($recordid, $content);
+                                    break;
+                                case 'summary':
+                                    $content = block_maj_submissions::format_summary($recordid, $content);
+                                    break;
+                                case 'sessiontypes':
+                                    $content = block_maj_submissions::format_sessiontypes($recordid, $content);
+                                    break;
+                            }
+                            $records[$recordid]->$fieldname = $content;
+                        }
+                    }
+
+                    $fieldname = 'authornames';
+                    if (in_array($fieldname, $types)) {
+                        foreach ($records as $recordid => $record) {
+                            if (empty($record->$fieldname)) {
+                                $records[$recordid]->$fieldname = get_string('noauthors', 'block_maj_submissions', $recordid);
+                            } else {
+                                $records[$recordid]->$fieldname = block_maj_submissions::format_authornames($recordid, $record->$fieldname);
+                            }
+
+                        }
+                    }
+                }
+            }
+        }
+
+        $html = json_encode($records);
         break;
 
     default:

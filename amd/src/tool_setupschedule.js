@@ -64,13 +64,19 @@ define(["jquery", "jqueryui", "core/str", // split this define statement because
         }
 
         // extract URL and block instance id from page URL
+        TOOL.wwwroot = location.href.replace(new RegExp("^(.*?)/blocks.*$"), "$1");
         TOOL.blockroot = location.href.replace(new RegExp("^(.*?)/tools.*$"), "$1");
         TOOL.toolroot = location.href.replace(new RegExp("^(.*?)/tool.php.*$"), "$1");
         TOOL.pageid = location.href.replace(new RegExp("^.*?\\bid=([0-9]+)\\b.*$"), "$1");
-        TOOL.iconroot = $("img.iconhelp").prop("src").replace(new RegExp("/[^/]+$"), "");
-
-        TOOL.iconedit = TOOL.iconroot + "/i/edit";
-        TOOL.iconremove = TOOL.iconroot + "/i/delete";
+        if ($("img.iconhelp").length==0) {
+            TOOL.iconroot = TOOL.wwwroot + "/pix"; // Moodle >= 3.7
+            TOOL.iconedit = TOOL.iconroot + "/i/edit.svg";
+            TOOL.iconremove = TOOL.iconroot + "/i/delete.svg";
+        } else {
+            TOOL.iconroot = $("img.iconhelp").prop("src").replace(new RegExp("/[^/]+$"), "");
+            TOOL.iconedit = TOOL.iconroot + "/i/edit";
+            TOOL.iconremove = TOOL.iconroot + "/i/delete";
+        }
 
         // hide "Session information" section of form
         $("#id_sessioninfo").css("display", "none");
@@ -880,6 +886,17 @@ define(["jquery", "jqueryui", "core/str", // split this define statement because
 
     TOOL.scheduleinfo_remove = function() {
         $(".scheduleinfo").remove();
+    };
+
+    TOOL.update = function(evt, type) {
+        var p = {"id": TOOL.pageid, "action": "update", "type": type};
+        $.getJSON(TOOL.toolroot + "/action.php", p, function(records){
+            for (var rid in records) {
+                for (type in records[rid]) {
+                    $("#id_recordid_" + rid + " ." + type).html(records[rid][type]);
+                }
+            }
+        });
     };
 
     // ==========================================
