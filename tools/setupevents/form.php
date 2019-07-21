@@ -37,6 +37,13 @@ class block_maj_submissions_tool_setupevents extends block_maj_submissions_tool_
     protected $permissions = array();
 
     /**
+     * This is a readonly database, to which teacher/admin adds content.
+     */
+    protected function is_readonly() {
+        return true;
+    }
+
+    /**
      * get_defaultintro
      *
      * @return string

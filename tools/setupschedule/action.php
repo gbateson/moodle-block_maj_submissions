@@ -429,7 +429,7 @@ switch ($action) {
         $items = array();
         foreach ($types as $type) {
             if ($type=='event') {
-                $types_cmid = $type.'scmid';
+                $types_cmid = 'register'.$type.'scmid';
             } else {
                 $types_cmid = 'collect'.$type.'scmid';
             }

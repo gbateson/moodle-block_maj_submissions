@@ -127,13 +127,24 @@ abstract class block_maj_submissions_tool_form extends moodleform {
         // setup values that may required to create a new activity
         if ($this->type) {
 
+            $modinfo = get_fast_modinfo($this->course);
+
             // set the "course_module" id, if it is defined and still exists
             $cmid = $this->type.'cmid';
             if (property_exists($this->instance->config, $cmid)) {
                 $cmid = $this->instance->config->$cmid;
-                if (array_key_exists($cmid, get_fast_modinfo($this->course)->cms)) {
-                    $this->cmid = $cmid;
+                if (array_key_exists($cmid, $modinfo->cms)) {
+                    $cm = $modinfo->get_cm($cmid);
+                    if (property_exists($cm, 'deletioninprogress') && $cm->deletioninprogress) {
+                        // Moodle >= 3.2: activity is waiting to be deleted
+                        $cmid = 0;
+                    }
+                } else {
+                    // $cmid is not in current course. This can happen
+                    // after restoring course or importing block settings.
+                    $cmid = 0;
                 }
+                $this->cmid = $cmid;
             }
 
             // set start times, if any, in $defaultvalues
@@ -1251,7 +1262,9 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                 foreach ($cmids as $cmid) {
                     if (array_key_exists($cmid, $modinfo->cms)) {
                         $cm = $modinfo->get_cm($cmid);
-                        if ($modcount==0 || in_array($cm->modname, $modnames)) {
+                        if (property_exists($cm, 'deletioninprogress') && $cm->deletioninprogress) {
+                            // Moodle >= 3.2: activity is waiting to be deleted
+                        } else if ($modcount==0 || in_array($cm->modname, $modnames)) {
                             if ($sectionname=='' && $simplelist==false) {
                                 $sectionname = block_maj_submissions::get_sectionname($section, 0);
                                 if ($sectionname=='') {

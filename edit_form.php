@@ -104,7 +104,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $this->add_cmid($mform, $plugin, 'resource,file,page,url', 'receptioncmid');
 
         $this->add_cmid($mform, $plugin, 'data', 'registereventscmid');
-        //$this->add_repeat_elements($mform, $plugin, 'events', 'text', true);
+        $this->add_cmid($mform, $plugin, 'data', 'registerroomscmid');
 
         //-----------------------------------------------------------------------------
         $this->add_header($mform, $plugin, 'collectsubmissions');
@@ -662,7 +662,9 @@ class block_maj_submissions_edit_form extends block_edit_form {
                 foreach ($cmids as $cmid) {
                     if (array_key_exists($cmid, $modinfo->cms)) {
                         $cm = $modinfo->get_cm($cmid);
-                        if ($count==0 || in_array($cm->modname, $modnames)) {
+                        if (property_exists($cm, 'deletioninprogress') && $cm->deletioninprogress) {
+                            // Moodle >= 3.2: activity is waiting to be deleted
+                        } else if ($count==0 || in_array($cm->modname, $modnames)) {
                             if ($sectionname=='') {
                                 $sectionname = block_maj_submissions::get_sectionname($section, 0);
                                 if ($sectionname=='') {

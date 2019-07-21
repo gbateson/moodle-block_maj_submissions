@@ -40,15 +40,18 @@ abstract class block_maj_submissions_tool_setupdatabase extends block_maj_submis
         'visible'         => 1,  // course_modules.visible
         'intro'           => '', // see set_defaultintro()
         'introformat'     => FORMAT_HTML, // =1
+        'approval'        => 0,
+        'manageapproved'  => 0,
         'comments'        => 0,
+        'requiredentriestoview' => 0,
+        'requiredentries' => 0,
+        'maxentries'      => 0,
         'timeavailablefrom' => 0,
         'timeavailableto' => 0,
-        'requiredentries' => 0,
-        'requiredentriestoview' => 10,
-        'maxentries'      => 1,
-        'approval'        => 1,
-        'manageapproved'  => 0,
+        'timeviewfrom'    => 0, // start read-only
+        'timeviewto'      => 0, // finish tread-only
         'assessed'        => 0
+
     );
     protected $timefields = array(
         'timestart' => array('timeavailablefrom'),
@@ -80,12 +83,12 @@ abstract class block_maj_submissions_tool_setupdatabase extends block_maj_submis
         }
 
         // --------------------------------------------------------
-        $name = 'databaseactivity';
+        $name = 'databaseactivity'; // header
         $label = get_string($name, $this->plugin);
         $mform->addElement('header', $name, $label);
         // --------------------------------------------------------
 
-        $name = 'databaseactivity';
+        $name = 'databaseactivity'; // cmid
         $this->add_field_cm($mform, $this->course, $this->plugin, $name, $this->cmid);
         $this->add_field_section($mform, $this->course, $this->plugin, 'coursesection', $name, $sectionnum);
 
@@ -138,6 +141,8 @@ abstract class block_maj_submissions_tool_setupdatabase extends block_maj_submis
      *         or an empty array if everything is OK (true allowed for backwards compatibility too).
      */
     public function validation($data, $files) {
+        global $DB;
+
         $errors = array();
 
         $require_activity = true;
@@ -156,6 +161,29 @@ abstract class block_maj_submissions_tool_setupdatabase extends block_maj_submis
                     $errors[$group] = get_string("missing$name", $this->plugin);
                 }
                 $require_section = true;
+            } else if ($data[$num] > 0) {
+                $config = $this->instance->config;
+                $confignames = get_object_vars($config);
+                unset($confignames[$this->type.'cmid']);
+                $confignames = array_keys($confignames);
+                $confignames = preg_grep('/cmid$/', $confignames);
+                foreach ($confignames as $configname) {
+                    if ($config->$configname==$data[$num]) {
+                        $a = (object)array('databasedescription' => get_string($configname, $this->plugin),
+                                           'createnewactivity' => get_string('createnewactivity', $this->plugin));
+                        $errors[$group] = get_string('warningoverwritedatabase', $this->plugin, $a);
+                    }
+                }
+                if (empty($errors)) {
+                    $modinfo = get_fast_modinfo($this->instance->page->course);
+                    if (array_key_exists($data[$num], $modinfo->cms)) {
+                        $params = array('dataid' => $modinfo->get_cm($data[$num])->instance);
+                        if ($count = $DB->get_field('data_records', 'COUNT(*)', $params)) {
+                            // TODO: if you report the warning, add a "force" checkbox so it can be easily overridden
+                            // $errors[$group] = get_string('warningrecordsexist', $this->plugin, $count);
+                        }
+                    }
+                }
             }
         }
 
@@ -319,6 +347,41 @@ abstract class block_maj_submissions_tool_setupdatabase extends block_maj_submis
         }
 
         return false; // shouldn't happen !!
+    }
+
+
+    /**
+     * Specify whether or not database is read only.
+     * Databases that collect information from delegates,
+     * such as the registration or submissions databases,
+     * are NOT read-only, whereas the "rooms" and "events"
+     * databases are read-only, so that teachers and admins
+     * can add records, but ordinary delegates cannot.
+     */
+    protected function is_readonly() {
+        return false;
+    }
+
+    /**
+     * get_defaultvalues
+     *
+     * @param object $data from newly submitted form
+     * @param integer $time
+     */
+    protected function get_defaultvalues($data, $time) {
+        $defaultvalues = parent::get_defaultvalues($data, $time);
+
+        if ($this->is_readonly()) {
+            // content will be added by teacher/admin
+            $defaultvalues['timeviewfrom'] = $time;
+        } else {
+            // content will be added by students (=participants)
+            $defaultvalues['approval'] = 1;
+            $defaultvalues['maxentries'] = 1;
+            $defaultvalues['requiredentriestoview'] = 10;
+        }
+
+        return $defaultvalues;
     }
 
     /**

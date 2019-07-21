@@ -1648,8 +1648,7 @@ class block_maj_submissions extends block_base {
             'es' => 'es', // Spanish
             'fr' => 'fr', // French
             'ja' => 'ja', // Japanese
-            'kr' => 'k0', // Korean
-         'pt_br' => 'pt_br', // Brazilian Portuguese
+         'pt_br' => 'pt_BR', // Brazilian Portuguese
             'ro' => 'ro', // Romanian
             'ru' => 'ru', // Russian
             'tr' => 'tr', // Turkish
@@ -2051,7 +2050,7 @@ class block_maj_submissions extends block_base {
             }
         }
 
-        // search for double-byte seatss
+        // search for double-byte seats
         if (preg_match('/[\x{FF10}-\x{FF19}]+/u', $seats, $match)) {
             $seats = strtr($match[0], array("\u{FF10}" => 0, "\u{FF11}" => 1,
                                             "\u{FF12}" => 2, "\u{FF13}" => 3,
@@ -2295,6 +2294,8 @@ class block_maj_submissions extends block_base {
     static public function format_title($recordid, $item) {
         if (is_string($item)) {
             $text = trim($item);
+        } else if (isset($item['event_name'])) {
+            $text = trim($item['event_name']);
         } else if (empty($item['presentation_title'])) {
             $text = '';
         } else {
@@ -2315,6 +2316,8 @@ class block_maj_submissions extends block_base {
     static public function format_summary($recordid, $item) {
         if (is_string($item)) {
             $text = trim($item);
+        } else if (isset($item['event_description'])) {
+            $text = trim($item['event_description']);
         } else if (empty($item['presentation_abstract'])) {
             $text = '';
         } else {
@@ -2422,7 +2425,9 @@ class block_maj_submissions extends block_base {
         $authornames = array_filter($authornames);
         $authornames = implode(', ', $authornames);
 
-        if ($authornames=='') {
+        if (isset($item['event_facilitator'])) {
+            $authornames = trim($item['event_facilitator']);
+        } else if ($authornames=='') {
             $authornames = get_string('noauthors', 'block_maj_submissions', $recordid);
         }
 
