@@ -1968,59 +1968,79 @@ class block_maj_submissions extends block_base {
 
         $info = array();
         if ($contents = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $order", $params)) {
-            $search = '/(<span[^>]*class="multilang"[^>]*>)(.*?)\s*(<\/span>)/us';
+
+            // regex to match multilang SPANs
+            //   $1 : opening multilang SPAN tag
+            //   $2 : SPAN content
+            //   $3 : closing SPAN tag
+            $multilang = '/(<span[^>]*class="multilang"[^>]*>)(.*?)\s*(<\/span>)/us';
+
             $rid = 0;
             foreach ($contents as $id => $content) {
+
+                // skip empty content
                 if ($content->content=='') {
                     continue;
                 }
-                if ($rid && $rid==$content->recordid) {
-                    // do nothing
-                } else {
-                    $rid = $content->recordid;
+
+                // cache record id
+                $rid = $content->recordid;
+
+                if (empty($info[$rid])) {
                     if ($type) {
                         $info[$rid] = '';
                     } else {
                         $info[$rid] = array('name' => '', 'seats' => '');
                     }
                 }
-                $parentheses = ($content->fieldname=='schedule_roomname');
-                if (preg_match_all($search, $content->content, $matches)) {
+
+                $name = '';
+                $seats = 0;
+
+                $text = $content->content;
+                $fieldname = $content->fieldname;
+
+                if (preg_match_all($multilang, $text, $matches)) {
                     $i_max = count($matches[0]);
                     for ($i=0; $i<$i_max; $i++) {
-                        list($name, $seats) = self::extract_room_from_text($matches[2][$i], $parentheses);
-                        $matches[0][$i] = $matches[1][$i].$name.$matches[3][$i];
+                        $room = self::extract_room_from_text($matches[2][$i], $fieldname);
+                        $matches[0][$i] = $matches[1][$i].$room->name.$matches[3][$i];
+                        if ($room->seats > $seats) {
+                            $seats = $room->seats;
+                        }
                     }
-                    $name = implode('', $matches[0]);
+                    $name = implode('', $matches[0][$i]);
                 } else {
-                    list($name, $seats) = self::extract_room_from_text($content->content, $parentheses);
+                    $room = self::extract_room_from_text($text, $fieldname);
+                    $name = $room->name;
+                    $seats = $room->seats;
                 }
+
                 $name = format_string($name);
-                if ($name && $seats) {
-                    if ($type) {
-                        if ($info[$rid]=='') {
-                            $info[$rid] = ('type'=='name' ? $name : $seats);
-                        }
-                    } else {
-                        if ($info[$rid]['name']==='') {
-                            $info[$rid]['name'] = $name;
-                        }
-                        if ($info[$rid]['seats']==='') {
-                            $info[$rid]['seats'] = $seats;
-                        }
+                if ($type) {
+                    if ($info[$rid]=='') {
+                        $info[$rid] = ('type'=='name' ? $name : $seats);
+                    }
+                } else {
+                    if ($info[$rid]['name']==='') {
+                        $info[$rid]['name'] = $name;
+                    }
+                    if ($info[$rid]['seats']==='') {
+                        $info[$rid]['seats'] = $seats;
                     }
                 }
             }
         }
+
         if ($recordid==0) {
             return $info;
         }
 
         if (array_key_exists($recordid, $info)) {
             return $info[$recordid];
-        } else {
-            return ($type=='name' ? '' : 0);
         }
+
+        return ($type=='name' ? '' : 0);
     }
 
     /**
@@ -2028,26 +2048,26 @@ class block_maj_submissions extends block_base {
      *
      * extract a numeric number of seats from the "schedule_roomseats" field
      *
-     * @param string $name
-     * @param boolean $parentheses
-     * @param string $type "name" or "seats" or ""
+     * @param string $text
+     * @param string $fieldname
      * @return the numeric seats of seats extract from the schedule_roomseats
      * @todo Finish documenting this function
      */
-    static function extract_room_from_text($name, $parentheses, $type='') {
+    static function extract_room_from_text($text, $fieldname) {
 
-        // search for double-byte parentheses
-        $seats = '';
-        if ($parentheses) {
-            if (preg_match('/^(.*?)\s*\x{FF08}(.*?)\x{FF09}/us', $name, $match)) {
-                $name = $match[1];
-                $seats = $match[2];
-                $parentheses = false;
-            } else if (preg_match('/^(.*?)\s*\((.*?)\)/us', $name, $match)) {
-                $name = $match[1];
-                $seats = $match[2];
-                $parentheses = false;
-            }
+        // "schedule_roomname" value may contain seat capacity in parentheses
+        if (preg_match('/^(.*?)\s*\x{FF08}(.*?)\x{FF09}/us', $text, $match)) {
+            $name = $match[1];
+            $seats = $match[2];
+        } else if (preg_match('/^(.*?)\s*\((.*?)\)/us', $text, $match)) {
+            $name = $match[1];
+            $seats = $match[2];
+        } else if ($fieldname=='schedule_roomname') {
+            $name = $text;
+            $seats = '';
+        } else {
+            $name = '';
+            $seats = $text;
         }
 
         // search for double-byte seats
@@ -2057,16 +2077,14 @@ class block_maj_submissions extends block_base {
                                             "\u{FF14}" => 4, "\u{FF15}" => 5,
                                             "\u{FF16}" => 6, "\u{FF17}" => 7,
                                             "\u{FF18}" => 8, "\u{FF19}" => 9));
-        } else if (preg_match('/[0-9]+/', $seats, $match)) {
-            $seats = $match[0];
         }
-        $seats = ($seats=='' ? 0 : intval($seats));
+        if (preg_match('/[0-9]+/', $seats, $match)) {
+            $seats = intval($match[0]);
+        } else {
+            $seats = 0;
+        }
 
-        switch ($type) {
-            case 'name' : return $name;
-            case 'seats': return $seats;
-            default: return array($name, $seats);
-        }
+        return (object)array('name' => $name, 'seats' => $seats);
     }
 
     /**
@@ -2328,6 +2346,25 @@ class block_maj_submissions extends block_base {
             $text = get_string('noabstract', 'block_maj_submissions', $recordid);
         }
         return html_writer::tag('div', $text, array('class' => 'summary'));
+    }
+
+    /**
+     * Format presentation abstract as HTML suitable for adding to the conference schedule
+     *
+     * @param array $item
+     * @return string of HTML to represent the presentation abstract in the conference schedule
+     */
+    static public function format_sessiontypes($recordid, $item) {
+        if (is_string($item)) {
+            $type = trim($item);
+        } else if (isset($item['event_type'])) {
+            $type = trim($item['event_type']);
+        } else if (isset($item['presentation_type'])) {
+            $type = trim($item['presentation_type']);
+        } else {
+            $type = '';
+        }
+        return html_writer::tag('span', $text, array('class' => 'type'));
     }
 
     /**

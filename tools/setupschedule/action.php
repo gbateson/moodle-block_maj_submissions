@@ -170,7 +170,7 @@ switch ($action) {
 
         // get number of empty seats in each room
         if ($info = $config->collectpresentationscmid) {
-            $info = block_maj_submissions::get_room_info($info, 0, 'seats');
+            $info = block_maj_submissions::get_room_seats($info);
             $info = block_maj_submissions::get_seats_info($info);
         } else {
             $info = new stdClass();

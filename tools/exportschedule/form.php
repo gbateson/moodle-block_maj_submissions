@@ -319,13 +319,16 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
             'keynote' => '/\bkeynote\b/',
             'workshop' => '/\bworkshop\b/',
             'lightning' => '/\blightning\b/',
-            'presentation' => '/\bpresentation\b/'
+            'presentation' => '/\bpresentation\b/',
+            // cell content
+            'eventtitle' => '/Day \d+:/'
         );
 
         $formats = (object)array(
             'date'         => ['h_align' => 'left',   'v_align' => 'center', 'size' => 18],
-            'roomheading'  => ['h_align' => 'center', 'v_align' => 'center', 'size' => 14, 'bg_color' => '#eeddee'], // white
-            'timeheading'  => ['h_align' => 'center', 'v_align' => 'top',    'size' => 12, 'bg_color' => '#ffffff'], // purple
+            'event'        => ['h_align' => 'left',   'v_align' => 'center', 'size' => 14],
+            'roomheading'  => ['h_align' => 'center', 'v_align' => 'center', 'size' => 14, 'bg_color' => '#eeddee'], // purple
+            'timeheading'  => ['h_align' => 'center', 'v_align' => 'top',    'size' => 12, 'bg_color' => '#ffffff'], // white
             'presentation' => ['h_align' => 'left',   'v_align' => 'top',    'size' => 10, 'bg_color' => '#fffcf6'], // yellow
             'lightning'    => ['h_align' => 'left',   'v_align' => 'top',    'size' => 10, 'bg_color' => '#f8ffff'], // blue
             'workshop'     => ['h_align' => 'left',   'v_align' => 'top',    'size' => 10, 'bg_color' => '#fff8ff'], // purple
@@ -337,8 +340,9 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                   'default' => 25);
 
         $rowheight = (object)array('date' => 32,
-                                   'roomheadings' => 40,
+                                   'event' => 34,
                                    'multiroom' => 45,
+                                   'roomheadings' => 40,
                                    'default' => 80);
 
         if (preg_match_all($search->days, $html, $days)) {
@@ -378,6 +382,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                             $is_date = preg_match($search->date, $rowclass);
                             $is_roomheadings = preg_match($search->roomheadings, $rowclass);
                             $is_multiroom = false;
+                            $is_event_row = false;
 
                             $countcells = count($cells[0]);
                             if ($lastcol < $countcells) {
@@ -436,11 +441,22 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                 $text = html_entity_decode($cells[2][$c]);
                                 $text = str_replace('<br>', chr(10), $text);
 
+                                if (preg_match($search->eventtitle, $text)) {
+                                    $is_event_row = true;
+                                    $is_event_cell = true;
+                                } else {
+                                    $is_event_cell = false;
+                                }
+
                                 // set format for this cell
                                 switch (true) {
 
                                     case $is_date:
                                         $format = $formats->date;
+                                        break;
+
+                                    case $is_event_cell:
+                                        $format = $formats->event;
                                         break;
 
                                     case preg_match($search->timeheading, $cellclass):
@@ -576,6 +592,10 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
 
                                     case $is_date:
                                         $height = $rowheight->date;
+                                        break;
+
+                                    case $is_event_row:
+                                        $height = $rowheight->event;
                                         break;
 
                                     case $is_roomheadings:
