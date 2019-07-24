@@ -985,10 +985,11 @@ define(["jquery", "jqueryui", "core/str", // split this define statement because
 
             var slotstart = (60 * parseInt(starthours) + parseInt(startmins));
 
-            var d = 1;
-            var added = false;
             var oldclass = new RegExp("\\bday\\d+");
             $("table.schedule").each(function(){
+
+                var d = 1;
+                var added = false;
                 $(this).find("tbody.day").each(function(index){
                     if (added==false && position <= index) {
                         added = true;
@@ -1001,6 +1002,24 @@ define(["jquery", "jqueryui", "core/str", // split this define statement because
                     added = true;
                     $(this).append(TOOL.day(d++, daytext, roomcount, slotcount, slotstart, slotlength, slotinterval));
                 }
+
+                var tabtext = daytext;
+                $(this).find(".tabs td").each(function(){
+                    var d = 1;
+                    var added = false;
+                    $(this).find("div.tab").each(function(index){
+                        if (added==false && position <= index) {
+                            added = true;
+                            $(this).before(TOOL.tab(d++, tabtext));
+                        }
+                        var cssclass = $(this).prop("class").replace(oldclass, "");
+                        $(this).prop("class", TOOL.trim(cssclass) + " day" + d++);
+                    });
+                    if (added==false) {
+                        added = true;
+                        $(this).append(TOOL.tab(d++, tabtext));
+                    }
+                });
             });
 
             // renumber all slots on the new day
@@ -1386,20 +1405,16 @@ define(["jquery", "jqueryui", "core/str", // split this define statement because
                         var added = false;
                         var oldclass = new RegExp("\\broom\\d+");
                         $(this).find(".roomheading").each(function(){
-                            var r = $(this).data("room");
-                            //console.log("position" + position + ", r=" + r);
+                            r++;
                             if (added==false && position <= r) {
                                 added = true;
                                 $(this).before(TOOL.roomheading(r, roomtxt, roomtopic));
-                            }
-                            if (added) {
                                 r++;
                             }
                             var cssclass = $(this).prop("class").replace(oldclass, "");
                             $(this).prop("class", TOOL.trim(cssclass) + " room" + r);
                         });
                         if (added==false) {
-                            added = true;
                             r++;
                             $(this).append(TOOL.roomheading(r, roomtxt, roomtopic));
                         }
@@ -2598,8 +2613,15 @@ define(["jquery", "jqueryui", "core/str", // split this define statement because
     // helper functions to create jQuery objects
     // ==========================================
 
-    TOOL.day = function(d, daytext, roomcount, slotcount, slotstart, slotlength, slotinterval) {
-        var html = TOOL.html_day(d, daytext, roomcount, slotcount, slotstart, slotlength, slotinterval);
+    TOOL.tab = function(day, tabtext) {
+        var html = TOOL.html_tab(day, tabtext);
+        return $(html).each(function(){
+            TOOL.make_day_editable(this);
+        });
+    };
+
+    TOOL.day = function(day, daytext, roomcount, slotcount, slotstart, slotlength, slotinterval) {
+        var html = TOOL.html_day(day, daytext, roomcount, slotcount, slotstart, slotlength, slotinterval);
         return $(html).each(function(){
             TOOL.make_day_editable(this);
         });
@@ -2625,7 +2647,7 @@ define(["jquery", "jqueryui", "core/str", // split this define statement because
     };
 
     TOOL.slot = function(targetday, startfinish, duration) {
-        var slot = $(TOOL.html_slot(targetday, startfinish, duration));
+        var slot = $(TOOL.html_slot(targetday, startfinish, duration, TOOL.extract_roomcount(targetday)));
         TOOL.make_slots_editable(null, slot);
         TOOL.make_sessions_droppable(slot);
         TOOL.make_sessions_draggable(slot);
@@ -2701,11 +2723,15 @@ define(["jquery", "jqueryui", "core/str", // split this define statement because
                                                (starttime % 60),
                                                Math.floor(finishtime / 60),
                                                (finishtime % 60));
-            html += TOOL.html_slot(day, startfinish, slotlength);
+            html += TOOL.html_slot(day, startfinish, slotlength, roomcount);
         }
 
         html += HTML.endtag("tbody");
         return html;
+    };
+
+    TOOL.html_tab = function(day, tabtext) {
+        return HTML.tag("div", tabtext, {"class": "tab day" + day});
     };
 
     TOOL.html_roomheadings_toprow = function() {
@@ -2817,7 +2843,7 @@ define(["jquery", "jqueryui", "core/str", // split this define statement because
         return html;
     };
 
-    TOOL.html_slot = function(day, startfinish, duration) {
+    TOOL.html_slot = function(day, startfinish, duration, roomcount) {
         var html = "";
         var durationtxt = TOOL.get_string("durationtxt", duration);
         html += HTML.starttag("tr", {"class": "slot duration" + duration});
@@ -2825,7 +2851,7 @@ define(["jquery", "jqueryui", "core/str", // split this define statement because
         html += HTML.tag("span", startfinish, {"class": "startfinish"});
         html += HTML.tag("span", durationtxt, {"class": "duration"});
         html += HTML.endtag("td");
-        html += TOOL.html_sessions(1, TOOL.extract_roomcount(day));
+        html += TOOL.html_sessions(1, roomcount);
         html += HTML.endtag("tr");
         return html;
     };
@@ -3067,14 +3093,19 @@ define(["jquery", "jqueryui", "core/str", // split this define statement because
         menu.prop("id", "id_" + name);
 
         // tidy up option values
-        var info = new RegExp("\\([^()]*\\)$");
-        menu.find("option").each(function(){
-            var v = TOOL.trim($(this).val().replace(info, ""));
-            if (v==="0") {
-                v = "";
-            }
-            this.setAttribute("value", v);
-        });
+        // =========================================
+        // THIS CODE WAS COMMENTED OUT ON 2019-07-22
+        // because changing the menu values is not
+        // desirable for a menu of rooms
+        // =========================================
+        //var info = new RegExp("\\([^()]*\\)$");
+        //menu.find("option").each(function(){
+        //    var v = TOOL.trim($(this).val().replace(info, ""));
+        //    if (v==="0") {
+        //        v = "";
+        //    }
+        //    this.setAttribute("value", v);
+        //});
 
         // set selected item, if any
         if (value) {
