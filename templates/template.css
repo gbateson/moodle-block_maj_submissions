@@ -250,6 +250,12 @@
     content: " ";
 }
 
+/** hide elements on event */
+.session.event .schedulenumber,
+.session.event .categorytypetopic {
+    display: none;
+}
+
 .schedule .summary {
     float:             left;
     font-size:     xx-small;

@@ -2004,16 +2004,14 @@ class block_maj_submissions extends block_base {
                     $i_max = count($matches[0]);
                     for ($i=0; $i<$i_max; $i++) {
                         $room = self::extract_room_from_text($matches[2][$i], $fieldname);
-                        $matches[0][$i] = $matches[1][$i].$room->name.$matches[3][$i];
-                        if ($room->seats > $seats) {
-                            $seats = $room->seats;
+                        $matches[0][$i] = $matches[1][$i].$room['name'].$matches[3][$i];
+                        if ($seats < $room['seats']) {
+                            $seats = $room['seats'];
                         }
                     }
                     $name = implode('', $matches[0][$i]);
                 } else {
-                    $room = self::extract_room_from_text($text, $fieldname);
-                    $name = $room->name;
-                    $seats = $room->seats;
+                    list($name, $seats) = self::extract_room_from_text($text, $fieldname);
                 }
 
                 $name = format_string($name);
@@ -2084,7 +2082,7 @@ class block_maj_submissions extends block_base {
             $seats = 0;
         }
 
-        return (object)array('name' => $name, 'seats' => $seats);
+        return array('name' => $name, 'seats' => $seats);
     }
 
     /**
@@ -2159,6 +2157,10 @@ class block_maj_submissions extends block_base {
 
         $sessionclass = 'session';
 
+        if (isset($item['event_name'])) {
+            $sessionclass .= ' event';
+        }
+
         // extract category
         //     個人の発表 Individual presentation
         //     スポンサー提供の発表 Sponsored presentation
@@ -2188,10 +2190,17 @@ class block_maj_submissions extends block_base {
         //     商用ライトニング・トーク（１０分） Commercial lightning talk (10 mins)
         //     商用プレゼンテーション（４０分） Commercial presentation (40 mins)
         //     商用プレゼンテーション（９０分） Commercial presentation (90 mins)
-        if (empty($item['presentation_type'])) {
-            $presentationtype = '';
-        } else {
-            $presentationtype = $item['presentation_type'];
+        switch (true) {
+            case isset($item['event_type']):
+                $presentationtype = trim($item['event_type']);
+                break;
+            case isset($item['presentation_type']):
+                $presentationtype = trim($item['presentation_type']);
+                break;
+            default:
+                $presentationtype = '';
+        }
+        if ($presentationtype) {
             if (empty($classes['type'][$presentationtype])) {
                 $class = $presentationtype;
                 if (strpos($class, '</span>') || strpos($class, '</lang>')) {
@@ -2203,17 +2212,22 @@ class block_maj_submissions extends block_base {
             $sessionclass .= ' '.$classes['type'][$presentationtype];
         }
 
-        if (empty($item['presentation_topic'])) {
-            $presentationtopic = '';
-        } else {
-            $presentationtopic = $item['presentation_topic'];
+        switch (true) {
+            case isset($item['event_topic']):
+                $presentationtopic = trim($item['event_topic']);
+                break;
+            case isset($item['presentation_topic']):
+                $presentationtopic = trim($item['presentation_topic']);
+                break;
+            default:
+                $presentationtopic = '';
         }
 
         // extract duration CSS class e.g. duration40mins
         if (empty($item['schedule_duration'])) {
             $scheduleduration = $presentationtype;
         } else {
-            $scheduleduration = $item['schedule_duration'];
+            $scheduleduration = trim($item['schedule_duration']);
         }
         if ($scheduleduration) {
             if (isset($classes['duration'][$scheduleduration])) {
@@ -2321,6 +2335,8 @@ class block_maj_submissions extends block_base {
         }
         if ($text=='') {
             $text = get_string('notitle', 'block_maj_submissions', $recordid);
+        } else {
+            $text = self::plain_text($text);
         }
         return html_writer::tag('div', $text, array('class' => 'title'));
     }
@@ -2340,10 +2356,11 @@ class block_maj_submissions extends block_base {
             $text = '';
         } else {
             $text = trim($item['presentation_abstract']);
-            $text = self::plain_text($text);
         }
         if ($text=='') {
             $text = get_string('noabstract', 'block_maj_submissions', $recordid);
+        } else {
+            $text = self::plain_text($text);
         }
         return html_writer::tag('div', $text, array('class' => 'summary'));
     }

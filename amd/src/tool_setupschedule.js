@@ -39,7 +39,7 @@ define(["jquery", "jqueryui", "core/str", // split this define statement because
 
     // TODO: initialize this array from the PHP script on the server
     //       blocks/maj_submissions/tools/setupschedule/action.php
-    TOOL.sessiontypes = "case|lightning|paper|presentation|showcase|workshop";
+    TOOL.sessiontypes = "case|event|featured|keynote|lightning|paper|poster|presentation|showcase|virtual|workshop";
 
     // define selectors for session child nodes
     TOOL.sessiontimeroom = ".time, .room";

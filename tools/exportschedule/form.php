@@ -316,12 +316,13 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
             'roomheading' => '/\broomheading\b/',
             'timeheading' => '/\btimeheading\b/',
             'multiroom' => '/\bmultiroom\b/',
+            'event' => '/\bevent\b/',
             'keynote' => '/\bkeynote\b/',
             'workshop' => '/\bworkshop\b/',
             'lightning' => '/\blightning\b/',
             'presentation' => '/\bpresentation\b/',
             // cell content
-            'eventtitle' => '/Day \d+:/'
+            'eventdetails' => '/<br>.*$/isu'
         );
 
         $formats = (object)array(
@@ -382,18 +383,20 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                             $is_date = preg_match($search->date, $rowclass);
                             $is_roomheadings = preg_match($search->roomheadings, $rowclass);
                             $is_multiroom = false;
-                            $is_event_row = false;
+                            $is_event = false;
 
                             $countcells = count($cells[0]);
                             if ($lastcol < $countcells) {
                                 $lastcol = $countcells;
                             }
 
-                            if (empty($offset[$r])) {
-                                $offset[$r] = array_fill(0, $lastcol, 0);
+                            if (empty($offset[0])) {
+                                $offset[0] = array_fill(0, $lastcol, 0);
                             }
 
-                            for ($c=0; $c<$countcells; $c++) {
+                            // We need to go backwards through the cells
+                            // in order to calculate the $offset array correctly.
+                            for ($c=($countcells-1); $c>=0; $c--) {
 
                                 $cellclass = '';
                                 $colspan = 1;
@@ -415,6 +418,10 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
 
                                 if (preg_match($search->multiroom, $cellclass)) {
                                     $is_multiroom = true;
+                                }
+
+                                if (preg_match($search->event, $cellclass)) {
+                                    $is_event = true;
                                 }
 
                                 if ($workbook===null) {
@@ -439,14 +446,10 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                 }
 
                                 $text = html_entity_decode($cells[2][$c]);
-                                $text = str_replace('<br>', chr(10), $text);
-
-                                if (preg_match($search->eventtitle, $text)) {
-                                    $is_event_row = true;
-                                    $is_event_cell = true;
-                                } else {
-                                    $is_event_cell = false;
+                                if ($is_event) {
+                                    $text = preg_replace($search->eventdetails, '', $text);
                                 }
+                                $text = str_replace('<br>', chr(10), $text);
 
                                 // set format for this cell
                                 switch (true) {
@@ -455,7 +458,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                         $format = $formats->date;
                                         break;
 
-                                    case $is_event_cell:
+                                    case $is_event:
                                         $format = $formats->event;
                                         break;
 
@@ -554,33 +557,30 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                 $worksheet->write_string($row, $col, $text, $format);
 
                                 if ($colspan > 1 || $rowspan > 1) {
-                                    $rowoff = ($rowspan - 1);
-                                    $coloff = ($colspan - 1);
-                                    $rowmax = ($row + $rowoff);
-                                    $colmax = ($col + $coloff);
-                                    for ($r1=0; $r1<=$rowoff; $r1++) {
+                                    $rowmax = ($row + $rowspan - 1);
+                                    $colmax = ($col + $colspan - 1);
+                                    for ($r1=0; $r1<$rowspan; $r1++) {
                                         if (empty($offset[$r1])) {
                                             $offset[$r1] = array_fill(0, $lastcol, 0);
                                         }
-                                        if ($r1==0) {
-                                            // current row - clear cells to the right
-                                            $min = 1;
-                                            $add = $coloff;
-                                        } else {
-                                            // subsequent row - clear cells including current column
-                                            $min = 0;
-                                            $add = $colspan;
-                                        }
-                                        for ($c1=($c+$min); $c1<$lastcol; $c1++) {
-                                            if (empty($offset[$r1][$c1])) {
-                                                $offset[$r1][$c1] = $add;
-                                            } else {
-                                                $offset[$r1][$c1] += $add;
-                                            }
-                                        }
-                                        for ($c1=$min; $c1<=$coloff; $c1++) {
-                                            array_splice($offset, $c + $c1, 1);
+                                        // For the current row, we clear cells to the right of the current cell.
+                                        // For subsequent rows, we clear clear cells including current column.
+                                        $c_min = ($r1 ? 0 : 1);
+                                        $c_max = count($offset[$r1]);
+                                        $c_add = ($colspan - $c_min);
+
+                                        $renumber = false;
+                                        for ($c1=$c_min; $c1<$colspan; $c1++) {
+                                            $renumber = true;
+                                            array_splice($offset[$r1], $c + $c1, 1);
                                             $worksheet->write_blank($row + $r1, $col + $c1, $format);
+                                            $c_max--;
+                                        }
+                                        if ($renumber) {
+                                            $offset[$r1] = array_values($offset[$r1]);
+                                        }
+                                        for ($c1=($c+$c_min); $c1<$c_max; $c1++) {
+                                            $offset[$r1][$c1] += $c_add;
                                         }
                                     }
                                     $worksheet->merge_cells($row, $col, $rowmax, $colmax);
@@ -594,7 +594,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                         $height = $rowheight->date;
                                         break;
 
-                                    case $is_event_row:
+                                    case $is_event:
                                         $height = $rowheight->event;
                                         break;
 
@@ -737,12 +737,18 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
 
                     // reduce SPAN tags
                     // reduce DIV tags
+                    // reduce P tags
                     // remove <br> at end of table data cell
                     $search = array('/<span[^>]*>(.*?)<\/span>/',
                                     '/<div[^>]*>(.*?)<\/div>/',
+                                    '/<p[^>]*>(.*?)<\/p>/',
                                     '/<br>(?=<\/td>)/');
-                    $replace = array('$1', '$1<br>', '');
+                    $replace = array('$1', '$1<br>', '$1<br>', '');
                     $html = preg_replace($search, $replace, $html);
+
+                    // remove the "authors" DIV from shared sessions (e.g. poster sessions) 
+                    $search ='/<div[^>]*class="authors"[^>]*>(.*?)<\/div>\s*/';
+                    $html = preg_replace($search, '$1', $html);
                 }
             }
         }
