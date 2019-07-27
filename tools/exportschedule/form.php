@@ -308,6 +308,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
             'rows' => '/(<tr[^>]*>)(.*?)<\/tr>/isu',
             'cells' => '/(<t[hd][^>]*>)(.*?)<\/t[hd]>/isu',
             'attributes' => '/(\w+)="([^"]*)"/isu',
+            'cellspans' => '/(colspan|rowspan)="(\d+)"/isu',
             'richtext' => '/<(b|i|u|s|strike|sub|sup|big|small)\b[^>]*>(.*?)<\/\\1>/isu',
             // row classes
             'date' => '/\bdate\b/',
@@ -360,6 +361,9 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                     $lastcol = 0;
                     $offset = array();
 
+                    // setup the $offset array for the whole day
+                    // BEFORE you start generating any Excel cells
+
                     $countrows = count($rows[0]);
                     for ($r=0; $r<$countrows; $r++) {
 
@@ -394,9 +398,55 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                 $offset[0] = array_fill(0, $lastcol, 0);
                             }
 
-                            // We need to go backwards through the cells
-                            // in order to calculate the $offset array correctly.
+                            // Process rowspan/colspan cells in the current row.
+                            // We need to do this from from right to left (i.e. $c--)
+                            // so that the $offset values are correctly calculated.
                             for ($c=($countcells-1); $c>=0; $c--) {
+
+                                $colspan = 1;
+                                $rowspan = 1;
+
+                                if (preg_match_all($search->cellspans, $cells[1][$c], $cellspans)) {
+
+                                    $countcellspans = count($cellspans[0]);
+                                    for ($a=0; $a<$countcellspans; $a++) {
+
+                                        switch ($cellspans[1][$a]) {
+                                            case 'colspan': $colspan = intval($cellspans[2][$a]); break;
+                                            case 'rowspan': $rowspan = intval($cellspans[2][$a]); break;
+                                        }
+                                    }
+                                }
+
+                                if ($colspan > 1 || $rowspan > 1) {
+                                    for ($roffset=0; $roffset<$rowspan; $roffset++) {
+                                        if (empty($offset[$roffset])) {
+                                            $offset[$roffset] = array_fill(0, $lastcol, 0);
+                                        }
+                                        // For the current row, we clear cells to the right of the current cell.
+                                        // For subsequent rows, we clear clear cells including current column.
+                                        $coffsetmin = ($roffset==0 ? 1 : 0);
+
+                                        $renumber = false;
+                                        for ($coffset = $coffsetmin; $coffset < $colspan; $coffset++) {
+                                            array_splice($offset[$roffset], $c + $coffset, 1);
+                                            $renumber = true;
+                                        }
+                                        if ($renumber) {
+                                            $offset[$roffset] = array_values($offset[$roffset]);
+                                        }
+                                        $cindexmin = $c + $coffsetmin;
+                                        $cindexmax = count($offset[$roffset]);
+                                        $cincrement = ($colspan - $coffsetmin);
+                                        for ($cindex = $cindexmin; $cindex < $cindexmax; $cindex++) {
+                                            $offset[$roffset][$cindex] += $cincrement;
+                                        }
+                                    }
+                                }
+                            }
+
+                            // format the cells in this row
+                            for ($c=0; $c<$countcells; $c++) {
 
                                 $cellclass = '';
                                 $colspan = 1;
@@ -550,41 +600,24 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                 $col = $c;
                                 if (isset($offset[0][$c])) {
                                     $col += $offset[0][$c];
-                                } else {
-                                    $offset[0][$c] = 0;
                                 }
 
                                 $worksheet->write_string($row, $col, $text, $format);
 
                                 if ($colspan > 1 || $rowspan > 1) {
-                                    $rowmax = ($row + $rowspan - 1);
-                                    $colmax = ($col + $colspan - 1);
-                                    for ($r1=0; $r1<$rowspan; $r1++) {
-                                        if (empty($offset[$r1])) {
-                                            $offset[$r1] = array_fill(0, $lastcol, 0);
-                                        }
-                                        // For the current row, we clear cells to the right of the current cell.
-                                        // For subsequent rows, we clear clear cells including current column.
-                                        $c_min = ($r1 ? 0 : 1);
-                                        $c_max = count($offset[$r1]);
-                                        $c_add = ($colspan - $c_min);
-
-                                        $renumber = false;
-                                        for ($c1=$c_min; $c1<$colspan; $c1++) {
-                                            $renumber = true;
-                                            array_splice($offset[$r1], $c + $c1, 1);
-                                            $worksheet->write_blank($row + $r1, $col + $c1, $format);
-                                            $c_max--;
-                                        }
-                                        if ($renumber) {
-                                            $offset[$r1] = array_values($offset[$r1]);
-                                        }
-                                        for ($c1=($c+$c_min); $c1<$c_max; $c1++) {
-                                            $offset[$r1][$c1] += $c_add;
+                                    // add blank cells for the merge
+                                    for ($roffset = 0; $roffset < $rowspan; $roffset++) {
+                                        $coffsetmin = ($roffset==0 ? 1 : 0);
+                                        for ($coffset = $coffsetmin; $coffset < $colspan; $coffset++) {
+                                            $worksheet->write_blank($row + $roffset, $col + $coffset, $format);
                                         }
                                     }
+                                    // now we can merge the cells
+                                    $rowmax = ($row + $rowspan - 1);
+                                    $colmax = ($col + $colspan - 1);
                                     $worksheet->merge_cells($row, $col, $rowmax, $colmax);
                                 }
+
                             } // end loop through cells
 
                             if ($countcells) {
