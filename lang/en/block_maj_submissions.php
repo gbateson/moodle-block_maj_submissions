@@ -263,6 +263,7 @@ $string['noabstract'] = '(No abstract rid={$a})';
 $string['noauthors'] = '(No authors rid={$a})';
 $string['norecordsfound'] = 'No records found matching these search conditions.';
 $string['normalroom'] = 'Normal room';
+$string['noschedule'] = 'Sorry, the conference schedule could not be found.';
 $string['notaccepted'] = 'Unfortunately, your proposal has <u>NOT</u> been accepted.';
 $string['notattending'] = 'Not attending';
 $string['notendswith'] = 'does not end with';

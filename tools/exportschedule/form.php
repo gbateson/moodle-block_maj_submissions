@@ -104,8 +104,8 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
         $plugin = $this->plugin;
         return array('csvshowgizmo' => get_string('filecsvshowgizmo', $plugin),
                      'excel' => get_string('fileexcel', $plugin),
-                     'html' => get_string('filehtml', $plugin),
-                     'pdf' => get_string('filepdf', $plugin));
+                     'html' => get_string('filehtml', $plugin));
+                     //'pdf' => get_string('filepdf', $plugin)
     }
 
     /**
@@ -488,7 +488,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
 
                                 if ($worksheet===null) {
                                     if (preg_match($search->date, $rowclass)) {
-                                        $dayname = $cells[2][$c];
+                                        $dayname = block_maj_submissions::plain_text($cells[2][$c]);
                                     } else {
                                         $dayname = get_string('day', $this->plugin).': '.($d + 1);
                                     }
@@ -677,9 +677,12 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
      * @todo Finish documenting this function
      */
     public function export_html($lang) {
-        global $CFG;
-        $msg = array();
-        return $msg;
+        if ($html = $this->get_schedule_html($lang)) {
+            $filename = $this->make_filename('html');
+            send_file($html, $filename, 0, 0, true, true);
+            // script will die here if schedule was found
+        }
+        return array(get_string('noschedule', $this->plugin));
     }
 
     /**
@@ -691,16 +694,82 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
      * @todo Finish documenting this function
      */
     public function export_pdf($lang) {
-        $msg = array();
-        return $msg;
+        global $CFG;
+        require_once($CFG->libdir.'/pdflib.php');
+
+        if ($html = $this->get_schedule($lang)) {
+
+            $doc = new pdf('L'); // landscape orientation
+
+            // basic info
+            // $doc->SetTitle($value);
+            // $doc->SetAuthor($value);
+            // $doc->SetCreator($value);
+            // $doc->SetKeywords($value);
+            // $doc->SetSubject('Schedule');
+            $doc->SetMargins(15, 30);
+
+            // header info
+            // $doc->setPrintHeader($value);
+            // $doc->setHeaderMargin($value);
+            // $doc->setHeaderFont($value);
+            // $doc->setHeaderData($value);
+
+            // footer info
+            // $doc->setPrintFooter($value);
+            // $doc->setFooterMargin($value);
+            // $doc->setFooterFont($value);
+
+            // text and font info
+            // $doc->SetTextColor($value[0], $value[1], $value[2]);
+            // $doc->SetFillColor($value[0], $value[1], $value[2]);
+            $doc->SetFont('kozgopromedium', '', 10); // family, style, size
+
+            $doc->AddPage();
+            $doc->writeHTML($html);
+
+            $filename = $this->make_filename('pdf');
+            $doc->Output($filename, 'D'); // force download
+            die;
+        }
+
+        return array(get_string('noschedule', $this->plugin));
     }
 
     /**
-     * export_pdf
+     * get_schedule_html
      *
      * @uses $CFG
      * @param string $lang
      * @return array $msg
+     * @todo Finish documenting this function
+     */
+    protected function get_schedule_html($lang) {
+        global $CFG;
+        if ($html = $this->get_schedule($lang)) {
+            $filename = $CFG->dirroot.'/blocks/maj_submissions/templates/template.css';
+            if (file_exists($filename)) {
+                if ($style = file_get_contents($filename)) {
+                    $style = "\n".$style."\n";
+                    $params = array('type' => 'text/css');
+                    $style = html_writer::tag('style', $style, $params);
+                }
+            } else {
+                $style = '';
+            }
+            $html = html_writer::tag('head', $style).
+                    html_writer::tag('body', $html);
+            $html = html_writer::tag('html', $html);
+        }
+        return $html;
+    }
+
+    /**
+     * get_schedule
+     *
+     * @uses $CFG
+     * @param string $lang
+     * @return string HTML content from the conference schedule page resource
      * @todo Finish documenting this function
      */
     protected function get_schedule($lang) {

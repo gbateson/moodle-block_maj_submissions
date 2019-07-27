@@ -237,7 +237,14 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
                 if ($name=='affiliation_country') {
                     if ($text = $record->$field) {
                         $text = block_maj_submissions::textlib('strtolower', $text);
-                        $record->{"affiliation_$num"} .= ' ('.ucwords($text).')';
+                        switch (true) {
+                            case preg_match('/\b(brunei)\b/', $text): $text = 'Brunei'; break;
+                            case preg_match('/\b(uk|(united kingdom)\b)/', $text): $text = 'UK'; break;
+                            case preg_match('/\b(usa|(united states))\b/', $text): $text = 'USA'; break;
+                            case preg_match('/\b(uae|(united emirates))\b/', $text): $text = 'UAE'; break;
+                            default: $text = ucwords($text);
+                        }
+                        $record->{"affiliation_$num"} .= ' ('.$text.')';
                     }
                 }
             }
