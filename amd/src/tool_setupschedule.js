@@ -274,6 +274,11 @@ define(["jquery", "jqueryui", "core/str", // split this define statement because
         var i = [];
         var count = 0;
         $(tbody).find("tr").each(function(){
+            var roomx = new RegExp("\\broom\\d+\\b", "g");
+            $(this).find("th.roomheading").each(function(r){
+                $(this).prop("class", $(this).prop("class").replace(roomx, ""));
+                $(this).addClass("room" + (r + 1));
+            });
             var r = 0;
             $(this).find("th, td").each(function(){
                 while (i[r]) {

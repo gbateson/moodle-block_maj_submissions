@@ -2015,7 +2015,9 @@ class block_maj_submissions extends block_base {
                     }
                     $name = implode('', $matches[0][$i]);
                 } else {
-                    list($name, $seats) = self::extract_room_from_text($text, $fieldname);
+                    $room = self::extract_room_from_text($text, $fieldname);
+                    $name = $room['name'];
+                    $seats = $room['seats'];
                 }
 
                 $name = format_string($name);
