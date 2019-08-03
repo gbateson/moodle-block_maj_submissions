@@ -294,6 +294,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
         require_once($CFG->dirroot.'/lib/excellib.class.php');
         require_once($CFG->dirroot.'/lib/phpexcel/PHPExcel/IComparable.php');
         require_once($CFG->dirroot.'/lib/phpexcel/PHPExcel/RichText.php');
+        require_once($CFG->dirroot.'/blocks/maj_submissions/tools/exportschedule/excellib.class.php');
 
         $msg = array();
 
@@ -476,7 +477,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
 
                                 if ($workbook===null) {
                                     $filename = $this->make_filename('xlsx');
-                                    $workbook = new MoodleExcelWorkbook($filename);
+                                    $workbook = new block_maj_submissions_ExcelWorkbook($filename);
                                     $workbook->send($filename);
                                     foreach ($formats as $f => $format) {
                                         $format = $workbook->add_format($format);
@@ -493,10 +494,21 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                         $dayname = get_string('day', $this->plugin).': '.($d + 1);
                                     }
                                     $worksheet = $workbook->add_worksheet($dayname);
+
+                                    // http://www.craiglotter.co.za/2010/04/18/setting-your-worksheet-printing-layout-options-in-phpexcel/
+                                    $worksheet->setup_page(array(
+                                        'Orientation' => PHPExcel_Worksheet_PageSetup::ORIENTATION_LANDSCAPE,
+                                        'PaperSize'   => PHPExcel_Worksheet_PageSetup::PAPERSIZE_A4,
+                                        'FitToPage'   => true,
+                                        'FitToHeight' => 1,
+                                        'FitToWidth'  => 1,
+                                    ));
                                 }
 
                                 $text = html_entity_decode($cells[2][$c]);
-                                if ($is_event) {
+                                if ($is_date && ! empty($this->instance->config->title)) {
+                                    $text = $this->instance->config->title.': '.$text;
+                                } else if ($is_event) {
                                     $text = preg_replace($search->eventdetails, '', $text);
                                 }
                                 $text = str_replace('<br>', chr(10), $text);
@@ -783,6 +795,26 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                 $cm = $modinfo->get_cm($cmid);
                 if ($cm->modname=='page') {
                     $html = $DB->get_field('page', 'content', array('id' => $cm->instance));
+
+                    // Put room name after title for multiroom sessions.
+                    $search = '/<td class="[^"]*multiroom[^"]*"[^>]*>(.+?)<\/td>/isu';
+                    if (preg_match_all($search, $html, $matches, PREG_OFFSET_CAPTURE)) {
+                        $i_max = count($matches[0]);
+                        for ($i = ($i_max - 1); $i >= 0; $i--) {
+                            list($match, $start) = $matches[0][$i];
+                            $length = strlen($match);
+                            $search = '/<span class="roomname">(.+?)<\/span>/';
+                            if (preg_match($search, $match, $roomname)) {
+                                $roomname = block_maj_submissions::plain_text($roomname[1]);
+                                if ($roomname = trim($roomname)) {
+                                    $roomname = html_writer::tag('b', '('.$roomname.')');
+                                    $search = '/(<div class="title">)(.+?)(<\/div>)/';
+                                    $match = preg_replace($search, '$1$2'.' '.$roomname.'$3', $match);
+                                }
+                            }
+                            $html = substr_replace($html, $match, $start, $length);
+                        }
+                    }
 
                     // remove embedded SCRIPT and STYLE tags and THEAD
                     $search = array('/<script[^>]*>.*<\/script>\s*/isu',

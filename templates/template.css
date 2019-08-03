@@ -133,7 +133,9 @@
 }
 
 .schedule .sharedsession .item {
-    margin-bottom: 12px;
+    clear:         both;
+    margin-bottom:  6px;
+    margin-top:     6px;
     overflow:      auto;
     position:  relative;
 }

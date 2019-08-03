@@ -95,7 +95,7 @@ MAJ.setup_attendance = function() {
             var attendingClass = new RegExp(" (not)?attending", "g");
 
             // set up attending/not attending checkboxes
-            var sessions = document.querySelectorAll("table.schedule .session:not(.emptysession)");
+            var sessions = document.querySelectorAll("table.schedule .session:not(.emptysession):not(.event)");
             for (var s=0; s<sessions.length; s++) {
 
                 if (sessions[s].className.indexOf("sharedsession") >= 0) {
