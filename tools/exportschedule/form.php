@@ -346,7 +346,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                    'event' => 34,
                                    'multiroom' => 45,
                                    'roomheadings' => 40,
-                                   'default' => 80);
+                                   'default' => -1); // = autofit
 
         if (preg_match_all($search->days, $html, $days)) {
 
