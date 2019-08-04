@@ -258,6 +258,10 @@
     display: none;
 }
 
+.session.event .title {
+    font-size: 18px;
+}
+
 .schedule .summary {
     float:             left;
     font-size:     xx-small;
@@ -506,6 +510,14 @@
         font-weight:    initial;
         padding-top:        0px;
         white-space:     normal;
+    }
+
+    .session.event {
+        vertical-align: middle;
+    }
+
+    .session.event .title {
+        font-size: 18px;
     }
 
     .schedule .authors {

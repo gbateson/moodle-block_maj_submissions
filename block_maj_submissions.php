@@ -1947,7 +1947,7 @@ class block_maj_submissions extends block_base {
      *
      * @param integer $recordid
      * @param integer $cmid
-     * @param string $type (optiona;, default="")
+     * @param string $type (optional: default="")
      * @return array [recordid => mixed], either "name", "seats" of array("name" => 99, "seats" => 99)
      * @todo Finish documenting this function
      */
@@ -2022,8 +2022,12 @@ class block_maj_submissions extends block_base {
 
                 $name = format_string($name);
                 if ($type) {
-                    if ($info[$rid]=='') {
-                        $info[$rid] = ('type'=='name' ? $name : $seats);
+                    if ($info[$rid]==='') {
+                        if ('type'=='name') {
+                            $info[$rid] = $name;
+                        } else {
+                            $info[$rid] = $seats;
+                        }
                     }
                 } else {
                     if ($info[$rid]['name']==='') {

@@ -95,13 +95,25 @@ MAJ.setup_attendance = function() {
             var attendingClass = new RegExp(" (not)?attending", "g");
 
             // set up attending/not attending checkboxes
-            var sessions = document.querySelectorAll("table.schedule .session:not(.emptysession):not(.event)");
+            var sessions = "table.schedule .session";
+            sessions += ":not(.emptysession):not(.event)";
+            sessions += ":not(.poster):not(.virtual)";
+            sessions = document.querySelectorAll(sessions);
             for (var s=0; s<sessions.length; s++) {
 
-                if (sessions[s].className.indexOf("sharedsession") >= 0) {
-                    var items = sessions[s].querySelectorAll(".item");
+                var items = false;
+                switch (true) {
+                    case sessions[s].classList:
+                        items = sessions[s].classList.contains("sharedsession");
+                        break;
+                    case sessions[s].className:
+                        items = (sessions[s].className.indexOf("sharedsession") >= 0);
+                        break;
+                }
+                if (items) {
+                    items = sessions[s].querySelectorAll(".item");
                 } else {
-                    var items = [sessions[s]];
+                    items = [sessions[s]];
                 }
 
                 var attending = false;
