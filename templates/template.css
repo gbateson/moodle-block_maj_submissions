@@ -101,12 +101,14 @@
     font-weight: 450;
 }
 
+.schedule .session.paper,
 .schedule .session.presentation {
 	background-color: #fffcf6; /* light orange */
 }
 
 .schedule .session.case,
-.schedule .session.casestudy {
+.schedule .session.casestudy,
+.schedule .session.virtual {
     background-color: #f8f8ff; /* light blue */
 }
 
@@ -115,7 +117,6 @@
     background-color: #f8ffff; /* light cian */
 }
 
-.schedule .session.poster,
 .schedule .session.showcase {
     background-color: #fffff8; /* light yellow */
 }
@@ -126,6 +127,11 @@
 
 .schedule .session.keynote {
 	background-color: #f9f2ec; /* light brown */
+}
+
+.schedule .session.poster,
+.schedule .session.symposium {
+	background-color: #ecf9f2; /* light green */
 }
 
 .schedule .emptysession {
@@ -256,6 +262,10 @@
 .session.event .schedulenumber,
 .session.event .categorytypetopic {
     display: none;
+}
+
+.session.event {
+    background-color: #f2f2f2; /* grey 5% */
 }
 
 .session.event .title {

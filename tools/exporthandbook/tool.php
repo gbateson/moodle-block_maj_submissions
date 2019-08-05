@@ -143,12 +143,19 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
     // sort $records by ('schedule_day', 'schedule_time', 'schedule_roomname')
     uasort($records, function($a, $b) {
         $fields = array('schedule_day', 'schedule_time', 'presentation_type', 'schedule_roomname');
+        $search = '/(?<!\d)[1-9](?!\d)/';
         foreach ($fields as $field) {
             if (isset($a->$field) && isset($b->$field)) {
-                if ($a->$field > $b->$field) {
+                $asort = $a->$field;
+                $bsort = $b->$field;
+                if ($field=='schedule_day' || $field='schedule_time') {
+                    $asort = preg_replace($search, '0$0', $asort);
+                    $bsort = preg_replace($search, '0$0', $bsort);
+                }
+                if ($asort > $bsort) {
                     return 1;
                 }
-                if ($a->$field < $b->$field) {
+                if ($asort < $bsort) {
                     return -1;
                 }
             } else if (isset($a->$field)) {

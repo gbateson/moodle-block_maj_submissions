@@ -298,7 +298,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
 
         $msg = array();
 
-        $html = $this->get_schedule($lang);
+        $html = $this->get_schedule($lang, false);
 
         $workbook = null;
         $worksheet = null;
@@ -309,7 +309,6 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
             'rows' => '/(<tr[^>]*>)(.*?)<\/tr>/isu',
             'cells' => '/(<t[hd][^>]*>)(.*?)<\/t[hd]>/isu',
             'attributes' => '/(\w+)="([^"]*)"/isu',
-            'cellspans' => '/(colspan|rowspan)="(\d+)"/isu',
             'richtext' => '/<(b|i|u|s|strike|sub|sup|big|small)\b[^>]*>(.*?)<\/\\1>/isu',
             // row classes
             'date' => '/\bdate\b/',
@@ -322,21 +321,25 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
             'keynote' => '/\bkeynote\b/',
             'workshop' => '/\bworkshop\b/',
             'lightning' => '/\blightning\b/',
-            'presentation' => '/\bpresentation\b/',
+            'poster' => '/\b(poster|symposium)\b/',
+            'presentation' => '/\b(paper|presentation)\b/',
+            'virtual' => '/\b(virtual|case|casestudy)\b/',
             // cell content
             'eventdetails' => '/<br>.*$/isu'
         );
 
-        $formats = (object)array(
+        $formats = array(
+            'default'      => ['h_align' => 'left',   'v_align' => 'top',    'size' => 10],
             'date'         => ['h_align' => 'left',   'v_align' => 'center', 'size' => 18],
-            'event'        => ['h_align' => 'left',   'v_align' => 'center', 'size' => 14],
+            'event'        => ['h_align' => 'left',   'v_align' => 'center', 'size' => 14, 'bg_color' => '#f2f2f2'], // grey (5%)
             'roomheading'  => ['h_align' => 'center', 'v_align' => 'center', 'size' => 14, 'bg_color' => '#eeddee'], // purple
             'timeheading'  => ['h_align' => 'center', 'v_align' => 'top',    'size' => 12, 'bg_color' => '#ffffff'], // white
-            'presentation' => ['h_align' => 'left',   'v_align' => 'top',    'size' => 10, 'bg_color' => '#fffcf6'], // yellow
             'lightning'    => ['h_align' => 'left',   'v_align' => 'top',    'size' => 10, 'bg_color' => '#f8ffff'], // blue
-            'workshop'     => ['h_align' => 'left',   'v_align' => 'top',    'size' => 10, 'bg_color' => '#fff8ff'], // purple
             'keynote'      => ['h_align' => 'left',   'v_align' => 'top',    'size' => 10, 'bg_color' => '#f9f2ec'], // brown
-            'default'      => ['h_align' => 'left',   'v_align' => 'top',    'size' => 10, 'bg_color' => '#ffffff']
+            'poster'       => ['h_align' => 'left',   'v_align' => 'top',    'size' => 10, 'bg_color' => '#edf8f2'], // light green
+            'presentation' => ['h_align' => 'left',   'v_align' => 'top',    'size' => 10, 'bg_color' => '#fffcf6'], // yellow
+            'virtual'      => ['h_align' => 'left',   'v_align' => 'center', 'size' => 10, 'bg_color' => '#f8f8ff'], // light blue
+            'workshop'     => ['h_align' => 'left',   'v_align' => 'top',    'size' => 10, 'bg_color' => '#fff8ff'], // purple
         );
 
         $colwidth = (object)array('timeheading' => 15,
@@ -371,13 +374,13 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                         $col = 0;
                         $rowclass = '';
 
-                        if (preg_match_all($search->attributes, $rows[1][$r], $attributes)) {
+                        if (preg_match_all($search->attributes, $rows[1][$r], $matches)) {
 
-                            $countattributes = count($attributes[0]);
-                            for ($a=0; $a<$countattributes; $a++) {
+                            $count = count($matches[0]);
+                            for ($i=0; $i<$count; $i++) {
 
-                                switch ($attributes[1][$a]) {
-                                    case 'class': $rowclass = trim($attributes[2][$a]); break;
+                                switch ($matches[1][$i]) {
+                                    case 'class': $rowclass = trim($matches[2][$i]); break;
                                     // ignore anything else
                                 }
                             }
@@ -399,25 +402,34 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                 $offset[0] = array_fill(0, $lastcol, 0);
                             }
 
-                            // Process rowspan/colspan cells in the current row.
-                            // We need to do this from from right to left (i.e. $c--)
-                            // so that the $offset values are correctly calculated.
-                            for ($c=($countcells-1); $c>=0; $c--) {
+                            // cache the cell attributes (class, colspan, rowspan)
+                            // for all cels in the current row
+                            $attributes = array();
+                            for ($c=0; $c<$countcells; $c++) {
 
-                                $colspan = 1;
-                                $rowspan = 1;
+                                $attribute = array('', 1, 1); // class, colspan, rowspan
+                                if (preg_match_all($search->attributes, $cells[1][$c], $matches)) {
 
-                                if (preg_match_all($search->cellspans, $cells[1][$c], $cellspans)) {
+                                    $count = count($matches[0]);
+                                    for ($i=0; $i<$count; $i++) {
 
-                                    $countcellspans = count($cellspans[0]);
-                                    for ($a=0; $a<$countcellspans; $a++) {
-
-                                        switch ($cellspans[1][$a]) {
-                                            case 'colspan': $colspan = intval($cellspans[2][$a]); break;
-                                            case 'rowspan': $rowspan = intval($cellspans[2][$a]); break;
+                                        switch ($matches[1][$i]) {
+                                            case 'class': $attribute[0] =  trim($matches[2][$i]); break;
+                                            case 'colspan': $attribute[1] = intval($matches[2][$i]); break;
+                                            case 'rowspan': $attribute[2] = intval($matches[2][$i]); break;
+                                            // ignore "id", "style" and anything else
                                         }
                                     }
                                 }
+                                $attributes[$c] = $attribute;
+                            }
+
+                            // Process rowspan/colspan cells in the current row.
+                            // We need to do this from from right to left (i.e. $c--) so that
+                            // the $offset values in subsequent rows are calculated correctly.
+                            for ($c=($countcells-1); $c>=0; $c--) {
+
+                                list($cellclass, $colspan, $rowspan) = $attributes[$c];
 
                                 if ($colspan > 1 || $rowspan > 1) {
                                     for ($roffset=0; $roffset<$rowspan; $roffset++) {
@@ -449,23 +461,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                             // format the cells in this row
                             for ($c=0; $c<$countcells; $c++) {
 
-                                $cellclass = '';
-                                $colspan = 1;
-                                $rowspan = 1;
-
-                                if (preg_match_all($search->attributes, $cells[1][$c], $attributes)) {
-
-                                    $countattributes = count($attributes[0]);
-                                    for ($a=0; $a<$countattributes; $a++) {
-
-                                        switch ($attributes[1][$a]) {
-                                            case 'class': $cellclass =  trim($attributes[2][$a]); break;
-                                            case 'colspan': $colspan = intval($attributes[2][$a]); break;
-                                            case 'rowspan': $rowspan = intval($attributes[2][$a]); break;
-                                            // ignore "id", "style" and anything else
-                                        }
-                                    }
-                                }
+                                list($cellclass, $colspan, $rowspan) = $attributes[$c];
 
                                 if (preg_match($search->multiroom, $cellclass)) {
                                     $is_multiroom = true;
@@ -480,11 +476,9 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                     $workbook = new block_maj_submissions_ExcelWorkbook($filename);
                                     $workbook->send($filename);
                                     foreach ($formats as $f => $format) {
-                                        $format = $workbook->add_format($format);
-                                        $format->set_text_wrap();
-                                        $format->set_border(1); // 1=thin, 2=thick
-                                        $formats->$f = $format;
+                                        $formats[$f] = new block_maj_submissions_ExcelFormat($format);
                                     }
+                                    $formats = (object)$formats;
                                 }
 
                                 if ($worksheet===null) {
@@ -532,20 +526,28 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                         $format = $formats->roomheading;
                                         break;
 
-                                    case preg_match($search->presentation, $cellclass):
-                                        $format = $formats->presentation;
-                                        break;
-
                                     case preg_match($search->lightning, $cellclass):
                                         $format = $formats->lightning;
                                         break;
 
-                                    case preg_match($search->workshop, $cellclass):
-                                        $format = $formats->workshop;
-                                        break;
-
                                     case preg_match($search->keynote, $cellclass):
                                         $format = $formats->keynote;
+                                        break;
+
+                                    case preg_match($search->poster, $cellclass):
+                                        $format = $formats->poster;
+                                        break;
+
+                                    case preg_match($search->presentation, $cellclass):
+                                        $format = $formats->presentation;
+                                        break;
+
+                                    case preg_match($search->virtual, $cellclass):
+                                        $format = $formats->virtual;
+                                        break;
+
+                                    case preg_match($search->workshop, $cellclass):
+                                        $format = $formats->workshop;
                                         break;
 
                                     default:
@@ -595,8 +597,8 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                             case 'u': $font->setUnderline(true); break;
                                             case 'sub': $font->setSubScript(true); break;
                                             case 'sup': $font->setSuperScript(true); break;
-                                            case 's': // alias for "strike"                                                
-                                            case 'strike': $font->setStrikethrough(true); break;                                                
+                                            case 's': // alias for "strike"
+                                            case 'strike': $font->setStrikethrough(true); break;
                                             case 'big': $font->setSize(intval($fontsize * 1.2)); break;
                                             case 'small': $font->setSize(intval($fontsize * 0.8)); break;
                                         }
@@ -630,7 +632,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                     $worksheet->merge_cells($row, $col, $rowmax, $colmax);
                                 }
 
-                            } // end loop through cells
+                            } // end for ($c=0 ...) loop through cells
 
                             if ($countcells) {
                                 switch (true) {
@@ -662,15 +664,16 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                         // remove offets for this row
                         array_shift($offset);
 
-                    } // end loop through rows
+                    } // end for ($r=0 ...) loop through rows
 
                     if ($lastcol) {
                         $worksheet->set_column(0, 0, $colwidth->timeheading);
                         $worksheet->set_column(1, $lastcol-1, $colwidth->default);
                     }
-                }
-            }
-        }
+                } // end if preg_match($search->rows ...)
+
+            } // end for ($d=0 ...) loop through days
+        } // end if preg_match($search->days ...)
 
         if ($workbook) {
             $workbook->close();
@@ -709,7 +712,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
         global $CFG;
         require_once($CFG->libdir.'/pdflib.php');
 
-        if ($html = $this->get_schedule($lang)) {
+        if ($html = $this->get_schedule($lang, false)) {
 
             $doc = new pdf('L'); // landscape orientation
 
@@ -758,7 +761,8 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
      */
     protected function get_schedule_html($lang) {
         global $CFG;
-        if ($html = $this->get_schedule($lang)) {
+        if ($html = $this->get_schedule($lang, true)) {
+
             $filename = $CFG->dirroot.'/blocks/maj_submissions/templates/template.css';
             if (file_exists($filename)) {
                 if ($style = file_get_contents($filename)) {
@@ -769,8 +773,20 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
             } else {
                 $style = '';
             }
+
+            $filename = $CFG->dirroot.'/blocks/maj_submissions/templates/template.js';
+            if (file_exists($filename)) {
+                if ($script = file_get_contents($filename)) {
+                    $script = "\n//<![CDATA[\n".$script."\n//]]>\n";
+                    $params = array('type' => 'text/javascript');
+                    $script = html_writer::tag('script', $script, $params);
+                }
+            } else {
+                $script = '';
+            }
+
             $html = html_writer::tag('head', $style).
-                    html_writer::tag('body', $html);
+                    html_writer::tag('body', $html.$script);
             $html = html_writer::tag('html', $html);
         }
         return $html;
@@ -784,7 +800,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
      * @return string HTML content from the conference schedule page resource
      * @todo Finish documenting this function
      */
-    protected function get_schedule($lang) {
+    protected function get_schedule($lang, $keep_thead) {
         global $DB;
 
         $html = '';
@@ -816,11 +832,20 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                         }
                     }
 
+                    $thead = '';
+                    if ($keep_thead) {
+                        $search = '/<thead[^>]*>.*?<\/thead>/isu';
+                        if (preg_match($search, $html, $match)) {
+                            $thead = $match[0];
+                        }
+                    }
+
                     // remove embedded SCRIPT and STYLE tags and THEAD
-                    $search = array('/<script[^>]*>.*<\/script>\s*/isu',
-                                    '/<style[^>]*>.*<\/style>\s*/isu',
-                                    '/<thead[^>]*>.*<\/thead>\s*/isu');
+                    $search = array('/<script[^>]*>.*?<\/script>\s*/isu',
+                                    '/<style[^>]*>.*?<\/style>\s*/isu',
+                                    '/<thead[^>]*>.*?<\/thead>\s*/isu');
                     $html = preg_replace($search, '', $html);
+
 
                     // remove white space around HTML block elements
                     $search = '/\s*(<\/?(table|thead|tbody|tr|th|td|div)[^>]*>)\s*/s';
@@ -880,9 +905,13 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                     $replace = array('$1', '$1<br>', '$1<br>', '');
                     $html = preg_replace($search, $replace, $html);
 
-                    // remove the "authors" DIV from shared sessions (e.g. poster sessions) 
+                    // remove the "authors" DIV from shared sessions (e.g. poster sessions)
                     $search ='/<div[^>]*class="authors"[^>]*>(.*?)<\/div>\s*/';
                     $html = preg_replace($search, '$1', $html);
+
+                    if ($thead) {
+                        $html = preg_replace('/<tbody[^>]*>/', $thead.'$0', $html, 1);
+                    }
                 }
             }
         }
