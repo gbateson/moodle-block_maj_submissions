@@ -430,12 +430,9 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
         // biography information
         $text = '';
         for ($i=1; $i<=5; $i++) {
-            $field = 'biography';
-            if ($i >= 2) {
-                $field .= "_$i";
-            }
-            if (isset($record->$field) && $record->$field) {
-                $text .= html_writer::tag('dd', $record->$field, array('style' => 'font-style: italic; margin: 8px 18px; text-indent: 24px;'));
+            $biography = "biography_$i";
+            if (isset($record->$biography) && $record->$biography) {
+                $text .= html_writer::tag('dd', $record->$biography, array('style' => 'font-style: italic; margin: 8px 18px; text-indent: 24px;'));
             }
         }
         if ($text) {

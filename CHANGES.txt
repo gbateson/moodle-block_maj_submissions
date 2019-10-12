@@ -1,0 +1,866 @@
+========================================
+Change log for block_maj_submissions
+========================================
+
+2019-08-06 (51)
+ -  fix format of biographical when exporting handbook 
+
+2019-08-05 (50)
+ -  include 'day' tabs in downloadable HTML version of schedule 
+
+2019-08-05 (49)
+ -  add BG colors to poster and virtual presentations on schedule and fix order of days when exporting handbook 
+
+2019-08-05 (48)
+ -  add BG colors to poster and virtual presentations on schedule 
+
+2019-08-05 (47)
+ -  fix formatting of date rows when exporting schedule to Excel 
+
+2019-08-05 (46)
+ -  fix formatting of date rows when exporting schedule to Excel 
+
+2019-08-05 (45)
+ -  optimize PHP code in exportschedule tool 
+
+2019-08-04 (45)
+ -  use -1 (=auto fit) for default row height when exporting scheudle to Excel 
+
+2019-08-04 (44)
+ -  on the conference schedule, do not show attendance information for poster sessions and virtual presentations 
+
+2019-08-03 (43)
+ -  add new Excel class to allow setting of page properties, such as Orientation and FitToWidth/Height 
+
+2019-07-31 (42)
+ -  small fix to code that fetches info about available seats into schedule 
+
+2019-07-30 (41)
+ -  Fix errors about incomplete object, caused by class not existing before unserialize 
+
+2019-07-27 (40)
+ -  Fix errors about incomplete object, caused by class not existing before unserialize 
+ -  implement preliminary version of export to HTML and PDF 
+ -  implement preliminary version of export to HTML and PDF 
+
+2019-07-27 (39)
+ -  fix calculation of Excel column number in table cells to the right of a cell with colspan > 1 
+
+2019-07-26 (38)
+ -  blocks_maj_submissions fix handling of merged table cells in schedule when exporting to Excel 
+
+2019-07-24 (37)
+ -  define specific Excel format for rows that contain conference events 
+
+2019-07-23 (36)
+ -  fix adding new day to schedule 
+
+2019-07-22 (35)
+ -  blocks_maj_submissions regenerate tool_setupschedule.min.js 
+ -  fix several issues when adding a room to the schedule 
+
+2019-07-21 (34)
+ -  update 'Events' preset and allow records from 'Events' database to be added to the schedule 
+
+2019-07-19 (33)
+ -  remove Korean from list of available languages for PHP help 
+
+2019-07-19 (32)
+ -  update amd js files 
+
+2019-07-19 (31)
+ -  update amd js files 
+ -  implement updating of title and names via the setupschedule tool 
+
+2019-07-18 (30)
+ -  fix detection of help icon on Moodle >= 3.7 
+ -  maintain formatting (e.g. borders) of merged cells when exporting schedule to Excel 
+
+2019-07-02 (29)
+ -  blocks_maj_submissions add new 'Update' tool bar to setupschedule tool 
+ -  fix CSS for session titles in schedule 
+ -  set column width and row height during export of schedule to Excel 
+
+2019-06-27 (28)
+ -  maj_submissions enable basic export of schedule to Excel file 
+
+2019-06-24 (27)
+ -  incomplete implementation of tool to export schedule as Excel file 
+ -  add potential to export schedule in several formats. 
+
+2019-06-24 (26)
+ -  loosen CSS selectors so that styles are applied when main block is docked on course page 
+
+2019-06-17 (25)
+ -  fix styles for multilang conference strings in Boost theme 
+
+2019-06-08 (24)
+ -  add new JS file for updatevetting tool 
+
+2019-06-07 (23)
+ -  add new JS file for updatevetting tool 
+
+2019-06-07 (23)
+ -  fix layout issues for Boost theme in Moodle 3.7 
+
+2019-05-15 (22)
+ -  preliminary version of JS for vettingupdate tool 
+ -  add new tool, 'updatevetting' 
+ -  add new tool, 'updatevetting' 
+
+2019-05-06 (21)
+ -  add preliminary version of new tool, 'updatevetting' 
+ -  add mode=single to link in review results message; optimize code to display group fields in forms used by tools 
+
+2019-05-06 (20)
+ -  add mode=single to link in review results message; optimize code to display group fields in forms used by tools 
+
+2019-04-08 (19)
+ -  fix calls to plain_text which has moved to the object 
+
+2019-04-05 (18)
+ -  add comments about events_trigger availability 
+
+2019-02-28 (17)
+ -  fix error regarding missing 'modname' when adding new resource, workshop or database 
+
+2019-02-24 (16)
+ -  ensure appropriate parent classes are available for new 'schedule' type in datafield_action type 
+
+2019-02-23 (15)
+ -  move formatting of submission item for schedule into static method, so that it is more accessible to datafield_action (schedule) 
+
+2019-02-14 (14)
+ -  block/maj_submissions show number of seats left in schedule on large displays 
+ -  block/maj_submissions show number of seats left in schedule on large displays 
+
+2019-01-23 (13)
+ -  blocks/maj_submissions improve handling of multilang fields when exporting handbook 
+ -  blocks/maj_submissions reduce multilang dates and names to a single language when exporting handbook 
+
+2019-01-21 (12)
+ -  blocks/maj_submissions reduce multilang dates and names to a single language when exporting handbook 
+ -  blocks/maj_submissions fix email and affiliation when exporting handbook 
+
+2019-01-21 (12)
+ -  blocks/maj_submissions improve exporthandbook tool to handle multilang names 
+ -  remove use of 'events_trigger' for compatability with Moodle 3.6 
+
+2019-01-16 (11)
+ -  block/maj_submissions hide presentation_category from lightning talks on schedule 
+
+2019-01-11 (10)
+ -  block/maj_submissions rename JS variable TOOL.icons array so it does not clash with method of same name 
+
+2018-12-21 (09)
+ -  block/maj_submissions fix creation of schedule from template activity in another course 
+
+2018-12-14 (08)
+ -  block/maj_submissions fix formatting of single digit dates in tool to export dates to html file 
+
+2018-12-13 (07)
+ -  block/maj_submissions force default start times to 00:00:00 and default finish times to 23:55:00 
+
+2018-11-30 (06)
+ -  block/maj_submissions change order of time display: early - delegate - presenter 
+ -  block/maj_submissions reduce multilang SPANs in menu items in tool forms 
+
+2018-11-17 (05)
+ -  numerous small improvements to ensure access to activities is restricted and suitable defaults are used for titles and dates 
+
+2018-11-16 (04)
+ -  block/maj_submissions fix warning when transferring duplicate submissions to vetting database 
+
+2018-07-29 (03)
+ -  block/maj_submissions add new data_contents frecords if necessary when saving schedule 
+
+2018-07-18 (02)
+ -  block/maj_submissions exclude submissions whose status is 'Cancelled' or 'Not accepted' from the schedule 
+
+2018-07-13 (01)
+ -  block/maj_submissions add presenters names under presentation title in handbook 
+ -  block/maj_submissions add presenters names under presentation title in handbook 
+
+2018-07-12 (00)
+ -  block/maj_submissions add emails to list of presenters in handbook 
+
+2018-07-11 (99)
+ -  block/maj_submissions add list of presenters to handbook 
+
+2018-07-11 (99)
+ -  blocks/maj_submissions regenerate AMD files 
+
+2018-07-11 (98)
+ -  blocks/maj_submissions improve tool to export handbook 
+
+2018-07-07 (97)
+ -  block/maj_submissions add latest version of preset for rooms database 
+
+2018-06-07 (96)
+ -  block/maj_submissions improve function to build dialog menus in schedule setup javscript 
+ -  block/maj_submissions improve function to build dialog menus in schedule setup javscript 
+
+2018-06-06 (95)
+ -  block/maj_submissions improve function to build dialog menus in schedule setup javscript 
+
+2018-06-05 (94)
+ -  block/maj_submissions small fix to duration string in schedule setup 
+
+2018-06-04 (93)
+ -  block/maj_submissions aloow filtering by preferred time and keywords when populating schedule 
+
+2018-05-30 (92)
+ -  block/maj_submissions aloow filtering by preferred time and keywords when populating schedule 
+
+2018-05-30 (92)
+ -  block/maj_submissions initial implementation of populate schedule with filters 
+
+2018-05-28 (91)
+ -  create form to select days and/or presentation items when populating schedule 
+
+2018-05-28 (90)
+ -  block/maj_submissions add JQuery styles to schedule editor 
+
+2018-05-24 (89)
+ -  block/maj_submissions add initial versino AMD files 
+ -  block/maj_submissions add new tools to redo upgrade and sort lang strings 
+
+2018-05-23 (88)
+ -  block/maj_submissions several small changes to improve behavior of tools: (1) use real presentation categories/types when generating schedule content; (2) handle presentation types with no duration; (3) get review team name from lang pack; 
+
+2018-05-23 (87)
+ -  block/maj_submissions skip duplicate authors, records, and submissions when transferring submission database records to vetting workshop 
+
+2018-05-21 (86)
+ -  save vetting results as a resource accessible only by Program Committee 
+
+2018-05-18 (85)
+ -  block/maj_submissions improve feedback in tool to convert from workshop to database 
+
+2018-05-16 (84)
+ -  block/maj_submissions fix database URL and sendername fields in confirmation email message to presenters 
+
+2018-05-09 (83)
+ -  allow multiple groups, including Program Committee, to access newly created activities and resources with restricted-access 
+ -  fix white space around commas when trasferring from submissions from Database to Workshop 
+
+2018-05-09 (82)
+ -  complete tools to create limited-access forums for authors and reviewers 
+
+2018-05-08 (81)
+ -  add new tools to create forums for authors/reviewers 
+
+2018-05-07 (80)
+ -  finish tool to extract presenters and add them to a group 
+
+2018-05-07 (79)
+ -  block/maj_submissions add new tool to create group of presenters (not fully functional yet) 
+
+2018-02-20 (78)
+ -  blocks/maj_submissions improve print layout to fit registration document on a single sheet of A4 
+
+2018-02-20 (77)
+ -  block/maj_submissions improve printing of registration docuements with small adjustmnents to CSS 
+
+2018-02-20 (76)
+ -  block/maj_submissions override \!important CSS that forced unrequired display of ammount_due input field 
+
+2018-02-13 (75)
+ -  block/maj_submissions fix date format when exporting schedule 
+
+2018-01-29 (74)
+ -  block/maj_submissions add registration, lunch and dinner slots when generating content for the schedule 
+ -  block/maj_submissions improve generation of content for multiroom sessions such as registation and meals 
+
+2018-01-24 (73)
+ -  block/maj_submissions fix renumbering of schedule 
+
+2018-01-20 (72)
+ -  block/maj_submissions improve CSS for items in shared sessions in the schedule 
+
+2018-01-19 (71)
+ -  block/maj_submissions allow two 'items' to share the same session 
+
+2018-01-18 (70)
+ -  block/maj_submissions don't export imcomplete submission records to the schedule as it cause problems during the import proess. 
+
+2018-01-18 (69)
+ -  block/maj_submissions replace import/export icons when cliable text at the botom of the Tools menu 
+
+2018-01-17 (68)
+ -  block/maj_submissions ensure schedule_day is extracted and saved from schedule into submissions database 
+
+2018-01-17 (68)
+ -  add light background color to presentations and keynote sessions in schedule 
+
+2018-01-17 (67)
+ -  improve adjustment of multicol cells when adding/deleting a room 
+
+2018-01-15 (66)
+ -  block/maj_submissions fix compatability with PHP 5.6 in action.php 
+
+2018-01-15 (65)
+ -  block/maj_submissions declare action.php as AJAX_SCRIPT to fix problems with redirect when guest logs in 
+
+2018-01-15 (64)
+ -  block/maj_submissions lighten backgroun and border of Attending elements on schedule 
+
+2018-01-15 (63)
+ -  block/maj_submissions automatically set presenters attendance when loading scheduleing info on the schedule edit page 
+
+2018-01-15 (62)
+ -  block/maj_submissions improve the clculation of seats avialable when the schedule is first displayed 
+
+2018-01-15 (61)
+ -  block/maj_submissions fix id of label on attendance checkbox, so that clicking the label will toggle the checkbox 
+
+2018-01-14 (60)
+ -  block/maj_submissions fix id of label on attendance checkbox, so that clicking the label will toggle the checkbox 
+ -  block/maj_submissions improve display of attendance element on schedule 
+
+2018-01-14 (59)
+ -  block/maj_submissions improve automatic setting of room number, based on cell index, when editing schedule 
+
+2018-01-12 (58)
+ -  implement edit_session functionality to allow rowspan>1 on cells 
+
+2018-01-12 (57)
+ -  remove all scheduleinfo before loading new values 
+
+2018-01-11 (56)
+ -  block/maj_submissions small adjust to css for scheduleinfo icontext 
+ -  block/maj_submissions finish functionality to load scheduling info into schedule sessions 
+
+2018-01-10 (55)
+ -  refine detection of admin users with switched role, and hide text editor elements used on the submissions edit page of the submission database 
+
+2018-01-10 (53)
+ -  block/maj_submissions bump version number to trigger upgrade to previous release 
+
+2018-01-08 (52)
+ -  block/maj_submissions implement functionality to store attendance information in DB tables 
+
+2018-01-08 (52)
+ -  block/maj_submissions show dashed border for non-attending sessions on myschedule 
+ -  block/maj_submissions add new table to store attendance at conference sessions and events 
+
+2018-01-06 (50)
+ -  block/maj_submissions improve detection of most frequent values to use when creating new day in schedule 
+ -  block/maj_submissions load strings used on schedule edit page dynamically via AJAX 
+
+2017-12-29 (49)
+ -  block/maj_submissions enable updating of schedule database fields when schedule has been edited. 
+ -  block/maj_submissions improve setting of room headings on schedule edit page 
+
+2017-12-28 (48)
+ -  block/maj_submissions add several new actions to schedule edit page to add/edit/remove slot/room/roomheadings/day 
+
+2017-12-25 (47)
+ -  block/maj_submissions fix update of room information on schedule edit page 
+ -  block/maj_submissions implement edit/delete of time slots and rooms on schedule edit page 
+
+2017-12-20 (46)
+ -  block/maj_submissions move position of early bird setting on block settings form 
+
+2017-12-20 (45)
+ -  add new settings to early-bird start/finish times 
+
+2017-12-18 (44)
+ -  block/maj_submissions fix setting of CSS classes for sessions from multilang presentation category/type values 
+
+2017-12-18 (43)
+ -  block/maj_submissions if necessary, add new admin field 'filmultilangvalues' during update to convert all fields to multilang 
+
+2017-12-18 (42)
+ -  block/maj_submissions fix upgrade of multilang spans 
+ -  block/maj_submissions improve updated of multilang fields 
+ -  block/maj_submissions small improvements to upgrade script when converting multiline strings 
+ -  block/maj_submissions major update to convert multilang string to use SPAN tags 
+ -  block/maj_submissions major update to convert multilang string to use SPAN tags 
+
+2017-12-13 (41)
+ -  block/maj_submissions position dialog buttons under cursor when editing schedule 
+ -  blocks/maj_submissions implement JS functino to remove session from schedule 
+
+2017-12-12 (40)
+ -  block/maj_submissions add edit/delete icons to slots and days 
+ -  block/maj_submissions add edit icons to session and rooms in schedule on edit page 
+
+2017-12-11 (39)
+ -  block/maj_submissions send confirmation email to authors when review results are announced 
+
+2017-12-08 (38)
+ -  block/maj_submissions intermittant commit to refine selection of unassigned items in schedule 
+ -  block/maj_submissions finish tool to populate schedule, and add tool to reset schedule numbers 
+
+2017-12-07 (37)
+ -  new JS to extract multiple CSS classes from a DOM element on the schedule 
+ -  block/maj_submissions allow selective population of days when setting up the schedule 
+
+2017-12-07 (36)
+ -  block/maj_submissions allow selective population of days when setting up the schedule 
+ -  block/maj_submission add dialog box to select which day(s) session should be added to when populating the schedule 
+
+2017-12-06 (35)
+ -  first attempt to implement JS method to populate schedule 
+ -  block/maj_submissions aloow payment/membership info urls to be constant fields defined in the DB 
+
+2017-12-05 (34)
+ -  block/maj_submissions add presentation category/type to the CSS classes for each session in the scehdule 
+
+2017-12-03 (33)
+ -  blocks/maj_submissions rename diff.johnresig.js to diff.js 
+ -  block/maj_submissions add diff functionality for Japanese and other languages in which do not use spaces to delimit words 
+ -  block/maj_submissions add diff functionality for Japanese and other languages in which do not use spaces to delimit words 
+
+2017-12-01 (32)
+ -  block/maj_submissions add new js to display diff between two text fields 
+
+2017-11-24 (31)
+ -  initial coding to add CSS class to each session to denote presentation type, category and duration 
+ -  add presentation type and category to schedule sessions 
+
+2017-11-20 (30)
+ -  block/maj_submissions add Japanese messages for workshop2data tool 
+
+2017-11-20 (29)
+ -  block/maj_submissions transfer original title and submission content to submissions database in workshop2data tool 
+
+2017-11-16 (28)
+ -  block/maj_submissions standardize DOM structure of sessions elements in schedule 
+
+2017-11-15 (27)
+ -  add new tool buttons to populate empty schedule 
+ -  block/maj_submissions add feedback messages to the workshop2data tool 
+
+2017-11-14 (26)
+ -  block/maj_submissions add feedback messages to the workshop2data tool 
+ -  improve workshop2data tool so that it will calculate review scores even if workshop was not in grading mode 
+ -  add CSS to hide multilang spans that are not for current language 
+
+2017-11-13 (25)
+ -  block/maj_submissions order usernames by anon username on page showing login details for anonymous reviewers 
+
+2017-11-13 (24)
+ -  block/maj_submissions use descriptive text instead of columns in rooms database list template. 
+
+2017-11-12 (23)
+ -  block/maj_submissions use descriptive text instead of columns in rooms database list template. 
+ -  block/maj_submissions reduce multiline list of equipment items, to single-line comma-separated string 
+
+2017-11-12 (22)
+ -  block/maj_submissions add new preset for rooms database 
+
+2017-11-11 (21)
+ -  don't assign co-authors to review submissions they are associated with 
+
+2017-11-10 (20)
+ -  send vetting emails as plain text and html 
+ -  block/maj_submissions update password of anonymous user when setting up anonymous reviewers 
+
+2017-11-09 (19)
+ -  block/maj_submissions add new fields to sender name and email address to form for setting up vetting 
+
+2017-11-09 (18)
+ -  add preliminary JS event handlers to tool buttons on page to setup schedule 
+
+2017-11-08 (16)
+ -  allow sessions to be clicked or dragged into different time slots on the schedule 
+ -  block_maj_subimssions implement click event handler to exchange two sessions on the schedule edit page 
+ -  add colors to edit schedule page 
+ -  add schedule items to page for editing schedule 
+
+2017-11-06 (15)
+ -  block_maj_submisions restructure tools directory to improve modularity of code 
+
+2017-11-05 (14)
+ -  add settings to generate prototype schedule in 'setupscheudle' tool 
+
+2017-10-25 (13)
+ -  fix creation of page showing anonymous loging details in tool to setup vetting responsibilities 
+ -  first attempt at code to create anonymous users login page 
+ -  add report of anonymous user assignments to setupvetting tool 
+ -  fix small regression errors regarding undefined vars in data2workshop tool 
+
+2017-10-23 (12)
+ -  remove duplicate call to set_multilang in tools/lib.php 
+
+2017-10-23 (11)
+ -  remove duplicate call to set_multilang in tools/lib.php 
+ -  remove use of pix_url in Moodle >= 3.3 
+
+2017-10-22 (10)
+ -  nudge version number to force new git release 
+
+2017-10-22 (09)
+ -  allow new schdule to be generated from a template 
+
+2017-09-20 (08)
+ -  update schedule data for single event record in db 
+
+2017-09-18 (07)
+ -  complete new tool, workshop2data, to convert workshop submissions back to database records 
+
+2017-09-12 (06)
+ -  preliminary implementation of workshop2data tool 
+ -  finish tool to allocate reviewers to workshop submissions 
+
+2017-09-11 (05)
+ -  preliminary form processing for data2workshop tool 
+
+2017-09-05 (05)
+ -  first attempt at tool to setup vetting groups 
+
+2017-09-04 (04)
+ -  allow automatic setting of access restrictions 
+
+2017-08-30 (03)
+ -  preliminary attempt to update access restrictions 
+ -  add feedback message to data2workshop tool 
+
+2017-08-29 (02)
+ -  finish dat2workshop conversion tool 
+
+2017-08-27 (01)
+ -  add method to allow 'template activity' from which to copy settings for new activity 
+ -  add method to allow 'template activity' from which to copy settings for new activity 
+ -  enable transfer of data records to workshop activity for vetting 
+
+2017-08-25 (00)
+ -  add preliminary form for tool to convert workshop review results back to original database activity 
+
+2017-08-24 (99)
+ -  small change CSS and lang pack 
+
+2017-08-06 (98)
+ -  use pure CSS to show/hide howto.switchedrole message 
+
+2017-07-31 (97)
+ -  hide howto explanations with CSS inserted via JS 
+
+2017-07-31 (96)
+ -  show .howto in CSS, then hide with JS and only show necessary with JS. Thus, all howto items will be available when JS is mossing or some reason 
+
+2017-07-27 (95)
+ -  centralize code to determine pluginfile links into a function in lib.php 
+
+2017-07-26 (94)
+ -  seperate CSS for presets 
+
+2017-07-25 (93)
+ -  add new argument to allow JS to be loaded onload or immediately 
+
+2017-07-24 (92)
+ -  remove empty rows for schedule and peer_review when viewing 'single record' template 
+
+2017-07-20 (91)
+ -  replace config cmid when creating a new cm with a cm creation tool 
+
+2017-07-20 (90)
+ -  add JS to detect guest user 
+
+2017-07-19 (89)
+ -  nudge version number to add lib.php to GIT repository 
+
+2017-07-19 (88)
+ -  ensure conference files are included in backup and restore 
+
+2017-07-19 (87)
+ -  add lib.php containing pluginfile function to serve up conference files to users who have the required access permissions 
+
+2017-07-19 (86)
+ -  use standard function to add and save filemanager in edit form 
+
+2017-07-18 (85)
+ -  fix updating of language-dependent constants 
+ -  blocks_maj_submissions do not allow authenticated users to add records to a newly setup database registrations/submissions 
+
+2017-07-14 (84)
+ -  automatically edirect to add page if there is no data on View page 
+ -  improve multilang get_string function to accept parameters for 'get_string()' 
+ -  fix syntax error in js file for submissions preset 
+
+2017-07-12 (83)
+ -  replace content of jstemplate.js in all presets to simply call standard MAJ js files 
+ -  preliminary attempt to split JS files into sensible hierarchy in order to minimize duplication of code 
+ -  add defaults values for intro and jstemplate in new database cm's 
+ -  allow seperate JS files for each preset 
+
+2017-07-11 (82)
+ -  add preliminary version of presets.js.php 
+ -  add default field maps to setdefaultvalues field in presets 
+
+2017-07-09 (81)
+ -  fix syntax errors from recent changes to code to update permissions 
+ -  allow for permissions and availability to be set when adding new cm 
+
+2017-07-09 (80)
+ -  rename eventscmid to registereventscmid 
+
+2017-07-09 (79)
+ -  standardize naming of events database to 'Conference events database' 
+
+2017-07-09 (78)
+ -  improve creation of new database in tools to create setup registrations, submissions, workshops and events 
+
+2017-07-05 (77)
+ -  improve a couple of Japanes lang strings  
+ -  remove quick links from content download, and standardize generation of links to sections 
+ -  remove quick links from content download, and standardize generation of links to sections 
+
+2017-07-05 (76)
+ -  add css styles to quick links navigation menu 
+ -  add css styles to quick links navigation menu 
+
+2017-07-04 (75)
+ -  display 'Quick links' section in block, if required 
+
+2017-07-04 (74)
+ -  tidy HTML when exporting content 
+ -  add new setting to remove current year from dates, if requested 
+
+2017-07-03 (73)
+ -  consolidate strings in Japanese lang pack 
+
+2017-05-11 (72)
+ -  small improvement to language strings for setupevent tool 
+
+2017-05-10 (71)
+ -  add new database for events, and simplify basic page for setting upschedule 
+
+2017-05-09 (70)
+ -  replace multiple Moodle form elements with single elements what will be manipulated by jQuery 
+ -  preliminary version of tool to setup schedule 
+
+2017-05-08 (69)
+ -  add dividers to conference tools section of block on course page 
+
+2017-04-20 (68)
+ -  remove deprecated properties 
+
+2017-04-20 (67)
+ -  finish condition filter elements in tools/data2workshop; add new tool to setup vetting 
+
+2017-04-19 (66)
+ -  preliminary version of form to assign submissions to workshops activities for review 
+
+2017-04-19 (65)
+ -  maj_submissions add new tool to create anonymous users for vetting 
+
+2017-04-19 (64)
+ -  tool_createusers add new tool to create anonymous users for vetting 
+
+2017-03-04 (63)
+ -  add styles for tools that setup a database 
+
+2017-03-02 (62)
+ -  add preliminary presets for presentations and workshops 
+
+2017-03-02 (61)
+ -  block_maj_submission delete preset within this block rather than using the standard mod/data/preset.php script 
+
+2017-03-01 (60)
+ -  add/update required constant fields if they are updated in the block settings 
+
+2017-03-01 (59)
+ -  use standard standard database importer classes to import template into database 
+ -  add initial settings when creating new database activity 
+
+2017-02-28 (58)
+ -  fix adding of new database activities 
+
+2017-02-28 (57)
+ -  optimize code to display and disable setup form elements 
+
+2017-02-27 (56)
+ -  add field to allow spcification of the name of a new section, if required, when setting up a registration database 
+
+2017-02-25 (55)
+ -  add preset templates for the registrations database 
+ -  allow selection of database and course section in tool to setup registrations database 
+ -  begin adding details to tool forms 
+ -  add new preset directory within block's folder hierarchy 
+ -  preliminary version of forms for tools 
+ -  preliminary version of forms for tools 
+
+2017-02-24 (54)
+ -  preliminary version of forms for tools 
+ -  refine code to link to PHP help pages, and use the default 'en' pages for languages that have no PHP help pages 
+
+2017-02-24 (53)
+ -  add skeleton script for new tool: setupschedule.php 
+
+2017-02-23 (52)
+ -  standardize names of cmid fields 
+
+2017-02-23 (51)
+ -  do not show lang labels on settings form if there is only one language available 
+
+2017-02-23 (50)
+ -  widen selection of multilang template fields to include ALL fields with 'english' or 'japanese' in the name 
+
+2017-02-23 (49)
+ -  widen selection of multilang template fields to include ALL fields with 'english' or 'japanese' in the name 
+
+2017-02-23 (48)
+ -  add new displaylangs field to allow specification of particular languages 
+
+2017-02-22 (47)
+ -  standardize multilang fields to use two-letter language code as suffix 
+ -  standardize multilang fields to use two-letter language code as suffix 
+
+2017-02-22 (46)
+ -  standardize multilang fields to use two-letter language code as suffix 
+
+2017-02-22 (45)
+ -  add new config fields to store multilang conference strings and constant vaules 
+
+2017-02-02 (44)
+ -  rename conversion tools 
+ -  remove reg stats from content export file 
+ -  remove reg stats from content export file 
+
+2017-01-23 (43)
+ -  block_maj_submission fix counting of non-presenter registrations 
+
+2017-01-22 (42)
+ -  fix sql to detect number of presenters who have registered 
+
+2017-01-01 (41)
+ -  fix undefined property, 'editing', when view user profile and MAJ submissions block is displayed 
+
+2017-01-01 (40)
+ -  improve formatting of date ranges with same year, month or day 
+
+2016-10-05 (39)
+ -  small corrections to text content and css positioning on settings page 
+
+2016-09-27 (38)
+ -  small corrections to text content and css positioning on settings page 
+ -  finish display of stats on how many subs and reg records have been received so far 
+
+2016-09-27 (37)
+ -  improve code to display stats on number of reg and sub 
+ -  improve code to display stats on number of reg and sub 
+ -  being code to display stats on number of reg and sub 
+
+2016-09-26 (36)
+ -  move date formatting to separate method to prepare for multilang date ranges 
+
+2016-09-25 (35)
+ -  improve table syntax HTML export of dates 
+
+2016-09-24 (34)
+ -  add new setting to hide/show dates on the course page 
+
+2016-09-19 (33)
+ -  allow multilnag tags in export html content 
+
+2016-09-16 (32)
+ -  improve detection of need to fix dates 
+
+2016-09-16 (31)
+ -  add ja language pack 
+
+2016-09-16 (30)
+ -  add new script to export HTML content 
+
+2016-09-15 (29)
+ -  blocks_maj_submissions improve descriptive text in tools 
+ -  blocks_maj_submissions improve descriptive text in tools 
+
+2016-09-15 (28)
+ -  add new setup tools to the MAJ block on the course page 
+
+2016-09-15 (27)
+ -  add preliminary version of two new tools: setupregistrations and setupsubmissions 
+
+2016-09-15 (26)
+ -  do not append CJK month sign to %b or %h 
+
+2016-09-15 (25)
+ -  remove unecessary reference to collectXXXcmid 
+
+2016-09-14 (24)
+ -  add dividers to block content on course page 
+
+2016-09-14 (23)
+ -  automatically mange calendar events for start and finish times 
+
+2016-09-14 (22)
+ -  add new CSS styles for impending dates and group cmids by section on drop down menu to select activities 
+
+2016-09-14 (21)
+ -  add new CSS styles for impending dates and group cmids by section on drop down menu to select activities 
+
+2016-09-08 (20)
+ -  use moodleform style form in import script 
+ -  use standard moodleform in import/export scripts 
+
+2016-09-08 (19)
+ -  convert import form to use standard moodleform 
+
+2016-09-08 (18)
+ -  use moodleform style form in import script 
+ -  start conversion of input form to use moodleform object 
+ -  fix initialization of several time fields, and fix import of cmid fields 
+
+2016-09-08 (17)
+ -  activate new iport and export scripts 
+
+2016-09-08 (16)
+ -  add preliminary versions of import/export scripts 
+
+2016-09-07 (15)
+ -  small improvement to text heading 
+ -  allow info pages to link to resources 
+
+2016-09-07 (14)
+ -  allow link to page/url resource for conference information 
+
+2016-09-07 (13)
+ -  add preliminary structure for conversion tools 
+
+2016-09-07 (12)
+ -  add preliminary structure for conversion tools 
+ -  add links from course page block to conversion tools 
+
+2016-09-06 (11)
+ -  improve formatting of shortdates in en, ja, ko and zh 
+
+2016-09-06 (10)
+ -  improve display of dates on course page block 
+
+2016-09-05 (09)
+ -  add local version of userdate to format dates 
+ -  improve display of dates on course page 
+ -  add more dates to allow separate collection dates for workshops and sponsored presentations, and to allow separate registration dates for presenters and non-presenters 
+
+2016-09-04 (08)
+ -  add new field to specify registration activity 
+
+2016-09-04 (07)
+ -  add restore functionality to fix collect/publish cmids and review/review sectionnums 
+
+2016-09-02 (06)
+ -  modularize and optimize code to determine course section name 
+
+2016-09-01 (05)
+ -  modularize and optimize code to determine course section name 
+ -  rename review/revise sectionid to sectionnum, for easier creation of links from block on main page 
+
+2016-09-01 (04)
+ -  add short display text to block - this will be expanded later in development 
+ -  add options to select elemts for fields, sections and activities 
+
+2016-09-01 (03)
+ -  blocks_maj_submissions optimize code structure to produce edit_form 
+
+2016-09-01 (02)
+ -  use repeat_elements to allow flexiable number of filter fields, review activities, and revisions activities 
+
+2016-09-01 (01)
+ -  set minimum required Moodle version to 2.3 
+
+2016-09-01 (00)
+ -  populate new repository with skeleton block 
