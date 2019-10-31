@@ -290,7 +290,7 @@ function block_maj_submissions_upgrade_multiroom() {
 
     list($dataids, $pageids) = block_maj_submissions_upgrade_cmids();
 
-    $select = array('blockname = ? AND configdata IS NOT NULL AND configdata != ?');
+    $select = 'blockname = ? AND configdata IS NOT NULL AND configdata != ?';
     $params = array($blockname, '');
     if ($instance = $DB->get_records_select('block_instances', $select, $params)) {
         $instance = reset($instance); // just the first block instance

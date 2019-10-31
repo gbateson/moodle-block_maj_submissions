@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2019-10-31 (53)
+ - fix SQL select statement in db/upgrade.php
+
 2019-08-06 (51)
  -  fix format of biographical when exporting handbook 
 
