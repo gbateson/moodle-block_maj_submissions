@@ -163,6 +163,7 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
             $select = array('dr.id AS recordid, dr.dataid');
             $from   = array('{data_records} dr');
             $where  = array('dr.dataid = ?');
+            $order  = '';
             $params = array($dataid);
 
             if (empty($data->filterconditionsfield)) {
@@ -173,12 +174,12 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
             $this->add_filter_sql($data, $select, $from, $where, $params);
 
             // add SQL to fetch presentation content
-            $fields = array('title' => '',
-                            'type' => '',
-                            'language' => '',
-                            'keywords' => '',
-                            'abstract' => '');
-            $this->add_content_sql($data, $select, $from, $where, $params, $fields, $dataid);
+            $fields = array('presentation_title' => '',
+                            'presentation_type' => '',
+                            'presentation_language' => '',
+                            'presentation_keywords' => '',
+                            'presentation_abstract' => '');
+            $this->add_content_sql($data, $select, $from, $where, $order, $params, $fields, $dataid);
 
             $select = implode(', ', $select);
             $from   = implode(' LEFT JOIN ', $from);

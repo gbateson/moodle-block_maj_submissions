@@ -421,7 +421,7 @@ Password: {$a->password}
 After you have logged in, you can review submissions via the following link:
 URL: {$a->workshopurl}
 
-Please use the associated rubric for each submission you are assigned to review. Also, be sure to write some detailed comments if you think the submission abstract could be improved in any way. We will notify those presenters about your comments which will remain completely anonymous.
+Please use the associated rubric for each submission you are assigned to review. If you think submission abstract could be improved, please be sure to write detailed and constructive comments about what changes need to be made. We will notify those presenters about your comments which will remain completely anonymous.
 
 Please complete the vetting process before {$a->deadline}. We wish to inform the presenters of necessary changes as soon as possible.
 

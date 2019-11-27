@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2019-11-27 (55)
+ - fix enrolment in groups when creating anonymous users; fix empty workshop submission titles; fix 'too few arguments' erro when creating presenters' group; modify reviewers' message to request 'constructive comments'
+
 2019-11-10 (54)
  - standardize layout and spelling in CHANGES.txt
 

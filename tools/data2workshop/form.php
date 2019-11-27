@@ -221,10 +221,10 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
 
 				// sanitize submission titles (and remove duplicates)
 				foreach ($records as $id => $record) {
-					if (empty($record->title)) {
+					if (empty($record->presentation_title)) {
 						$title = get_string('notitle', $this->plugin, $record->recordid);
 					} else {
-						$title = block_maj_submissions::plain_text($record->title);
+						$title = block_maj_submissions::plain_text($record->presentation_title);
 					}
 					if (array_key_exists($title, $duplicaterecords)) {
 						$duplicaterecords[$title]++;
@@ -252,7 +252,7 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
 
 					// skip database records that already exist in the workshop
 					foreach ($records as $id => $record) {
-						$title = $record->title;
+						$title = $record->presentation_title;
 						if (array_key_exists($title, $duplicatesubmissions)) {
 							$duplicatesubmissions[$title]++;
 							unset($records[$id]);
@@ -380,7 +380,7 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
                             'authorid' => array_shift($anonymous),
                             'timecreated' => $time,
                             'timemodified' => $time,
-                            'title' => $record->title,
+                            'title' => $record->presentation_title,
                             'content' => $content,
                             'contentformat' => 0,
                             'contenttrust' => 0

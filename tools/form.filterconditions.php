@@ -221,20 +221,24 @@ abstract class block_maj_submissions_tool_filterconditions extends block_maj_sub
         }
 
         if (empty($data)) {
-            $data = (object)array(
-                'sourcedatabase' => optional_param('sourcedatabase', 0, PARAM_INT),
-                'countfilterconditions' => optional_param('countfilterconditions', 0, PARAM_INT),
-                'filterconditionsfield' => optional_param_array('filterconditionsfield', null, PARAM_INT),
-                'filterconditionsoperator' => optional_param_array('filterconditionsoperator', null, PARAM_INT),
-                'filterconditionsvalue' => optional_param_array('filterconditionsvalue', null, PARAM_TEXT),
-                'sortfield' => optional_param('sortfield', 0, PARAM_INT),
-                'sortdirection' => optional_param('sortdirection', '', PARAM_ALPHA),
-                'displayperpage' => optional_param('displayperpage', 0, PARAM_INT),
-                'submissions' => optional_param_array('submissions', null, PARAM_INT)
-            );
+            $data = new stdClass();
         }
-        if (empty($data->filterconditionsfield)) {
-            $data->filterconditionsfield = array();
+
+        $defaults = array(
+            'sourcedatabase' => optional_param('sourcedatabase', 0, PARAM_INT),
+            'countfilterconditions' => optional_param('countfilterconditions', 0, PARAM_INT),
+            'filterconditionsfield' => optional_param_array('filterconditionsfield', array(), PARAM_INT),
+            'filterconditionsoperator' => optional_param_array('filterconditionsoperator', array(), PARAM_INT),
+            'filterconditionsvalue' => optional_param_array('filterconditionsvalue', array(), PARAM_TEXT),
+            'sortfield' => optional_param('sortfield', 0, PARAM_INT),
+            'sortdirection' => optional_param('sortdirection', '', PARAM_ALPHA),
+            'displayperpage' => optional_param('displayperpage', 0, PARAM_INT),
+            'submissions' => optional_param_array('submissions', array(), PARAM_INT)
+        );
+        foreach ($defaults as $name => $value) {
+            if (empty($data->$name)) {
+                $data->name = $value;
+            }
         }
 
         // add SQL to fetch only required records
@@ -248,11 +252,11 @@ abstract class block_maj_submissions_tool_filterconditions extends block_maj_sub
         $where  = implode(' AND ', $where);
 
         $sql = "SELECT $select FROM $from WHERE $where";
-        if ($data->displayperpage) {
+        if ($order) {
             $sql .= " ORDER BY $order";
         }
         if ($data->displayperpage) {
-            $sql .= ' LIMIT 0,'.$data->displayperpage;
+            $sql .= " LIMIT 0,$data->displayperpage";
         }
         return $DB->get_records_sql($sql, $params);
     }
