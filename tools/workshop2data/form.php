@@ -229,48 +229,13 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
             $counttransferred = 0;
             $datarecords = array();
 
-            // get info about criteria (=dimensions) and levels
-            $params = array('workshopid' => $workshop->id);
-            if ($criteria = $DB->get_records('workshopform_rubric', $params, 'sort')) {
-                foreach (array_keys($criteria) as $id) {
-                    $criteria[$id]->levels = array();
-                }
-                list($select, $params) = $DB->get_in_or_equal(array_keys($criteria));
-                if ($levels = $DB->get_records_select('workshopform_rubric_levels', "dimensionid $select", $params, 'grade')) {
-                    while ($level = array_pop($levels)) {
-                        $id = $level->dimensionid;
-                        $grade = $level->grade;
-                        $level = format_string($level->definition, $level->definitionformat);
-                        $criteria[$id]->levels[$grade] = $level;
-                    }
-                }
-                unset($levels);
-                foreach (array_keys($criteria) as $id) {
-                    asort($criteria[$id]->levels);
-                    $grades = array_keys($criteria[$id]->levels);
-                    $criteria[$id]->maxgrade = intval(max($grades));
-                    $maxgrade += $criteria[$id]->maxgrade;
-
-                    // format the rubric criteria description, assuming the following structure:
-                    // <p><b>title</b><br />explanation ...</p>
-                    $text = format_text($criteria[$id]->description, $criteria[$id]->descriptionformat);
-                    $text = preg_replace('/^\\s*<(h1|h2|h3|h4|h5|h6|p)\\b[^>]*>(.*?)<\\/\\1>.*$/u', '$2', $text);
-                    $text = preg_replace('/^(.*?)<br\\b[^>]*>.*$/u', '$1', $text);
-                    $text = preg_replace('/<[^>]*>/u', '', $text); // strip tags
-                    $text = preg_replace('/[[:punct:]]+$/u', '', $text);
-                    $criteria[$id]->description = $text;
-                }
-            } else {
-                $criteria = array();
-            }
-
             foreach ($submissions as $sid => $submission) {
 
                 // Get database records that link to this submission.
                 // We only expect one record - but there may be more!
                 if ($records = self::get_database_records($workshop, $sid, $database->id)) {
                     $record = reset($records);
-                    self::send_confirmation_email($this->plugin, $config, $data, $record, $submission, 'reviewresult', $datarecords);
+                    self::send_confirmation_email($this->plugin, $config, $data, $record, $submission, 'reviewresult', $datarecords, $workshop->id);
                 }
                 unset($records, $record);
             }
@@ -324,7 +289,7 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
      * @uses $DB
      * @param string $emailtype "reviewresult" or "reviewupdate"
      */
-    static public function send_confirmation_email($plugin, $config, $data, $record, $submission, $emailtype, &$datarecords) {
+    static public function send_confirmation_email($plugin, $config, $data, $record, $submission, $emailtype, &$datarecords, $workshopid=0) {
         global $DB, $USER;
 
         static $a = null; // email parameters
@@ -334,6 +299,9 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
         static $conferencemonth  = null;
         static $statusfilters    = null;
         static $noreply          = null;
+
+        static $criteria         = null;
+        static $maxgrade         = 0;
 
         // set up static variables
         if ($a===null) {
@@ -451,6 +419,43 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
         $a->submission_status = '';
         $a->peer_review_score = '';
         $a->peer_review_notes = '';
+
+        // get info about criteria (=dimensions) and levels
+        if ($criteria===null) {
+            $params = array('workshopid' => $workshopid);
+            if ($criteria = $DB->get_records('workshopform_rubric', $params, 'sort')) {
+                foreach (array_keys($criteria) as $id) {
+                    $criteria[$id]->levels = array();
+                }
+                list($select, $params) = $DB->get_in_or_equal(array_keys($criteria));
+                if ($levels = $DB->get_records_select('workshopform_rubric_levels', "dimensionid $select", $params, 'grade')) {
+                    while ($level = array_pop($levels)) {
+                        $id = $level->dimensionid;
+                        $grade = $level->grade;
+                        $level = format_string($level->definition, $level->definitionformat);
+                        $criteria[$id]->levels[$grade] = $level;
+                    }
+                }
+                unset($levels);
+                foreach (array_keys($criteria) as $id) {
+                    asort($criteria[$id]->levels);
+                    $grades = array_keys($criteria[$id]->levels);
+                    $criteria[$id]->maxgrade = intval(max($grades));
+                    $maxgrade += $criteria[$id]->maxgrade;
+
+                    // format the rubric criteria description, assuming the following structure:
+                    // <p><b>title</b><br />explanation ...</p>
+                    $text = format_text($criteria[$id]->description, $criteria[$id]->descriptionformat);
+                    $text = preg_replace('/^\\s*<(h1|h2|h3|h4|h5|h6|p)\\b[^>]*>(.*?)<\\/\\1>.*$/u', '$2', $text);
+                    $text = preg_replace('/^(.*?)<br\\b[^>]*>.*$/u', '$1', $text);
+                    $text = preg_replace('/<[^>]*>/u', '', $text); // strip tags
+                    $text = preg_replace('/[[:punct:]]+$/u', '', $text);
+                    $criteria[$id]->description = $text;
+                }
+            } else {
+                $criteria = array();
+            }
+        }
 
         // format and transfer each of the peer review fields
         foreach ($reviewfields as $name => $fieldid) {

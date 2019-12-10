@@ -237,7 +237,7 @@ abstract class block_maj_submissions_tool_filterconditions extends block_maj_sub
         );
         foreach ($defaults as $name => $value) {
             if (empty($data->$name)) {
-                $data->name = $value;
+                $data->$name = $value;
             }
         }
 

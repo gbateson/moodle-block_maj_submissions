@@ -383,6 +383,11 @@ class block_maj_submissions_tool_updatevetting extends block_maj_submissions_too
 
 			// get all records matching the filters (may update $data and $fields)
             if ($records = $this->get_filtered_records($dataid, $data, $fields, $recordids)) {
+
+                // initialize array of data records that were added/updated
+                $datarecords = array();
+
+                // process each record
                 foreach ($records as $record) {
                     $submission = (object)array(
                         'id' => null,

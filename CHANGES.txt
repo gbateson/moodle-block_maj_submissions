@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2019-12-10 (56)
+ - fix setting of criteria scores in tool to transfer review scores from workshop back to submissions database
+
 2019-11-27 (55)
  - fix enrolment in groups when creating anonymous users; fix empty workshop submission titles; fix 'too few arguments' erro when creating presenters' group; modify reviewers' message to request 'constructive comments'
 
