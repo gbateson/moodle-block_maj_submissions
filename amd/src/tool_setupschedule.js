@@ -898,7 +898,10 @@ define(["jquery", "jqueryui", "core/str", // split this define statement because
         $.getJSON(TOOL.toolroot + "/action.php", p, function(records){
             for (var rid in records) {
                 for (type in records[rid]) {
-                    $("#id_recordid_" + rid + " ." + type).html(records[rid][type]);
+                    var newelm = $(records[rid][type]);
+                    var oldelm = $("#id_recordid_" + rid + " ." + type);
+                    oldelm.find(".icons").prependTo(newelm);
+                    oldelm.replaceWith(newelm);
                 }
             }
         });

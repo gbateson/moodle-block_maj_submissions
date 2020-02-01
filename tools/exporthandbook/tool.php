@@ -233,7 +233,7 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
 
                 // set the numbered version of the field
                 $field = $name.'_'.$num;
-                $record->$field = $instance->multilang_string($values);
+                $record->$field = block_maj_submissions::multilang_string($values);
 
                 // reduce multilang spans to a single string
                 if (strpos($record->$field, 'multilang')) {

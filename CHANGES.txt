@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2020-02-01 (57)
+ - format authornames according to display language and only at 'et al.' for multiple names that exceed the maximum number of characters (50)
+
 2019-12-10 (56)
  - fix setting of criteria scores in tool to transfer review scores from workshop back to submissions database
 

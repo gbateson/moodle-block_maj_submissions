@@ -1115,7 +1115,7 @@ class block_maj_submissions extends block_base {
             $this->check_date_fixes();
         }
 
-        return $this->multilang_string($dates);
+        return self::multilang_string($dates);
     }
 
     /**
@@ -1152,7 +1152,7 @@ class block_maj_submissions extends block_base {
             force_current_language($lang);
         }
 
-        return $this->multilang_string($times);
+        return self::multilang_string($times);
     }
 
     /**
@@ -1194,7 +1194,7 @@ class block_maj_submissions extends block_base {
         $format = str_replace('%e', '%d', $format);
 
         // set the $year, $month and $day characters for CJK languages
-        list($year, $month, $day) = $this->get_date_chars();
+        list($year, $month, $day) = self::get_date_chars();
 
         // add year, month and day characters for CJK languages
         if ($this->fixyearchar || $this->fixmonthchar || $this->fixdaychar) {
@@ -1266,7 +1266,7 @@ class block_maj_submissions extends block_base {
         $date = strftime($dateformat, time());
 
         // set the $year, $month and $day characters for CJK languages
-        list($year, $month, $day) = $this->get_date_chars();
+        list($year, $month, $day) = self::get_date_chars();
 
         if ($year && ! preg_match("/[0-9]+$year/", $date)) {
             $this->fixyearchar = true;
@@ -1300,7 +1300,7 @@ class block_maj_submissions extends block_base {
      *
      * @return array($year, $month, $day)
      */
-    protected function get_date_chars() {
+    static public function get_date_chars() {
         switch (substr(current_language(), 0, 2)) {
             case 'ja': return array('年', '月', '日'); // Japanese
             case 'ko': return array('년', '월', '일'); // Korean
@@ -1340,15 +1340,24 @@ class block_maj_submissions extends block_base {
     /**
      * get_string
      *
-     * @return string, if $this->multilang is set, return the "multilang" verison of the required string;
+     * @return string, either string for current language or the "multilang" version of the string
+     */
+    public function get_string($identifier, $component='', $a=null, $returnarray=false) {
+        if ($this->multilang) {
+            return self::get_multilang_string($identifier, $component, $a, $returnarray);
+        } else {
+            return get_string($identifier, $component, $a);
+        }
+    }
+
+    /**
+     * get_multilang_string
+     *
+     * @return string, return the "multilang" verison of the required string;
      *                 i.e. <span lang="xx" class="multilang">...</span><span...>...</span>
      *                 otherwise, return Moodle's standard get_string() output
      */
-    public function get_string($identifier, $component='', $a=null, $returnarray=false) {
-
-        if ($this->multilang==false) {
-            return get_string($identifier, $component, $a);
-        }
+    static public function get_multilang_string($identifier, $component='', $a=null, $returnarray=false) {
 
         $strman = get_string_manager();
         $langs = $strman->get_list_of_translations();
@@ -1356,7 +1365,7 @@ class block_maj_submissions extends block_base {
 
         // sort $langs, so that "en" is first
         // and parent langs appear before child langs
-        usort($langs, array($this, 'usort_langs'));
+        usort($langs, array('maj_submissions', 'usort_langs'));
 
         // initialize $params for get_string
         if ($a_is_multilang = is_array($a)) {
@@ -1378,9 +1387,7 @@ class block_maj_submissions extends block_base {
                     }
                 }
                 $text = $strman->get_string($identifier, $component, $params, $lang);
-                if (array_search($text, $texts)===false) {
-                    $texts[$lang] = $text;
-                }
+                $texts[$lang] = $text;
             }
         }
 
@@ -1388,7 +1395,7 @@ class block_maj_submissions extends block_base {
             return $texts;
         }
 
-        return $this->multilang_string($texts);
+        return self::multilang_string($texts);
     }
 
     /**
@@ -1397,7 +1404,7 @@ class block_maj_submissions extends block_base {
      * @param array $items
      * @return multilang string version of $items
      */
-    public function multilang_string($items) {
+    static public function multilang_string($items) {
 
         // no items - should not happen !!
         if (empty($items)) {
@@ -1433,10 +1440,13 @@ class block_maj_submissions extends block_base {
     /**
      * reduce_multilang_string
      *
+     * NOTE: this method does seem to be used anywhere and can probably be deleted
+     *
+     * @param string $text possibly containing multilang strings
      * @param string $lang optional(default = "en")
      * @return string
      */
-    public function reduce_multilang_string($text, $lang='en') {
+    static public function reduce_multilang_string($text, $lang='en') {
         $search = '/<span[^>]*lang="(\w*)"[^>]*>(.*?)<\/span>/isu';
         if (preg_match_all($search, $text, $matches)) {
             $i_max = count($matches[0]);
@@ -1458,7 +1468,7 @@ class block_maj_submissions extends block_base {
      * and parent langs (length = 2)
      * appear before child langs (length > 2)
      */
-    public function usort_langs($a, $b) {
+    static public function usort_langs($a, $b) {
 
         // put "en" first
         if ($a=='en') {
@@ -2402,16 +2412,26 @@ class block_maj_submissions extends block_base {
      */
     static public function format_authornames($recordid, $item) {
 
-        if (isset($item['name_order'])) {
+        static $nametemplates = null;
+        if ($nametemplates===null) {
+            $nametemplates = self::get_multilang_string('fullnamedisplay', '', null, true);
+            foreach ($nametemplates as $lang => $nametemplate) {
+                $nametemplate = preg_replace('/(\x3000|\s)+/us', ' ', $nametemplate);
+                $nametemplate = preg_replace('/\{\$a->(\w+)\}/', '$1', $nametemplate);
+                $nametemplates[$lang] = $nametemplate;
+            }
+        }
+
+        // the "name_order" field allow users to override the English name order
+        if (empty($item['name_order'])) {
+            $nametemplate = reset($nametemplates);
+        } else {
             $nametemplate = $item['name_order'];
             $pairs = array('Given name' => 'firstname',
                            'SURNAME' => 'lastname');
-        } else {
-            $nametemplate = get_string('fullnamedisplay');
-            $pairs = array('{$a->firstname}' => 'firstname',
-                           '{$a->lastname}' => 'lastname');
+            $nametemplate = strtr($nametemplate, $pairs);
         }
-        $nametemplate = strtr($nametemplate, $pairs);
+        $defaultnametemplate = $nametemplate;
 
         $authornames = array();
         $fields = preg_grep('/^name_(given|surname)(.*)$/', array_keys($item));
@@ -2455,6 +2475,9 @@ class block_maj_submissions extends block_base {
             $authornames[$i][$lang][$type] = self::textlib('strtotitle', $item[$field]);
         }
 
+        // the full length of the English names
+        $namelength = 0;
+
         ksort($authornames);
         foreach ($authornames as $i => $langs) {
             // remove names with no surname
@@ -2463,6 +2486,7 @@ class block_maj_submissions extends block_base {
                     unset($langs[$lang]);
                 }
             }
+
             // format names as multilang if necessary
             $count = count($langs);
             if ($count==0) {
@@ -2470,24 +2494,49 @@ class block_maj_submissions extends block_base {
                 continue;
             }
             if ($count==1) {
-                $authornames[$i] = reset($langs);
-                $pairs = array('firstname' => $authornames[$i]['given'],
-                               'lastname' => $authornames[$i]['surname']);
-                $authornames[$i] = strtr($nametemplate, $pairs);
-                continue;
-            }
-            foreach ($langs as $lang => $name) {
+                $lang = key($langs);
+                $name = reset($langs);
+                if ($lang == 'en' || empty($nametemplates[$lang])) {
+                    $nametemplate = $defaultnametemplate;
+                } else {
+                    $nametemplate = $nametemplates[$lang];
+                }
                 $pairs = array('firstname' => $name['given'],
                                'lastname' => $name['surname']);
                 $name = strtr($nametemplate, $pairs);
+                $namelength += self::textlib('strlen', $name);
+                $authornames[$i] = $name;
+                continue;
+            }
+
+            foreach ($langs as $lang => $name) {
+                if ($lang == 'en' || empty($nametemplates[$lang])) {
+                    $nametemplate = $defaultnametemplate;
+                } else {
+                    $nametemplate = $nametemplates[$lang];
+                }
+                $pairs = array('firstname' => $name['given'],
+                               'lastname' => $name['surname']);
+                $name = strtr($nametemplate, $pairs);
+                if ($lang == 'en') {
+                    if ($namelength) {
+                        $namelength += 2; // comma and space
+                    }
+                    $namelength += self::textlib('strlen', $name);
+                }
                 $params = array('class' => 'multilang', 'lang' => $lang);
                 $authornames[$i][$lang] = html_writer::tag('span', $name, $params);
             }
             $authornames[$i] = implode('', $authornames[$i]);
         }
-        $authornames = array_map('trim', $authornames);
-        $authornames = array_filter($authornames);
-        $authornames = implode(', ', $authornames);
+
+        if (count($authornames) > 1 && $namelength > self::MAX_NAME_LENGTH) {
+            $authornames = reset($authornames).' '.self::get_multilang_string('etal', 'block_maj_submissions');
+        } else {
+            $authornames = array_map('trim', $authornames);
+            $authornames = array_filter($authornames);
+            $authornames = implode(', ', $authornames);
+        }
 
         if (isset($item['event_facilitator'])) {
             $authornames = trim($item['event_facilitator']);
@@ -2528,11 +2577,6 @@ class block_maj_submissions extends block_base {
             if ($affiliation = implode('', $affiliation)) {
                 $authornames .= " ($affiliation)";
             }
-        }
-
-        if (self::textlib('strlen', $authornames) > self::MAX_NAME_LENGTH) {
-            $authornames = explode(',', $authornames);
-            $authornames = reset($authornames).' '.get_string('etal', 'block_maj_submissions');
         }
 
         return html_writer::tag('span', $authornames, array('class' => 'authornames'));
