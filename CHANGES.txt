@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2020-02-02 (58)
+ - fix formatting of affiliation for sponsored presenations in schedule
+
 2020-02-01 (57)
  - format authornames according to display language and only at 'et al.' for multiple names that exceed the maximum number of characters (50)
 

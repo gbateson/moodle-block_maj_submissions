@@ -728,12 +728,18 @@ switch ($action) {
                 $types = array($type => $types[$type]);
             }
 
+            // For "authornames", we need the "presentation_category" field too.
+            // (see block_maj_submissions::format_authornames)
+            if (array_key_exists('authornames', $types)) {
+                $types['presentation_category'] = 'presentation_category';
+            }
+
             list($select, $params) = $DB->get_in_or_equal($types);
             $select = "name $select";
 
             if (in_array('name_', $types)) {
-                $select = '('.$select.' OR '.$DB->sql_like('name', '?').')';
-                $params[] = 'name_%';
+                $select = '('.$select.' OR '.$DB->sql_like('name', '?').' OR '.$DB->sql_like('name', '?').')';
+                array_push($params, 'name_%', 'affiliation%');
             }
 
             $select = "dataid = ? AND $select";
@@ -756,7 +762,7 @@ switch ($action) {
                         }
                         // get real field name
                         $fieldname = $fieldnames[$fieldid];
-                        if (substr($fieldname, 0, 5)=='name_') {
+                        if (substr($fieldname, 0, 5)=='name_' || substr($fieldname, 0, 11)=='affiliation' || $fieldname=='presentation_category') {
                             if (empty($records[$recordid]->authornames)) {
                                 $records[$recordid]->authornames = array();
                             }
@@ -786,7 +792,6 @@ switch ($action) {
                             } else {
                                 $records[$recordid]->$fieldname = block_maj_submissions::format_authornames($recordid, $record->$fieldname);
                             }
-
                         }
                     }
                 }

@@ -1365,7 +1365,7 @@ class block_maj_submissions extends block_base {
 
         // sort $langs, so that "en" is first
         // and parent langs appear before child langs
-        usort($langs, array('maj_submissions', 'usort_langs'));
+        usort($langs, array('block_maj_submissions', 'usort_langs'));
 
         // initialize $params for get_string
         if ($a_is_multilang = is_array($a)) {
@@ -2530,28 +2530,16 @@ class block_maj_submissions extends block_base {
             $authornames[$i] = implode('', $authornames[$i]);
         }
 
-        if (count($authornames) > 1 && $namelength > self::MAX_NAME_LENGTH) {
-            $authornames = reset($authornames).' '.self::get_multilang_string('etal', 'block_maj_submissions');
-        } else {
-            $authornames = array_map('trim', $authornames);
-            $authornames = array_filter($authornames);
-            $authornames = implode(', ', $authornames);
-        }
-
-        if (isset($item['event_facilitator'])) {
-            $authornames = trim($item['event_facilitator']);
-        } else if ($authornames=='') {
-            $authornames = get_string('noauthors', 'block_maj_submissions', $recordid);
-        }
-
         // for commercial presentations, we append the affiliation too
         if (empty($item['presentation_category'])) {
             $category = '';
         } else {
             $category = $item['presentation_category'];
         }
+
+        $affiliation = array();
         if (strpos($category, 'Sponsored')) {
-            $affiliation = array();
+
             $fields = preg_grep('/^affiliation(.*)$/', array_keys($item));
             foreach ($fields as $field) {
                 if (empty($item[$field])) {
@@ -2566,17 +2554,32 @@ class block_maj_submissions extends block_base {
                 } else {
                     $lang = 'xx';
                 }
-                $affiliation[$lang] = $item[$field];
-            }
-            if (count($affiliation) > 2) {
-                foreach ($affiliation as $lang => $name) {
-                    $params = array('class' => 'multilang', 'lang' => $lang);
-                    $affiliation[$lang] = html_writer::tag('span', $name, $params);
+                if (strlen($lang)==2 && empty($affiliation[$lang])) {
+                    $affiliation[$lang] = $item[$field];
                 }
             }
-            if ($affiliation = implode('', $affiliation)) {
-                $authornames .= " ($affiliation)";
-            }
+        }
+
+        if ($name = reset($affiliation)) {
+            $namelength += self::textlib('strlen', $name);
+        }
+
+        if ($namelength > self::MAX_NAME_LENGTH) {
+            $authornames = reset($authornames).' '.self::get_multilang_string('etal', 'block_maj_submissions');
+        } else {
+            $authornames = array_map('trim', $authornames);
+            $authornames = array_filter($authornames);
+            $authornames = implode(', ', $authornames);
+        }
+
+        if (isset($item['event_facilitator'])) {
+            $authornames = trim($item['event_facilitator']);
+        } else if ($authornames=='') {
+            $authornames = get_string('noauthors', 'block_maj_submissions', $recordid);
+        }
+
+        if ($affiliation = self::multilang_string($affiliation)) {
+            $authornames .= " ($affiliation)";
         }
 
         return html_writer::tag('span', $authornames, array('class' => 'authornames'));
