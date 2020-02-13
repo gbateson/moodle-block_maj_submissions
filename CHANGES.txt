@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2020-02-13 (60)
+ - improve formatting for sponsored lunch seminar in Excel version of conference schedule
+
 2020-02-02 (58)
  - fix formatting of affiliation for sponsored presenations in schedule
 

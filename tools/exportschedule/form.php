@@ -67,6 +67,21 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
         $options = $this->get_fileformat_options();
         $mform->addElement('select', $name, $label, $options);
         $mform->setType($name, PARAM_ALPHANUM);
+        if (array_key_exists('excel', $options)) {
+            $mform->setDefault($name, 'excel');
+        }
+
+        $name = 'addbannerimage';
+        $this->add_field($mform, $this->plugin, $name, 'checkbox');
+        $mform->disabledIf($name, 'fileformat', 'neq', 'excel');
+
+        $name = 'addconferencename';
+        $this->add_field($mform, $this->plugin, $name, 'checkbox');
+        $mform->disabledIf($name, 'fileformat', 'neq', 'excel');
+
+        $name = 'addscheduletitle';
+        $this->add_field($mform, $this->plugin, $name, 'checkbox');
+        $mform->disabledIf($name, 'fileformat', 'neq', 'excel');
 
         $this->add_action_buttons(true, get_string('export', 'grades'));
     }
@@ -121,19 +136,19 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
             switch ($data->fileformat) {
 
                 case 'csvshowgizmo':
-                    $msg = $this->export_csvshowgizmo($lang);
+                    $msg = $this->export_csvshowgizmo($lang, $data);
                     break;
 
                 case 'excel':
-                    $msg = $this->export_excel($lang);
+                    $msg = $this->export_excel($lang, $data);
                     break;
 
                 case 'html':
-                    $msg = $this->export_html($lang);
+                    $msg = $this->export_html($lang, $data);
                     break;
 
                 case 'pdf':
-                    $msg = $this->export_pdf($lang);
+                    $msg = $this->export_pdf($lang, $data);
                     break;
 
                 default:
@@ -150,10 +165,11 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
      *
      * @uses $CFG
      * @param string $lang
+     * @param array $data
      * @return array $msg
      * @todo Finish documenting this function
      */
-    public function export_csvshowgizmo($lang) {
+    public function export_csvshowgizmo($lang, $data) {
         global $CFG;
 
         $msg = array();
@@ -286,10 +302,11 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
      *
      * @uses $CFG
      * @param string $lang
+     * @param array $data
      * @return array $msg
      * @todo Finish documenting this function
      */
-    public function export_excel($lang) {
+    public function export_excel($lang, $data) {
         global $CFG;
         require_once($CFG->dirroot.'/lib/excellib.class.php');
         require_once($CFG->dirroot.'/lib/phpexcel/PHPExcel/IComparable.php');
@@ -319,11 +336,12 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
             'multiroom' => '/\bmultiroom\b/',
             'event' => '/\bevent\b/',
             'keynote' => '/\bkeynote\b/',
-            'workshop' => '/\bworkshop\b/',
             'lightning' => '/\blightning\b/',
             'poster' => '/\b(poster|symposium)\b/',
             'presentation' => '/\b(paper|presentation)\b/',
+            'sponsoredlunch' => '/\bsponsored +lunch\b/',
             'virtual' => '/\b(virtual|case|casestudy)\b/',
+            'workshop' => '/\bworkshop\b/',
             // cell content
             'eventdetails' => '/<br>.*$/isu'
         );
@@ -333,6 +351,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
             'date'         => ['h_align' => 'left',   'v_align' => 'center', 'size' => 18],
             'event'        => ['h_align' => 'left',   'v_align' => 'center', 'size' => 14, 'bg_color' => '#f2f2f2'], // grey (5%)
             'roomheading'  => ['h_align' => 'center', 'v_align' => 'center', 'size' => 14, 'bg_color' => '#eeddee'], // purple
+            'smallevent'   => ['h_align' => 'left',   'v_align' => 'top',    'size' => 14, 'bg_color' => '#f2f2f2'], // grey (5%)
             'timeheading'  => ['h_align' => 'center', 'v_align' => 'top',    'size' => 12, 'bg_color' => '#ffffff'], // white
             'lightning'    => ['h_align' => 'left',   'v_align' => 'top',    'size' => 10, 'bg_color' => '#f8ffff'], // blue
             'keynote'      => ['h_align' => 'left',   'v_align' => 'top',    'size' => 10, 'bg_color' => '#f9f2ec'], // brown
@@ -349,6 +368,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                    'event' => 34,
                                    'multiroom' => 45,
                                    'roomheadings' => 40,
+                                   'sponsoredlunch' => 70,
                                    'default' => -1); // = autofit
 
         if (preg_match_all($search->days, $html, $days)) {
@@ -388,10 +408,11 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
 
                         if (preg_match_all($search->cells, $rows[2][$r], $cells)) {
 
-                            $is_date = preg_match($search->date, $rowclass);
-                            $is_roomheadings = preg_match($search->roomheadings, $rowclass);
-                            $is_multiroom = false;
-                            $is_event = false;
+                            $row_is_date = preg_match($search->date, $rowclass);
+                            $row_is_roomheadings = preg_match($search->roomheadings, $rowclass);
+                            $row_is_multiroom = false;
+                            $row_is_event = false;
+                            $row_is_sponsoredlunch = false;
 
                             $countcells = count($cells[0]);
                             if ($lastcol < $countcells) {
@@ -463,12 +484,18 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
 
                                 list($cellclass, $colspan, $rowspan) = $attributes[$c];
 
+                                // Set flags that apply to the entire row
                                 if (preg_match($search->multiroom, $cellclass)) {
-                                    $is_multiroom = true;
+                                    $row_is_multiroom = true;
                                 }
-
                                 if (preg_match($search->event, $cellclass)) {
-                                    $is_event = true;
+                                    $row_is_event = true;
+                                    $cell_is_event = true;
+                                } else {
+                                    $cell_is_event = false;
+                                }
+                                if (preg_match($search->sponsoredlunch, $cellclass)) {
+                                    $row_is_sponsoredlunch = true;
                                 }
 
                                 if ($workbook===null) {
@@ -497,12 +524,39 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                         'FitToHeight' => 1,
                                         'FitToWidth'  => 1,
                                     ));
+
+                                    if ($d==-1) {
+                                        // add add banner image
+                                        if ($data->addbannerimage) {
+                                            $objDrawing = new PHPExcel_Worksheet_Drawing();
+                                            $objDrawing->setName('test_img');
+                                            $objDrawing->setDescription('test_img');
+                                            $objDrawing->setPath('../images/logo.png');
+                                            $objDrawing->setCoordinates('A1');                      
+                                            //setOffsetX works properly
+                                            $objDrawing->setOffsetX(5); 
+                                            $objDrawing->setOffsetY(5);                
+                                            //set width, height
+                                            $objDrawing->setWidth(100); 
+                                            $objDrawing->setHeight(35); 
+                                            $objDrawing->setWorksheet($worksheet);
+                                        }
+                                        // add conference name
+                                        if ($data->addconferencename) {
+                                            $text = $this->instance->config->title;
+                                        }
+                                        // add schedule title
+                                        if ($data->addscheduletitle) {
+                                            $text = $this->get_schedule_title($lang);
+                                        }
+                                    }
                                 }
 
                                 $text = html_entity_decode($cells[2][$c]);
-                                if ($is_date && ! empty($this->instance->config->title)) {
+                                if ($row_is_date && ! empty($this->instance->config->title)) {
                                     $text = $this->instance->config->title.': '.$text;
-                                } else if ($is_event) {
+                                }
+                                if ($cell_is_event) {
                                     $text = preg_replace($search->eventdetails, '', $text);
                                 }
                                 $text = str_replace('<br>', chr(10), $text);
@@ -510,12 +564,16 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                 // set format for this cell
                                 switch (true) {
 
-                                    case $is_date:
+                                    case $row_is_date:
                                         $format = $formats->date;
                                         break;
 
-                                    case $is_event:
-                                        $format = $formats->event;
+                                    case $cell_is_event:
+                                        if ($countcells <= 2) {
+                                            $format = $formats->event;
+                                        } else {
+                                            $format = $formats->smallevent;
+                                        }
                                         break;
 
                                     case preg_match($search->timeheading, $cellclass):
@@ -634,22 +692,27 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
 
                             } // end for ($c=0 ...) loop through cells
 
+                            // The order of these case statements is important.
                             if ($countcells) {
                                 switch (true) {
 
-                                    case $is_date:
+                                    case $row_is_date:
                                         $height = $rowheight->date;
                                         break;
 
-                                    case $is_event:
+                                    case $row_is_sponsoredlunch:
+                                        $height = $rowheight->sponsoredlunch;
+                                        break;
+
+                                    case $row_is_event:
                                         $height = $rowheight->event;
                                         break;
 
-                                    case $is_roomheadings:
+                                    case $row_is_roomheadings:
                                         $height = $rowheight->roomheadings;
                                         break;
 
-                                    case $is_multiroom:
+                                    case $row_is_multiroom:
                                         $height = $rowheight->multiroom;
                                         break;
 
@@ -688,10 +751,11 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
      *
      * @uses $CFG
      * @param string $lang
+     * @param array $data
      * @return array $msg
      * @todo Finish documenting this function
      */
-    public function export_html($lang) {
+    public function export_html($lang, $data) {
         if ($html = $this->get_schedule_html($lang)) {
             $filename = $this->make_filename('html');
             send_file($html, $filename, 0, 0, true, true);
@@ -705,10 +769,11 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
      *
      * @uses $CFG
      * @param string $lang
+     * @param array $data
      * @return array $msg
      * @todo Finish documenting this function
      */
-    public function export_pdf($lang) {
+    public function export_pdf($lang, $data) {
         global $CFG;
         require_once($CFG->libdir.'/pdflib.php');
 
@@ -852,19 +917,8 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                     $html = preg_replace($search, '$1', $html);
 
                     // remove unwanted multilang strings
-                    $search = '/<span[^>]*class="multilang"[^>]*>(.*?)<\/span>\s*/isu';
-                    if (preg_match_all($search, $html, $matches, PREG_OFFSET_CAPTURE)) {
-                        $i_max = count($matches[0]) - 1;
-                        for ($i=$i_max; $i>=0; $i--) {
-                            list($match, $start) = $matches[0][$i];
-                            if (strpos($match, 'lang="'.$lang.'"')) {
-                                $replace = $matches[1][$i][0];
-                            } else {
-                                $replace = '';
-                            }
-                            $html = substr_replace($html, $replace, $start, strlen($match));
-                        }
-                    }
+                    $html = $this->remove_multilang_spans($html, $lang);
+
 
                     // remove SPAN.category|topic (within DIV.categorytypetopic)
                     // remove SPAN:empty
@@ -916,6 +970,54 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
             }
         }
         return $html;
+    }
+
+    /**
+     * get_schedule_title
+     *
+     * @param string $lang
+     * @return string schedule title
+     * @todo Finish documenting this function
+     */
+    protected function get_schedule_title($lang='') {
+        $text = '';
+        $config = $this->instance->config;
+        if ($cmid = $config->publishcmid) {
+            $modinfo = get_fast_modinfo($this->course);
+            if (array_key_exists($cmid, $modinfo->cms)) {
+                $cm = $modinfo->get_cm($cmid);
+                if ($cm->modname=='page') {
+                    $text = $DB->get_field('page', 'name', array('id' => $cm->instance));
+                }
+            }
+        }
+        return $this->remove_multilang_spans($text, $lang);
+    }
+
+    /**
+     * remove_multilang_spans
+     *
+     * @param string $text
+     * @param string $lang
+     * @return string schedule title
+     * @todo Finish documenting this function
+     */
+    protected function remove_multilang_spans($text, $lang='') {
+        // remove unwanted multilang strings
+        $search = '/<span[^>]*class="multilang"[^>]*>(.*?)<\/span>\s*/isu';
+        if (preg_match_all($search, $text, $matches, PREG_OFFSET_CAPTURE)) {
+            $i_max = count($matches[0]) - 1;
+            for ($i=$i_max; $i>=0; $i--) {
+                list($match, $start) = $matches[0][$i];
+                if (strpos($match, 'lang="'.$lang.'"')) {
+                    $replace = $matches[1][$i][0];
+                } else {
+                    $replace = '';
+                }
+                $text = substr_replace($text, $replace, $start, strlen($match));
+            }
+        }
+        return $text;
     }
 
     /**

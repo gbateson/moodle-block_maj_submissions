@@ -54,6 +54,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
     );
 
     // caches for the menu items   = array();
+    protected $schedule_event     = null;
     protected $schedule_day       = null;
     protected $schedule_time      = null;
     protected $schedule_duration  = null;

@@ -370,8 +370,10 @@ abstract class block_maj_submissions_tool_form extends moodleform {
      * @return void, but will modify $mform
      */
     protected function add_field($mform, $plugin, $name, $elementtype, $paramtype='', $options=null, $default=null) {
-        if ($elementtype=='selectgroups' && is_scalar(current($options))) {
-            $elementtype = 'select'; // prevent error in PEAR library
+        if ($elementtype=='selectgroups') {
+            if (is_array($options) && is_scalar(current($options))) {
+                $elementtype = 'select'; // prevent error in PEAR library
+            }
         }
         $label = get_string($name, $plugin);
         $mform->addElement($elementtype, $name, $label, $options);
