@@ -158,6 +158,49 @@ class block_maj_submissions_ExcelWorksheet extends MoodleExcelWorksheet {
             }
         }
     }
+
+   /**
+    * Insert an image in a worksheet.
+    *
+    * The standard version of this method has a bug:
+    * It tries to use "getWidth()" to try to set the width !! 
+    * So this method is the same as the standard method but it uses "setWidth()" ;-)
+    *
+    * @param integer $row     The row we are going to insert the bitmap into
+    * @param integer $col     The column we are going to insert the bitmap into
+    * @param string  $bitmap  The bitmap filename
+    * @param integer $x       The horizontal position (offset) of the image inside the cell.
+    * @param integer $y       The vertical position (offset) of the image inside the cell.
+    * @param integer $scale_x The horizontal scale
+    * @param integer $scale_y The vertical scale
+    */
+    public function insert_bitmap($row, $col, $bitmap, $x = 0, $y = 0, $scale_x = 1, $scale_y = 1) {
+        $objDrawing = new PHPExcel_Worksheet_Drawing();
+        $objDrawing->setPath($bitmap);
+        $objDrawing->setCoordinates(PHPExcel_Cell::stringFromColumnIndex($col) . ($row+1));
+        $objDrawing->setOffsetX($x);
+        $objDrawing->setOffsetY($y);
+        $objDrawing->setWorksheet($this->worksheet);
+        if ($scale_x != 1) {
+            $objDrawing->setResizeProportional(false);
+            $objDrawing->setWidth($objDrawing->getWidth() * $scale_x);
+        }
+        if ($scale_y != 1) {
+            $objDrawing->setResizeProportional(false);
+            $objDrawing->setHeight($objDrawing->getHeight() * $scale_y);
+        }
+    }
+
+    /**
+     * Insert one or more rows before the specified row.
+     *
+     * @param int $row        Insert before this row (optional, default=1)
+     * @param int $numrows    Number of rows to insert (optional, default=1)
+     * @return void, but may update this worksheet's worksheet
+     */
+    public function insert_rows($row=1, $numrows=1) {
+        $this->worksheet->insertNewRowBefore($row, $numrows);
+    }
 }
 
 class block_maj_submissions_ExcelFormat extends MoodleExcelFormat {

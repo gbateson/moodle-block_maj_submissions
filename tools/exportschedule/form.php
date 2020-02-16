@@ -71,17 +71,12 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
             $mform->setDefault($name, 'excel');
         }
 
-        $name = 'addbannerimage';
-        $this->add_field($mform, $this->plugin, $name, 'checkbox');
-        $mform->disabledIf($name, 'fileformat', 'neq', 'excel');
-
-        $name = 'addconferencename';
-        $this->add_field($mform, $this->plugin, $name, 'checkbox');
-        $mform->disabledIf($name, 'fileformat', 'neq', 'excel');
-
-        $name = 'addscheduletitle';
-        $this->add_field($mform, $this->plugin, $name, 'checkbox');
-        $mform->disabledIf($name, 'fileformat', 'neq', 'excel');
+        // add checkboxes
+        $names = array('addbannerimage', 'addconferencename', 'addscheduletitle');
+        foreach ($names as $name) {
+            $this->add_field($mform, $this->plugin, $name, 'checkbox', PARAM_INT);
+            $mform->disabledIf($name, 'fileformat', 'neq', 'excel');
+        }
 
         $this->add_action_buttons(true, get_string('export', 'grades'));
     }
@@ -293,7 +288,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
         }
 
         $lines = $line.$lines;
-        $this->send_file($lines, 'csv');
+        $this->send_file($lines, 'csv', $data);
         // script will die at end of send_file()
     }
 
@@ -320,6 +315,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
         $workbook = null;
         $worksheet = null;
         $formats = null;
+        $banner = null;
 
         $search = (object)array(
             'days' => '/(<tbody[^>]*>)(.*?)<\/tbody>/isu',
@@ -347,6 +343,9 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
         );
 
         $formats = array(
+            'conferencename' => ['h_align' => 'center', 'v_align' => 'center', 'size' => 36],
+            'scheduletitle' => ['h_align' => 'center', 'v_align' => 'center', 'size' => 24],
+            'bannerimage'  => ['h_align' => 'center', 'v_align' => 'center', 'size' => 12],
             'default'      => ['h_align' => 'left',   'v_align' => 'top',    'size' => 10],
             'date'         => ['h_align' => 'left',   'v_align' => 'center', 'size' => 18],
             'event'        => ['h_align' => 'left',   'v_align' => 'center', 'size' => 14, 'bg_color' => '#f2f2f2'], // grey (5%)
@@ -361,6 +360,28 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
             'workshop'     => ['h_align' => 'left',   'v_align' => 'top',    'size' => 10, 'bg_color' => '#fff8ff'], // purple
         );
 
+        if (empty($data->addbannerimage)) {
+            $banner = null;
+        } else {
+            $banner = $this->get_banner_image();
+        }
+        if (empty($banner) || empty($banner->filepath)) {
+            $data->addbannerimage = 0;
+            $banner = null;
+        } else {
+            $data->addbannerimage = 1;
+        }
+
+        if (empty($data->addconferencename)) {
+            $data->addconferencename = 0;
+            unset($formats['conferencename']);
+        }
+
+        if (empty($data->addscheduletitle)) {
+            $data->addscheduletitle = 0;
+            unset($formats['scheduletitle']);
+        }
+
         $colwidth = (object)array('timeheading' => 15,
                                   'default' => 25);
 
@@ -369,6 +390,8 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                    'multiroom' => 45,
                                    'roomheadings' => 40,
                                    'sponsoredlunch' => 70,
+                                   'conferencename' => 42,
+                                   'scheduletitle' => 30,
                                    'default' => -1); // = autofit
 
         if (preg_match_all($search->days, $html, $days)) {
@@ -499,11 +522,14 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                 }
 
                                 if ($workbook===null) {
-                                    $filename = $this->make_filename('xlsx');
+                                    $filename = $this->make_filename('xlsx', $data);
                                     $workbook = new block_maj_submissions_ExcelWorkbook($filename);
                                     $workbook->send($filename);
                                     foreach ($formats as $f => $format) {
                                         $formats[$f] = new block_maj_submissions_ExcelFormat($format);
+                                        if ($f=='bannerimage' || $f=='conferencename' || $f=='scheduletitle') {
+                                            $formats[$f]->set_border(PHPExcel_Style_Border::BORDER_NONE);
+                                        }
                                     }
                                     $formats = (object)$formats;
                                 }
@@ -524,32 +550,6 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                         'FitToHeight' => 1,
                                         'FitToWidth'  => 1,
                                     ));
-
-                                    if ($d==-1) {
-                                        // add add banner image
-                                        if ($data->addbannerimage) {
-                                            $objDrawing = new PHPExcel_Worksheet_Drawing();
-                                            $objDrawing->setName('test_img');
-                                            $objDrawing->setDescription('test_img');
-                                            $objDrawing->setPath('../images/logo.png');
-                                            $objDrawing->setCoordinates('A1');                      
-                                            //setOffsetX works properly
-                                            $objDrawing->setOffsetX(5); 
-                                            $objDrawing->setOffsetY(5);                
-                                            //set width, height
-                                            $objDrawing->setWidth(100); 
-                                            $objDrawing->setHeight(35); 
-                                            $objDrawing->setWorksheet($worksheet);
-                                        }
-                                        // add conference name
-                                        if ($data->addconferencename) {
-                                            $text = $this->instance->config->title;
-                                        }
-                                        // add schedule title
-                                        if ($data->addscheduletitle) {
-                                            $text = $this->get_schedule_title($lang);
-                                        }
-                                    }
                                 }
 
                                 $text = html_entity_decode($cells[2][$c]);
@@ -733,6 +733,65 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                         $worksheet->set_column(0, 0, $colwidth->timeheading);
                         $worksheet->set_column(1, $lastcol-1, $colwidth->default);
                     }
+
+                    if ($countrows > 18) {
+                        $worksheet->setup_page(array('FitToHeight' => ceil($countrows / 18)));
+                    }
+
+                    if ($d==0) {
+
+                        $row = 0;
+                        $col = 0;
+
+                        // Add add banner image, if required.
+                        if ($data->addbannerimage) {
+
+                            // Get total width (in chars)
+                            $width = ($colwidth->timeheading + (($lastcol - 1) * $colwidth->default));
+
+                            // Convert width-in-chars to width-in-pixels (8.43 chars = 64 pixels)
+                            $width = ($width * (64/8.43));
+
+                            // Determine scale factor
+                            $scale = ($width / $banner->width);
+
+                            // Multiply by 0.75 to convert pixels to "points" used by Excel.
+                            $height = ($scale * $banner->height * 0.75);
+
+                            $worksheet->insert_rows($row + 1);
+                            $worksheet->merge_cells($row, $col, $row, $lastcol - 1);
+                            $worksheet->insert_bitmap($row, $col, $banner->filepath, 0, 0, $scale, $scale);
+                            $worksheet->write_string($row, $col, '', $formats->bannerimage);
+                            $worksheet->set_row($row, $height);
+                            $row++;
+                        }
+
+                        // Add conference name, if required.
+                        if ($data->addconferencename) {
+                            $text = $this->instance->config->title;
+                            $worksheet->insert_rows($row + 1);
+                            $worksheet->merge_cells($row, $col, $row, $lastcol - 1);
+                            $worksheet->write_string($row, $col, $text, $formats->conferencename);
+                            $worksheet->set_row($row, $rowheight->conferencename);
+                            $row++;
+                        }
+
+                        // Add schedule title, if required.
+                        if ($data->addscheduletitle) {
+                            $text = $this->get_schedule_title($lang);
+                            $worksheet->insert_rows($row + 1);
+                            $worksheet->merge_cells($row, $col, $row, $lastcol - 1);
+                            $worksheet->write_string($row, $col, $text, $formats->scheduletitle);
+                            $worksheet->set_row($row, $rowheight->scheduletitle);
+                            $row++;
+                        }
+
+                        // Add a spacer row, if required.
+                        if ($row) {
+                            $worksheet->insert_rows($row + 1);
+                            $row++;
+                        }
+                    }
                 } // end if preg_match($search->rows ...)
 
             } // end for ($d=0 ...) loop through days
@@ -740,6 +799,12 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
 
         if ($workbook) {
             $workbook->close();
+
+            // Remove banner image from local hard disk
+            if ($banner && $banner->filepath) {
+                @unlink($banner->filepath);
+            }
+
             die;
         }
 
@@ -757,7 +822,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
      */
     public function export_html($lang, $data) {
         if ($html = $this->get_schedule_html($lang)) {
-            $filename = $this->make_filename('html');
+            $filename = $this->make_filename('html', $data);
             send_file($html, $filename, 0, 0, true, true);
             // script will die here if schedule was found
         }
@@ -808,7 +873,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
             $doc->AddPage();
             $doc->writeHTML($html);
 
-            $filename = $this->make_filename('pdf');
+            $filename = $this->make_filename('pdf', $data);
             $doc->Output($filename, 'D'); // force download
             die;
         }
@@ -980,6 +1045,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
      * @todo Finish documenting this function
      */
     protected function get_schedule_title($lang='') {
+        global $DB;
         $text = '';
         $config = $this->instance->config;
         if ($cmid = $config->publishcmid) {
@@ -992,6 +1058,123 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
             }
         }
         return $this->remove_multilang_spans($text, $lang);
+    }
+
+    /**
+     * get_banner_image
+     *
+     * @return object with properties "src", "width", and "height"
+     * @todo Finish documenting this function
+     */
+    protected function get_banner_image() {
+        global $DB;
+        if ($section = $DB->get_record('course_sections', array('course' => $this->course->id, 'section' => 0))) {
+            if (preg_match_all('/<img[^>]*>/', $section->summary, $images)) {
+                $search = '/(alt|height|src|width)="([^"]+)"/';
+                foreach ($images as $image) {
+                    if (preg_match_all($search, $image[0], $banner)) {
+                        $image = (object)array_combine($banner[1], $banner[2]);
+
+                        // Sanity checks on image src.
+                        if (empty($image->src)) {
+                            continue;
+                        }
+                        $parts = parse_url($image->src);
+                        if (empty($parts) || empty($parts['path'])) {
+                            continue;
+                        }
+
+                        // Sanity checks on image filename and extension.
+                        $parts = pathinfo($parts['path']);
+                        if (empty($parts['basename'])) {
+                            continue;
+                        }
+                        if (empty($parts['extension'])) {
+                            continue;
+                        }
+
+                        // Standardize the dirname.
+                        if (empty($parts['dirname']) || $parts['dirname'] == '.') {
+                            $parts['dirname'] = '/';
+                        } else {
+                            $parts['dirname'] = preg_replace('/@@PLUGINFILE@@/', '', $parts['dirname']);
+                            $parts['dirname'] = trim($parts['dirname'], '/');
+                            if ($parts['dirname'] == '') {
+                                $parts['dirname'] = '/';
+                            } else {
+                                $parts['dirname'] = '/'.$parts['dirname'].'/';
+                            }
+                        }
+
+                        // Create $filerecord for use with Moodle file API
+                        $filerecord = (object)array(
+                            'contextid' => $this->course->context->id,
+                            'component' => 'course',
+                            'filearea'  => 'section',
+                            'itemid'    => $section->id,
+                            'filepath'  => $parts['dirname'],
+                            'filename'  => $parts['basename'],
+                            'filetype'  => $parts['extension']
+                        );
+
+                        // Convert PLUGINFILE urls with image->src.
+                        $image->src = file_rewrite_pluginfile_urls(
+                            $image->src, 'pluginfile.php',
+                            $filerecord->contextid,
+                            $filerecord->component,
+                            $filerecord->filearea,
+                            $filerecord->itemid
+                        );
+
+                        // Set the "alt" text, if required$image->filepath
+                        if (empty($image->alt)) {
+                            $image->alt = $filerecord->filename;
+                        }
+
+                        // Locate (or create) this file in the Moodle file system.
+                        $fs = get_file_storage();
+                        $pathnamehash = $fs->get_pathname_hash($filerecord->contextid,
+                                                               $filerecord->component,
+                                                               $filerecord->filearea,
+                                                               $filerecord->itemid,
+                                                               $filerecord->filepath,
+                                                               $filerecord->filename);
+                        if ($fs->file_exists_by_hash($pathnamehash)) {
+                            $image->file = $fs->get_file_by_hash($pathnamehash);
+                        } else {
+                            // Not a file on this Moodle site - unexpected!!
+                            $image->file = $fs->create_file_from_url($filerecord, $image->src, array('skipcertverify' => true), true);
+                        }
+
+                        // Extract image's real width and height, if available
+                        if ($imageinfo = $image->file->get_imageinfo()) {
+                            $image->height = $imageinfo['height'];
+                            $image->width = $imageinfo['width'];
+                        }
+
+                        // Initialize full path to image file.
+                        $image->filepath = '';
+
+                        // Copy image to a temporary file.
+                        if ($dirpath = make_temp_directory($this->plugin)) {
+                            $filename = 'bannerimage_'.$filerecord->contextid.'_';
+                            $extension = '.'.$filerecord->filetype;
+                            if ($filepath = tempnam($dirpath, $filename)) {
+                                if (file_exists($filepath.$extension)) {
+                                    @unlink($filepath.$extension);
+                                }
+                                rename($filepath, $filepath.$extension);
+                                $filepath .= $extension;
+                                $image->file->copy_content_to($filepath);
+                                $image->filepath = $filepath;
+                            }
+                        }
+                        return $image;
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -1028,8 +1211,8 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
      * @param string $filetype
      * @return void
      */
-    protected function send_file($content, $filetype) {
-        $filename = $this->make_filename($filetype);
+    protected function send_file($content, $filetype, $data) {
+        $filename = $this->make_filename($filetype, $data);
         send_file($content, $filename, 0, 0, true, true);
         // script will die at end of send_file()
     }
@@ -1040,7 +1223,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
      * @param string $filetype
      * @return void
      */
-    protected function make_filename($filetype) {
+    protected function make_filename($filetype, $data) {
         $config = $this->instance->config;
         if (empty($config->title)) {
             $filename = '';
@@ -1049,6 +1232,13 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
         }
         if ($filename=='') {
             $filename = $this->instance->blockname;
+        }
+        if (isset($data->language) && ($lang = $data->language)) {
+            if ($options = $this->get_language_options()) {
+                if (array_key_exists($lang, $options)) {
+                    $filename .= ".lang";
+                }
+            }
         }
         $filename .= ".$filetype";
         $filename = preg_replace('/[ \.]+/', '.', $filename);
