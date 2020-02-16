@@ -1236,7 +1236,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
         if (isset($data->language) && ($lang = $data->language)) {
             if ($options = $this->get_language_options()) {
                 if (array_key_exists($lang, $options)) {
-                    $filename .= ".lang";
+                    $filename .= ".$lang";
                 }
             }
         }
