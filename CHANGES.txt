@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2020-02-17 (63)
+ - add banner, conference name, and schedule title to HTML version of schedule export
+
 2020-02-16 (61)
  - add banner image, conference name and schedule title to schedule exported to Excel file
 

@@ -72,10 +72,12 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
         }
 
         // add checkboxes
-        $names = array('addbannerimage', 'addconferencename', 'addscheduletitle');
+        $names = array('addbannerimage',
+                       'addconferencename',
+                       'addscheduletitle');
         foreach ($names as $name) {
             $this->add_field($mform, $this->plugin, $name, 'checkbox', PARAM_INT);
-            $mform->disabledIf($name, 'fileformat', 'neq', 'excel');
+            $mform->disabledIf($name, 'fileformat', 'eq', 'csvshowgizmo');
         }
 
         $this->add_action_buttons(true, get_string('export', 'grades'));
@@ -126,6 +128,16 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
      */
     public function form_postprocessing() {
         if ($data = $this->get_data()) {
+
+            // Ensure checbox values are set.
+            $names = array('addbannerimage',
+                           'addconferencename',
+                           'addscheduletitle');
+            foreach ($names as $name) {
+                if (empty($data->$name)) {
+                    $data->$name = 0;
+                }
+            }
 
             $lang = $data->language;
             switch ($data->fileformat) {
@@ -343,9 +355,9 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
         );
 
         $formats = array(
-            'conferencename' => ['h_align' => 'center', 'v_align' => 'center', 'size' => 36],
-            'scheduletitle' => ['h_align' => 'center', 'v_align' => 'center', 'size' => 24],
-            'bannerimage'  => ['h_align' => 'center', 'v_align' => 'center', 'size' => 12],
+            'conferencename' => ['h_align' => 'center', 'v_align' => 'center', 'size' => 36, 'border' => 0],
+            'scheduletitle' => ['h_align' => 'center', 'v_align' => 'center', 'size' => 24, 'border' => 0],
+            'bannerimage'  => ['h_align' => 'center', 'v_align' => 'center', 'size' => 12, 'border' => 0],
             'default'      => ['h_align' => 'left',   'v_align' => 'top',    'size' => 10],
             'date'         => ['h_align' => 'left',   'v_align' => 'center', 'size' => 18],
             'event'        => ['h_align' => 'left',   'v_align' => 'center', 'size' => 14, 'bg_color' => '#f2f2f2'], // grey (5%)
@@ -360,25 +372,22 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
             'workshop'     => ['h_align' => 'left',   'v_align' => 'top',    'size' => 10, 'bg_color' => '#fff8ff'], // purple
         );
 
-        if (empty($data->addbannerimage)) {
-            $banner = null;
-        } else {
+        if ($data->addbannerimage) {
             $banner = $this->get_banner_image();
+            if (empty($banner)) {
+                $data->addbannerimage = 0;
+            }
         }
-        if (empty($banner) || empty($banner->filepath)) {
-            $data->addbannerimage = 0;
-            $banner = null;
-        } else {
-            $data->addbannerimage = 1;
+
+        if (empty($data->addbannerimage)) {
+            unset($formats['bannerimage']);
         }
 
         if (empty($data->addconferencename)) {
-            $data->addconferencename = 0;
             unset($formats['conferencename']);
         }
 
         if (empty($data->addscheduletitle)) {
-            $data->addscheduletitle = 0;
             unset($formats['scheduletitle']);
         }
 
@@ -527,9 +536,6 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                     $workbook->send($filename);
                                     foreach ($formats as $f => $format) {
                                         $formats[$f] = new block_maj_submissions_ExcelFormat($format);
-                                        if ($f=='bannerimage' || $f=='conferencename' || $f=='scheduletitle') {
-                                            $formats[$f]->set_border(PHPExcel_Style_Border::BORDER_NONE);
-                                        }
                                     }
                                     $formats = (object)$formats;
                                 }
@@ -821,7 +827,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
      * @todo Finish documenting this function
      */
     public function export_html($lang, $data) {
-        if ($html = $this->get_schedule_html($lang)) {
+        if ($html = $this->get_schedule_html($lang, $data)) {
             $filename = $this->make_filename('html', $data);
             send_file($html, $filename, 0, 0, true, true);
             // script will die here if schedule was found
@@ -889,9 +895,33 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
      * @return array $msg
      * @todo Finish documenting this function
      */
-    protected function get_schedule_html($lang) {
+    protected function get_schedule_html($lang, $data) {
         global $CFG;
         if ($html = $this->get_schedule($lang, true)) {
+
+            $headers = array();
+            if ($data->addbannerimage && ($banner = $this->get_banner_image())) {
+                $header = base64_encode(file_get_contents($banner->filepath));
+                $header = '<img src="data:'.mime_content_type($banner->filepath).';base64,'.$header.'">';
+                @unlink($banner->filepath);
+                $headers[] = $header;
+            }
+
+            if ($data->addconferencename) {
+                $header = $this->instance->config->title;
+                $header = html_writer::tag('h1', $header);
+                $headers[] = $header;
+            }
+
+            if ($data->addscheduletitle) {
+                $header = $this->get_schedule_title($lang);
+                $header = html_writer::tag('h2', $header);
+                $headers[] = $header;
+            }
+
+            if ($headers = implode('', $headers)) {
+                $html = $headers.$html;
+            }
 
             $filename = $CFG->dirroot.'/blocks/maj_submissions/templates/template.css';
             if (file_exists($filename)) {
@@ -914,9 +944,8 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
             } else {
                 $script = '';
             }
-
-            $html = html_writer::tag('head', $style).
-                    html_writer::tag('body', $html.$script);
+            $html = html_writer::tag('head', '<meta charset="UTF-8">'.$style).
+                    html_writer::tag('body', $html.$script, array('class' => 'lang-'.$data->language));
             $html = html_writer::tag('html', $html);
         }
         return $html;
@@ -1072,8 +1101,10 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
             if (preg_match_all('/<img[^>]*>/', $section->summary, $images)) {
                 $search = '/(alt|height|src|width)="([^"]+)"/';
                 foreach ($images as $image) {
-                    if (preg_match_all($search, $image[0], $banner)) {
-                        $image = (object)array_combine($banner[1], $banner[2]);
+                    if (preg_match_all($search, $image[0], $parts)) {
+
+                        // create the $banner image object.
+                        $image = (object)array_combine($parts[1], $parts[2]);
 
                         // Sanity checks on image src.
                         if (empty($image->src)) {
@@ -1117,7 +1148,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                             'filetype'  => $parts['extension']
                         );
 
-                        // Convert PLUGINFILE urls with image->src.
+                        // Convert PLUGINFILE urls with banner->src.
                         $image->src = file_rewrite_pluginfile_urls(
                             $image->src, 'pluginfile.php',
                             $filerecord->contextid,
@@ -1167,9 +1198,9 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                 $filepath .= $extension;
                                 $image->file->copy_content_to($filepath);
                                 $image->filepath = $filepath;
+                                return $image;
                             }
                         }
-                        return $image;
                     }
                 }
             }
