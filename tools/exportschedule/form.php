@@ -903,19 +903,20 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
             if ($data->addbannerimage && ($banner = $this->get_banner_image())) {
                 $header = base64_encode(file_get_contents($banner->filepath));
                 $header = '<img src="data:'.mime_content_type($banner->filepath).';base64,'.$header.'">';
+                $header = html_writer::tag('p', $header)."\n";
                 @unlink($banner->filepath);
                 $headers[] = $header;
             }
 
             if ($data->addconferencename) {
                 $header = $this->instance->config->title;
-                $header = html_writer::tag('h1', $header);
+                $header = html_writer::tag('h1', $header, array('style' => 'font-size: 2.0em; font-weight: 400;'));
                 $headers[] = $header;
             }
 
             if ($data->addscheduletitle) {
                 $header = $this->get_schedule_title($lang);
-                $header = html_writer::tag('h2', $header);
+                $header = html_writer::tag('h2', $header, array('style' => 'font-size: 1.7em; font-weight: 400;'));
                 $headers[] = $header;
             }
 
@@ -944,8 +945,8 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
             } else {
                 $script = '';
             }
-            $html = html_writer::tag('head', '<meta charset="UTF-8">'.$style).
-                    html_writer::tag('body', $html.$script, array('class' => 'lang-'.$data->language));
+            $html = html_writer::tag('head', "\n".'<meta charset="UTF-8">'."\n".$style)."\n".
+                    html_writer::tag('body', $html."\n".$script, array('class' => 'lang-'.$data->language));
             $html = html_writer::tag('html', $html);
         }
         return $html;
@@ -1148,7 +1149,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                             'filetype'  => $parts['extension']
                         );
 
-                        // Convert PLUGINFILE urls with banner->src.
+                        // Convert PLUGINFILE urls within $image->src.
                         $image->src = file_rewrite_pluginfile_urls(
                             $image->src, 'pluginfile.php',
                             $filerecord->contextid,
@@ -1157,7 +1158,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                             $filerecord->itemid
                         );
 
-                        // Set the "alt" text, if required$image->filepath
+                        // Set the "alt" text, if required.
                         if (empty($image->alt)) {
                             $image->alt = $filerecord->filename;
                         }
@@ -1178,24 +1179,18 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                         }
 
                         // Extract image's real width and height, if available
-                        if ($imageinfo = $image->file->get_imageinfo()) {
-                            $image->height = $imageinfo['height'];
-                            $image->width = $imageinfo['width'];
+                        if ($info = $image->file->get_imageinfo()) {
+                            $image->height = $info['height'];
+                            $image->width = $info['width'];
                         }
-
-                        // Initialize full path to image file.
-                        $image->filepath = '';
 
                         // Copy image to a temporary file.
                         if ($dirpath = make_temp_directory($this->plugin)) {
                             $filename = 'bannerimage_'.$filerecord->contextid.'_';
-                            $extension = '.'.$filerecord->filetype;
+                            $filetype = $filerecord->filetype;
                             if ($filepath = tempnam($dirpath, $filename)) {
-                                if (file_exists($filepath.$extension)) {
-                                    @unlink($filepath.$extension);
-                                }
-                                rename($filepath, $filepath.$extension);
-                                $filepath .= $extension;
+                                rename($filepath, "$filepath.$filetype");
+                                $filepath .= $filetype;
                                 $image->file->copy_content_to($filepath);
                                 $image->filepath = $filepath;
                                 return $image;
@@ -1266,7 +1261,9 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
         }
         if (isset($data->language) && ($lang = $data->language)) {
             if ($options = $this->get_language_options()) {
-                if (array_key_exists($lang, $options)) {
+                if (count($options)==1 && $lang==key($options)) {
+                    // only one display language - do nothing
+                } else {
                     $filename .= ".$lang";
                 }
             }

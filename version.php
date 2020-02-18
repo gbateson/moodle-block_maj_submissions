@@ -35,5 +35,5 @@ $plugin->dependencies = array(
 );
 $plugin->maturity  = MATURITY_STABLE;
 $plugin->requires  = 2012062500; // Moodle 2.3
-$plugin->version   = 2020021763;
-$plugin->release   = '2020-02-17 (63)';
+$plugin->version   = 2020021864;
+$plugin->release   = '2020-02-18 (64)';
