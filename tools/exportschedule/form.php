@@ -85,8 +85,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
 
     protected function get_language_options() {
 
-        // get list of all langs
-        //$langs = get_string_manager()->get_list_of_languages();
+        // Get list of all languages.
         $langs = get_string_manager()->get_list_of_translations(true);
 
         $config = $this->instance->config;
@@ -351,7 +350,9 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
             'virtual' => '/\b(virtual|case|casestudy)\b/',
             'workshop' => '/\bworkshop\b/',
             // cell content
-            'eventdetails' => '/<br>.*$/isu'
+            'eventdetails' => '/<br>.*$/isu',
+            'sponsorname' => '/<i>[^<>()]*\(([^<>()]*)\)<\/i>/',
+            'et_al' => '/<i>([^<>()]*?) *(et al\.)<\/i>/'
         );
 
         $formats = array(
@@ -389,6 +390,12 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
 
         if (empty($data->addscheduletitle)) {
             unset($formats['scheduletitle']);
+        }
+
+        if (empty($this->instance->config->title)) {
+            $instancetitle = '';
+        } else {
+            $instancetitle = $this->instance->config->title;
         }
 
         $colwidth = (object)array('timeheading' => 15,
@@ -528,6 +535,9 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                 }
                                 if (preg_match($search->sponsoredlunch, $cellclass)) {
                                     $row_is_sponsoredlunch = true;
+                                    $cell_is_sponsoredlunch = true;
+                                } else {
+                                    $cell_is_sponsoredlunch = false;
                                 }
 
                                 if ($workbook===null) {
@@ -559,12 +569,24 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                 }
 
                                 $text = html_entity_decode($cells[2][$c]);
-                                if ($row_is_date && ! empty($this->instance->config->title)) {
-                                    $text = $this->instance->config->title.': '.$text;
+
+                                // Fix white space before "et al."
+                                $text = preg_replace($search->et_al, '<i>$1 $2</i>', $text);
+
+                                switch (true) {
+                                    case $row_is_date && $instancetitle:
+                                        $text = "$instancetitle: $text";
+                                        break;
+
+                                    case $cell_is_event:
+                                        $text = preg_replace($search->eventdetails, '', $text);
+                                        break;
+
+                                    case $cell_is_sponsoredlunch:
+                                        $text = preg_replace($search->sponsorname, '$1', $text);
+                                        break;
                                 }
-                                if ($cell_is_event) {
-                                    $text = preg_replace($search->eventdetails, '', $text);
-                                }
+
                                 $text = str_replace('<br>', chr(10), $text);
 
                                 // set format for this cell

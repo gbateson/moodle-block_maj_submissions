@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2020-02-19 (65)
+ - improve formatting of sponsor names in 'sponsored lunch' sessions when exporting to Excel
+
 2020-02-17 (63)
  - add banner, conference name, and schedule title to HTML version of schedule export
 
