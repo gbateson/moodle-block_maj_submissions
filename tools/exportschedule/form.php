@@ -1206,15 +1206,12 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                             $image->width = $info['width'];
                         }
 
-                        // Copy image to a temporary file.
+                        // Copy image to a temporary file - could also use "tmpfile()" for this.
                         if ($dirpath = make_temp_directory($this->plugin)) {
-                            $filename = 'bannerimage_'.$filerecord->contextid.'_';
-                            $filetype = $filerecord->filetype;
-                            if ($filepath = tempnam($dirpath, $filename)) {
-                                rename($filepath, "$filepath.$filetype");
-                                $filepath .= $filetype;
-                                $image->file->copy_content_to($filepath);
-                                $image->filepath = $filepath;
+                            if ($filepath = tempnam($dirpath, 'bannerimage_'.$filerecord->contextid.'_')) {
+                                $image->filepath = $filepath.'.'.$filerecord->filetype;
+                                rename($filepath, $image->filepath);
+                                $image->file->copy_content_to($image->filepath);
                                 return $image;
                             }
                         }
