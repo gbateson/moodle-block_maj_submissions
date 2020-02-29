@@ -426,15 +426,46 @@ function block_maj_submissions_upgrade_multilang() {
                          'param2', 'param3',
                          'param4', 'param5');
 
+    $courseid = 0;
     foreach ($dataids as $dataid) {
-        $fields = $DB->get_records('data_fields', array('dataid' => $dataid));
-        if (empty($fields)) {
+
+        if (! $fields = $DB->get_records('data_fields', array('dataid' => $dataid))) {
             continue; // unexpected !!
         }
-        $data = $DB->get_record('data', array('id' => $dataid));
-        if (empty($data)) {
+
+        if (! $data = $DB->get_record('data', array('id' => $dataid))) {
             continue; // shouldn't happen !!
         }
+
+        // Get course context id.
+        if ($courseid && $courseid == $data->course) {
+            // do nothing
+        } else {
+
+            // Unset courseid.
+            $courseid = 0;
+
+            // Get context id for this course.
+            if (! $contextid = $DB->get_field('context', 'id', array('contextlevel' => CONTEXT_COURSE, 'instanceid' => $data->course))) {
+                continue; // shouldn't happen !!
+            }
+
+            // Get config data for "maj_submissions" block in this course.
+            if (! $config = $DB->get_field('block_instances', 'configdata', array('blockname' => 'maj_submissions', 'parentcontextid' => $contextid))) {
+                continue; // shouldn't happen !!
+            }
+
+            // Get $config object for the "maj_submissions" block in this course.
+            $config = unserialize(base64_decode($config));
+            if (empty($config)) {
+                continue; // shouldn't happen !!
+            }
+
+            // Cache courseid
+            $courseid == $data->course;
+        }
+
+        // Fix multilang fields in each template.
         foreach ($templates as $template) {
             if (empty($data->$template)) {
                 continue;

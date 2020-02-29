@@ -805,7 +805,12 @@ abstract class block_maj_submissions_tool_form extends moodleform {
      * non-ascii chars at the start and ascii chars at the end.
      */
     static public function convert_to_multilang($text, $config) {
-        $langs = block_maj_submissions::get_languages($config->displaylangs);
+        if (empty($config->displaylangs)) {
+            $langs = '';
+        } else {
+            $langs = $config->displaylangs;
+        }
+        $langs = block_maj_submissions::get_languages($langs);
         if (count($langs) > 1) {
             $search = self::bilingual_string();
             $replace = '<span class="multilang" lang="'.$langs[0].'">$2</span>'.
