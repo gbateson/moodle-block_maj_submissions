@@ -3,6 +3,9 @@ Change log for block_maj_submissions
 ========================================
 
 2020-02-29 (67)
+ - add message to CHANGES.txt
+
+2020-02-29 (67)
  - fix 'missing variable $config' and add most recent version to menu of versions in redo.php
 
 2020-02-22 (66)
