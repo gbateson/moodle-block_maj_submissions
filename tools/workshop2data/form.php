@@ -131,8 +131,8 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
         $this->add_field_section($mform, $this->course, $this->plugin, 'coursesection', $name, $sectionnum);
 
         $name = 'programcommittee';
-        $options = $this->get_group_options();
-        $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options);
+        list($options, $default) = $this->get_group_options($name);
+        $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options, $default);
         $mform->disabledIf($name, 'sourceworkshop', 'eq', 0);
         $mform->disabledIf($name, 'targetdatabasenum', 'eq', 0);
 

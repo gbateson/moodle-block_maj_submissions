@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-01-19 (68)
+ - modify conversion tools to select sensible default for groups menus
+
 2020-02-29 (67)
  - add message to CHANGES.txt
 

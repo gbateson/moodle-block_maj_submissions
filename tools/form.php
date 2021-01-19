@@ -391,8 +391,8 @@ abstract class block_maj_submissions_tool_form extends moodleform {
      */
     protected function add_group_fields($mform) {
         foreach ($this->groupfieldnames as $name) {
-            $options = $this->get_group_options();
-            $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options);
+            list($options, $default) = $this->get_group_options($name);
+            $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options, $default);
         }
     }
 
@@ -402,16 +402,68 @@ abstract class block_maj_submissions_tool_form extends moodleform {
      * @uses $DB
      * @return array of database fieldnames
      */
-    protected function get_group_options() {
+    protected function get_group_options($name) {
         global $DB;
-        $groups = groups_list_to_menu(groups_get_all_groups($this->course->id));
+
+        $defaultgroupid = '';
+        $lang = current_language();
+        $langs = get_string_manager()->get_list_of_translations();
+        if (array_key_exists($lang, $langs)) {
+            $langtext = $langs[$lang];
+            $langtext = preg_replace('/[ \x{200E}]*\(\w+\)[ \x{200E}]*/u', '', $langtext);
+            // Unicode LTR char is inserted by get_list_of_translations() 
+            // (see line 518 in "lib/classes/string_manager_standard.php")
+            // $lrm = json_decode('"\u200E"');
+            $langtext = trim($langtext);
+        } else {
+            $langtext = '';
+        }
+
+        $search = '/<span[^>]*lang="(\w+)"[^>]*>(.*?)<\/span>/i';
         $sql = 'SELECT COUNT(*) FROM {groups_members} WHERE groupid = ?';
-        foreach ($groups as $id => $name) {
+
+        // reduce multilang spans, and get the default item
+        $groups = groups_get_all_groups($this->course->id);
+        foreach ($groups as $id => $group) {
+
+            $groupname = $group->name;
+            $englishname = $groupname;
+
+            if (preg_match_all($search, $groupname, $matches, PREG_OFFSET_CAPTURE)) {
+                $i_max = (count($matches[0]) - 1);
+                for ($i=$i_max; $i >= 0; $i--) {
+                    list($match, $start) = $matches[0][$i];
+                    if ($matches[1][$i][0] == 'en') {
+                        $englishname = $matches[2][$i][0];
+                    }
+                    if ($lang == $matches[1][$i][0]) {
+                        $replace = $matches[2][$i][0];
+                    } else {
+                        $replace = '';
+                    }
+                    $groupname = substr_replace($groupname, $replace, $start, strlen($match));
+                }
+            }
+
+            if ($englishname = trim($englishname)) {
+                $englishname = strtolower(strip_tags($englishname));
+                $englishname = preg_replace('/[^a-zA-Z0-9]/', '', $englishname);
+                if (strpos($englishname, $name) === 0) {
+                    if (block_maj_submissions::textlib('strpos', $groupname, $langtext)) {
+                        // if this is the current language, we override previous value
+                        $defaultgroupid = $id;
+                    } else if ($defaultgroupid == '') {
+                        $defaultgroupid = $id;
+                    }
+                }
+            }
+
             $count = $DB->get_field_sql($sql, array('groupid' => $id));
-            $a = (object)array('name' => $name, 'count' => $count);
+            $a = (object)array('name' => $groupname, 'count' => $count);
             $groups[$id] = get_string('groupnamecount', $this->plugin, $a);
         }
-        return $groups;
+
+        return array($groups, $defaultgroupid);
     }
     /**
      * process_action
@@ -761,6 +813,13 @@ abstract class block_maj_submissions_tool_form extends moodleform {
             'param10'     => 'text'
         );
         return $DB->insert_record($table, $field);
+    }
+
+    /**
+     * If string contains multilang spans, return TRUE; otherwise, return FALSE.
+     */
+    static public function has_multilang_spans($str) {
+        return preg_match('/<span[^>]*class="multilang"[^>]*>/is', $str);
     }
 
     /**

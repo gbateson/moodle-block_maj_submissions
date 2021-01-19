@@ -157,7 +157,12 @@ abstract class block_maj_submissions_tool_filterconditions extends block_maj_sub
                     if ($keep==false) {
                         unset($options[$id]);
                     } else {
-                        $options[$id] = preg_replace($search, $replace, $text).' ['.$name.']';
+                        if (self::has_multilang_spans($text)) {
+                            $text = format_text($text);
+                        } else {
+                            $text = preg_replace($search, $replace, $text);
+                        }
+                        $options[$id] = $text.' ['.$name.']';
                     }
                 }
             }

@@ -71,7 +71,7 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
      * The name of the form field containing
      * the id of a group of anonymous submitters
      */
-    protected $groupfieldnames = 'programcommittee,anonymousauthors';
+    protected $groupfieldnames = 'programcommittee,anonymousauthors,anonymousreviewers';
 
     /**
      * definition

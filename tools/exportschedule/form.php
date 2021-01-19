@@ -759,7 +759,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
 
                     if ($lastcol) {
                         $worksheet->set_column(0, 0, $colwidth->timeheading);
-                        $worksheet->set_column(1, $lastcol-1, $colwidth->default);
+                        $worksheet->set_column(1, $lastcol - 1, $colwidth->default);
                     }
 
                     if ($countrows > 18) {
@@ -775,7 +775,8 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                         if ($data->addbannerimage) {
 
                             // Get total width (in chars)
-                            $width = ($colwidth->timeheading + (($lastcol - 1) * $colwidth->default));
+                            $width = $colwidth->timeheading;
+                            $width += ($colwidth->default * ($lastcol - 1));
 
                             // Convert width-in-chars to width-in-pixels (8.43 chars = 64 pixels)
                             $width = ($width * (64/8.43));
@@ -932,13 +933,13 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
 
             if ($data->addconferencename) {
                 $header = $this->instance->config->title;
-                $header = html_writer::tag('h1', $header, array('style' => 'font-size: 2.0em; font-weight: 400;'));
+                $header = html_writer::tag('h1', $header);
                 $headers[] = $header;
             }
 
             if ($data->addscheduletitle) {
                 $header = $this->get_schedule_title($lang);
-                $header = html_writer::tag('h2', $header, array('style' => 'font-size: 1.7em; font-weight: 400;'));
+                $header = html_writer::tag('h2', $header);
                 $headers[] = $header;
             }
 
@@ -968,7 +969,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                 $script = '';
             }
             $html = html_writer::tag('head', "\n".'<meta charset="UTF-8">'."\n".$style)."\n".
-                    html_writer::tag('body', $html."\n".$script, array('class' => 'lang-'.$data->language));
+                    html_writer::tag('body', "\n".$html."\n".$script, array('class' => 'lang-'.$lang));
             $html = html_writer::tag('html', $html);
         }
         return $html;
