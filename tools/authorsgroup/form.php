@@ -51,7 +51,7 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
      * The name of the form field containing
      * the id of a group of anonymous submitters
      */
-    protected $groupfieldnames = 'authorsgroup';
+    protected $groupfieldnames = array('authorsgroup' => 'presenters');
 
     /**
      * definition

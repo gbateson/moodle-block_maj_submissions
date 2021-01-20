@@ -50,7 +50,6 @@ abstract class block_maj_submissions_tool_setupforum extends block_maj_submissio
         'timestart' => array('accesstimestart'),
         'timefinish' => array('accesstimefinish')
     );
-    protected $groupfieldnames = 'programcommittee,forumgroup';
     protected $forumfieldname = 'forumactivity';
 
     /**
@@ -78,8 +77,8 @@ abstract class block_maj_submissions_tool_setupforum extends block_maj_submissio
         }
 
         $this->add_group_fields($mform);
-        foreach ($this->groupfieldnames as $name) {
-            $mform->disabledIf($name, $this->forumfieldname, 'eq', 0);
+        foreach ($this->groupfieldnames as $fieldname => $defaultname) {
+            $mform->disabledIf($fieldname, $this->forumfieldname, 'eq', 0);
         }
 
         $name = $this->forumfieldname;

@@ -85,6 +85,12 @@ abstract class block_maj_submissions_tool_form extends moodleform {
     protected $restrictions = array();
 
     /**
+     * current language code and text
+     */
+    protected $langcode = '';
+    protected $langtext = '';
+
+    /**
      * constructor
      */
     public function __construct($action=null, $customdata=null, $method='post', $target='', $attributes=null, $editable=true) {
@@ -92,9 +98,26 @@ abstract class block_maj_submissions_tool_form extends moodleform {
         // cache $this->plugin, $this->course and $this->instance
         $this->cache_customdata($customdata);
 
-        $this->groupfieldnames = explode(',', $this->groupfieldnames);
-        $this->groupfieldnames = array_map('trim', $this->groupfieldnames);
-        $this->groupfieldnames = array_filter($this->groupfieldnames);
+        // convert groupfieldnames to an array
+        if (is_string($this->groupfieldnames)) {
+            $this->groupfieldnames = explode(',', $this->groupfieldnames);
+            $this->groupfieldnames = array_map('trim', $this->groupfieldnames);
+            $this->groupfieldnames = array_filter($this->groupfieldnames);
+            $this->groupfieldnames = array_combine($this->groupfieldnames, $this->groupfieldnames);
+        }
+
+        // extract current language code and text (required for group menus)
+        $this->langcode = current_language();
+        $langs = get_string_manager()->get_list_of_translations();
+        if (array_key_exists($this->langcode, $langs)) {
+            $this->langtext = $langs[$this->langcode];
+            // remove the suffix of the langtext, which contains 
+            // the langcode, brackets and unicode "left-to-right" chars
+            // https://en.wikipedia.org/wiki/Left-to-right_mark
+            // The unicode LTR char is inserted by get_list_of_translations() 
+            // (see line 518 in "lib/classes/string_manager_standard.php")
+            $this->langtext = substr($this->langtext, 0, strrpos($this->langtext, ' '));
+        }
 
         // call parent constructor, to continue normal setup
         // which includes calling the "definition()" method
@@ -390,9 +413,9 @@ abstract class block_maj_submissions_tool_form extends moodleform {
      * @return void, but will modify $mform
      */
     protected function add_group_fields($mform) {
-        foreach ($this->groupfieldnames as $name) {
-            list($options, $default) = $this->get_group_options($name);
-            $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options, $default);
+        foreach ($this->groupfieldnames as $fieldname => $defaultname) {
+            list($options, $default) = $this->get_group_options($fieldname, $defaultname);
+            $this->add_field($mform, $this->plugin, $fieldname, 'select', PARAM_INT, $options, $default);
         }
     }
 
@@ -402,41 +425,31 @@ abstract class block_maj_submissions_tool_form extends moodleform {
      * @uses $DB
      * @return array of database fieldnames
      */
-    protected function get_group_options($name) {
+    protected function get_group_options($fieldname, $defaultname) {
         global $DB;
 
         $defaultgroupid = '';
-        $lang = current_language();
-        $langs = get_string_manager()->get_list_of_translations();
-        if (array_key_exists($lang, $langs)) {
-            $langtext = $langs[$lang];
-            $langtext = preg_replace('/[ \x{200E}]*\(\w+\)[ \x{200E}]*/u', '', $langtext);
-            // Unicode LTR char is inserted by get_list_of_translations() 
-            // (see line 518 in "lib/classes/string_manager_standard.php")
-            // $lrm = json_decode('"\u200E"');
-            $langtext = trim($langtext);
-        } else {
-            $langtext = '';
-        }
+        $defaultgroupname = ($defaultname ? $defaultname : $fieldname);
 
-        $search = '/<span[^>]*lang="(\w+)"[^>]*>(.*?)<\/span>/i';
-        $sql = 'SELECT COUNT(*) FROM {groups_members} WHERE groupid = ?';
+        // Cache strings that are used when looping through groups.
+        $multilangsearch = '/<span[^>]*lang="(\w+)"[^>]*>(.*?)<\/span>/i';
+        $membercountsql = 'SELECT COUNT(*) FROM {groups_members} WHERE groupid = ?';
 
-        // reduce multilang spans, and get the default item
+        // Reduce multilang spans, and get the default item.
         $groups = groups_get_all_groups($this->course->id);
         foreach ($groups as $id => $group) {
 
             $groupname = $group->name;
             $englishname = $groupname;
 
-            if (preg_match_all($search, $groupname, $matches, PREG_OFFSET_CAPTURE)) {
+            if (preg_match_all($multilangsearch, $groupname, $matches, PREG_OFFSET_CAPTURE)) {
                 $i_max = (count($matches[0]) - 1);
                 for ($i=$i_max; $i >= 0; $i--) {
                     list($match, $start) = $matches[0][$i];
                     if ($matches[1][$i][0] == 'en') {
                         $englishname = $matches[2][$i][0];
                     }
-                    if ($lang == $matches[1][$i][0]) {
+                    if ($this->langcode == $matches[1][$i][0]) {
                         $replace = $matches[2][$i][0];
                     } else {
                         $replace = '';
@@ -448,8 +461,8 @@ abstract class block_maj_submissions_tool_form extends moodleform {
             if ($englishname = trim($englishname)) {
                 $englishname = strtolower(strip_tags($englishname));
                 $englishname = preg_replace('/[^a-zA-Z0-9]/', '', $englishname);
-                if (strpos($englishname, $name) === 0) {
-                    if (block_maj_submissions::textlib('strpos', $groupname, $langtext)) {
+                if (strpos($englishname, $defaultgroupname) === 0) {
+                    if (block_maj_submissions::textlib('strpos', $groupname, $this->langtext)) {
                         // if this is the current language, we override previous value
                         $defaultgroupid = $id;
                     } else if ($defaultgroupid == '') {
@@ -458,13 +471,13 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                 }
             }
 
-            $count = $DB->get_field_sql($sql, array('groupid' => $id));
+            $count = $DB->get_field_sql($membercountsql, array('groupid' => $id));
             $a = (object)array('name' => $groupname, 'count' => $count);
             $groups[$id] = get_string('groupnamecount', $this->plugin, $a);
         }
-
         return array($groups, $defaultgroupid);
     }
+
     /**
      * process_action
      *
@@ -542,9 +555,9 @@ abstract class block_maj_submissions_tool_form extends moodleform {
      */
     public function get_restrictions($data) {
         $restrictions = $this->restrictions;
-        foreach ($this->groupfieldnames as $name) {
-            if (isset($data->$name) && is_numeric($data->$name)) {
-                $restrictions[] = $this->get_group_restriction($data->$name);
+        foreach ($this->groupfieldnames as $fieldname => $defaultname) {
+            if (isset($data->$fieldname) && is_numeric($data->$fieldname)) {
+                $restrictions[] = $this->get_group_restriction($data->$fieldname);
             }
         }
         return $restrictions;
@@ -600,15 +613,6 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                 if ($activityname=='' && method_exists($this, 'get_template')) {
                     if ($template = $this->get_template($data)) {
                         $activityname = $template->name;
-
-                        // check there isn't another activity with this name in this course
-                        $i = 1;
-                        $params = array('course' => $this->course->id, 'name' => $activityname);
-                        while ($DB->record_exists($this->modulename, $params)) {
-                            $i++;
-                            $params['name'] = "$activityname ($i)";
-                        }
-                        $activityname = $params['name'];
                     }
                 }
 
@@ -622,6 +626,15 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                         $activityname = preg_replace('/\s*((\(\))|(\x{FF08}\x{FF09}))/u', '', $activityname);
                     }
                 }
+
+                // ensure name is unique within this course
+                $i = 1;
+                $params = array('course' => $this->course->id, 'name' => $activityname);
+                while ($DB->record_exists($this->modulename, $params)) {
+                    $i++;
+                    $params['name'] = "$activityname ($i)";
+                }
+                $activityname = $params['name'];
 
                 $activitynametext = block_maj_submissions::filter_text($activityname);
                 $activitynametext = strip_tags($activitynametext);

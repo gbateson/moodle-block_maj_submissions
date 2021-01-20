@@ -31,4 +31,6 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot.'/blocks/maj_submissions/tools/form.setupforum.php');
 
 class block_maj_submissions_tool_authorsforum extends block_maj_submissions_tool_setupforum {
+    protected $groupfieldnames = array('programcommittee' => '',
+                                       'forumgroup' => 'presenters');
 }

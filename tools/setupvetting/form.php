@@ -78,8 +78,8 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
         $this->add_field($mform, $this->plugin, $name, 'selectgroups', PARAM_INT, $options, 0);
 
         $this->add_group_fields($mform);
-		foreach ($this->groupfieldnames as $name) {
-			$mform->disabledIf($name, 'targetworkshop', 'eq', 0);
+		foreach ($this->groupfieldnames as $fieldname => $defaultname) {
+			$mform->disabledIf($fieldname, 'targetworkshop', 'eq', 0);
 		}
 
         $name = 'resetpasswords';
