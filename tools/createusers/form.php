@@ -45,8 +45,13 @@ class block_maj_submissions_tool_createusers extends tool_createusers_form {
     protected $instance = null;
 
     // should we allow student/teacher enolments
+    protected $allow_role_enrolments = true;
     protected $allow_student_enrolments = true;
     protected $allow_teacher_enrolments = false;
+
+    protected $default_enrol_method = 'manual';
+    protected $default_enrol_role = 'guest';
+    protected $default_enrol_status = ENROL_USER_SUSPENDED;
 
     /**
      * constructor
