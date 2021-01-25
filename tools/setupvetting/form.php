@@ -178,7 +178,6 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
 
         $cm = null;
         $msg = array();
-        $time = time();
 
         $config = $this->instance->config;
 
@@ -536,7 +535,7 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
 					$pagedata->visible = 0; // hide from students
                     $restrictions = false;
 				}
-				if ($page = $this->get_cm($msg, $pagedata, $time, 'page', $a)) {
+				if ($page = $this->get_cm($msg, $pagedata, 'page', $a)) {
                     if ($restrictions) {
                         self::set_cm_restrictions($page, $restrictions);
                     }
@@ -663,10 +662,9 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
      * get_defaultvalues
      *
      * @param object $data from newly submitted form
-     * @param integer $time
      */
-    protected function get_defaultvalues($data, $time) {
-        $defaultvalues = parent::get_defaultvalues($data, $time);
+    protected function get_defaultvalues($data) {
+        $defaultvalues = parent::get_defaultvalues($data);
 
         $name = 'displayoptions';
         if (is_array($defaultvalues[$name])) {

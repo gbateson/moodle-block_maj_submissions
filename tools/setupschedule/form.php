@@ -455,13 +455,12 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
         global $DB;
 
         $cm = false;
-        $time = time();
         $msg = array();
 
         // check we have some form data
         if ($data = $this->get_data()) {
 
-            $cm = $this->get_cm($msg, $data, $time, 'publishcmid');
+            $cm = $this->get_cm($msg, $data, 'publishcmid');
 
             if ($cm) {
 
@@ -827,12 +826,11 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
      * get_defaultvalues
      *
      * @param object $data from newly submitted form
-     * @param integer $time
      */
-    protected function get_defaultvalues($data, $time) {
+    protected function get_defaultvalues($data) {
         global $CFG, $DB;
 
-        $defaultvalues = parent::get_defaultvalues($data, $time);
+        $defaultvalues = parent::get_defaultvalues($data);
 
         $name = 'displayoptions';
         if (is_array($defaultvalues[$name])) {

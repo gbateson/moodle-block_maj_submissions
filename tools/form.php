@@ -55,6 +55,11 @@ abstract class block_maj_submissions_tool_form extends moodleform {
     protected $cmid = 0;
 
     /**
+     * A cache of the current time
+     */
+    protected $time = 0;
+
+    /**
      * The names of the form field, if any, containing the id of a group of anonymous users
      */
     protected $groupfieldnames = '';
@@ -97,6 +102,9 @@ abstract class block_maj_submissions_tool_form extends moodleform {
 
         // cache $this->plugin, $this->course and $this->instance
         $this->cache_customdata($customdata);
+
+        // cache the current time
+        $this->time = time();
 
         // convert groupfieldnames to an array
         if (is_string($this->groupfieldnames)) {
@@ -506,15 +514,14 @@ abstract class block_maj_submissions_tool_form extends moodleform {
      * get_defaultvalues
      *
      * @param object $data from newly submitted form
-     * @param integer $time
      */
-    protected function get_defaultvalues($data, $time) {
+    protected function get_defaultvalues($data) {
         $defaultvalues = $this->defaultvalues;
 
         $defaultvalues['intro'] = $this->get_defaultintro();
 
         foreach ($this->timefields['timestart'] as $name) {
-            $defaultvalues[$name] = $time;
+            $defaultvalues[$name] = $this->time;
         }
 
         foreach ($this->timefields['timefinish'] as $name) {
@@ -523,7 +530,7 @@ abstract class block_maj_submissions_tool_form extends moodleform {
 
 		// "timemodified" is required by most mod types
 		// including "data", "page" and "workshop"
-        $defaultvalues['timemodified'] = $time;
+        $defaultvalues['timemodified'] = $this->time;
 
         return $defaultvalues;
     }
@@ -581,12 +588,11 @@ abstract class block_maj_submissions_tool_form extends moodleform {
      *
      * @param array   $msg
      * @param object  $data
-     * @param integer $time
      * @param string  $name
      * @param mixed  $a, arguments for get_string(), if needed
      * @return object newly added $cm object; otherwise false
      */
-    public function get_cm(&$msg, $data, $time, $name, $a=null) {
+    public function get_cm(&$msg, $data, $name, $a=null) {
         global $DB;
 
         $cm = false;
@@ -609,6 +615,15 @@ abstract class block_maj_submissions_tool_form extends moodleform {
 
             if ($activitynum==self::CREATE_NEW) {
 
+                // get modname and default values
+                if (isset($data->modname)) {
+                    $modname = $data->modname;
+                    $defaultvalues = $data;
+                } else {
+                    $modname = $this->modulename;
+                    $defaultvalues = $this->get_defaultvalues($data);
+                }
+
                 // if activityname is empty, try to set it from the template (data2workshop)
                 if ($activityname=='' && method_exists($this, 'get_template')) {
                     if ($template = $this->get_template($data)) {
@@ -630,7 +645,7 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                 // ensure name is unique within this course
                 $i = 1;
                 $params = array('course' => $this->course->id, 'name' => $activityname);
-                while ($DB->record_exists($this->modulename, $params)) {
+                while ($DB->record_exists($modname, $params)) {
                     $i++;
                     $params['name'] = "$activityname ($i)";
                 }
@@ -647,13 +662,6 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                 }
 
                 if ($section) {
-                    if (isset($data->modname)) {
-						$modname = $data->modname;
-						$defaultvalues = $data;
-					} else {
-						$modname = $this->modulename;
-						$defaultvalues = $this->get_defaultvalues($data, $time);
-                    }
 					$is_resource = in_array($modname, array('book', 'folder', 'imscp', 'page', 'resource', 'url'));
                     $cm = self::get_coursemodule($this->course, $section, $modname, $activityname, $defaultvalues);
 
@@ -1020,11 +1028,11 @@ abstract class block_maj_submissions_tool_form extends moodleform {
         // add default values
         $columns = $DB->get_columns($modulename);
         foreach ($columns as $column) {
-            if ($column->not_null) {
-                $name = $column->name;
-                if ($name=='id' || isset($newrecord->$name)) {
-                    // do nothing
-                } else if (isset($column->default_value)) {
+            $name = $column->name;
+            if (isset($newrecord->$name) || $name=='id') {
+                // do nothing
+            } else if ($column->not_null) {
+                if (isset($column->default_value)) {
                     $newrecord->$name = $column->default_value;
                 } else {
                     // see: lib/dml/database_column_info.php

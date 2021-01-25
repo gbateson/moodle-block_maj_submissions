@@ -118,7 +118,6 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
         global $DB;
 
         $cm = false;
-        $time = time();
         $msg = array();
         $config = $this->instance->config;
 
@@ -296,7 +295,7 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
                         $user = (object)array(
                             'groupid'   => $groupid,
                             'userid'    => $userid,
-                            'timeadded' => $time,
+                            'timeadded' => $this->time,
                             'component' => '',
                             'itemid'    => 0
                         );

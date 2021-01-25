@@ -350,13 +350,12 @@ class block_maj_submissions_tool_updatevetting extends block_maj_submissions_too
         require_once($CFG->dirroot.'/blocks/maj_submissions/tools/workshop2data/form.php');
 
         $cm = false;
-        $time = time();
         $msg = array();
         $config = $this->instance->config;
 
         // get/create the $cm record and associated $section
         if ($data = $this->get_data()) {
-            $cm = $this->get_cm($msg, $data, $time, 'sourcedatabase');
+            $cm = $this->get_cm($msg, $data, 'sourcedatabase');
         }
 
         if (empty($data->submissions)) {

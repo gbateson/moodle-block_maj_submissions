@@ -234,11 +234,10 @@ abstract class block_maj_submissions_tool_setupdatabase extends block_maj_submis
 
         $cm = false;
         $msg = array();
-        $time = time();
 
         // get/create the $cm record and associated $section
         if ($data = $this->get_data()) {
-            $cm = $this->get_cm($msg, $data, $time, 'databaseactivity');
+            $cm = $this->get_cm($msg, $data, 'databaseactivity');
         }
 
         if ($cm) {
@@ -366,14 +365,13 @@ abstract class block_maj_submissions_tool_setupdatabase extends block_maj_submis
      * get_defaultvalues
      *
      * @param object $data from newly submitted form
-     * @param integer $time
      */
-    protected function get_defaultvalues($data, $time) {
-        $defaultvalues = parent::get_defaultvalues($data, $time);
+    protected function get_defaultvalues($data) {
+        $defaultvalues = parent::get_defaultvalues($data);
 
         if ($this->is_readonly()) {
             // content will be added by teacher/admin
-            $defaultvalues['timeviewfrom'] = $time;
+            $defaultvalues['timeviewfrom'] = $this->time;
         } else {
             // content will be added by students (=participants)
             $defaultvalues['approval'] = 1;

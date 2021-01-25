@@ -155,7 +155,6 @@ abstract class block_maj_submissions_tool_setupforum extends block_maj_submissio
 
         $cm = false;
         $msg = array();
-        $time = time();
 
 		$groupid = 0;
 		$groupname = '';
@@ -170,7 +169,7 @@ abstract class block_maj_submissions_tool_setupforum extends block_maj_submissio
                 //$DB->set_field('course_modules', 'availability', '', array('id' => $cm->id));
             }
 
-            $cm = $this->get_cm($msg, $data, $time, $this->forumfieldname);
+            $cm = $this->get_cm($msg, $data, $this->forumfieldname);
         }
 
         if ($cm) {

@@ -193,14 +193,13 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
 
         $cm = false;
         $msg = array();
-        $time = time();
 
         // cache shortcut to block config settings
         $config = $this->instance->config;
 
         // get/create the $cm record and associated $section
         if ($data = $this->get_data()) {
-            $cm = $this->get_cm($msg, $data, $time, 'targetdatabase');
+            $cm = $this->get_cm($msg, $data, 'targetdatabase');
         }
 
         if ($cm) {
@@ -229,6 +228,8 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
             $counttransferred = 0;
             $datarecords = array();
 
+            $multilangsearch = '/<span[^>]*lang="(\w+)"[^>]*>(.*?)<\/span>/i';
+
             foreach ($submissions as $sid => $submission) {
 
                 // Get database records that link to this submission.
@@ -248,14 +249,31 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                 $msg[] = html_writer::tag('p', get_string('reviewstransferred', $this->plugin)).
                          html_writer::alist($datarecords, null, 'ol');
 
+                $suffix = $workshop->name;
+                if (preg_match_all($multilangsearch, $suffix, $matches, PREG_OFFSET_CAPTURE)) {
+                    $i_max = (count($matches[0]) - 1);
+                    for ($i=$i_max; $i >= 0; $i--) {
+                        list($match, $start) = $matches[2][$i]; // the "inner" text of the <span>
+                        if (($pos = block_maj_submissions::textlib('strrpos', $match, '(')) ||
+                            ($pos = block_maj_submissions::textlib('strrpos', $match, '（'))) {
+                            $replace = block_maj_submissions::textlib('substr', $match, $pos);
+                            $suffix = substr_replace($suffix, $replace, $start, strlen($match));
+                        }
+                    }
+                    $suffix = get_string('labelsep', 'langconfig').$suffix;
+                } else {
+                    $suffix = '';
+                }
+
                 // prepare resource with list of reviewed submissions
                 $pagedata = (object)array(
                     'modname' => 'page',
                     'pagenum' => self::CREATE_NEW,
-                    'pagename' => $this->instance->get_string('vettingresults', $this->plugin),
+                    'pagename' => $this->instance->get_string('vettingresults', $this->plugin).$suffix,
                     'coursesectionnum' => get_fast_modinfo($this->course)->get_cm($cm->id)->sectionnum,
                     'coursesectionname' => '',
-                    'content' => end($msg)
+                    'content' => end($msg),
+                    'timemodified' => $this->time
                 );
 
                 // hide list of from ordinary users (=students)
@@ -267,7 +285,7 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
 				}
 
 				// create Moodle page page
-                $cm = $this->get_cm($msg, $pagedata, $time, 'page', $a);
+                $cm = $this->get_cm($msg, $pagedata, 'page');
 
                 // restrict access to "Program Committee" only
                 if (isset($data->$name) && is_numeric($data->$name)) {

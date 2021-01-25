@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-01-25 (71)
+ - ensure vetting results are not overwritten and are separated by language
+
 2021-01-22 (70)
  - allow enrolment using various methods and roles
 

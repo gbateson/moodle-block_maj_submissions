@@ -737,13 +737,14 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $switch_plus = $PAGE->theme->$image_url('t/switch_plus', 'core')->out();
 
         $string = array();
-        include($CFG->dirroot.'/lang/en/langconfig.php');
+        $component = 'langconfig';
+        include($CFG->dirroot."/lang/en/$component.php");
         $options = array_flip(preg_grep('/^strftime(da|re)/', array_keys($string)));
 
         // add examples of each date format string
         $elements = array();
         foreach (array_keys($options) as $i => $option) {
-            $fmt = get_string($option);
+            $fmt = get_string($option, $component);
             $text = userdate($time, $fmt);
 
             $params = array('src' => $switch_plus, 'onclick' => 'toggledateformat(this, '.$i.')');

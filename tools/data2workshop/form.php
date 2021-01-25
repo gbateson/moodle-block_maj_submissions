@@ -113,10 +113,9 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
      * get_defaultvalues
      *
      * @param object $data from newly submitted form
-     * @param integer $time
      */
-    protected function get_defaultvalues($data, $time) {
-        $defaultvalues = parent::get_defaultvalues($data, $time);
+    protected function get_defaultvalues($data) {
+        $defaultvalues = parent::get_defaultvalues($data);
 
         if ($template = $this->get_template($data)) {
             foreach ($template as $name => $value) {
@@ -172,13 +171,12 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
         require_once($CFG->dirroot.'/mod/workshop/locallib.php');
 
         $cm = false;
-        $time = time();
         $msg = array();
         $config = $this->instance->config;
 
         // get/create the $cm record and associated $section
         if ($data = $this->get_data()) {
-            $cm = $this->get_cm($msg, $data, $time, 'targetworkshop');
+            $cm = $this->get_cm($msg, $data, 'targetworkshop');
         }
 
         if ($cm) {
@@ -378,8 +376,8 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
                         $submission = (object)array(
                             'workshopid' => $cm->instance,
                             'authorid' => array_shift($anonymous),
-                            'timecreated' => $time,
-                            'timemodified' => $time,
+                            'timecreated' => $this->time,
+                            'timemodified' => $this->time,
                             'title' => $record->presentation_title,
                             'content' => $content,
                             'contentformat' => 0,
