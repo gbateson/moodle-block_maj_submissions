@@ -258,8 +258,9 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
                     foreach ($parts as $i => $langs) {
                         foreach ($langs as $lang => $types) {
                             if (array_key_exists('firstname', $types) && array_key_exists('lastname', $types)) {
-                                $select = '(firstname = ? AND lastname = ?) OR (firstnamephonetic = ? AND lastnamephonetic = ?)';
-                                $params = array($types['firstname'],
+                                $select = 'deleted = ? AND ((firstname = ? AND lastname = ?) OR (firstnamephonetic = ? AND lastnamephonetic = ?))';
+                                $params = array(0,
+                                                $types['firstname'],
                                                 $types['lastname'],
                                                 $types['firstname'],
                                                 $types['lastname']);
