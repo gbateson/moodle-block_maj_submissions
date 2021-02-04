@@ -549,7 +549,7 @@
     }
 }
 
-@media only screen and (min-width: 768px) and (max-height: 800px) {
+@media only screen and (min-width: 768px) and (max-height: 1200px) {
 
     .schedule {
         position: relative;
@@ -603,3 +603,9 @@
         color:                  purple;
     }
 }
+
+/** hide headers and footers when printing **/
+@media only print {
+    #page-header, #page-footer, .activity-navigation { display: none; }
+}
+

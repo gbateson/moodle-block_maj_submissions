@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-02-04 (74)
+ - add tool to create video activities for each record in the submissions database
+
 2021-01-25 (72)
  - do not add deleted users to presenters' group
 

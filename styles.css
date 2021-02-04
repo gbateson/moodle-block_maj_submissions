@@ -254,7 +254,7 @@ form[id^=block_maj_submissions] .col-md-9[data-fieldtype=group] br {
     text-align:        center;
 }
 .path-blocks-maj_submissions-tools .toolmessagelist {
-    max-width:          540px;
+    max-width:          840px;
 }
 .path-blocks-maj_submissions-tools .toolmessagelist li {
     margin-bottom:        6px;

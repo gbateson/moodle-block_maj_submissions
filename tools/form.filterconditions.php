@@ -51,11 +51,12 @@ abstract class block_maj_submissions_tool_filterconditions extends block_maj_sub
      *
      * @param object $mform
      * @param string $name of form field
+     * @param integer $default cm id
      * @return void, but will update $mform
      */
-    protected function add_field_sourcedatabase($mform, $name) {
+    protected function add_field_sourcedatabase($mform, $name, $default=0) {
         $options = self::get_cmids($mform, $this->course, $this->plugin, 'data');
-        $this->add_field($mform, $this->plugin, $name, 'selectgroups', PARAM_INT, $options, 0);
+        $this->add_field($mform, $this->plugin, $name, 'selectgroups', PARAM_INT, $options, $default);
     }
 
     /**
@@ -208,23 +209,6 @@ abstract class block_maj_submissions_tool_filterconditions extends block_maj_sub
     protected function get_filtered_records($dataid, &$data, &$fields, $recordids=null) {
         global $DB;
 
-        // basic SQL to fetch records from database activity
-        $select = array('dr.id AS recordid, dr.dataid, dr.userid, dr.timemodified');
-        $from   = array('{data_records} dr');
-        $where  = array('dr.dataid = ?');
-        $order  = '';
-        $params = array($dataid);
-
-        if ($recordids) {
-            if (count($recordids)==1) {
-                $where[] = 'dr.id = ?';
-                $params[] = reset($recordids);
-            } else {
-                $where[] = 'dr.id IN ('.implode(',', array_fill(0, count($recordids), '?')).')';
-                $params = array_merge($params, $recordids);
-            }
-        }
-
         if (empty($data)) {
             $data = new stdClass();
         }
@@ -246,11 +230,31 @@ abstract class block_maj_submissions_tool_filterconditions extends block_maj_sub
             }
         }
 
+        // basic SQL to fetch records from database activity
+        $select = array('dr.id AS recordid, dr.dataid, dr.userid, dr.timemodified');
+        $from   = array('{data_records} dr');
+        $where  = array();
+        $order  = '';
+        $params = array();
+
         // add SQL to fetch only required records
         $this->add_filter_sql($data, $select, $from, $where, $params);
 
         // add SQL to fetch presentation content
         $this->add_content_sql($data, $select, $from, $where, $order, $params, $fields, $dataid);
+
+        $where[] = 'dr.dataid = ?';
+        $params[] = $dataid;
+
+        if ($recordids) {
+            if (count($recordids)==1) {
+                $where[] = 'dr.id = ?';
+                $params[] = reset($recordids);
+            } else {
+                $where[] = 'dr.id IN ('.implode(',', array_fill(0, count($recordids), '?')).')';
+                $params = array_merge($params, $recordids);
+            }
+        }
 
         $select = implode(', ', $select);
         $from   = implode(' LEFT JOIN ', $from);
@@ -412,6 +416,7 @@ abstract class block_maj_submissions_tool_filterconditions extends block_maj_sub
         }
 
         $i = count($data->filterconditionsfield);
+        $contentparams = array();
         foreach ($fieldnames as $name) {
             if ($name=='charcount' || $name=='wordcount') {
                 continue;
@@ -424,11 +429,10 @@ abstract class block_maj_submissions_tool_filterconditions extends block_maj_sub
                 }
 
                 $alias = 'dc'.$i;
-                array_push($select, "$alias.recordid AS recordid$i",
-                                    "$alias.fieldid AS fieldid$i",
+                array_push($select, $field->id." AS {$name}_fieldid",
+                                    "$alias.id AS {$name}_contentid",
                                     "$alias.content AS $name");
-                $from[] = '{data_content}'." $alias ON $alias.recordid = dr.id";
-                $where[] = "$alias.fieldid = ?";
+                $from[] = '{data_content}'." $alias ON $alias.recordid = dr.id AND $alias.fieldid = ?";
                 $params[] = $field->id;
                 $i++;
             } else {

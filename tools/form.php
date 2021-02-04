@@ -178,21 +178,28 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                 $this->cmid = $cmid;
             }
 
-            // set start times, if any, in $defaultvalues
-            $time = $this->type.'timestart';
-            if (property_exists($this->instance->config, $time)) {
-                $time = $this->instance->config->$time;
-                foreach ($this->timefields['timestart'] as $timefield) {
-                    $this->defaultvalues[$timefield] = $time;
-                }
-            }
+            if (is_array($this->timefields)) {
 
-            // set finish times, if any, in $defaultvalues
-            $time = $this->type.'timefinish';
-            if (property_exists($this->instance->config, $time)) {
-                $time = $this->instance->config->$time;
-                foreach ($this->timefields['timefinish'] as $timefield) {
-                    $this->defaultvalues[$timefield] = $time;
+                // set start times, if any, in $defaultvalues
+                if (array_key_exists('timestart', $this->timefields)) {
+                    $time = $this->type.'timestart';
+                    if (property_exists($this->instance->config, $time)) {
+                        $time = $this->instance->config->$time;
+                        foreach ($this->timefields['timestart'] as $timefield) {
+                            $this->defaultvalues[$timefield] = $time;
+                        }
+                    }
+                }
+
+                // set finish times, if any, in $defaultvalues
+                if (array_key_exists('timestart', $this->timefields)) {
+                    $time = $this->type.'timefinish';
+                    if (property_exists($this->instance->config, $time)) {
+                        $time = $this->instance->config->$time;
+                        foreach ($this->timefields['timefinish'] as $timefield) {
+                            $this->defaultvalues[$timefield] = $time;
+                        }
+                    }
                 }
             }
         }
@@ -596,20 +603,17 @@ abstract class block_maj_submissions_tool_form extends moodleform {
         global $DB;
 
         $cm = false;
-        if (empty($data->$name)) {
 
+        if (empty($data->$name)) {
             $activitynum  = $name.'num';
             $activitynum = (empty($data->$activitynum) ? 0 : $data->$activitynum);
-
             $activityname = $name.'name';
             $activityname = (empty($data->$activityname) ? '' : $data->$activityname);
-
-            $sectionnum   = (empty($data->coursesectionnum) ? 0 : $data->coursesectionnum);
-            $sectionname  = (empty($data->coursesectionname) ? '' : $data->coursesectionname);
-
         } else {
             $activitynum = $data->$name;
         }
+        $sectionnum   = (empty($data->coursesectionnum) ? 0 : $data->coursesectionnum);
+        $sectionname  = (empty($data->coursesectionname) ? '' : $data->coursesectionname);
 
         if ($activitynum) {
 
@@ -1018,6 +1022,7 @@ abstract class block_maj_submissions_tool_form extends moodleform {
             'return'        => 0,
             'cmidnumber'    => '',
             'groupmode'     => 0, // no groups
+            'groupingid'    => 0, // no grouping
             'MAX_FILE_SIZE' => 10485760, // 10 GB
         );
 
@@ -1073,7 +1078,7 @@ abstract class block_maj_submissions_tool_form extends moodleform {
             $sectionid = add_mod_to_section($newrecord);
         }
         if (! $sectionid) {
-            throw new exception('Could not add the new course module to that section');
+            throw new exception('Could not add the new course module to section: '.$newrecord->section);
         }
         if (! $DB->set_field('course_modules', 'section',  $sectionid, array('id' => $newrecord->id))) {
             throw new exception('Could not update the course module with the correct section');

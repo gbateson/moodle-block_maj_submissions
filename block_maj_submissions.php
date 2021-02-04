@@ -638,6 +638,8 @@ class block_maj_submissions extends block_base {
             $this->content->text .= $this->get_tool_link($plugin, 'setuprooms');
             $this->content->text .= $this->get_tool_link($plugin, 'setupschedule');
             $this->content->text .= html_writer::tag('p', '', array('class' => 'tooldivider'));
+            $this->content->text .= $this->get_tool_link($plugin, 'setupvideos');
+            $this->content->text .= html_writer::tag('p', '', array('class' => 'tooldivider'));
             $this->content->text .= $this->get_tool_link($plugin, 'authorsgroup');
             $this->content->text .= $this->get_tool_link($plugin, 'authorsforum');
             $this->content->text .= $this->get_tool_link($plugin, 'reviewersforum');
