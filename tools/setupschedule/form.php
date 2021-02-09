@@ -79,11 +79,11 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
     public function definition() {
         global $PAGE;
 
-		if (method_exists($PAGE->requires, 'js_call_amd')) {
-			// Moodle >= 2.9
+        if (method_exists($PAGE->requires, 'js_call_amd')) {
+            // Moodle >= 2.9
             $PAGE->requires->js_call_amd('block_maj_submissions/tool_setupschedule', 'init');
             $PAGE->requires->jquery_plugin('ui-css');
-		} else if (method_exists($PAGE->requires, 'jquery')) {
+        } else if (method_exists($PAGE->requires, 'jquery')) {
             // Moodle >= 2.5
             $PAGE->requires->jquery();
             $PAGE->requires->jquery_plugin('ui');
@@ -96,7 +96,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $PAGE->requires->js($jquery.'/jquery.js', true);
             $PAGE->requires->js($jquery.'/jquery-ui.js', true);
             $PAGE->requires->js('/blocks/maj_submissions/tools/setupschedule/jquery.js', true);
-		}
+        }
 
         $mform = $this->_form;
         $this->set_form_id($mform);
@@ -531,11 +531,11 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                 } else {
 
                     // tidy the incoming HTML snippet
-                	$search = '/^.*?(<table[^>]*>.*<\/table>).*?$/us';
-                	//$data->schedule_html = clean_param($data->schedule_html, PARAM_CLEANHTML);
-                	$data->schedule_html = preg_replace($search, '$1', $data->schedule_html)."\n";
+                    $search = '/^.*?(<table[^>]*>.*<\/table>).*?$/us';
+                    //$data->schedule_html = clean_param($data->schedule_html, PARAM_CLEANHTML);
+                    $data->schedule_html = preg_replace($search, '$1', $data->schedule_html)."\n";
 
-                	// save the modified HTML for the schedule
+                    // save the modified HTML for the schedule
                     $html = $DB->get_field($cm->modname, 'content', array('id' => $cm->instance));
                     $html = preg_replace('/<table[^>]*>.*<\/table>\s*/us', $data->schedule_html, $html);
                     $DB->set_field($cm->modname, 'content', $html, array('id' => $cm->instance));
@@ -967,23 +967,23 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
         $letters = range(97, 122); // ascii a-z
         $letters = array_map('chr', $letters);
 
-		// get presentation categories, types and topics
+        // get presentation categories, types and topics
         if ($cmid = $config->collectpresentationscmid) {
             $dataid = get_fast_modinfo($this->course)->get_cm($cmid)->instance;
             $categories = $this->get_menufield_options($dataid, 'presentation_category', true);
             $types = $this->get_menufield_options($dataid, 'presentation_type', true);
             $topics = $this->get_menufield_options($dataid, 'presentation_topic', true);
-    	} else {
-			$categories = array('Individual session',
-								'Sponsored session',
-								'Keynote speech');
-			$types = array('Lightning talk',
-						   'Research paper',
-						   'Show and tell',
-						   'Symposium',
-						   'Poster');
+        } else {
+            $categories = array('Individual session',
+                                'Sponsored session',
+                                'Keynote speech');
+            $types = array('Lightning talk',
+                           'Research paper',
+                           'Show and tell',
+                           'Symposium',
+                           'Poster');
             $topics = array();
-    	}
+        }
 
         $countcategories = (count($categories) - 1);
         $counttypes = (count($types) - 1);
@@ -1083,7 +1083,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $finish = $instance->multilang_userdate($finish, 'schedulesessiontime', $this->plugin);
             $slots[] = (object)array('startfinish' => "$start - $finish",
                                      'duration' => $duration,
-            						 'cssclass' => $cssclass,
+                                     'cssclass' => $cssclass,
                                      'multiroom' => false);
 
             // increment counter

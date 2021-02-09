@@ -788,7 +788,7 @@ switch ($action) {
                     if (in_array($fieldname, $types)) {
                         foreach ($records as $recordid => $record) {
                             if (empty($record->$fieldname)) {
-                                $records[$recordid]->$fieldname = get_string('noauthors', 'block_maj_submissions', $recordid);
+                                $records[$recordid]->$fieldname = ''; // get_string('noauthors', 'block_maj_submissions', $recordid);
                             } else {
                                 $records[$recordid]->$fieldname = block_maj_submissions::format_authornames($recordid, $record->$fieldname);
                             }

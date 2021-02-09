@@ -14,7 +14,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * load the EnglishCentral player
+ * JS required to setup schedule
  *
  * @module      block_maj_submissions/tool_setupschedule
  * @category    output
@@ -211,6 +211,7 @@ define(["jquery", "jqueryui", "core/str", // split this define statement because
         TOOL.clean_emptysessions(schedule);
         TOOL.setup_table_rooms(schedule);
         TOOL.fix_times_and_rooms(schedule);
+        TOOL.fix_multislot_times(schedule);
         TOOL.hide_multilang_spans(schedule);
         TOOL.make_sessions_droppable(schedule);
         TOOL.make_sessions_draggable(schedule);
@@ -3326,6 +3327,77 @@ define(["jquery", "jqueryui", "core/str", // split this define statement because
 
     TOOL.empty = function(v) {
         return (v===undefined || v===null);
+    };
+
+    TOOL.fix_multislot_times = function(schedule){
+
+        var r1 = new RegExp("^ *([0-9]+) *: *([0-9]+) *");
+        var r2 = new RegExp(" *([0-9]+) *: *([0-9]+) *$");
+        var m = null; // matched time parts
+
+        schedule.querySelectorAll(".session[rowspan]").forEach(function(s){
+            // remove superfluous rowspan
+            if (s.rowSpan == 1) {
+                s.removeAttribute("rowspan");
+                return;
+            }
+            // s1 (heading of first slot)
+            // s2 (heading of last slot)
+            var times = new Array();
+            var s1 = s.parentNode;
+            var s2 = s1;
+            var i = 1;
+            while (s2 && i < s.rowSpan) {
+                s2 = s2.nextElementSibling;
+                i++;
+            }
+            // get time range for first slot
+            if (s1) {
+                s1 = s1.querySelector(".timeheading .startfinish");
+                if (s1) {
+                    s1 = s1.innerText;
+                }
+            } else {
+                s1 = "";
+            }
+            // get time range for last slot
+            if (s2) {
+                s2 = s2.querySelector(".timeheading .startfinish");
+                if (s2) {
+                    s2 = s2.innerText;
+                }
+            } else {
+                s2 = "";
+            }
+            // extract start time of first slot
+            m = r1.exec(s1);
+            if (m) {
+                times.push(m[1] + ":" + m[2]);
+                s1 = parseInt(60 * m[1]) + parseInt(m[2]);
+            }
+            // extract end time of last slot
+            m = r2.exec(s2);
+            if (m) {
+                times.push(m[1] + ":" + m[2]);
+                s2 = parseInt(60 * m[1]) + parseInt(m[2]);
+            }
+            if (s1 && s2) {
+                // fix end time just after midnight
+                if (s2 < s1) {
+                    s2 += parseInt(24 * 60); // 24 hours
+                }
+                // set accurate duration for this session
+                var elm = s.querySelector(".duration");
+                if (elm) {
+                    elm.innerText = (s2 - s1) + " mins";
+                }
+                // set accurate startfinish for this session
+                var elm = s.querySelector(".startfinish");
+                if (elm) {
+                    elm.innerText = times.join(" - ");
+                }
+            }
+        });
     };
 
     return TOOL;

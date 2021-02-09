@@ -151,19 +151,19 @@ abstract class block_maj_submissions_tool_setupforum extends block_maj_submissio
         global $CFG, $DB;
 
         require_once($CFG->dirroot.'/mod/forum/lib.php');
-		require_once($CFG->dirroot.'/rating/lib.php');
+        require_once($CFG->dirroot.'/rating/lib.php');
 
         $cm = false;
         $msg = array();
 
-		$groupid = 0;
-		$groupname = '';
+        $groupid = 0;
+        $groupname = '';
 
         // get/create the $cm record and associated $section
         if ($data = $this->get_data()) {
 
             if (empty($data->resetforum)) {
-            	$data->resetforum = 0;
+                $data->resetforum = 0;
             } else {
                 // remove ALL access restrictions first
                 //$DB->set_field('course_modules', 'availability', '', array('id' => $cm->id));
@@ -179,11 +179,11 @@ abstract class block_maj_submissions_tool_setupforum extends block_maj_submissio
             $countold = 0;
             $countusers = 0;
 
-			// fetch forum object
-			$forum = $DB->get_record('forum', array('id' => $cm->instance), '*', MUST_EXIST);
-			$forum->cmidnumber = (empty($cm->idnumber) ? '' : $cm->idnumber);
-			$forum->courseid = $forum->course;
-			$forum->instance = $forum->id;
+            // fetch forum object
+            $forum = $DB->get_record('forum', array('id' => $cm->instance), '*', MUST_EXIST);
+            $forum->cmidnumber = (empty($cm->idnumber) ? '' : $cm->idnumber);
+            $forum->courseid = $forum->course;
+            $forum->instance = $forum->id;
 
             if ($data->resetforum) {
                 if ($ids = $DB->get_records('forum_discussions', array('forum' => $cm->instance), '', 'id')) {
@@ -221,32 +221,32 @@ abstract class block_maj_submissions_tool_setupforum extends block_maj_submissio
                 // fetch subscription ids (so they can be reused)
                 $ids = $DB->get_records_menu('forum_subscriptions', array('forum' => $cm->instance), 'id', 'id,userid');
                 if ($ids==false) {
-                	$ids = array();
+                    $ids = array();
                 }
                 $msg[] = get_string('forumreset', $this->plugin, $forum->name);
             }
             if ($groupid = $data->forumgroup) {
 
-				$groupname = groups_get_group_name($groupid);
-				$groupname = format_string($groupname);
+                $groupname = groups_get_group_name($groupid);
+                $groupname = format_string($groupname);
 
                 if ($userids = $DB->get_records_menu('groups_members', array('groupid' => $groupid), 'id', 'id,userid')) {
-					$countusers = count($userids);
+                    $countusers = count($userids);
 
-					// remove users who are already subscribed
+                    // remove users who are already subscribed
                     foreach ($userids as $id => $userid) {
-                    	$i = array_search($userid, $ids);
-                    	if (is_numeric($i)) {
-                    		$countold++;
-                    		unset($ids[$i]);
-                    		unset($userids[$id]);
-                    	}
+                        $i = array_search($userid, $ids);
+                        if (is_numeric($i)) {
+                            $countold++;
+                            unset($ids[$i]);
+                            unset($userids[$id]);
+                        }
                     }
 
                     // get any remaining subscription record ids
-                	$ids = array_keys($ids);
+                    $ids = array_keys($ids);
 
-					// subscribe any remaining users
+                    // subscribe any remaining users
                     foreach ($userids as $id => $userid) {
                         $params = array('forum' => $cm->instance, 'userid' => $userid);
                         if (! $DB->record_exists('forum_subscriptions', $params)) {

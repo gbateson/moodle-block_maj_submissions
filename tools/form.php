@@ -87,7 +87,7 @@ abstract class block_maj_submissions_tool_form extends moodleform {
         'timefinish' => array()
     );
     protected $permissions = array();
-    protected $restrictions = array();
+    protected $restrictions = null;
 
     /**
      * current language code and text
@@ -535,8 +535,8 @@ abstract class block_maj_submissions_tool_form extends moodleform {
             $defaultvalues[$name] = 0;
         }
 
-		// "timemodified" is required by most mod types
-		// including "data", "page" and "workshop"
+        // "timemodified" is required by most mod types
+        // including "data", "page" and "workshop"
         $defaultvalues['timemodified'] = $this->time;
 
         return $defaultvalues;
@@ -568,10 +568,22 @@ abstract class block_maj_submissions_tool_form extends moodleform {
      * @return array of stdClass()
      */
     public function get_restrictions($data) {
-        $restrictions = $this->restrictions;
+        if (isset($this->restrictions)) {
+            $restrictions = $this->restrictions;
+        } else {
+            $restrictions = (object)array(
+                'op' => '|',
+                'c' => array(),
+                'show' => true
+            );
+        }
         foreach ($this->groupfieldnames as $fieldname => $defaultname) {
             if (isset($data->$fieldname) && is_numeric($data->$fieldname)) {
-                $restrictions[] = $this->get_group_restriction($data->$fieldname);
+                $restrictions->c[] = $this->get_group_restriction($data->$fieldname);
+                if (isset($restrictions->showc)) {
+                    // hide if condition not satisfied
+                    $restrictions->showc[] = false;
+                }
             }
         }
         return $restrictions;
@@ -627,6 +639,7 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                     $modname = $this->modulename;
                     $defaultvalues = $this->get_defaultvalues($data);
                 }
+                $modnametext = get_string('pluginname', $modname);
 
                 // if activityname is empty, try to set it from the template (data2workshop)
                 if ($activityname=='' && method_exists($this, 'get_template')) {
@@ -660,15 +673,18 @@ abstract class block_maj_submissions_tool_form extends moodleform {
 
                 // create new section, if required
                 if ($sectionnum==self::CREATE_NEW) {
-                    $section = self::get_section($this->course, $sectionname);
+                    $section = self::get_section($msg, $this->plugin, $this->course, $sectionname);
                 } else {
                     $section = get_fast_modinfo($this->course)->get_section_info($sectionnum);
                 }
 
                 if ($section) {
-					$is_resource = in_array($modname, array('book', 'folder', 'imscp', 'page', 'resource', 'url'));
+                    $is_resource = in_array($modname, array('book', 'folder', 'imscp', 'page', 'resource', 'url'));
                     $cm = self::get_coursemodule($this->course, $section, $modname, $activityname, $defaultvalues);
 
+                    // setup parameters for "get_string()"
+                    $a = (object)array('type' => $modnametext,
+                                       'name' => $activitynametext);
                     if ($cm) {
                         if ($this->type) {
                             if ($this->cmid==0) {
@@ -678,23 +694,14 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                                 $this->instance->instance_config_save($this->instance->config);
                             }
                         }
-
                         // create link to new module
-                        $link = "/mod/$modname/view.php";
-                        $link = new moodle_url($link, array('id' => $cm->id));
-                        $link = html_writer::link($link, $activitynametext, array('target' => '_blank'));
-
-						if ($is_resource) {
-							$msg[] = get_string('newresourcecreated', $this->plugin, $link);
-						} else {
-							$msg[] = get_string('newactivitycreated', $this->plugin, $link);
-						}
+                        if ($modname != 'label') {
+                            $url = new moodle_url("/mod/$modname/view.php", array('id' => $cm->id));
+                            $a->name = html_writer::link($url, $a->name, array('target' => 'MAJ'));
+                        }
+                        $msg[] = get_string('newmodcreated', $this->plugin, $a);
                     } else {
-						if ($is_resource) {
-							$msg[] = get_string('newresourceskipped', $this->plugin, $activitynametext);
-						} else {
-							$msg[] = get_string('newactivityskipped', $this->plugin, $activitynametext);
-						}
+                        $msg[] = get_string('newmodfailed', $this->plugin, $a);
                     }
                 }
             } else {
@@ -784,27 +791,27 @@ abstract class block_maj_submissions_tool_form extends moodleform {
     public function get_menufield_options($dataid, $name, $numerickeys=false) {
         global $DB;
         $options = array();
-		$params = array('dataid' => $dataid, 'name' => $name);
-		if ($record = $DB->get_record('data_fields', $params)) {
-			$search = self::bilingual_string();
-			if (self::is_low_ascii_language()) {
-				$replace = '$2'; // low-ascii language e.g. English
-			} else {
-				$replace = '$1'; // high-ascii/multibyte language
-			}
-			$options = preg_split('/[\r\n]+/', $record->param1);
-			$options = array_filter($options);
-			$options = array_flip($options);
-			foreach (array_keys($options) as $option) {
-			    if (strpos($option, 'multilang')===false) {
-			        // no multilang spans, so extract double/single byte string
+        $params = array('dataid' => $dataid, 'name' => $name);
+        if ($record = $DB->get_record('data_fields', $params)) {
+            $search = self::bilingual_string();
+            if (self::is_low_ascii_language()) {
+                $replace = '$2'; // low-ascii language e.g. English
+            } else {
+                $replace = '$1'; // high-ascii/multibyte language
+            }
+            $options = preg_split('/[\r\n]+/', $record->param1);
+            $options = array_filter($options);
+            $options = array_flip($options);
+            foreach (array_keys($options) as $option) {
+                if (strpos($option, 'multilang')===false) {
+                    // no multilang spans, so extract double/single byte string
                     $options[$option] = preg_replace($search, $replace, $option);
-			    } else {
-			        // reduce multilang spans to a single string
+                } else {
+                    // reduce multilang spans to a single string
                     $options[$option] = format_string($option);
-			    }
-			}
-		}
+                }
+            }
+        }
         if ($numerickeys) {
            $options = array_keys($options);
         }
@@ -908,12 +915,14 @@ abstract class block_maj_submissions_tool_form extends moodleform {
      * get_section
      *
      * @uses $DB
+     * @param array $msg
+     * @param string $plugin
      * @param object $course
      * @param string $sectionname
      * @return object
      * @todo Finish documenting this function
      */
-    static public function get_section($course, $sectionname) {
+    static public function get_section(&$msg, $plugin, $course, $sectionname) {
         global $DB;
 
         // some DBs (e.g. MSSQL) cannot compare TEXT fields
@@ -955,8 +964,12 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                 'name'          => $sectionname,
                 'summary'       => '',
                 'summaryformat' => FORMAT_HTML,
+                'timemodified' => time(),
             );
-            $section->id = $DB->insert_record('course_sections', $section);
+            if ($section->id = $DB->insert_record('course_sections', $section, $sectionname)) {
+                $url = block_maj_submissions::get_sectionlink($course->id, $sectionnum);
+                $msg[] = get_string('newsectioncreated', $plugin, html_writer::link($url, $sectionname));
+            }
         }
 
         if ($section) {
@@ -1152,7 +1165,11 @@ abstract class block_maj_submissions_tool_form extends moodleform {
 
         if (class_exists('\core_availability\info_module')) {
             // Moodle >= 2.7
+            $table = 'course_modules';
 
+            if (is_numeric($cm)) {
+                $cm = $DB->get_record($table, array('id' => $cm));
+            }
             if ($cm instanceof stdClass) {
                 $cm = cm_info::create($cm);
             }
@@ -1166,43 +1183,84 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                 $structure = $tree->save();
             }
 
-            $structure = self::fix_cm_restrictions($cm, $structure, $restrictions);
+            $structure = self::merge_restrictions($cm, $structure, $restrictions);
 
             // encode availability $structure
             if (empty($structure->c)) {
                 $availability = null;
             } else {
                 $availability = json_encode($structure);
-                //if (preg_match_all('/(?<="showc":\[).*?(?=\])/', $availability, $matches, PREG_OFFSET_CAPTURE)) {
-                //    $replace = array('0' => 'false',
-                //                     '1' => 'true');
-                //    $i_max = (count($matches[0]) - 1);
-                //    for ($i=$i_max; $i>=0; $i--) {
-                //        list($match, $start) = $matches[0][$i];
-                //        $availability = substr_replace($availability, strtr($match, $replace), $start, strlen($match));
-                //    }
-                //}
             }
 
             // update availability in database
             if ($cm->availability==$availability) {
                 // do nothing
             } else {
-                $DB->set_field('course_modules', 'availability', $availability, array('id' => $cm->id));
+                $DB->set_field($table, 'availability', $availability, array('id' => $cm->id));
                 rebuild_course_cache($cm->course);
             }
         }
-
     }
 
     /**
-     * fix_cm_restrictions
+     * set access restrctions (=availability) on a newly created $section
      *
-     * @param object $cm
-     * @param object $structure
+     * @param course module object
+     * @param array of stdClass $availability (decoded from JSON)
+     * @todo Finish documenting this function
+     */
+    static public function set_section_restrictions($section, $restrictions) {
+        global $DB;
+
+        if (class_exists('\\core_availability\\info_section')) {
+            // Moodle >= 2.7
+            $table = 'course_sections';
+
+            if (is_numeric($section)) {
+                $section = $DB->get_record($table, array('id' => $section));
+            }
+            if ($section instanceof stdClass) {
+                $modinfo = get_fast_modinfo($section->course);
+                $section = new section_info($section, $section->section, null, null, $modinfo, null);
+            }
+
+            // get current availability structure for this $section
+            if (empty($section->availability)) {
+                $structure = null;
+            } else {
+                $info = new \core_availability\info_section($section);
+                $tree = $info->get_availability_tree();
+                $structure = $tree->save();
+            }
+
+            // merge restrictions
+            $structure = self::merge_restrictions($section, $structure, $restrictions);
+
+            // encode availability $structure
+            if (empty($structure->c)) {
+                $availability = null;
+            } else {
+                $availability = json_encode($structure);
+            }
+
+            // update availability in database
+            if ($section->availability == $availability) {
+                // do nothing
+            } else {
+                $DB->set_field($table, 'availability', $availability, array('id' => $section->id));
+                rebuild_course_cache($section->course);
+            }
+        }
+    }
+
+    /**
+     * merge_restrictions
+     *
+     * @param object $object 
+     * @param object $structure from the $section or $cm
      * @param array of stdClass() $restrictions
      */
-    static public function fix_cm_restrictions($cm, $structure, $restrictions) {
+    static public function merge_restrictions($object, $structure, $restrictions) {
         global $DB;
 
         if (empty($structure)) {
@@ -1214,15 +1272,15 @@ abstract class block_maj_submissions_tool_form extends moodleform {
         if (! isset($structure->c)) {
             $structure->c = array();
         }
-        if ($structure->op=='|') {
+        if ($structure->op=='|' || $structure->op=='!&') {
             if (! isset($structure->show)) {
                 $structure->show = false;
             }
             unset($structure->showc);
         }
-        if ($structure->op=='&') {
+        if ($structure->op=='&' || $structure->op=='!|') {
             if (! isset($structure->showc)) {
-                $structure->showc = array_fill(0, count($structure->showc), false);
+                $structure->showc = array_fill(0, count($structure->c), false);
             }
             unset($structure->show);
         }
@@ -1235,28 +1293,36 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                 switch ($old->type) {
                     case 'completion':
                         $table = 'course_modules';
-                        $params = array('id' => $old->cm, 'course' => $cm->course);
+                        $params = array('id' => $old->cm, 'course' => $object->course);
                         break;
                     case 'grade':
                         $table = 'grade_items';
-                        $params = array('id' => $old->id, 'courseid' => $cm->course);
+                        $params = array('id' => $old->id, 'courseid' => $object->course);
                         break;
                     case 'group':
                         $table = 'groups';
-                        $params = array('id' => $old->id, 'courseid' => $cm->course);
+                        $params = array('id' => $old->id, 'courseid' => $object->course);
                         break;
                     case 'grouping':
                         $table = 'groupings';
-                        $params = array('id' => $old->id, 'courseid' => $cm->course);
+                        $params = array('id' => $old->id, 'courseid' => $object->course);
+                        break;
+                    case 'role': // 3rd-party plugin
+                        $table = 'role';
+                        $params = array('id' => $old->id);
                         break;
                     default:
                         $table = '';
                         $params = array();
                 }
                 if ($table=='' || $DB->record_exists($table, $params)) {
-                    // do nothing
+                    // $params are valid - do nothing
                 } else {
+                    // remove this condition
                     array_splice($structure->c, $i, 1);
+                    if (isset($structure->showc)) {
+                        array_splice($structure->showc, $i, 1);
+                    }
                 }
             } else if (isset($old->op) && isset($old->c)) {
                 // a subset of restrictions
@@ -1264,11 +1330,11 @@ abstract class block_maj_submissions_tool_form extends moodleform {
         }
 
         // add new $restrictions if they do not exist in $structure
-        foreach ($restrictions as $i => $new) {
-            $found = false;
+        foreach ($restrictions->c as $i => $new) {
+            $missing = true;
             foreach ($structure->c as $old) {
                 $params = false;
-                if ($old->type==$new->type) {
+                if ($old->type == $new->type) {
                     switch ($old->type) {
                         case 'completion': $params = array('cm', 'e');          break;
                         case 'date':       $params = array('d',  't');          break;
@@ -1276,24 +1342,34 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                         case 'group':      $params = array('id');               break;
                         case 'grouping':   $params = array('id');               break;
                         case 'profile':    $params = array('sf', 'op', 'v');    break;
+                        case 'role':       $params = array('id');               break;
                     }
                 }
                 if ($params) {
-                    $found = true;
+                    $missing = false;
                     foreach ($params as $param) {
                         if (isset($old->$param) && isset($new->$param) && $old->$param==$new->$param) {
                             // do nothing
                         } else {
-                            $found = false;
+                            $missing = true; // $param doesn't match on $old and $new condition
                         }
                     }
                 }
-                if ($found) {
-                    break;
+                if (! $missing) {
+                    break; // this restriction already exists
                 }
             }
-            if ($found==false) {
+            if ($missing) {
                 array_push($structure->c, $new);
+                if (isset($structure->showc)) {
+                    if (isset($restrictions->showc)) {
+                        $structure->showc[] = $restrictions->showc[$i];
+                    } else if (isset($restrictions->show)) {
+                        $structure->showc[] = $restrictions->show;;
+                    } else {
+                        $structure->showc[] = false;
+                    }
+                }
             }
         }
 

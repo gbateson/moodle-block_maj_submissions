@@ -78,9 +78,9 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
         $this->add_field($mform, $this->plugin, $name, 'selectgroups', PARAM_INT, $options, 0);
 
         $this->add_group_fields($mform);
-		foreach ($this->groupfieldnames as $fieldname => $defaultname) {
-			$mform->disabledIf($fieldname, 'targetworkshop', 'eq', 0);
-		}
+        foreach ($this->groupfieldnames as $fieldname => $defaultname) {
+            $mform->disabledIf($fieldname, 'targetworkshop', 'eq', 0);
+        }
 
         $name = 'resetpasswords';
         $this->add_field($mform, $this->plugin, $name, 'selectyesno', PARAM_INT);
@@ -527,19 +527,23 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                 );
                 // restrict access to program committee, if available
                 // otherwise, hide from students
-				$name = 'programcommittee';
-				if (isset($data->$name) && is_numeric($data->$name)) {
-					$pagedata->$name = $data->$name;
-                    $restrictions = array($this->get_group_restriction($data->$name));
-				} else {
-					$pagedata->visible = 0; // hide from students
+                $name = 'programcommittee';
+                if (isset($data->$name) && is_numeric($data->$name)) {
+                    $pagedata->$name = $data->$name;
+                    $restrictions = (object)array(
+                        'op' => '!',
+                        'c' => array($this->get_group_restriction($data->$name)),
+                        'show' => false
+                    );
+                } else {
+                    $pagedata->visible = 0; // hide from students
                     $restrictions = false;
-				}
-				if ($page = $this->get_cm($msg, $pagedata, 'page', $a)) {
+                }
+                if ($page = $this->get_cm($msg, $pagedata, 'page', $a)) {
                     if ($restrictions) {
                         self::set_cm_restrictions($page, $restrictions);
                     }
-				}
+                }
 
             }
         }

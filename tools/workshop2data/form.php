@@ -158,9 +158,9 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
     protected function get_statuslevel_options() {
         if ($dataid = $this->get_dataid('targetdatabasenum')) {
             $options = $this->get_menufield_options($dataid, 'submission_status');
-    	} else {
-    		$options = array();
-    	}
+        } else {
+            $options = array();
+        }
         return $options;
     }
 
@@ -277,22 +277,23 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                 );
 
                 // hide list of from ordinary users (=students)
-				$name = 'programcommittee';
-				if (empty($data->$name)) {
-					$pagedata->visible = 0;
-				} else {
-					$pagedata->visible = 1;
-				}
+                $name = 'programcommittee';
+                if (empty($data->$name)) {
+                    $pagedata->visible = 0;
+                } else {
+                    $pagedata->visible = 1;
+                }
 
-				// create Moodle page page
+                // create Moodle page page
                 $cm = $this->get_cm($msg, $pagedata, 'page');
 
                 // restrict access to "Program Committee" only
                 if (isset($data->$name) && is_numeric($data->$name)) {
-                    $restrictions = array((object)array(
-                        'type' => 'group',
-                        'id' => intval($data->$name)
-                    ));
+                    $restrictions = (object)array(
+                        'op' => '|',
+                        'c' => array((object)array('type' => 'group', 'id' => intval($data->$name))),
+                        'show' => true
+                    );
                     self::set_cm_restrictions($cm, $restrictions);
                 }
             }

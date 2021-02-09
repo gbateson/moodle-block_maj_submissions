@@ -90,9 +90,9 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
             $sectionnum = 0;
         }
 
-		$name = 'sourcedatabase';
-		$this->add_field_sourcedatabase($mform, $name);
-		$this->add_field_filterconditions($mform, 'filterconditions', $name);
+        $name = 'sourcedatabase';
+        $this->add_field_sourcedatabase($mform, $name);
+        $this->add_field_filterconditions($mform, 'filterconditions', $name);
 
         $name = 'targetworkshop';
         $this->add_field_cm($mform, $this->course, $this->plugin, $name, $this->cmid);
@@ -201,85 +201,85 @@ class block_maj_submissions_tool_data2workshop extends block_maj_submissions_too
             $params = array('groupid' => $data->anonymousauthors);
             $anonymous = $DB->get_records_menu('groups_members', $params, null, 'id,userid');
 
-			// specifiy the presentation fields that we want
-			$fields = array('presentation_title' => '',
-							'presentation_type' => '',
-							'presentation_language' => '',
-							'presentation_keywords' => '',
-							'charcount' => 0,
-							'wordcount' => 0,
-							'presentation_abstract' => '');
+            // specifiy the presentation fields that we want
+            $fields = array('presentation_title' => '',
+                            'presentation_type' => '',
+                            'presentation_language' => '',
+                            'presentation_keywords' => '',
+                            'charcount' => 0,
+                            'wordcount' => 0,
+                            'presentation_abstract' => '');
 
-			// get all records matching the filters (may update $data and $fields)
+            // get all records matching the filters (may update $data and $fields)
             if ($records = $this->get_filtered_records($dataid, $data, $fields)) {
 
-				$duplicaterecords = array();
-				$duplicateauthors = array();
-				$duplicatesubmissions = array();
+                $duplicaterecords = array();
+                $duplicateauthors = array();
+                $duplicatesubmissions = array();
 
-				// sanitize submission titles (and remove duplicates)
-				foreach ($records as $id => $record) {
-					if (empty($record->presentation_title)) {
-						$title = get_string('notitle', $this->plugin, $record->recordid);
-					} else {
-						$title = block_maj_submissions::plain_text($record->presentation_title);
-					}
-					if (array_key_exists($title, $duplicaterecords)) {
-						$duplicaterecords[$title]++;
-						unset($records[$id]);
-					} else {
-						$duplicaterecords[$title] = 0;
-						$records[$id]->title = $title;
-					}
-				}
+                // sanitize submission titles (and remove duplicates)
+                foreach ($records as $id => $record) {
+                    if (empty($record->presentation_title)) {
+                        $title = get_string('notitle', $this->plugin, $record->recordid);
+                    } else {
+                        $title = block_maj_submissions::plain_text($record->presentation_title);
+                    }
+                    if (array_key_exists($title, $duplicaterecords)) {
+                        $duplicaterecords[$title]++;
+                        unset($records[$id]);
+                    } else {
+                        $duplicaterecords[$title] = 0;
+                        $records[$id]->title = $title;
+                    }
+                }
 
-				// remove duplicate authors and submissions
-				if (empty($data->resetsubmissions)) {
+                // remove duplicate authors and submissions
+                if (empty($data->resetsubmissions)) {
 
-					// we should exclude authors who already have a submission,
-					// because the workshop module allows only ONE submission per user.
-					if ($submissions = $workshop->get_submissions('all', $data->anonymousauthors)) {
-						foreach ($submissions as $submission) {
-							$id = array_search($submission->authorid, $anonymous);
-							if (is_numeric($id)) {
-								$duplicateauthors[] = $submission->authorid;
-								unset($anonymous[$id]);
-							}
-						}
-					}
+                    // we should exclude authors who already have a submission,
+                    // because the workshop module allows only ONE submission per user.
+                    if ($submissions = $workshop->get_submissions('all', $data->anonymousauthors)) {
+                        foreach ($submissions as $submission) {
+                            $id = array_search($submission->authorid, $anonymous);
+                            if (is_numeric($id)) {
+                                $duplicateauthors[] = $submission->authorid;
+                                unset($anonymous[$id]);
+                            }
+                        }
+                    }
 
-					// skip database records that already exist in the workshop
-					foreach ($records as $id => $record) {
-						$title = $record->presentation_title;
-						if (array_key_exists($title, $duplicatesubmissions)) {
-							$duplicatesubmissions[$title]++;
-							unset($records[$id]);
-						} else if ($DB->record_exists('workshop_submissions', array('title' => $title, 'workshopid' => $cm->instance))) {
-							$duplicatesubmissions[$title] = 1;
-							unset($records[$id]);
-						} else {
-							$duplicatesubmissions[$title] = 0;
-						}
-					}
-				}
+                    // skip database records that already exist in the workshop
+                    foreach ($records as $id => $record) {
+                        $title = $record->presentation_title;
+                        if (array_key_exists($title, $duplicatesubmissions)) {
+                            $duplicatesubmissions[$title]++;
+                            unset($records[$id]);
+                        } else if ($DB->record_exists('workshop_submissions', array('title' => $title, 'workshopid' => $cm->instance))) {
+                            $duplicatesubmissions[$title] = 1;
+                            unset($records[$id]);
+                        } else {
+                            $duplicatesubmissions[$title] = 0;
+                        }
+                    }
+                }
 
-				if ($count = count($duplicateauthors)) {
-					$msg[] = get_string('duplicateauthors', $this->plugin, $count);
-				}
+                if ($count = count($duplicateauthors)) {
+                    $msg[] = get_string('duplicateauthors', $this->plugin, $count);
+                }
 
-				$duplicaterecords = array_filter($duplicaterecords);
-				if ($count = count($duplicaterecords)) {
-					$a = html_writer::alist(array_keys($duplicaterecords));
-					$a = (object)array('count' => $count,'list' => $a);
-					$msg[] = get_string('duplicaterecords', $this->plugin, $a);
-				}
+                $duplicaterecords = array_filter($duplicaterecords);
+                if ($count = count($duplicaterecords)) {
+                    $a = html_writer::alist(array_keys($duplicaterecords));
+                    $a = (object)array('count' => $count,'list' => $a);
+                    $msg[] = get_string('duplicaterecords', $this->plugin, $a);
+                }
 
-				$duplicatesubmissions = array_filter($duplicatesubmissions);
-				if ($count = count($duplicatesubmissions)) {
-					$a = html_writer::alist(array_keys($duplicatesubmissions));
-					$a = (object)array('count' => $count,'list' => $a);
-					$msg[] = get_string('duplicatesubmissions', $this->plugin, $a);
-				}
+                $duplicatesubmissions = array_filter($duplicatesubmissions);
+                if ($count = count($duplicatesubmissions)) {
+                    $a = html_writer::alist(array_keys($duplicatesubmissions));
+                    $a = (object)array('count' => $count,'list' => $a);
+                    $msg[] = get_string('duplicatesubmissions', $this->plugin, $a);
+                }
 
                 $countanonymous = count($anonymous);
                 $countselected = count($records);

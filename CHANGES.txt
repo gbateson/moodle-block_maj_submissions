@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-02-09 (75)
+ - add JS to fix times and durations of multi-slot sessions in the schedule
+
 2021-02-04 (74)
  - add tool to create video activities for each record in the submissions database
 

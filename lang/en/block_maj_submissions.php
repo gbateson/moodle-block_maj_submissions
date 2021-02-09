@@ -252,14 +252,12 @@ If you click on the &quot;+&quot; sign next to one of the dates, the name of the
 Note that if the &quot;Display dates&quot; is set to &quot;No&quot; then no date will be displayed. Also, if a format is specified in the &quot;Custom date format string&quot; setting, then that will override the string selected here.';
 $string['multiplerooms'] = 'Multiple rooms';
 $string['myschedule'] = 'My schedule';
-$string['newactivitycreated'] = 'New activity created: {$a}';
-$string['newactivityskipped'] = 'Creation of new activity skipped: {$a}';
 $string['newfeedback'] = 'New feedback';
 $string['newfeedback_help'] = 'Select the new feedback for the selected records. If you select "Custom", you should add custom feedback.';
 $string['newgroupcreated'] = 'New group created: {$a}';
 $string['newgroupmembers'] = '{$a->count} member(s) added to group: {$a->name}';
-$string['newresourcecreated'] = 'New resource created: {$a}';
-$string['newresourceskipped'] = 'Creation of new resource skipped: {$a}';
+$string['newmodfailed'] = 'Oops, could NOT create new {$a->type}: {$a->name}';
+$string['newmodcreated'] = 'New {$a->type} created: {$a->name}';
 $string['newscore'] = 'New score';
 $string['newscore_help'] = 'If a value is specified here, it will be set as the "Review score" for the selected records.
 
@@ -413,6 +411,8 @@ $string['resetsubmissions_help'] = 'This setting specifies whether or not to res
 
 **Yes**
 : All old submissions will be removed from the target workshop before new submissions are transferred from the source database. In addition, any links from other databases to the target workshop will be removed.';
+$string['restrictroleid'] = 'Restrict access by role';
+$string['restrictroleid_help'] = 'Access to the section containing the video activities will be restricted to users with the spcified role.';
 $string['reviewcmids'] = 'Review activity [{no}]';
 $string['reviewcmids_help'] = 'A workshop activity that is used to peer review submissions.';
 $string['reviewdeadline'] = 'Review deadline';
@@ -709,6 +709,3 @@ $string['workshopsrecord'] = 'a workshop proposal';
 $string['workshopstime'] = 'Conference workshops';
 $string['workshopstime_help'] = 'The start and finish dates of the conference workshops.';
 $string['youwillbenotified'] = 'When the changes have been made, they will be reviewed and you will be notified of the new acceptance status.';
-
-$string['duplicatevideorecords'] = 'No video activities were created for the {$a->count} duplicate records in the submissions database: {$a->list}.';
-$string['duplicatevideos'] = 'No video activities were created for the {$a->count} videos that already exist in this course: {$a->list}';

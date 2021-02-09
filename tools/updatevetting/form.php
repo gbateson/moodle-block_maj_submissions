@@ -45,11 +45,11 @@ class block_maj_submissions_tool_updatevetting extends block_maj_submissions_too
     public function definition() {
         global $PAGE;
 
-		if (method_exists($PAGE->requires, 'js_call_amd')) {
-			// Moodle >= 2.9
+        if (method_exists($PAGE->requires, 'js_call_amd')) {
+            // Moodle >= 2.9
             $PAGE->requires->js_call_amd('block_maj_submissions/tool_updatevetting', 'init');
             $PAGE->requires->jquery_plugin('ui-css');
-		}
+        }
 
         $mform = $this->_form;
         $this->set_form_id($mform);
@@ -57,25 +57,25 @@ class block_maj_submissions_tool_updatevetting extends block_maj_submissions_too
         // fetch default form values
         $default = $this->get_default_formvalues();
 
-		$name = 'sourcedatabase';
-		$this->add_field_sourcedatabase($mform, $name);
+        $name = 'sourcedatabase';
+        $this->add_field_sourcedatabase($mform, $name);
 
         // other fields are all depedent on the "sourcedatabase" being set
-		$dependantname = $name;
+        $dependantname = $name;
 
-		$include = 'peer_review_score,presentation_title,presentation_type,submission_status';
-		$exclude = '';
+        $include = 'peer_review_score,presentation_title,presentation_type,submission_status';
+        $exclude = '';
 
-		$name = 'filterconditions';
-		$this->add_field_filterconditions($mform, $name, $dependantname, $include, $exclude);
+        $name = 'filterconditions';
+        $this->add_field_filterconditions($mform, $name, $dependantname, $include, $exclude);
 
-		$name = 'search';
+        $name = 'search';
         $options = array('size' => self::TEXT_FIELD_SIZE);
         $this->add_field($mform, $this->plugin, $name, 'text', PARAM_TEXT, $options);
         $mform->disabledIf($name, $dependantname, 'eq', 0);
 
-		$name = 'sort';
-		$label = get_string($name, $this->plugin);
+        $name = 'sort';
+        $label = get_string($name, $this->plugin);
         $elements = array(
             $mform->createElement('select', $name.'field', '', $this->get_field_options($include, $exclude)),
             $mform->createElement('select', $name.'direction', '', $this->get_sortdirection_options())
@@ -88,8 +88,8 @@ class block_maj_submissions_tool_updatevetting extends block_maj_submissions_too
         $mform->setDefault($name.'direction', $default->sortdirection);
         $mform->disabledIf($name, $dependantname, 'eq', 0);
 
-		$name = 'displayperpage';
-		$options = $this->get_sortperpage_options();
+        $name = 'displayperpage';
+        $options = $this->get_sortperpage_options();
         $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options, $default->$name);
         $mform->disabledIf($name, $dependantname, 'eq', 0);
 
@@ -187,16 +187,16 @@ class block_maj_submissions_tool_updatevetting extends block_maj_submissions_too
         $SESSION->dataprefs[$dataid]['sort'] = $default->sortfield;
         $SESSION->dataprefs[$dataid]['order'] = $default->sortdirection;
 
-		$options = $this->get_newstatus_options();
-		$default->newstatus = '';
-		foreach ($options as $key => $value) {
-		    if (strpos($key, 'Accepted')===false) {
-		        continue;
-		    }
-		    if (strpos($key, 'Not')===false && strpos($key, 'Conditionally')===false) {
-		        $default->newstatus = $key;
-		    }
-		}
+        $options = $this->get_newstatus_options();
+        $default->newstatus = '';
+        foreach ($options as $key => $value) {
+            if (strpos($key, 'Accepted')===false) {
+                continue;
+            }
+            if (strpos($key, 'Not')===false && strpos($key, 'Conditionally')===false) {
+                $default->newstatus = $key;
+            }
+        }
 
         return $default;
     }
@@ -329,9 +329,9 @@ class block_maj_submissions_tool_updatevetting extends block_maj_submissions_too
     protected function get_newstatus_options() {
         if ($dataid = $this->get_dataid('sourcedatabasenum')) {
             $options = $this->get_menufield_options($dataid, 'submission_status');
-    	} else {
-    		$options = array();
-    	}
+        } else {
+            $options = array();
+        }
         return $options;
     }
 
@@ -370,8 +370,8 @@ class block_maj_submissions_tool_updatevetting extends block_maj_submissions_too
             // cache the database id
             $dataid = $this->get_dataid('sourcedatabase');
 
-			// specifiy the presentation fields that we want
-			$fields = array('peer_review_details' => '', // set $submission->grade (must come 1st)
+            // specifiy the presentation fields that we want
+            $fields = array('peer_review_details' => '', // set $submission->grade (must come 1st)
                             'submission_status'   => '', // set $status from $submission->grade
                             'peer_review_score'   => '', // requires $submission->grade
                             'peer_review_notes'   => '', // requires $status
@@ -380,7 +380,7 @@ class block_maj_submissions_tool_updatevetting extends block_maj_submissions_too
                             'presentation_original' => '',
                             'presentation_abstract' => '');
 
-			// get all records matching the filters (may update $data and $fields)
+            // get all records matching the filters (may update $data and $fields)
             if ($records = $this->get_filtered_records($dataid, $data, $fields, $recordids)) {
 
                 // initialize array of data records that were added/updated

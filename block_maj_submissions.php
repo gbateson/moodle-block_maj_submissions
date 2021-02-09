@@ -980,24 +980,24 @@ class block_maj_submissions extends block_base {
      * @return`array (string of SQL, array of SQL params)
      */
     public function get_dataids_sql() {
-    	global $DB;
+        global $DB;
 
-		$ids = array();
-		if ($cmid = $this->config->collectpresentationscmid) {
-			$ids[] = $DB->get_field('course_modules', 'instance', array('id' => $cmid));
-		}
-		if ($cmid = $this->config->collectsponsoredscmid) {
-			$ids[] = $DB->get_field('course_modules', 'instance', array('id' => $cmid));
-		}
-		if ($cmid = $this->config->collectworkshopscmid) {
-			$ids[] = $DB->get_field('course_modules', 'instance', array('id' => $cmid));
-		}
-		$ids = array_filter($ids);
-		if (empty($ids)) {
-			return array('?', array(0));
-		} else {
-			return $DB->get_in_or_equal($ids);
-		}
+        $ids = array();
+        if ($cmid = $this->config->collectpresentationscmid) {
+            $ids[] = $DB->get_field('course_modules', 'instance', array('id' => $cmid));
+        }
+        if ($cmid = $this->config->collectsponsoredscmid) {
+            $ids[] = $DB->get_field('course_modules', 'instance', array('id' => $cmid));
+        }
+        if ($cmid = $this->config->collectworkshopscmid) {
+            $ids[] = $DB->get_field('course_modules', 'instance', array('id' => $cmid));
+        }
+        $ids = array_filter($ids);
+        if (empty($ids)) {
+            return array('?', array(0));
+        } else {
+            return $DB->get_in_or_equal($ids);
+        }
     }
 
     /**
@@ -1007,17 +1007,17 @@ class block_maj_submissions extends block_base {
      * @return`array ($records, $fieldsnames)
      */
     public function get_multilang_fieldnames($fields) {
-    	global $DB;
+        global $DB;
 
         // get SQL to match ids of database activities connected with this block
         list($datawhere, $params) = $this->get_dataids_sql();
 
         // build SQL to extract field names
-    	$where = array();
-    	foreach ($fields as $field) {
-    	    $where[] = $DB->sql_like('name', '?');
-    	    $params[] = $field.'%';
-    	}
+        $where = array();
+        foreach ($fields as $field) {
+            $where[] = $DB->sql_like('name', '?');
+            $params[] = $field.'%';
+        }
 
         $where = implode(' OR ', $where);
         $where = "dataid $datawhere AND ($where)";
@@ -1031,44 +1031,44 @@ class block_maj_submissions extends block_base {
      * @return`array ($records, $fieldsnames)
      */
     public function get_submission_records($fields) {
-    	global $DB;
+        global $DB;
 
         // get SQL to match ids of database activities connected with this block
         list($datawhere, $dataparams) = $this->get_dataids_sql();
 
-		list($where, $params) = $DB->get_in_or_equal($fields);
-		$select = 'dc.id, df.name, dc.recordid, dc.content';
-		$from   = '{data_content} dc '.
-				  'LEFT JOIN {data_fields} df ON dc.fieldid = df.id';
-		$where  = "df.dataid $datawhere AND df.name $where";
-		$params = array_merge($dataparams, $params);
-		$order  = 'dc.recordid';
+        list($where, $params) = $DB->get_in_or_equal($fields);
+        $select = 'dc.id, df.name, dc.recordid, dc.content';
+        $from   = '{data_content} dc '.
+                  'LEFT JOIN {data_fields} df ON dc.fieldid = df.id';
+        $where  = "df.dataid $datawhere AND df.name $where";
+        $params = array_merge($dataparams, $params);
+        $order  = 'dc.recordid';
 
-		$records = array();
-		$fieldnames = array();
-		if ($values = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
-			foreach ($values as $value) {
-				if (empty($value->content)) {
-					continue;
-				}
-				$rid = $value->recordid;
-				$fieldname = $value->name;
-				$fieldnames[$fieldname] = true;
-				if (empty($records[$rid])) {
-					$records[$rid] = new stdClass();
-				}
+        $records = array();
+        $fieldnames = array();
+        if ($values = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
+            foreach ($values as $value) {
+                if (empty($value->content)) {
+                    continue;
+                }
+                $rid = $value->recordid;
+                $fieldname = $value->name;
+                $fieldnames[$fieldname] = true;
+                if (empty($records[$rid])) {
+                    $records[$rid] = new stdClass();
+                }
 
-				// remove HTML comments, script/style blocks, and HTML tags
-				// and standardize white space to a single one-byte space
-				$value = $value->content;
-				$value = preg_replace('/<!-.*?->\s*/us', '', $value);
-				$value = preg_replace('/<(script|style)[^>]*>.*?<\/\1>\s*/ius', '', $value);
-				$value = preg_replace('/<.*?>\s*/us', ' ', $value);
-				$value = preg_replace('/(\x3000|\s)+/us', ' ', $value);
-				$records[$rid]->$fieldname = trim($value);
-			}
-		}
-		return array($records, $fieldnames);
+                // remove HTML comments, script/style blocks, and HTML tags
+                // and standardize white space to a single one-byte space
+                $value = $value->content;
+                $value = preg_replace('/<!-.*?->\s*/us', '', $value);
+                $value = preg_replace('/<(script|style)[^>]*>.*?<\/\1>\s*/ius', '', $value);
+                $value = preg_replace('/<.*?>\s*/us', ' ', $value);
+                $value = preg_replace('/(\x3000|\s)+/us', ' ', $value);
+                $records[$rid]->$fieldname = trim($value);
+            }
+        }
+        return array($records, $fieldnames);
     }
 
     /**
@@ -1681,19 +1681,14 @@ class block_maj_submissions extends block_base {
     /**
      * get_sectionlink
      *
-     * names longer than $namelength will be trancated to to HEAD ... TAIL
-     * where the number of characters in HEAD is $headlength
-     * and the number of characters in TIAL is $taillength
-     *
-     * @param object   $section
-     * @param integer  $namelength of section name (optional, default=28)
-     * @param integer  $headlength of head of section name (optional, default=10)
-     * @param integer  $taillength of tail of section name (optional, default=10)
+     * @param integer  $courseid
+     * @param integer  $sectionnum
+     * @param integer  $coursedisplay (optional, default=null)
      * @return string  name of $section
      */
-    static public function get_sectionlink($courseid, $sectionnum, $coursedisplay) {
+    static public function get_sectionlink($courseid, $sectionnum, $coursedisplay=null) {
         $url = new moodle_url('/course/view.php', array('id' => $courseid));
-        if ($coursedisplay==COURSE_DISPLAY_SINGLEPAGE) {
+        if ($coursedisplay===null || $coursedisplay==COURSE_DISPLAY_SINGLEPAGE) {
             $url->set_anchor("section-$sectionnum");
         } else {
             $url->param('section', $sectionnum);
@@ -1708,7 +1703,7 @@ class block_maj_submissions extends block_base {
      *
      * names longer than $namelength will be trancated to to HEAD ... TAIL
      * where the number of characters in HEAD is $headlength
-     * and the number of characters in TIAL is $taillength
+     * and the number of characters in TAIL is $taillength
      *
      * @param object   $section
      * @param integer  $namelength of section name (optional, default=28)

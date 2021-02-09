@@ -237,11 +237,11 @@ abstract class block_maj_submissions_tool_filterconditions extends block_maj_sub
         $order  = '';
         $params = array();
 
-        // add SQL to fetch only required records
-        $this->add_filter_sql($data, $select, $from, $where, $params);
-
         // add SQL to fetch presentation content
         $this->add_content_sql($data, $select, $from, $where, $order, $params, $fields, $dataid);
+
+        // add SQL to fetch only required records
+        $this->add_filter_sql($data, $select, $from, $where, $params);
 
         $where[] = 'dr.dataid = ?';
         $params[] = $dataid;
@@ -267,6 +267,7 @@ abstract class block_maj_submissions_tool_filterconditions extends block_maj_sub
         if ($data->displayperpage) {
             $sql .= " LIMIT 0,$data->displayperpage";
         }
+
         return $DB->get_records_sql($sql, $params);
     }
 

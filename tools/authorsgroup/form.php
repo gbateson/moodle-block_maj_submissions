@@ -138,7 +138,7 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
             // cache the database id
             $dataid = get_fast_modinfo($this->course)->get_cm($databasenum)->instance;
 
-			// cache the groupname
+            // cache the groupname
             $groupname = groups_get_group_name($groupid);
             $groupname = format_string($groupname);
 
@@ -148,9 +148,9 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
                 $DB->delete_records('groups_members', array('groupid' => $groupid));
             }
 
-			// cache ids of enrolled users
-			$fields = 'u.id, u.firstname, u.lastname, u.firstnamephonetic, u.lastnamephonetic';
-			$enrolledusers = get_enrolled_users($this->course->context, '', 0, $fields);
+            // cache ids of enrolled users
+            $fields = 'u.id, u.firstname, u.lastname, u.firstnamephonetic, u.lastnamephonetic';
+            $enrolledusers = get_enrolled_users($this->course->context, '', 0, $fields);
 
             // initialize counters
             $countsubmissions = $DB->get_field('data_records', 'COUNT(*)', array('dataid' => $dataid));
@@ -265,23 +265,23 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
                                                 $types['firstname'],
                                                 $types['lastname']);
                                 if ($users = $DB->get_records_select('user', $select, $params, 'id')) {
-                                	$userid = 0;
-									foreach ($users as $user) {
-										if (array_key_exists($user->id, $enrolledusers)) {
-											$userid = $user->id;
-											break;
-										}
-									}
-									if ($userid) {
-										// add only the enrolled user
-										$userids[$userid] = 1;
-									} else {
-                                		// Add all users, since none are enrolled.
-                                		// They will be listed as "No role" in the group.
-										foreach ($users as $user) {
-											$userids[$user->id] = 1;
-										}
-                                	}
+                                    $userid = 0;
+                                    foreach ($users as $user) {
+                                        if (array_key_exists($user->id, $enrolledusers)) {
+                                            $userid = $user->id;
+                                            break;
+                                        }
+                                    }
+                                    if ($userid) {
+                                        // add only the enrolled user
+                                        $userids[$userid] = 1;
+                                    } else {
+                                        // Add all users, since none are enrolled.
+                                        // They will be listed as "No role" in the group.
+                                        foreach ($users as $user) {
+                                            $userids[$user->id] = 1;
+                                        }
+                                    }
                                 }
                             }
                         }
