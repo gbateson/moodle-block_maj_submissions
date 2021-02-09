@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-02-09 (76)
+ - fix exportschedule tool, to use latest PhpSpreadsheet liv in Moodle >= 3.8
+
 2021-02-09 (75)
  - add JS to fix times and durations of multi-slot sessions in the schedule
 

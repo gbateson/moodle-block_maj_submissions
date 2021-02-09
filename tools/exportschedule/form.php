@@ -315,8 +315,15 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
     public function export_excel($lang, $data) {
         global $CFG;
         require_once($CFG->dirroot.'/lib/excellib.class.php');
-        require_once($CFG->dirroot.'/lib/phpexcel/PHPExcel/IComparable.php');
-        require_once($CFG->dirroot.'/lib/phpexcel/PHPExcel/RichText.php');
+        if (is_dir($CFG->dirroot.'/lib/phpspreadsheet')) {
+            // Moodle >= 3.8
+            require_once($CFG->dirroot.'/lib/phpspreadsheet/vendor/phpoffice/phpspreadsheet/src/PhpSpreadsheet/RichText/RichText.php');
+        }
+        if (is_dir($CFG->dirroot.'/lib/phpexcel/PHPExcel')) {
+            // Moodle 2.5 - 3.7
+            require_once($CFG->dirroot.'/lib/phpexcel/PHPExcel/IComparable.php');
+            require_once($CFG->dirroot.'/lib/phpexcel/PHPExcel/RichText.php');
+        }
         require_once($CFG->dirroot.'/blocks/maj_submissions/tools/exportschedule/excellib.class.php');
 
         $msg = array();
@@ -409,6 +416,20 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                    'conferencename' => 42,
                                    'scheduletitle' => 30,
                                    'default' => -1); // = autofit
+
+        if (class_exists('\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup')) {
+            // Moodle >= 3.8
+            $landscape = \PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE;
+            $papersize_a4 = \PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::PAPERSIZE_A4;
+        } else if (class_exists('PHPExcel_Worksheet_PageSetup')) {
+            // Moodle 2.5 - 3.7
+            $landscape = PHPExcel_Worksheet_PageSetup::ORIENTATION_LANDSCAPE;
+            $papersize_a4 = PHPExcel_Worksheet_PageSetup::PAPERSIZE_A4;
+        } else {
+            // shouldn't happen !!
+            $landscape = 'landscape';
+            $papersize_a4 = 9;
+        }
 
         if (preg_match_all($search->days, $html, $days)) {
 
@@ -560,8 +581,8 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
 
                                     // http://www.craiglotter.co.za/2010/04/18/setting-your-worksheet-printing-layout-options-in-phpexcel/
                                     $worksheet->setup_page(array(
-                                        'Orientation' => PHPExcel_Worksheet_PageSetup::ORIENTATION_LANDSCAPE,
-                                        'PaperSize'   => PHPExcel_Worksheet_PageSetup::PAPERSIZE_A4,
+                                        'Orientation' => $landscape,
+                                        'PaperSize'   => $papersize_a4,
                                         'FitToPage'   => true,
                                         'FitToHeight' => 1,
                                         'FitToWidth'  => 1,
@@ -646,7 +667,13 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                 // convert <big>, <small>, <b>, <i> and <u>, to richtext
                                 if (preg_match_all($search->richtext, $text, $strings, PREG_OFFSET_CAPTURE)) {
 
-                                    $richtext = new PHPExcel_RichText();
+                                    if (class_exists('\PhpOffice\PhpSpreadsheet\RichText\RichText')) {
+                                        $richtext = new \PhpOffice\PhpSpreadsheet\RichText\RichText();
+                                    } else if (class_exists('PHPExcel_RichText')) {
+                                        $richtext = new PHPExcel_RichText();
+                                    } else {
+                                        $richtext = null;
+                                    }
 
                                     // fetch default font size for this cell
                                     $fontsize = $format->get_format_array();

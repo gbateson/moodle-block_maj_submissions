@@ -44,7 +44,15 @@ class block_maj_submissions_ExcelWorkbook extends MoodleExcelWorkbook {
      * @return MoodleExcelWorksheet
      */
     public function add_worksheet($name = '') {
-        return new block_maj_submissions_ExcelWorksheet($name, $this->objPHPExcel);
+        if (isset($this->objspreadsheet)) {
+            // Moodle >= 3.8
+            return new block_maj_submissions_ExcelWorksheet($name, $this->objspreadsheet);
+        }
+        if (isset($this->objPHPExcel)) {
+            // Moodle 2.5 - 3.7
+            return new block_maj_submissions_ExcelWorksheet($name, $this->objPHPExcel);
+        }
+        return false; // shouldn't happen !!
     }
 }
 
@@ -175,9 +183,20 @@ class block_maj_submissions_ExcelWorksheet extends MoodleExcelWorksheet {
     * @param integer $scale_y The vertical scale
     */
     public function insert_bitmap($row, $col, $bitmap, $x = 0, $y = 0, $scale_x = 1, $scale_y = 1) {
-        $objDrawing = new PHPExcel_Worksheet_Drawing();
+        if (class_exists('\PhpOffice\PhpSpreadsheet\Worksheet\Drawing')) {
+            // Moodle >= 3.8
+            $objDrawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
+        } else {
+            // Moodle 2.5 - 3.7
+            $objDrawing = new PHPExcel_Worksheet_Drawing();
+        }
         $objDrawing->setPath($bitmap);
-        $objDrawing->setCoordinates(PHPExcel_Cell::stringFromColumnIndex($col) . ($row+1));
+        if (class_exists('\PhpOffice\PhpSpreadsheet\Cell\Coordinate')) {
+            $coords = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . ($row+1);
+        } else {
+            $coords = PHPExcel_Cell::stringFromColumnIndex($col) . ($row+1);
+        }
+        $objDrawing->setCoordinates($coords);
         $objDrawing->setOffsetX($x);
         $objDrawing->setOffsetY($y);
         $objDrawing->setWorksheet($this->worksheet);
@@ -204,12 +223,18 @@ class block_maj_submissions_ExcelWorksheet extends MoodleExcelWorksheet {
 }
 
 class block_maj_submissions_ExcelFormat extends MoodleExcelFormat {
+    // Moodle >= 3.8
+    //   'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN
+    //   'wrapText' => true
+    // Moodle 2.5 - 3.7
+    //   'style' => PHPExcel_Style_Border::BORDER_THIN
+    //   'wrap' => true
     protected $format = array(
-        'alignment' => array('wrap' => true),
-        'borders' => array('top'    => array('style' => PHPExcel_Style_Border::BORDER_THIN),
-                           'bottom' => array('style' => PHPExcel_Style_Border::BORDER_THIN),
-                           'left'   => array('style' => PHPExcel_Style_Border::BORDER_THIN),
-                           'right'  => array('style' => PHPExcel_Style_Border::BORDER_THIN)),
+        'alignment' => array('wrap' => true, 'wrapText' => true),
+        'borders' => array('top'    => array('style' => 'thin', 'borderStyle' => 'thin'),
+                           'bottom' => array('style' => 'thin', 'borderStyle' => 'thin'),
+                           'left'   => array('style' => 'thin', 'borderStyle' => 'thin'),
+                           'right'  => array('style' => 'thin', 'borderStyle' => 'thin')),
         'fill' => array(),
         'font' => array('size' => 10,
                         'name' => 'Arial'),
