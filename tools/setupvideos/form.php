@@ -363,7 +363,7 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                         if ($videofieldid) {
 
                             $videourl = new moodle_url("/mod/$videomodname/view.php", array('id' => $cm->id));
-                            $videourl = $url->out(); // convert to string
+                            $videourl = $url->out(false); // convert to string (not escaped)
 
                             $params = array('recordid' => $record->recordid,
                                             'fieldid' => $videofieldid);
@@ -379,13 +379,13 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                     }
                 }
 
-                // TODO: restrict coursesection access to users with "participant" role
+                // Restrict coursesection access to users with the required role (usually "participant").
                 if ($roleid = $data->restrictroleid) {
                         $section = $DB->get_record('course_sections', array('course' => $cm->course,
                                                                             'section' => $cm->section));
                         $restrictions = (object)array(
                             'op' => '|',
-                            'c' => array((object)array('type' => 'role', 'id' => (int)$roleid)),
+                            'c' => array((object)array('type' => 'role', 'id' => intval($roleid))),
                             'show' => true
                         );
                         self::set_section_restrictions($section, $restrictions);
