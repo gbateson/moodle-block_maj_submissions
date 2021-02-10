@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-02-10 (79)
+ - filter multilang strings in tool to update vetting
+
 2021-02-10 (78)
  - do not escape ampersands when transferring video URL to submissions database records
 

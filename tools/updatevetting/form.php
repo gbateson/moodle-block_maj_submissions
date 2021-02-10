@@ -227,13 +227,13 @@ class block_maj_submissions_tool_updatevetting extends block_maj_submissions_too
 
                 // add titles
                 $text = '';
-                $text .= html_writer::tag('div', 'Submission ID', array('class' => 'submissionid', 'style' => $style));
-                $text .= html_writer::tag('div', $fields['peer_review_score'], array('class' => 'peerreviewscore', 'style' => $style));
-                $text .= html_writer::tag('div', $fields['submission_status'], array('class' => 'submissionstatus', 'style' => $style));
+                $text .= html_writer::tag('div', get_string('recordid', 'datafield_admin'), array('class' => 'submissionid', 'style' => $style));
+                $text .= html_writer::tag('div', format_text($fields['peer_review_score']), array('class' => 'peerreviewscore', 'style' => $style));
+                $text .= html_writer::tag('div', format_text($fields['submission_status']), array('class' => 'submissionstatus', 'style' => $style));
                 $text .= html_writer::tag('div', get_string('timemodified', 'data'), array('class' => 'timemodified', 'style' => $style));
                 $text .= html_writer::tag('div', get_string('user'), array('class' => 'user', 'style' => $style));
-                $text .= html_writer::tag('div', $fields['presentation_type'], array('class' => 'presentationtype', 'style' => $style));
-                $text .= html_writer::tag('div', $fields['presentation_title'], array('class' => 'presentationtitle', 'style' => $style));
+                $text .= html_writer::tag('div', format_text($fields['presentation_type']), array('class' => 'presentationtype', 'style' => $style));
+                $text .= html_writer::tag('div', format_text($fields['presentation_title']), array('class' => 'presentationtitle', 'style' => $style));
                 $elements[] = $mform->createElement('checkbox', $name."[0]", '', $text);
 
                 // cache date format
@@ -259,7 +259,15 @@ class block_maj_submissions_tool_updatevetting extends block_maj_submissions_too
                     }
 
                     // format short version of submission status
-                    $record->submission_status = block_maj_submissions::trim_text($record->submission_status, 32, 16, 12);
+                    $record->submission_status = format_text($record->submission_status);
+                    $record->submission_status = shorten_text($record->submission_status);
+                    //$record->submission_status = block_maj_submissions::plain_text($record->submission_status);
+                    //$record->submission_status = block_maj_submissions::trim_text($record->submission_status, 32, 16, 12);
+
+                    $record->presentation_type = format_text($record->presentation_type);
+                    $record->presentation_type = shorten_text($record->presentation_type);
+                    //$record->presentation_type = block_maj_submissions::plain_text($record->presentation_type);
+                    //$record->presentation_type = block_maj_submissions::trim_text($record->presentation_type, 32, 16, 12);
 
                     // format the time modified (remove year if it is current year)
                     if (strftime('%Y', $record->timemodified)==strftime('%Y')) {
