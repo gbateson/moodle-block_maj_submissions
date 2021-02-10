@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-02-10 (77)
+ - put workshops dates above those for main conference, since the workshops are usually held on the first day of the conference
+
 2021-02-09 (76)
  - fix exportschedule tool, to use latest PhpSpreadsheet liv in Moodle >= 3.8
 

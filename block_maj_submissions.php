@@ -1627,8 +1627,8 @@ class block_maj_submissions extends block_base {
      */
     static public function get_timetypes() {
         return array(
-            array('conference',
-                  'workshops',
+            array('workshops',
+                  'conference',
                   'reception'),
             array('collectpresentations',
                   'collectworkshops',
@@ -1911,12 +1911,17 @@ class block_maj_submissions extends block_base {
      */
     static public function context($contextlevel, $instanceid=0, $strictness=0) {
         if (class_exists('context_helper')) {
+            // Moodle >= 2.2
             // use call_user_func() to prevent syntax error in PHP 5.2.x
             $class = context_helper::get_class_for_level($contextlevel);
             return call_user_func(array($class, 'instance'), $instanceid, $strictness);
-        } else {
-            return self::context($contextlevel, $instanceid);
         }
+        if (function_exists('get_context_instance')) {
+            // Moodle 1.7 - 2.5
+            return get_context_instance($contextlevel, $instanceid);
+        }
+        // Moodle <= 1.6 does not know about contexts
+        return null;
     }
 
     /**
