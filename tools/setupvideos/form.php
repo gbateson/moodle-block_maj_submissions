@@ -55,45 +55,81 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
      * definition
      */
     public function definition() {
-        global $DB;
+        global $CFG, $DB;
 
         $mform = $this->_form;
         $this->set_form_id($mform);
 
-        // extract the module context and course section, if possible
-        if ($this->cmid) {
-            $context = block_maj_submissions::context(CONTEXT_MODULE, $this->cmid);
-            $sectionnum = get_fast_modinfo($this->course)->get_cm($this->cmid)->sectionnum;
-        } else {
-            $context = $this->course->context;
-            $sectionnum = 0;
-        }
-
-        $name = 'sourcedatabase';
-        $this->add_field_sourcedatabase($mform, $name, $this->cmid);
-        $this->add_field_filterconditions($mform, 'filterconditions', $name);
-        $this->add_field_section($mform, $this->course, $this->plugin, 'coursesection', $name, $sectionnum);
-
-        $name = 'restrictroleid';
+        // get assignable roleids
         $plugins = core_plugin_manager::instance()->get_enabled_plugins('availability');
         if (array_key_exists('role', $plugins)) {
-            $options = get_assignable_roles($this->course->context);
-            $options = array('' => get_string('none')) + $options;
-            $default = $DB->get_field('role', 'id', array('shortname' => 'student'));
-            $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $options, $default);
+            $roleids = get_assignable_roles($this->course->context);
+            $roleids = array('' => get_string('none')) + $roleids;
+            $defaultroleid = $DB->get_field('role', 'id', array('shortname' => 'student'));
+        } else {
+            $roleids = array();
+            $defaultroleid = 0;
         }
 
+        // get video mods, if any
         $plugins = core_plugin_manager::instance()->get_enabled_plugins('mod');
-        $options = array('bigbluebuttonbn', 'googlemeet', 'webex', 'zoom');
-        $options  = array_intersect_key($plugins, array_flip($options));
+        $videomodnames = array('bigbluebuttonbn', 'googlemeet', 'webex', 'zoom');
+        $videomodnames  = array_intersect_key($plugins, array_flip($videomodnames));
 
-        $name = 'videomodname';
-        foreach (array_keys($options) as $modname) {
-            $options[$modname] = get_string('pluginname', 'mod_'.$modname);
+        foreach (array_keys($videomodnames) as $videomodname) {
+            if (file_exists("$CFG->dirroot/mod/$videomodname")) {
+                $videomodnames[$videomodname] = get_string('pluginname', 'mod_'.$videomodname);
+            } else {
+                // Ignore mods that are marked as "active" but are not available 
+                // on the current site. This can sometimes happen after a restore.
+                unset($videomodnames[$videomodname]);
+            }
         }
-        $this->add_field($mform, $this->plugin, $name, 'select', PARAM_ALPHANUM, $options);
 
-        $this->add_action_buttons();
+        $showform = true;
+        if (empty($videomodnames)) {
+            $showform = false;
+            $name = 'novideomodnames';
+            $label = html_writer::tag('b', get_string('error'), array('class' => 'text-danger'));
+            $mform->addElement('static', $name, $label, get_string($name, $this->plugin));
+        }
+        if (empty($roleids)) {
+            //$showform = false;
+            $name = 'norolecondition';
+            $label = html_writer::tag('b', get_string('warning'), array('class' => 'text-warning'));
+            $mform->addElement('static', $name, $label, get_string($name, $this->plugin));
+        }
+
+        if ($showform) {
+
+            // extract the module context and course section, if possible
+            if ($this->cmid) {
+                $context = block_maj_submissions::context(CONTEXT_MODULE, $this->cmid);
+                $sectionnum = get_fast_modinfo($this->course)->get_cm($this->cmid)->sectionnum;
+            } else {
+                $context = $this->course->context;
+                $sectionnum = 0;
+            }
+
+            $name = 'sourcedatabase';
+            $this->add_field_sourcedatabase($mform, $name, $this->cmid);
+            $this->add_field_filterconditions($mform, 'filterconditions', $name);
+            $this->add_field_section($mform, $this->course, $this->plugin, 'coursesection', $name, $sectionnum);
+
+            if (count($roleids)) {
+                $name = 'restrictroleid';
+                $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $roleids, $defaultroleid);
+            }
+
+            if (count($videomodnames)) {
+                $name = 'videomodname';
+                $this->add_field($mform, $this->plugin, $name, 'select', PARAM_ALPHANUM, $videomodnames);
+            }
+
+            $this->add_action_buttons();
+        } else {
+            $mform->addElement('cancel');
+        }
     }
 
     /**

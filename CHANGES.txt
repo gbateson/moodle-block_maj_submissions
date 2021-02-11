@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-02-11 (80)
+ - in detect missing plugins in tool to setup videos
+
 2021-02-10 (79)
  - filter multilang strings in tool to update vetting
 
