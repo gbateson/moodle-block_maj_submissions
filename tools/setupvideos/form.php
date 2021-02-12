@@ -181,6 +181,7 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                             'presentation_handout_file' => '',
                             'presentation_slides_file' => '',
                             'presentation_url' => '',
+                            'schedule_number' => '',
                             'schedule_day' => '',
                             'schedule_time' => '',
                             'schedule_duration' => '');
@@ -230,12 +231,9 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                 $date = getdate($date);
                 $dateyear = $date['year'];
 
-                $removetime = false;
-                $removedate = block_maj_submissions::REMOVE_YEAR;
-
                 $multilangsearch = '/<span[^>]*lang="(\w+)"[^>]*>(.*?)<\/span>/ui';
                 $datetextsearch = '/([^<>]+)( +)(\d+ *: *\d+)/u';
-                $datetextreplace = '<small>$1</small>$2<big>$3</big>';
+                $datetextreplace = '<small>$1</small>$2<big class="text-info">$3</big>';
 
                 $names = array('schedule_day', 'schedule_time', 'schedule_duration');
                 foreach ($records as $id => $record) {
@@ -273,12 +271,20 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                         $record->schedule_starttime = $record->schedule_day_clean.' '.$dateyear.' '.$record->schedule_time_clean;
                         $record->schedule_starttime = strtotime($record->schedule_starttime);
 
-                        // format timestamp as multilang date string
+                        // format start day (integer from 1 - 31)
+                        $record->schedule_startday = intval(date('j', $record->schedule_starttime));
+
+                        // format startdate as multilang date string (remove time, remove year)
+                        $record->schedule_startdate_multilang = $this->instance->multilang_userdate($record->schedule_starttime,
+                                                                                                    $dateformat, $this->plugin,
+                                                                                                    true, block_maj_submissions::REMOVE_YEAR);
+                        // format starttime as multilang date string (keep time, remove year)
                         $record->schedule_starttime_multilang = $this->instance->multilang_userdate($record->schedule_starttime,
-                                                                                                   $dateformat, $this->plugin,
-                                                                                                   $removetime, $removedate);
+                                                                                                    $dateformat, $this->plugin,
+                                                                                                    false, block_maj_submissions::REMOVE_YEAR);
                         $record->schedule_starttime_multilang = preg_replace($datetextsearch, $datetextreplace,
-                                                                            $record->schedule_starttime_multilang);
+                                                                             $record->schedule_starttime_multilang);
+
                     }
                     if (empty($record->schedule_duration_clean)) {
                         $record->schedule_finishtime = 0;
@@ -306,13 +312,30 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                 }
 
                 // create video activity for each submission record
-                $datetime = 0;
+                $startday = 0;
+                $starttime = 0;
                 $countselected = count($records);
                 foreach ($records as $record) {
 
+                    // create new label for $record->schedule_startday_multilang
+                    if ($startday != $record->schedule_startday) {
+                        $startday = $record->schedule_startday;
+                        $label = (object)array(
+                            'course' => $this->course->id,
+                            'modname' => 'label',
+                            'labelnum' => self::CREATE_NEW,
+                            'labelname' => format_text($record->schedule_startdate_multilang),
+                            'coursesectionnum' => $data->coursesectionnum,
+                            'coursesectionname' => $data->coursesectionname,
+                            'intro' => html_writer::tag('h3', $record->schedule_startdate_multilang),
+                            'introformat' => FORMAT_HTML // = 1
+                        );
+                        $label = $this->get_cm($msg, $label, 'label');
+                    }
+
                     // add label for $record->schedule_starttime
-                    if ($datetime < $record->schedule_starttime) {
-                        $datetime = $record->schedule_starttime;
+                    if ($starttime < $record->schedule_starttime) {
+                        $starttime = $record->schedule_starttime;
                         // create new label for $record->schedule_starttime_multilang
                         $label = (object)array(
                             'course' => $this->course->id,
@@ -355,7 +378,7 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                                                            'max-width: 960px;');
                                 $video->intro .= html_writer::tag('p', block_maj_submissions::plain_text($record->$name), $params)."\n";
                             } else if ($record->$name) {
-                                $field = html_writer::tag('b', $field.': ');
+                                $field = html_writer::tag('b', $field.': ', array('class' => 'text-info'));
                                 $video->intro .= html_writer::tag('p', $field.$record->$name)."\n";
                             }
                         }

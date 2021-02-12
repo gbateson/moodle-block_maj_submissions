@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-02-12 (81)
+ - small improvements to formatting and text color of video times and information
+
 2021-02-11 (80)
  - in detect missing plugins in tool to setup videos
 
