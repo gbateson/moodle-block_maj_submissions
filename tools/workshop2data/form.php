@@ -44,7 +44,6 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
     protected $type = '';
     protected $modulename = 'data';
     protected $defaultvalues = array(
-        'visible'         => 1,  // course_modules.visible
         'intro'           => '', // see set_defaultintro()
         'introformat'     => FORMAT_HTML, // =1
         'comments'        => 0,
@@ -279,9 +278,9 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                 // hide list of from ordinary users (=students)
                 $name = 'programcommittee';
                 if (empty($data->$name)) {
-                    $pagedata->visible = 0;
+                    $pagedata->visible = 0; // hidden from everyone
                 } else {
-                    $pagedata->visible = 1;
+                    $pagedata->visible = 1; // visible, but only to program committe
                 }
 
                 // create Moodle page page

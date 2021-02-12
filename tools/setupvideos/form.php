@@ -39,15 +39,12 @@ require_once($CFG->dirroot.'/blocks/maj_submissions/tools/form.filterconditions.
  */
 class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_filterconditions {
 
+    // The source activity is the submissions database.
     protected $type = 'collectpresentations';
     protected $modulename = '';
     protected $defaultname = '';
 
-    protected $defaultvalues = array(
-        'intro' => '',
-        'introformat' => 1,
-    );
-
+    // time fileds will be set from the schedule
     protected $timefields = array('timestart' => array(),
                                   'timefinish' => array());
 
@@ -145,16 +142,19 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
 
         $cm = false;
         $msg = array();
+        $videomodid = 0;
         $videomodname = '';
         $config = $this->instance->config;
 
         // get/create the $cm record and associated $section
         if ($data = $this->get_data()) {
             $cm = $this->get_cm($msg, $data, 'sourcedatabase');
-            $videomodname = $data->videomodname;
+            if ($videomodname = $data->videomodname) {
+                $videomodid = $DB->get_field('modules', 'id', array('name' => $videomodname));
+            }
         }
 
-        if ($cm && $videomodname) {
+        if ($cm && $videomodid) {
 
             // get the "lib.php" file for the selected video mod
             require_once($CFG->dirroot."/mod/$videomodname/lib.php");
@@ -214,11 +214,21 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                     if (array_key_exists($title, $duplicatevideos)) {
                         $duplicatevideos[$title]++;
                         unset($records[$id]);
-                    } else if ($DB->record_exists($data->videomodname, array('name' => $title, 'course' => $cm->course))) {
-                        $duplicatevideos[$title] = 1;
-                        unset($records[$id]);
                     } else {
-                        $duplicatevideos[$title] = 0;
+                        $sql = 'SELECT cm.id, v.id AS vid, v.name '.
+                               'FROM {course_modules} cm, {'.$videomodname.'} v '.
+                               'WHERE cm.module = ? AND cm.course = ? AND cm.instance = v.id AND v.name = ?';
+                        $params = array($videomodid, $cm->course, $title);
+                        if (property_exists($cm, 'deletioninprogress')) {
+                            $sql .= ' AND cm.deletioninprogress = ?';
+                            $params[] = 0;
+                        }
+                        if ($DB->record_exists_sql($sql, $params)) {
+                            $duplicatevideos[$title] = 1;
+                            unset($records[$id]);
+                        } else {
+                            $duplicatevideos[$title] = 0;
+                        }
                     }
                 }
 
@@ -255,6 +265,8 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                             } else {
                                 // no multilang strings, so use entire string
                                 $record->$clean = $record->$name;
+                                // watch out for multilang dates that have been stripped of tags, e.g.
+                                // Feb 19th (Fri)Feb月 19日 (Fri)Feb월 19일 (Fri)Feb月 19日 (Fri)Feb月 19日 (Fri)
                             }
                         }
                     }
@@ -271,14 +283,14 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                         $record->schedule_starttime = $record->schedule_day_clean.' '.$dateyear.' '.$record->schedule_time_clean;
                         $record->schedule_starttime = strtotime($record->schedule_starttime);
 
-                        // format start day (integer from 1 - 31)
+                        // format start DAY (integer from 1 - 31)
                         $record->schedule_startday = intval(date('j', $record->schedule_starttime));
 
-                        // format startdate as multilang date string (remove time, remove year)
+                        // format start DATE as multilang date string (remove time, remove year)
                         $record->schedule_startdate_multilang = $this->instance->multilang_userdate($record->schedule_starttime,
                                                                                                     $dateformat, $this->plugin,
                                                                                                     true, block_maj_submissions::REMOVE_YEAR);
-                        // format starttime as multilang date string (keep time, remove year)
+                        // format start TIME as multilang date string (keep time, remove year)
                         $record->schedule_starttime_multilang = $this->instance->multilang_userdate($record->schedule_starttime,
                                                                                                     $dateformat, $this->plugin,
                                                                                                     false, block_maj_submissions::REMOVE_YEAR);
@@ -295,7 +307,7 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                 }
 
                 // sort records by schedule_starttime
-                uasort($records, array(get_class($this), 'sort_by_datetime'));
+                uasort($records, array(get_class($this), 'sort_by_starttime'));
 
                 $duplicaterecords = array_filter($duplicaterecords);
                 if ($count = count($duplicaterecords)) {
@@ -327,7 +339,7 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                             'labelname' => format_text($record->schedule_startdate_multilang),
                             'coursesectionnum' => $data->coursesectionnum,
                             'coursesectionname' => $data->coursesectionname,
-                            'intro' => html_writer::tag('h3', $record->schedule_startdate_multilang),
+                            'intro' => html_writer::tag('h3', $record->schedule_startdate_multilang, array('class' => 'bg-info text-light rounded px-2 py-1')),
                             'introformat' => FORMAT_HTML // = 1
                         );
                         $label = $this->get_cm($msg, $label, 'label');
@@ -365,7 +377,7 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                         '.lang-ja .multilang:not([lang=ja])'.
                         ' { display: none; }'."\n".
                     '</style>'."\n";
-                    $video->introformat = 1;
+                    $video->introformat = FORMAT_HTML; // = 1
 
                     // add details of each field to intro
                     foreach ($fields as $name => $field) {
@@ -385,7 +397,7 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                     }
 
                     // add link back to submissions database
-                    $field = html_writer::tag('b', get_string('moreinfo').': ');
+                    $field = html_writer::tag('b', get_string('moreinfo').': ', array('class' => 'text-info'));
                     $params = array('d' => $record->dataid,
                                     'rid' => $record->recordid,
                                     'mode' => 'single');
@@ -460,13 +472,13 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
     }
 
     /**
-     * sort_by_datetime
+     * sort_by_starttime
      *
      * @param object $a
      * @param object $b
      * @return integer if ($a < $b) -1; if ($a > $b) 1; Otherwise, 0.
      */
-    static public function sort_by_datetime($a, $b) {
+    static public function sort_by_starttime($a, $b) {
         $field = 'schedule_starttime';
         $a_value = (empty($a->$field) ? 0 : $a->$field);
         $b_value = (empty($b->$field) ? 0 : $b->$field);

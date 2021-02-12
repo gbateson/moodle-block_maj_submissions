@@ -37,7 +37,6 @@ abstract class block_maj_submissions_tool_setupdatabase extends block_maj_submis
     protected $defaultpreset = '';
     protected $modulename = 'data';
     protected $defaultvalues = array(
-        'visible'         => 1,  // course_modules.visible
         'intro'           => '', // see set_defaultintro()
         'introformat'     => FORMAT_HTML, // =1
         'approval'        => 0,

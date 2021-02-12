@@ -522,8 +522,7 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                     'pagename' => '',
                     'coursesectionnum' => $cm->sectionnum,
                     'coursesectionname' => '',
-                    'content' => html_writer::table($table),
-                    'visible' => 0
+                    'content' => html_writer::table($table)
                 );
                 // restrict access to program committee, if available
                 // otherwise, hide from students
@@ -535,9 +534,10 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                         'c' => array($this->get_group_restriction($data->$name)),
                         'show' => false
                     );
+                    $pagedata->visible = 1; // show to program committee
                 } else {
-                    $pagedata->visible = 0; // hide from students
                     $restrictions = false;
+                    $pagedata->visible = 0; // hide from everybody
                 }
                 if ($page = $this->get_cm($msg, $pagedata, 'page', $a)) {
                     if ($restrictions) {

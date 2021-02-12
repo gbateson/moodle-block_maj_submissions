@@ -679,7 +679,6 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                 }
 
                 if ($section) {
-                    $is_resource = in_array($modname, array('book', 'folder', 'imscp', 'page', 'resource', 'url'));
                     $cm = self::get_coursemodule($this->course, $section, $modname, $activityname, $defaultvalues);
 
                     // setup parameters for "get_string()"
@@ -1031,6 +1030,9 @@ abstract class block_maj_submissions_tool_form extends moodleform {
             'modname'       => $modulename,
             'modulename'    => $modulename,
             'add'           => $modulename,
+            'visible'       => 1,
+            'visibleonpage' => 1,
+            'visibleonold'  => 1,
             'update'        => 0,
             'return'        => 0,
             'cmidnumber'    => '',
@@ -1042,6 +1044,12 @@ abstract class block_maj_submissions_tool_form extends moodleform {
         foreach ($defaultvalues as $column => $value) {
             $newrecord->$column = $value;
         }
+
+        // If the section is hidden, we should also hide the new instance
+        // but we retain the visibility in the "visibleold" field,
+        // so that it can be restored when the section is unhidden.
+        $newrecord->visibleold = $newrecord->visible;
+        $newrecord->visible = $section->visible;
 
         // add default values
         $columns = $DB->get_columns($modulename);
@@ -1096,12 +1104,6 @@ abstract class block_maj_submissions_tool_form extends moodleform {
         if (! $DB->set_field('course_modules', 'section',  $sectionid, array('id' => $newrecord->id))) {
             throw new exception('Could not update the course module with the correct section');
         }
-
-        // if the section is hidden, we should also hide the new instance
-        if (! isset($newrecord->visible)) {
-            $newrecord->visible = $DB->get_field('course_sections', 'visible', array('id' => $sectionid));
-        }
-        set_coursemodule_visible($newrecord->id, $newrecord->visible);
 
         if (class_exists('\\core\\event\\course_module_created')) {
             // Moodle >= 2.6
