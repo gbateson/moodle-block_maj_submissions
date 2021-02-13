@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-02-13 (83)
+ - fix setting of presentation_video field when creating video activities
+
 2021-02-12 (82)
  - when setting up video, be aware of 'deletioninprogress' when deciding if duplicate activity exists
 

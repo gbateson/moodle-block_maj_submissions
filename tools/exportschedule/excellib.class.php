@@ -223,22 +223,35 @@ class block_maj_submissions_ExcelWorksheet extends MoodleExcelWorksheet {
 }
 
 class block_maj_submissions_ExcelFormat extends MoodleExcelFormat {
-    // Moodle >= 3.8
-    //   'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN
-    //   'wrapText' => true
-    // Moodle 2.5 - 3.7
-    //   'style' => PHPExcel_Style_Border::BORDER_THIN
-    //   'wrap' => true
-    protected $format = array(
-        'alignment' => array('wrap' => true, 'wrapText' => true),
-        'borders' => array('top'    => array('style' => 'thin', 'borderStyle' => 'thin'),
-                           'bottom' => array('style' => 'thin', 'borderStyle' => 'thin'),
-                           'left'   => array('style' => 'thin', 'borderStyle' => 'thin'),
-                           'right'  => array('style' => 'thin', 'borderStyle' => 'thin')),
-        'fill' => array(),
-        'font' => array('size' => 10,
-                        'name' => 'Arial'),
-        'numberformat' => array()
-    );
+    /**
+     * Constructs one Moodle Format.
+     * Override standard constructor to add more formats
+     *
+     * @param array $properties
+     */
+    public function __construct($properties = array()) {
+        // set default format properties, according to what classes are available.
+        switch (true) {
+            case class_exists('\PhpOffice\PhpSpreadsheet\Style\Border'):
+                // Moodle >= 3.8
+                $alignment = array('wrapText' => true);
+                $border = \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN;
+                $border = array('borderStyle' => $border);
+                break;
+            case class_exists('PHPExcel_Style_Border'):
+                // Moodle 2.5 - 3.7
+                $alignment = array('wrap' => true);
+                $border = PHPExcel_Style_Border::BORDER_THIN;
+                $border = array('style' => $border);
+                break;
+            default:
+                $alignment = array('wrap' => true);
+                $border = array('style' => 'thin');
+        }
+        $this->format['alignment'] = $alignment;
+        $this->format['borders'] = array('top' => $border, 'bottom' => $border, 'left' => $border, 'right' => $border);
+        //$this->format['fill'] = array();
+        //$this->format['numberformat'] = array();
+        parent::__construct($properties);
+    }
 }
-

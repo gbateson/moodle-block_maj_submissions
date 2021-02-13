@@ -434,7 +434,7 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                         if ($videofieldid) {
 
                             $videourl = new moodle_url("/mod/$videomodname/view.php", array('id' => $cm->id));
-                            $videourl = $url->out(false); // convert to string (not escaped)
+                            $videourl = $videourl->out(false); // convert to string (not escaped)
 
                             $params = array('recordid' => $record->recordid,
                                             'fieldid' => $videofieldid);
