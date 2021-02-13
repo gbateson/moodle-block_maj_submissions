@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-02-14 (85)
+ - small fix to sorting of presentations by time when creating handbook
+
 2021-02-14 (84)
  - fix column setting when adding banner to exported schedule
 

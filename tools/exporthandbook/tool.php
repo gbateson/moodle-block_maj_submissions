@@ -148,7 +148,7 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
             if (isset($a->$field) && isset($b->$field)) {
                 $asort = $a->$field;
                 $bsort = $b->$field;
-                if ($field=='schedule_day' || $field='schedule_time') {
+                if ($field=='schedule_day' || $field=='schedule_time') {
                     $asort = preg_replace($search, '0$0', $asort);
                     $bsort = preg_replace($search, '0$0', $bsort);
                 }
