@@ -37,8 +37,9 @@ defined('MOODLE_INTERNAL') || die();
 class block_maj_submissions_ExcelWorkbook extends MoodleExcelWorkbook {
 
     /**
-     * Create one Moodle Worksheet, but notice that we override the base class
+     * Create a single Moodle Worksheet, but notice that we override the base class
      * to use "block_maj_submissions_ExcelWorksheet" instead of "MoodleExcelWorksheet"
+     * because we need the modified methods of "block_maj_submissions_ExcelWorksheet".
      *
      * @param string $name Name of the sheet
      * @return MoodleExcelWorksheet
@@ -46,13 +47,17 @@ class block_maj_submissions_ExcelWorkbook extends MoodleExcelWorkbook {
     public function add_worksheet($name = '') {
         if (isset($this->objspreadsheet)) {
             // Moodle >= 3.8
-            return new block_maj_submissions_ExcelWorksheet($name, $this->objspreadsheet);
-        }
-        if (isset($this->objPHPExcel)) {
+            $obj = $this->objspreadsheet;
+        } else if (isset($this->objPHPExcel)) {
             // Moodle 2.5 - 3.7
-            return new block_maj_submissions_ExcelWorksheet($name, $this->objPHPExcel);
+            $obj = $this->objPHPExcel;
+        } else {
+            $obj = null; // shouldn't happen !!
         }
-        return false; // shouldn't happen !!
+        if (empty($obj)) {
+            return false;
+        }
+        return new block_maj_submissions_ExcelWorksheet($name, $obj);
     }
 }
 
@@ -185,10 +190,14 @@ class block_maj_submissions_ExcelWorksheet extends MoodleExcelWorksheet {
     public function insert_bitmap($row, $col, $bitmap, $x = 0, $y = 0, $scale_x = 1, $scale_y = 1) {
         if (class_exists('\PhpOffice\PhpSpreadsheet\Worksheet\Drawing')) {
             // Moodle >= 3.8
+            // For PhpSpreadsheet library, the column indexes start on 1
             $objDrawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
-        } else {
+            $col += 1;
+        } else if (class_exists('PHPExcel_Worksheet_Drawing')) {
             // Moodle 2.5 - 3.7
             $objDrawing = new PHPExcel_Worksheet_Drawing();
+        } else {
+            $objDrawing = null; // shouldn't happen !!
         }
         $objDrawing->setPath($bitmap);
         if (class_exists('\PhpOffice\PhpSpreadsheet\Cell\Coordinate')) {
@@ -225,12 +234,12 @@ class block_maj_submissions_ExcelWorksheet extends MoodleExcelWorksheet {
 class block_maj_submissions_ExcelFormat extends MoodleExcelFormat {
     /**
      * Constructs one Moodle Format.
-     * Override standard constructor to add more formats
+     * Override standard constructor to add more default formats
      *
      * @param array $properties
      */
     public function __construct($properties = array()) {
-        // set default format properties, according to what classes are available.
+        // set default format properties, according to which classes are available.
         switch (true) {
             case class_exists('\PhpOffice\PhpSpreadsheet\Style\Border'):
                 // Moodle >= 3.8

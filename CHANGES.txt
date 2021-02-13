@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-02-14 (84)
+ - fix column setting when adding banner to exported schedule
+
 2021-02-13 (83)
  - fix setting of presentation_video field when creating video activities
 
