@@ -440,7 +440,7 @@ abstract class block_maj_submissions_tool_form extends moodleform {
      * @uses $DB
      * @return array of database fieldnames
      */
-    protected function get_group_options($fieldname, $defaultname) {
+    protected function get_group_options($fieldname, $defaultname='') {
         global $DB;
 
         $defaultgroupid = '';
@@ -609,6 +609,7 @@ abstract class block_maj_submissions_tool_form extends moodleform {
      * @param object  $data
      * @param string  $name
      * @param mixed  $a, arguments for get_string(), if needed
+     * @param mixed  $aftermod, course_module id or object of mod after which the new cm is to be placed.
      * @return object newly added $cm object; otherwise false
      */
     public function get_cm(&$msg, $data, $name, $a=null) {
@@ -659,14 +660,16 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                     }
                 }
 
-                // ensure name is unique within this course
-                $i = 1;
-                $params = array('course' => $this->course->id, 'name' => $activityname);
-                while ($DB->record_exists($modname, $params)) {
-                    $i++;
-                    $params['name'] = "$activityname ($i)";
+                // if we cannot reuse names, ensure that name is unique within this course
+                if (empty($data->reusename)) {
+                    $i = 1;
+                    $params = array('course' => $this->course->id, 'name' => $activityname);
+                    while ($DB->record_exists($modname, $params)) {
+                        $i++;
+                        $params['name'] = "$activityname ($i)";
+                    }
+                    $activityname = $params['name'];
                 }
-                $activityname = $params['name'];
 
                 $activitynametext = block_maj_submissions::filter_text($activityname);
                 $activitynametext = strip_tags($activitynametext);
@@ -679,7 +682,12 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                 }
 
                 if ($section) {
-                    $cm = self::get_coursemodule($this->course, $section, $modname, $activityname, $defaultvalues);
+                    if (empty($data->aftermod)) {
+                        $aftermod = null;
+                    } else {
+                        $aftermod = $data->aftermod;
+                    }
+                    $cm = self::get_coursemodule($this->course, $section, $modname, $activityname, $defaultvalues, $aftermod);
 
                     // setup parameters for "get_string()"
                     $a = (object)array('type' => $modnametext,
@@ -990,10 +998,11 @@ abstract class block_maj_submissions_tool_form extends moodleform {
      * @param string $modulename
      * @param string $instancename
      * @param array  $defaultvalues
+     * @param integer $aftermod
      * @return object
      * @todo Finish documenting this function
      */
-    static public function get_coursemodule($course, $section, $modulename, $instancename, $defaultvalues) {
+    static public function get_coursemodule($course, $section, $modulename, $instancename, $defaultvalues, $aftermod) {
         global $DB, $USER;
 
         // cache the module id
@@ -1090,13 +1099,26 @@ abstract class block_maj_submissions_tool_form extends moodleform {
             throw new exception('Could not add a new course module');
         }
 
+        $beforemod = null;
+        if ($aftermod) {
+            if (is_object($aftermod)) {
+                $aftermod = $aftermod->id;
+            }
+            $sequence = explode(',', $section->sequence);
+            $sequence = array_filter($sequence);
+            $i = array_search($aftermod, $sequence);
+            if (is_numeric($i) && array_key_exists($i + 1, $sequence)) {
+                $beforemod = $sequence[$i + 1];
+            }
+        }
+
         $newrecord->id = $newrecord->coursemodule;
         if (function_exists('course_add_cm_to_section')) {
             // Moodle >= 2.4
-            $sectionid = course_add_cm_to_section($newrecord->course, $newrecord->id, $section->section);
+            $sectionid = course_add_cm_to_section($newrecord->course, $newrecord->id, $section->section, $beforemod);
         } else {
             // Moodle <= 2.3
-            $sectionid = add_mod_to_section($newrecord);
+            $sectionid = add_mod_to_section($newrecord, $beforemod);
         }
         if (! $sectionid) {
             throw new exception('Could not add the new course module to section: '.$newrecord->section);
@@ -1265,22 +1287,32 @@ abstract class block_maj_submissions_tool_form extends moodleform {
     static public function merge_restrictions($object, $structure, $restrictions) {
         global $DB;
 
+        if (empty($object)) {
+            return false;
+        }
+
         if (empty($structure)) {
             $structure = new stdClass();
         }
+
+        // $restrictions->op takes preference over $structure->op
+        if (isset($restrictions) && isset($restrictions->op)) {
+            $structure->op = $restrictions->op;
+        }
+
         if (! isset($structure->op)) {
             $structure->op = '|';
         }
         if (! isset($structure->c)) {
             $structure->c = array();
         }
-        if ($structure->op=='|' || $structure->op=='!&') {
+        if ($structure->op == '|' || $structure->op == '!&') {
             if (! isset($structure->show)) {
                 $structure->show = false;
             }
             unset($structure->showc);
         }
-        if ($structure->op=='&' || $structure->op=='!|') {
+        if ($structure->op == '&' || $structure->op == '!|') {
             if (! isset($structure->showc)) {
                 $structure->showc = array_fill(0, count($structure->c), false);
             }
@@ -1317,7 +1349,7 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                         $table = '';
                         $params = array();
                 }
-                if ($table=='' || $DB->record_exists($table, $params)) {
+                if ($table == '' || $DB->record_exists($table, $params)) {
                     // $params are valid - do nothing
                 } else {
                     // remove this condition

@@ -61,7 +61,6 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
         $plugins = core_plugin_manager::instance()->get_enabled_plugins('availability');
         if (array_key_exists('role', $plugins)) {
             $roleids = get_assignable_roles($this->course->context);
-            $roleids = array('' => get_string('none')) + $roleids;
             $defaultroleid = $DB->get_field('role', 'id', array('shortname' => 'student'));
         } else {
             $roleids = array();
@@ -113,15 +112,26 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
             $this->add_field_filterconditions($mform, 'filterconditions', $name);
             $this->add_field_section($mform, $this->course, $this->plugin, 'coursesection', $name, $sectionnum);
 
+            $name = 'restrictgroupid';
+            list($groupids, $defaultgroupid) = $this->get_group_options($name);
+            if (count($groupids)) {
+                $groupids = array('' => get_string('none')) + $groupids;
+                $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $groupids);
+            }
+
+            $name = 'restrictroleid';
             if (count($roleids)) {
-                $name = 'restrictroleid';
+                $roleids = array('' => get_string('none')) + $roleids;
                 $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $roleids, $defaultroleid);
             }
 
+            $name = 'videomodname';
             if (count($videomodnames)) {
-                $name = 'videomodname';
                 $this->add_field($mform, $this->plugin, $name, 'select', PARAM_ALPHANUM, $videomodnames);
             }
+
+            $name = 'resetvideos';
+            $this->add_field($mform, $this->plugin, $name, 'selectyesno', PARAM_INT, null, 1);
 
             $this->add_action_buttons();
         } else {
@@ -209,25 +219,30 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                 }
 
                 // skip database records that already have video activity
-                foreach ($records as $id => $record) {
-                    $title = $record->presentation_title;
-                    if (array_key_exists($title, $duplicatevideos)) {
-                        $duplicatevideos[$title]++;
-                        unset($records[$id]);
-                    } else {
-                        $sql = 'SELECT cm.id, v.id AS vid, v.name '.
-                               'FROM {course_modules} cm, {'.$videomodname.'} v '.
-                               'WHERE cm.module = ? AND cm.course = ? AND cm.instance = v.id AND v.name = ?';
-                        $params = array($videomodid, $cm->course, $title);
-                        if (property_exists($cm, 'deletioninprogress')) {
-                            $sql .= ' AND cm.deletioninprogress = ?';
-                            $params[] = 0;
-                        }
-                        if ($DB->record_exists_sql($sql, $params)) {
-                            $duplicatevideos[$title] = 1;
+                if (isset($data->resetvideos) && $data->resetvideos) {
+                    $data->resetvideos = true;
+                } else {
+                    $data->resetvideos = false;
+                    foreach ($records as $id => $record) {
+                        $title = $record->presentation_title;
+                        if (array_key_exists($title, $duplicatevideos)) {
+                            $duplicatevideos[$title]++;
                             unset($records[$id]);
                         } else {
-                            $duplicatevideos[$title] = 0;
+                            $sql = 'SELECT cm.id, v.id AS vid, v.name '.
+                                   'FROM {course_modules} cm, {'.$videomodname.'} v '.
+                                   'WHERE cm.module = ? AND cm.course = ? AND cm.instance = v.id AND v.name = ?';
+                            $params = array($videomodid, $cm->course, $title);
+                            if (property_exists($cm, 'deletioninprogress')) {
+                                $sql .= ' AND cm.deletioninprogress = ?';
+                                $params[] = 0;
+                            }
+                            if ($DB->record_exists_sql($sql, $params)) {
+                                $duplicatevideos[$title] = 1;
+                                unset($records[$id]);
+                            } else {
+                                $duplicatevideos[$title] = 0;
+                            }
                         }
                     }
                 }
@@ -272,8 +287,13 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                     }
 
                     if (empty($record->schedule_day_clean) || empty($record->schedule_time_clean)) {
+                        $record->schedule_day_clean = '';
+                        $record->schedule_startday = 0;
+                        $record->schedule_startdate_multilang = '';
+
+                        $record->schedule_time_clean = '';
                         $record->schedule_starttime = 0;
-                        $record->schedule_starttime_multilang = 0;
+                        $record->schedule_starttime_multilang = '';
                     } else {
                         $record->schedule_day_clean = preg_replace('/ *\(\w+\)/', '', $record->schedule_day_clean);
                         $record->schedule_time_clean = preg_replace('/(\d+) *: *(\d+).*/', '$1:$2', $record->schedule_time_clean);
@@ -324,6 +344,7 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                 }
 
                 // create video activity for each submission record
+                $newcm = null;
                 $startday = 0;
                 $starttime = 0;
                 $countselected = count($records);
@@ -340,9 +361,11 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                             'coursesectionnum' => $data->coursesectionnum,
                             'coursesectionname' => $data->coursesectionname,
                             'intro' => html_writer::tag('h3', $record->schedule_startdate_multilang, array('class' => 'bg-info text-light rounded px-2 py-1')),
-                            'introformat' => FORMAT_HTML // = 1
+                            'introformat' => FORMAT_HTML, // = 1
+                            'reusename' => true, // reuse name, if possible
+                            'aftermod' => $newcm
                         );
-                        $label = $this->get_cm($msg, $label, 'label');
+                        $newcm = $this->get_cm($msg, $label, 'label');
                     }
 
                     // add label for $record->schedule_starttime
@@ -357,9 +380,11 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                             'coursesectionnum' => $data->coursesectionnum,
                             'coursesectionname' => $data->coursesectionname,
                             'intro' => $record->schedule_starttime_multilang,
-                            'introformat' => FORMAT_HTML // = 1
+                            'introformat' => FORMAT_HTML, // = 1
+                            'reusename' => true, // reuse name, if possible
+                            'aftermod' => $newcm
                         );
-                        $label = $this->get_cm($msg, $label, 'label');
+                        $newcm = $this->get_cm($msg, $label, 'label');
                     }
 
                     $video = (object)$this->defaultvalues;
@@ -404,6 +429,9 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                     $url = new moodle_url('/mod/data/view.php', $params);
                     $video->intro .= html_writer::tag('p', $field.html_writer::link($url, $record->title, array('target' => 'MAJ')))."\n";
 
+                    $video->reusename = $data->resetvideos;
+                    $video->aftermod = $newcm;
+
                     switch ($videomodname) {
                         case 'bigbluebuttonbn':
                             $video->type = 0; // room with recordings
@@ -429,11 +457,11 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                             break;
                     }
 
-                    if ($cm = $this->get_cm($msg, $video, 'video')) {
+                    if ($newcm = $this->get_cm($msg, $video, 'video')) {
 
                         if ($videofieldid) {
 
-                            $videourl = new moodle_url("/mod/$videomodname/view.php", array('id' => $cm->id));
+                            $videourl = new moodle_url("/mod/$videomodname/view.php", array('id' => $newcm->id));
                             $videourl = $videourl->out(false); // convert to string (not escaped)
 
                             $params = array('recordid' => $record->recordid,
@@ -450,18 +478,36 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                     }
                 }
 
-                // Restrict coursesection access to users with the required role (usually "participant").
-                if ($roleid = $data->restrictroleid) {
-                        $section = $DB->get_record('course_sections', array('course' => $cm->course,
-                                                                            'section' => $cm->section));
-                        $restrictions = (object)array(
-                            'op' => '|',
-                            'c' => array((object)array('type' => 'role', 'id' => intval($roleid))),
-                            'show' => true
-                        );
-                        self::set_section_restrictions($section, $restrictions);
+                // Collect $params required to extract $section info from $DB
+                $params = array();
+                if (isset($newcm)) {
+                    $params['id'] = $newcm->section;
+                    $params['course'] = $newcm->course;
+                } else if (empty($data->coursesectionnum) || $data->coursesectionnum == self::CREATE_NEW) {
+                    $params = array(); // no enough data
+                } else {
+                    // no $newcm was created, but we still have enough info to extract the $section 
+                    $params['course'] = $this->course->id;
+                    $params['section'] = $data->coursesectionnum;
                 }
 
+                // Collect section access restrictions, if any.
+                $restrictions = array();
+                if ($roleid = $data->restrictroleid) {
+                    $restrictions[] = (object)array('type' => 'role', 'id' => intval($roleid));
+                }
+                if ($groupid = $data->restrictgroupid) {
+                    $restrictions[] = (object)array('type' => 'group', 'id' => intval($groupid));
+                }
+
+                // if we have enough to extract $section, then update $restrictions
+                if (count($params) && count($restrictions)) {
+                    if ($section = $DB->get_record('course_sections', $params)) {
+                        $restrictions = (object)array('op' => '|', 'c' => $restrictions, 'show' => true);
+                        self::set_section_restrictions($section, $restrictions);
+                        $msg[] = get_string('accessupdatedsection', $this->plugin, $section->section);
+                    }
+                }
                 $a = (object)array('total' => $counttotal,
                                    'selected' => $countselected,
                                    'created' => $countcreated);

@@ -9,6 +9,7 @@ $string['maj_submissions:addinstance'] = 'Add a new MAJ Submissions block';
 $string['abstract'] = 'Abstract';
 $string['accepted'] = 'Your proposal has been <u>accepted</u>.';
 $string['acceptedfarewell'] = 'We look forward to seeing you at the conference in {$a}.';
+$string['accessupdatedsection'] = 'Access restrictions were updated on section {$a}';
 $string['add'] = 'Add';
 $string['addbannerimage_help'] = 'If checked, the conference banner image will be added at the top of the first page of the export file.';
 $string['addbannerimage'] = 'Add banner image';
@@ -413,8 +414,12 @@ $string['resetsubmissions_help'] = 'This setting specifies whether or not to res
 
 **Yes**
 : All old submissions will be removed from the target workshop before new submissions are transferred from the source database. In addition, any links from other databases to the target workshop will be removed.';
+$string['resetvideos'] = 'Reset video activities';
+$string['resetvideos_help'] = 'If this setting is set to YES, then information about each presentation will be re-copied from its submission database record to its video activity.';
+$string['restrictgroupid'] = 'Restrict access by group';
+$string['restrictgroupid_help'] = 'Access to the section containing the video activities will be restricted to users who belong to the specified group.';
 $string['restrictroleid'] = 'Restrict access by role';
-$string['restrictroleid_help'] = 'Access to the section containing the video activities will be restricted to users with the spcified role.';
+$string['restrictroleid_help'] = 'Access to the section containing the video activities will be restricted to users with the specified role.';
 $string['reviewcmids'] = 'Review activity [{no}]';
 $string['reviewcmids_help'] = 'A workshop activity that is used to peer review submissions.';
 $string['reviewdeadline'] = 'Review deadline';
