@@ -115,13 +115,13 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
             $name = 'restrictgroupid';
             list($groupids, $defaultgroupid) = $this->get_group_options($name);
             if (count($groupids)) {
-                $groupids = array('' => get_string('none')) + $groupids;
+                $groupids = array(0 => get_string('none')) + $groupids;
                 $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $groupids);
             }
 
             $name = 'restrictroleid';
             if (count($roleids)) {
-                $roleids = array('' => get_string('none')) + $roleids;
+                $roleids = array(0 => get_string('none')) + $roleids;
                 $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, $roleids, $defaultroleid);
             }
 
@@ -155,6 +155,13 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
         $videomodid = 0;
         $videomodname = '';
         $config = $this->instance->config;
+
+        if (empty($config->workshopstimestart)) {
+            $workshop_startday = 0;
+        } else {
+            // format workshop start DAY (integer from 1 - 31)
+            $workshop_startday = intval(date('j', $config->workshopstimestart));
+        }
 
         // get/create the $cm record and associated $section
         if ($data = $this->get_data()) {
@@ -282,18 +289,17 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                                 $record->$clean = $record->$name;
                                 // watch out for multilang dates that have been stripped of tags, e.g.
                                 // Feb 19th (Fri)Feb月 19日 (Fri)Feb월 19일 (Fri)Feb月 19日 (Fri)Feb月 19日 (Fri)
+                                if ($pos = strpos($record->$clean, ')')) {
+                                    $record->$clean = substr($record->$clean, 0, $pos + 1);
+                                }
                             }
                         }
                     }
 
                     if (empty($record->schedule_day_clean) || empty($record->schedule_time_clean)) {
                         $record->schedule_day_clean = '';
-                        $record->schedule_startday = 0;
-                        $record->schedule_startdate_multilang = '';
-
                         $record->schedule_time_clean = '';
                         $record->schedule_starttime = 0;
-                        $record->schedule_starttime_multilang = '';
                     } else {
                         $record->schedule_day_clean = preg_replace('/ *\(\w+\)/', '', $record->schedule_day_clean);
                         $record->schedule_time_clean = preg_replace('/(\d+) *: *(\d+).*/', '$1:$2', $record->schedule_time_clean);
@@ -302,7 +308,16 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                         // and then convert date string to unix timestamp
                         $record->schedule_starttime = $record->schedule_day_clean.' '.$dateyear.' '.$record->schedule_time_clean;
                         $record->schedule_starttime = strtotime($record->schedule_starttime);
+                        if (empty($record->schedule_starttime)) {
+                            $record->schedule_starttime = 0;
+                        }
+                    }
 
+                    if ($record->schedule_starttime == 0) {
+                        $record->schedule_startday = 0;
+                        $record->schedule_startdate_multilang = block_maj_submissions::get_string_multilang('missingstarttime', $this->plugin);
+                        $record->schedule_starttime_multilang = '';
+                    } else {
                         // format start DAY (integer from 1 - 31)
                         $record->schedule_startday = intval(date('j', $record->schedule_starttime));
 
@@ -345,7 +360,7 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
 
                 // create video activity for each submission record
                 $newcm = null;
-                $startday = 0;
+                $startday = -1;
                 $starttime = 0;
                 $countselected = count($records);
                 foreach ($records as $record) {
@@ -384,6 +399,16 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                             'reusename' => true, // reuse name, if possible
                             'aftermod' => $newcm
                         );
+                        if ($workshop_startday && $workshop_startday == $record->schedule_startday) {
+                            $text = block_maj_submissions::get_string_multilang('workshops', $this->plugin);
+                            $params = array('class' => 'bg-light text-info d-inline-block border border-dark ml-2 px-2 py-0');
+                            $label->intro .= ' '.html_writer::tab('big', $text, $params);
+                        }
+                        if (is_numeric(strpos($record->presentation_type, 'Keynote'))) {
+                            $text = block_maj_submissions::get_string_multilang('keynotespeech', $this->plugin);
+                            $params = array('class' => 'bg-light text-danger d-inline-block border border-dark ml-2 px-2 py-0');
+                            $label->intro .= ' '.html_writer::tab('big', $text, $params);
+                        }
                         $newcm = $this->get_cm($msg, $label, 'label');
                     }
 
@@ -436,8 +461,10 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                         case 'bigbluebuttonbn':
                             $video->type = 0; // room with recordings
                             $video->record = 1;
-                            $video->openingtime = ($record->schedule_starttime - (MINSECS * 10));
-                            $video->closingtime = $record->schedule_finishtime;
+                            if ($video->openingtime = $record->schedule_starttime) {
+                                $video->openingtime -= (MINSECS * 10); // open 10 mins before start
+                            }
+                            $video->closingtime = $record->schedule_finishtime; // may be zero
                             $participants = array(
                                 array('selectiontype' => 'all',
                                       'selectionid' => 'all',

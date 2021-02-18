@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-02-18 (87)
+ - block/maj_submissions remove 'No seats available' message from online rooms
+
 2021-02-15 (86)
  - allow reset of intro on video activities
 

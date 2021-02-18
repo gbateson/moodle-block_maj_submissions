@@ -328,10 +328,14 @@
     margin-right:       2px;
 }
 
-.schedule .emptyseats {
+.schedule .seatinfo {
     color:           purple;
     height:            17px;
     margin:     1px 4px 0px;
+}
+
+.schedule .seatinfo:empty {
+    display:           none;
 }
 
 .schedule .scheduleinfo {
@@ -544,7 +548,7 @@
         text-align:       right;
     }
 
-    .schedule .emptyseats {
+    .schedule .seatinfo {
         font-size:        0.9em;
     }
 }

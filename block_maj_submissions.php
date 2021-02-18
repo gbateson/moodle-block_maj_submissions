@@ -2025,7 +2025,7 @@ class block_maj_submissions extends block_base {
                             $seats = $room['seats'];
                         }
                     }
-                    $name = implode('', $matches[0][$i]);
+                    $name = implode('', $matches[0]);
                 } else {
                     $room = self::extract_room_from_text($text, $fieldname);
                     $name = $room['name'];
@@ -2101,7 +2101,7 @@ class block_maj_submissions extends block_base {
         if (preg_match('/[0-9]+/', $seats, $match)) {
             $seats = intval($match[0]);
         } else {
-            $seats = 0;
+            $seats = 0; // number of seats not specified
         }
 
         return array('name' => $name, 'seats' => $seats);
@@ -2114,7 +2114,7 @@ class block_maj_submissions extends block_base {
      * @return array [recordid => string]
      * @todo Finish documenting this function
      */
-    static public function get_seats_info($info) {
+    static public function get_seats_info($info, $is_manager) {
         global $DB;
         if (empty($info)) {
             return $info;
@@ -2132,14 +2132,22 @@ class block_maj_submissions extends block_base {
         $string = 'emptyseatsx';
         $plugin = 'block_maj_submissions';
         foreach ($info as $rid => $seats) {
-            $seats = intval($seats);
             if (array_key_exists($rid, $attend)) {
-                $seats -= intval($attend[$rid]);
+                $attend[$rid] = intval($attend[$rid]);
+            } else {
+                $attend[$rid] = 0;
             }
-            if ($seats < 0) {
-                $seats = 0;
+            if ($seats == 0) {
+                // unlimited number of seats (e.g. online)
+                if ($is_manager) {
+                    $info[$rid] = get_string('usedseatsx', $plugin, $attend[$rid]);
+                } else {
+                    $info[$rid] = get_string('seatsavailable', $plugin);
+                }
+            } else {
+                // limited number of seats (e.g. face-to-face presentation)
+                $info[$rid] = get_string('emptyseatsx', $plugin, max(0, $seats - $attend[$rid]));
             }
-            $info[$rid] = get_string($string, $plugin, $seats);
         }
         return $info;
     }

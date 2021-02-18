@@ -134,6 +134,8 @@ if ($action=='loadattendance' || $action=='updateattendance') {
     require_capability('moodle/course:manageactivities', $context);
 }
 
+$is_manager = has_capability('moodle/course:manageactivities', $context);
+
 // =========================================
 // setup the block instance object
 // =========================================
@@ -151,11 +153,14 @@ switch ($action) {
 
     case 'loadattendance':
 
-        $names = array('attending', 'emptyseatsx', 'fullschedule', 'myschedule', 'notattending', 'seatsavailable');
+        $names = array('attending', 'emptyseatsx', 'fullschedule', 'myschedule', 'notattending', 'seatsavailable', 'usedseatsx');
         foreach ($names as $name) {
-            $a = ($name=='emptyseatsx' ? 99 : null);
-            $string = json_encode(get_string($name, $plugin, $a));
-            $html .= 'MAJ.str.'.$name.' = '.$string.';'."\n";
+            if ($name=='emptyseatsx' || $name == 'usedseatsx') {
+                $string = get_string($name, $plugin, 99);
+            } else {
+                $string = get_string($name, $plugin);
+            }
+            $html .= 'MAJ.str.'.$name.' = '.json_encode($string).';'."\n";
         }
 
         $html .= 'MAJ.attend = {};'."\n";
@@ -171,11 +176,11 @@ switch ($action) {
         // get number of empty seats in each room
         if ($info = $config->collectpresentationscmid) {
             $info = block_maj_submissions::get_room_seats($info);
-            $info = block_maj_submissions::get_seats_info($info);
+            $info = block_maj_submissions::get_seats_info($info, $is_manager);
         } else {
             $info = new stdClass();
         }
-        $html .= 'MAJ.emptyseats = '.json_encode($info).';'."\n";
+        $html .= 'MAJ.seatinfo = '.json_encode($info).';'."\n";
         break;
 
     case 'updateattendance':
@@ -201,6 +206,10 @@ switch ($action) {
 
             if ($totalseats = block_maj_submissions::get_room_seats($cmid, $rid)) {
                 $html .= get_string('emptyseatsx', $plugin, $totalseats - $usedseats);
+            } else if ($is_manager) {
+                $html .= get_string('usedseatsx', $plugin, $usedseats);
+            } else {
+                $html .= get_string('seatsavailable', $plugin);
             }
         }
         break;

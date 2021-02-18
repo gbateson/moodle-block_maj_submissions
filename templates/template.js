@@ -141,12 +141,12 @@ MAJ.setup_attendance = function() {
                     }
 
                     // set up empty seats info
-                    var emptyseats = document.createElement("DIV");
-                    emptyseats.className = "emptyseats";
-                    if (MAJ.emptyseats[rid]) {
-                        emptyseats.innerHTML = MAJ.emptyseats[rid];
+                    var seatinfo = document.createElement("DIV");
+                    seatinfo.className = "seatinfo";
+                    if (MAJ.seatinfo[rid]) {
+                        seatinfo.innerHTML = MAJ.seatinfo[rid];
                     } else {
-                        emptyseats.innerHTML = MAJ.str.seatsavailable;
+                        seatinfo.innerHTML = MAJ.str.seatsavailable;
                     }
 
                     // set up checkbox
@@ -177,7 +177,7 @@ MAJ.setup_attendance = function() {
                     var capacity = document.createElement("DIV");
                     capacity.className = "capacity";
                     capacity.setAttribute("data-rid", rid);
-                    capacity.appendChild(emptyseats);
+                    capacity.appendChild(seatinfo);
                     capacity.appendChild(attendance);
 
                     capacity.addEventListener("click", function(){
@@ -200,7 +200,7 @@ MAJ.setup_attendance = function() {
                         xhr.open("POST", action, true);
                         xhr.onreadystatechange = function(){
                             if (this.readyState == 4 && this.status == 200) {
-                                var seats = target.querySelector(".emptyseats");
+                                var seats = target.querySelector(".seatinfo");
                                 if (seats) {
                                     seats.innerHTML = this.responseText;
                                 }

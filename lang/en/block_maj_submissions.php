@@ -221,6 +221,7 @@ $string['invalidcourseid'] = 'Invalid instanceid in course context record: id={$
 $string['invalidimportfile'] = 'Import file was missing, empty or invalid';
 $string['invalidinstanceid'] = 'Invalid block instance id: id = {$a}';
 $string['isinlist'] = 'is in list';
+$string['keynotespeech'] = 'Keynote speech';
 $string['keyword'] = 'Keyword';
 $string['largeroom'] = 'Large room';
 $string['last'] = 'Last';
@@ -245,6 +246,7 @@ $string['missingforumactivityname'] = 'Please give a name for the new forum.';
 $string['missingpreset'] = 'Please upload a preset file or select a preset from the list.';
 $string['missingregistercmid'] = 'The registration database is missing (or not specified).';
 $string['missingrevisetime'] = 'The deadline for revising submissions is missing.';
+$string['missingstarttime'] = 'Missing start time and date';
 $string['moodledatefmt'] = 'Moodle date format string';
 $string['moodledatefmt_help'] = 'Start and finish dates will be formatted in a similar way to the date selected here.
 
@@ -697,6 +699,7 @@ $string['unknownlanguage'] = 'Unknown language';
 $string['update'] = 'Update';
 $string['uploadpreset'] = 'Upload preset zip file';
 $string['uploadtemplatefile'] = 'Upload a template file';
+$string['usedseatsx'] = '{$a} attendees';
 $string['validimportfile'] = 'Configuration settings were successfully imported';
 $string['vettingresults'] = 'Vetting results';
 $string['videomodname'] = 'Video activity module';
@@ -709,6 +712,7 @@ $string['warningoverwritedatabase'] = 'The selected database is already used for
 $string['warningrecordsexist'] = 'The selected database contains {$a} live records. Please empty the database and try again.';
 $string['wordcount'] = 'Number of words';
 $string['workshopnamecount'] = '{$a->name} [{$a->count} submissions]';
+$string['workshops'] = 'Workshops';
 $string['workshopscmid'] = 'Workshop information';
 $string['workshopscmid_help'] = 'The page resource that displays information about the conference workshops.';
 $string['workshopsprocess'] = 'the workshop submission process';
