@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-03-30 (89)
+ - fix behavior of setupschedule tool when there is no submissions database
+
 2021-02-18 (87)
  - block/maj_submissions remove 'No seats available' message from online rooms
 

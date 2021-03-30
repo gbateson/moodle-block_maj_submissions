@@ -663,12 +663,28 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                 // if we cannot reuse names, ensure that name is unique within this course
                 if (empty($data->reusename)) {
                     $i = 1;
-                    $params = array('course' => $this->course->id, 'name' => $activityname);
-                    while ($DB->record_exists($modname, $params)) {
-                        $i++;
-                        $params['name'] = "$activityname ($i)";
+                    $sql = 'SELECT cm.id, x.name '.
+                           'FROM {course_modules} cm, '.
+                                '{modules} m, '.
+                                '{'.$modname.'} x '.
+                           'WHERE cm.course = :courseid AND '.
+                                 'cm.module = m.id AND '.
+                                 'm.name = :modname AND '.
+                                 'cm.instance = x.id AND '.
+                                 'x.name = :activityname';
+                    $params = array('courseid' => $this->course->id,
+                                    'modname' => $modname,
+                                    'activityname' => $activityname);
+                    if (property_exists('cm_info', 'deletioninprogress')) {
+                        // Moodle >= 3.2
+                        $sql .= ' AND cm.deletioninprogress = :deletioninprogress';
+                        $params['deletioninprogress'] = 0;
                     }
-                    $activityname = $params['name'];
+                    while ($DB->record_exists_sql($sql, $params)) {
+                        $i++;
+                        $params['activityname'] = "$activityname ($i)";
+                    }
+                    $activityname = $params['activityname'];
                 }
 
                 $activitynametext = block_maj_submissions::filter_text($activityname);
@@ -776,8 +792,7 @@ abstract class block_maj_submissions_tool_form extends moodleform {
             $user = $DB->get_record('user', array('id' => $userid));
         }
         if (empty($user)) {
-            $strman = get_string_manager();
-            if ($strman->string_exists('invaliduserid', 'notes')) {
+            if (get_string_manager()->string_exists('invaliduserid', 'notes')) {
                 // Moodle >= 3.0 (Invalid user id)
                 return get_string('invaliduserid', 'error').": $userid";
             }
@@ -1019,7 +1034,7 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                   'JOIN {'.$modulename.'} x ON cm.module = ? AND cm.instance = x.id';
         $where  = 'cs.course = ? AND cs.section = ? AND x.name = ?';
         $params = array($moduleid, $course->id, $section->section, $instancename, 0);
-        if (class_exists('cm_info') && property_exists('cm_info', 'deletioninprogress')) {
+        if (property_exists('cm_info', 'deletioninprogress')) {
             // Moodle >= 3.2
             $where .= ' AND deletioninprogress = ?';
             $params[] = 0;

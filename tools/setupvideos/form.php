@@ -69,7 +69,7 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
 
         // get video mods, if any
         $plugins = core_plugin_manager::instance()->get_enabled_plugins('mod');
-        $videomodnames = array('bigbluebuttonbn', 'googlemeet', 'webex', 'zoom');
+        $videomodnames = array('bigbluebuttonbn', 'googlemeet', 'jitsi', 'webex', 'zoom');
         $videomodnames  = array_intersect_key($plugins, array_flip($videomodnames));
 
         foreach (array_keys($videomodnames) as $videomodname) {
@@ -315,7 +315,7 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
 
                     if ($record->schedule_starttime == 0) {
                         $record->schedule_startday = 0;
-                        $record->schedule_startdate_multilang = block_maj_submissions::get_string_multilang('missingstarttime', $this->plugin);
+                        $record->schedule_startdate_multilang = block_maj_submissions::get_multilang_string('missingstarttime', $this->plugin);
                         $record->schedule_starttime_multilang = '';
                     } else {
                         // format start DAY (integer from 1 - 31)
@@ -400,14 +400,14 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                             'aftermod' => $newcm
                         );
                         if ($workshop_startday && $workshop_startday == $record->schedule_startday) {
-                            $text = block_maj_submissions::get_string_multilang('workshops', $this->plugin);
+                            $text = block_maj_submissions::get_multilang_string('workshops', $this->plugin);
                             $params = array('class' => 'bg-light text-info d-inline-block border border-dark ml-2 px-2 py-0');
-                            $label->intro .= ' '.html_writer::tab('big', $text, $params);
+                            $label->intro .= ' '.html_writer::tag('big', $text, $params);
                         }
                         if (is_numeric(strpos($record->presentation_type, 'Keynote'))) {
-                            $text = block_maj_submissions::get_string_multilang('keynotespeech', $this->plugin);
+                            $text = block_maj_submissions::get_multilang_string('keynotespeech', $this->plugin);
                             $params = array('class' => 'bg-light text-danger d-inline-block border border-dark ml-2 px-2 py-0');
-                            $label->intro .= ' '.html_writer::tab('big', $text, $params);
+                            $label->intro .= ' '.html_writer::tag('big', $text, $params);
                         }
                         $newcm = $this->get_cm($msg, $label, 'label');
                     }
@@ -458,6 +458,7 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                     $video->aftermod = $newcm;
 
                     switch ($videomodname) {
+
                         case 'bigbluebuttonbn':
                             $video->type = 0; // room with recordings
                             $video->record = 1;
@@ -481,6 +482,12 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                             $video->recordings_deleted = 1;
                             $video->recordings_imported = 0;
                             $video->recordings_preview = 1;
+                            break;
+
+                        case 'jitsi':
+                            if ($video->timeopen = $record->schedule_starttime) {
+                                $video->minpretime = 10; // open 10 mins before start
+                            }
                             break;
                     }
 

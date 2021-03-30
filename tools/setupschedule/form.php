@@ -107,12 +107,15 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $config->workshopstimestart,
             $config->conferencetimestart,
         );
-        $start = min(array_filter($start));
+        $start = array_filter($start);
+        $start = (empty($start) ? 0 : max($start));
+
         $finish = array(
             $config->workshopstimefinish,
             $config->conferencetimefinish,
         );
-        $finish = max(array_filter($finish));
+        $finish = array_filter($finish);
+        $finish = (empty($finish) ? 0 : max($finish));
 
         // extract the module context and course section, if possible
         if ($this->cmid) {
@@ -167,8 +170,8 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             // --------------------------------------------------------
 
             $name = 'numberofdays';
-            if (count($this->schedule_day) <= 1) {
-                $default = max(0, $finish - $start);
+            if (empty($this->schedule_day) || count($this->schedule_day) <= 1) {
+                $default = max(1, $finish - $start);
                 $default = ceil($default / DAYSECS);
             } else {
                 $default = count($this->schedule_day);
@@ -178,8 +181,8 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $mform->disabledIf($name, 'templatetype', 'neq', self::TEMPLATE_GENERATE);
 
             $name = 'numberofrooms';
-            if (count($this->schedule_roomname) <= 1) {
-                $default = 6;
+            if (empty($this->schedule_roomname) || count($this->schedule_roomname) <= 1) {
+                $default = 4;
             } else {
                 $default = count($this->schedule_roomname);
                 $default--;
@@ -188,7 +191,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
             $mform->disabledIf($name, 'templatetype', 'neq', self::TEMPLATE_GENERATE);
 
             $name = 'numberofslots';
-            if (count($this->schedule_time) <= 1) {
+            if (empty($this->schedule_time) || count($this->schedule_time) <= 1) {
                 $default = 6;
             } else {
                 $default = count($this->schedule_time);
@@ -539,73 +542,78 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                     $html = $DB->get_field($cm->modname, 'content', array('id' => $cm->instance));
                     $html = preg_replace('/<table[^>]*>.*<\/table>\s*/us', $data->schedule_html, $html);
                     $DB->set_field($cm->modname, 'content', $html, array('id' => $cm->instance));
+
+                    // create message with a link to the schedule
                     $link = "/mod/$cm->modname/view.php";
                     $link = new moodle_url($link, array('id' => $cm->id));
                     $link = html_writer::link($link, $cm->name, array('target' => '_blank'));
                     $msg[] = get_string('scheduleupdated', $this->plugin, $link);
 
-                    // prepare SQL to select database fields associated with this block
-                    list($dataidselect, $dataidparams) = $DB->get_in_or_equal($this->dataids);
-
-                    // search strings to parse HTML table
-                    $search = new stdClass();
-                    $search->tbody = '/<tbody\b([^>]*)>(.*?)<\/tbody>/us';
-                    $search->tr = '/<tr\b([^>]*)>(.*?)<\/tr>/us';
-                    $search->td = '/<td\b([^>]*)>(.*?)<\/td>/us';
-
-                    // search strings to detect CSS classes
-                    $search->class = '/(?<=class=").*?(?=")/';
-                    $search->dateclass = '/\bdate\b/';
-                    $search->dayclass = '/\bday\b/';
-                    $search->slotclass = '/\bslot\b/';
-                    $search->timeheading = '/\btimeheading\b/';
-
-                    // search string to detect recordid
-                    $search->recordid = '/(?<=id="id_recordid_)(\d+)(?=")/';
-
-                    // search string to extract multilang spans
-                    $search->multilang = '/(<span[^>]*lang="([^"]*)"[^>]*>)(.*?)\s*(<\/span>)/us';
-                    $search->ascii = '/^[[:ascii:]]*$/us';
-
-                    // the search string to extract value from a session
-                    // the value can be a multilang string, or plain text
-                    $value = '((<span[^>]*class="multilang"[^>]*>.*?<\/span>)+|.*?)';
-
-                    // map CSS class names to database fields
                     $fieldids = array();
-                    $fields = array('day'       => 'schedule_day',
-                                    'startfinish' => 'schedule_time',
-                                    'duration'  => 'schedule_duration',
-                                    'roomname'  => 'schedule_roomname',
-                                    'roomseats' => 'schedule_roomseats',
-                                    'roomtopic' => 'schedule_topic',
-                                    'title'     => 'presentation_title',
-                                    'category'  => 'presentation_category',
-                                    'type'      => 'presentation_type',
-                                    'topic'     => 'presentation_topic',
-                                    'schedulenumber' => 'schedule_number');
-                    foreach ($fields as $name => $field) {
-                        if ($name=='title') {
-                            $tag = 'div';
-                        } else {
-                            $tag = 'span';
-                        }
-                        $search->$name = '/<'.$tag.'[^>]*class="[^"]*\b('.$name.')\b[^"]*"[^>]*>'.$value.'<\/'.$tag.'>/us';
-                        $select = 'dataid '.$dataidselect.' AND name = ?';
-                        $params = array_merge($dataidparams, array($field));
-                        $fieldid = $DB->get_field_select('data_fields', 'id', $select, $params);
-                        if (empty($fieldid)) {
-                            unset($fields[$name]);
-                        } else {
-                            $fieldids[$field] = $fieldid;
-                        }
-                    }
+                    $fields = array();
+                    $d_max = 0; // number of days in conference
 
-                    // update room/session info
-                    if (preg_match_all($search->tbody, $html, $days)) {
-                        $d_max = count($days[0]);
-                    } else {
-                        $d_max = 0;
+                    // prepare SQL to select database fields associated with this block
+                    if (count($this->dataids)) {
+                        list($dataidselect, $dataidparams) = $DB->get_in_or_equal($this->dataids);
+
+                        // search strings to parse HTML table
+                        $search = new stdClass();
+                        $search->tbody = '/<tbody\b([^>]*)>(.*?)<\/tbody>/us';
+                        $search->tr = '/<tr\b([^>]*)>(.*?)<\/tr>/us';
+                        $search->td = '/<td\b([^>]*)>(.*?)<\/td>/us';
+
+                        // search strings to detect CSS classes
+                        $search->class = '/(?<=class=").*?(?=")/';
+                        $search->dateclass = '/\bdate\b/';
+                        $search->dayclass = '/\bday\b/';
+                        $search->slotclass = '/\bslot\b/';
+                        $search->timeheading = '/\btimeheading\b/';
+
+                        // search string to detect recordid
+                        $search->recordid = '/(?<=id="id_recordid_)(\d+)(?=")/';
+
+                        // search string to extract multilang spans
+                        $search->multilang = '/(<span[^>]*lang="([^"]*)"[^>]*>)(.*?)\s*(<\/span>)/us';
+                        $search->ascii = '/^[[:ascii:]]*$/us';
+
+                        // the search string to extract value from a session
+                        // the value can be a multilang string, or plain text
+                        $value = '((<span[^>]*class="multilang"[^>]*>.*?<\/span>)+|.*?)';
+
+                        // map CSS class names to database fields
+                        $fields = array('day'       => 'schedule_day',
+                                        'startfinish' => 'schedule_time',
+                                        'duration'  => 'schedule_duration',
+                                        'roomname'  => 'schedule_roomname',
+                                        'roomseats' => 'schedule_roomseats',
+                                        'roomtopic' => 'schedule_topic',
+                                        'title'     => 'presentation_title',
+                                        'category'  => 'presentation_category',
+                                        'type'      => 'presentation_type',
+                                        'topic'     => 'presentation_topic',
+                                        'schedulenumber' => 'schedule_number');
+                        foreach ($fields as $name => $field) {
+                            if ($name=='title') {
+                                $tag = 'div';
+                            } else {
+                                $tag = 'span';
+                            }
+                            $search->$name = '/<'.$tag.'[^>]*class="[^"]*\b('.$name.')\b[^"]*"[^>]*>'.$value.'<\/'.$tag.'>/us';
+                            $select = 'dataid '.$dataidselect.' AND name = ?';
+                            $params = array_merge($dataidparams, array($field));
+                            $fieldid = $DB->get_field_select('data_fields', 'id', $select, $params);
+                            if (empty($fieldid)) {
+                                unset($fields[$name]);
+                            } else {
+                                $fieldids[$field] = $fieldid;
+                            }
+                        }
+
+                        // update room/session info
+                        if (preg_match_all($search->tbody, $html, $days)) {
+                            $d_max = count($days[0]);
+                        }
                     }
 
                     // initialize $update flag
@@ -982,7 +990,10 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                            'Show and tell',
                            'Symposium',
                            'Poster');
-            $topics = array();
+            $topics = array('Assessment',
+                            'Competency Frameworks',
+                            'Language teaching',
+                            'Mobile learning');
         }
 
         $countcategories = (count($categories) - 1);

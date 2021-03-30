@@ -508,11 +508,12 @@ class block_maj_submissions_edit_form extends block_edit_form {
         }
         if ($finishdefault==0) {
             $time = ($startdefault ? $startdefault : time());
-            $finishdefault = mktime(23, 55, 0, date('n', $time), date('j', $time), date('Y', $time));
+            $finishdefault = mktime(23, 59, 0, date('n', $time), date('j', $time), date('Y', $time));
         }
 
-        $startoptions = array('optional' => true, 'defaulttime' => $startdefault);
-        $finishoptions = array('optional' => true, 'defaulttime' => $finishdefault);
+        // Moodle <= 3.4 uses a default minute "step" value of "5", but we can force it to be "1"
+        $startoptions = array('optional' => true, 'step' => 1, 'defaulttime' => $startdefault);
+        $finishoptions = array('optional' => true, 'step' => 1, 'defaulttime' => $finishdefault);
 
         $startlabel = html_writer::tag('b', get_string('timestart', $plugin).' ');
         $finishlabel = html_writer::tag('b', get_string('timefinish', $plugin).' ');
