@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-07-05 (90)
+ - fix generation of multilingual dates on 'Important dates' page
+
 2021-03-30 (89)
  - fix behavior of setupschedule tool when there is no submissions database
 

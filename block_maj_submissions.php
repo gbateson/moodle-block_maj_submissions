@@ -574,8 +574,8 @@ class block_maj_submissions extends block_base {
                         $text = html_writer::tag('a', $text, array('href' => $url));
                     }
                     $date = html_writer::tag('b', $text).
-                            html_writer::empty_tag('br').
-                            html_writer::tag('span', $date);
+                            html_writer::empty_tag('br').$date;
+                            //html_writer::tag('span', $date);
                     if ($this->user_can_edit()) {
                         if ($stats = $this->format_stats($plugin, $modinfo, $type, $cmid, $sectionnum)) {
                             $date .= html_writer::tag('i', $stats);
@@ -712,14 +712,14 @@ class block_maj_submissions extends block_base {
             );
             $date = $this->get_string('dateopenclose', $plugin, $date);
         } else if ($this->config->$timestart) {
-            $date = $this->multilang_userdate($this->config->$timestart, $dateformat, $plugin, $removestart, $removeyear);
+            $date = $this->multilang_userdate($this->config->$timestart, $dateformat, $plugin, $removestart, $removeyear, true);
             if ($this->config->$timestart < $timenow) {
                 $date = $this->get_string('dateopenedon', $plugin, $date);
             } else {
                 $date = $this->get_string('dateopenson', $plugin, $date);
             }
         } else if ($this->config->$timefinish) {
-            $date = $this->multilang_userdate($this->config->$timefinish, $dateformat, $plugin, $removefinish, $removeyear);
+            $date = $this->multilang_userdate($this->config->$timefinish, $dateformat, $plugin, $removefinish, $removeyear, true);
             if ($this->config->$timefinish < $timenow) {
                 $date = $this->get_string('dateclosedon', $plugin, $date);
             } else {
@@ -1078,9 +1078,10 @@ class block_maj_submissions extends block_base {
      * @param string  $formatstring
      * @param boolean $removetime (optional, default = false)
      * @param integer $removedate (optional, default = REMOVE_NONE)
+     * @param boolean $returnarray (optional, default = false)
      * @return string representation of $date
      */
-    public function multilang_userdate($date, $formatstring, $plugin='', $removetime=false, $removedate=self::REMOVE_NONE) {
+    public function multilang_userdate($date, $formatstring, $plugin='', $removetime=false, $removedate=self::REMOVE_NONE, $returnarray=false) {
         global $CFG;
 
         if ($this->multilang==false) {
@@ -1115,6 +1116,10 @@ class block_maj_submissions extends block_base {
             // "moodle_setlocale($locale)";
             force_current_language($lang);
             $this->check_date_fixes();
+        }
+
+        if ($returnarray) {
+            return $dates;
         }
 
         return self::multilang_string($dates);
@@ -1430,13 +1435,65 @@ class block_maj_submissions extends block_base {
             return reset($items);
         }
 
+        // Extract common $prefix and $suffix.
+        // (this is particularly intended for dates with time)
+        $strlen = 0;
+        $prefix = null;
+        $suffix = null;
+
+        foreach ($items as $lang => $item) {
+            if ($prefix === null) {
+                $prefix = $item;
+                $strlen = strlen($prefix);
+            } else if ($strlen > 0) {
+                $strlen = min($strlen, strlen($item));
+                for ($i = 0; $i < $strlen; $i++) {
+                    if ($prefix[$i] != $item[$i]) {
+                        $strlen = $i; // stop loop
+                    }
+                }
+            }
+        }
+        if ($strlen) {
+            $prefix = substr($prefix, 0, $strlen);
+            $items = array_map(function($value) use(&$strlen) {
+                return substr($value, $strlen);
+            }, $items);
+        } else {
+            $prefix = '';
+        }
+
+        foreach ($items as $lang => $item) {
+            $item = strrev($item);
+            if ($suffix === null) {
+                $suffix = $item;
+                $strlen = strlen($suffix);
+            } else if ($strlen > 0) {
+                $strlen = min($strlen, strlen($item));
+                for ($i = 0; $i < $strlen; $i++) {
+                    if ($suffix[$i] != $item[$i]) {
+                        $strlen = $i; // stop loop
+                    }
+                }
+            }
+        }
+        if ($strlen) {
+            $suffix = strrev($suffix);
+            $suffix = substr($suffix, -$strlen);
+            $items = array_map(function($value) use(&$strlen) {
+                return substr($value, 0, -$strlen);
+            }, $items);
+        } else {
+            $suffix = '';
+        }
+
         // format items as multilang $items
         foreach ($items as $lang => $item) {
             $params = array('lang' => $lang, 'class' => 'multilang');
             $items[$lang] = html_writer::tag('span', $item, $params);
         }
 
-        return implode('', $items);
+        return $prefix.implode('', $items).$suffix;
     }
 
     /**

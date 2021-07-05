@@ -76,18 +76,19 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
     $content = preg_replace('/\s*<(h4|p|ul)\b[^>]*class="(quicklinks|toollinks?|tooldivider)"[^>]*>.*?<\/\1>/s', '', $content);
 
     // format block and style tags
-    $s = '    ';
-    $content = strtr($content, array('<h4>'   => "\n<h4>",
-                                     '<h4 '   => "\n<h4 ",
-                                     '<ul>'   => "\n<ul>",
-                                     '<ul '   => "\n<ul ",
-                                     '</ul>'  => "\n</ul>",
-                                     '<li>'   => "\n$s<li>",
-                                     '<li '   => "\n$s<li ",
-                                     '</li>'  => "\n$s</li>",
-                                     '<b>'    => "\n$s$s<b>",
-                                     '<b '    => "\n$s$s<b ",
-                                     '<span>' => "\n$s$s<span>"));
+    $n = "\n"; // newline
+    $t = "    "; // tab
+    $content = strtr($content, array('<h4>'   => "$n<h4>",
+                                     '<h4 '   => "$n<h4 ",
+                                     '<ul>'   => "$n<ul>",
+                                     '<ul '   => "$n<ul ",
+                                     '</ul>'  => "$n</ul>",
+                                     '<li>'   => "$n$t<li>",
+                                     '<li '   => "$n$t<li ",
+                                     '</li>'  => "$n$t</li>",
+                                     '<b>'    => "$n$t$t<b>",
+                                     '<b '    => "$n$t$t<b ",
+                                     '<span>' => "$n$t$t<span>"));
 
     // convert divider DIV to one line
     $content = preg_replace('/(<li class="divider">)\s+(<\/li>)/s', '$1$2', $content);
@@ -118,8 +119,25 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
         }
     }
 
+    // Put $content into DIV.block_maj_submissions so that CSS styles are applied as expected.
+    $content = html_writer::tag('div', $content, array('class' => 'block_maj_submissions'));
+
     // create $table version of the html $content
     $table = $content;
+
+    $search = '/<li class="(date[^"]*)">\s*<b>(.*?)<\/b>\s*<br[^>]*>\s*(.*?)\s*<\/li>/us';
+    $replace = '<dl class="row my-0 $1">'.
+                '<dt class="col-sm-5 col-md-4 col-lg-3 my-0 py-1 px-sm-3">$2</dt>'.
+                '<dd class="col-sm-7 col-md-8 col-lg-9 my-0 py-1">$3</dd>'.
+               '</dl>';
+    $content = preg_replace($search, $replace, $content);
+
+    $search = '/<ul class="importantdates">(.*?)<\/ul>/us';
+    $replace = '<div class="container importantdates mx-0 my-2">$1</div>';
+    $content = preg_replace($search, $replace, $content);
+
+    // remove empty list items (e.g. dividers)
+    $content = preg_replace('/\s*<li[^>]*><\/li>/s', '<hr>', $content);
 
     // remove link tags, i.e. <a...> and </a>
     $table = preg_replace('/<\/?a[^<]*>\s*/', '', $table);
@@ -128,14 +146,14 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
     $table = preg_replace('/<(ul)([^>]*)>(.*?)<\/\1>/s', '<table$2"><tbody>$3</tbody></table>', $table);
     $table = preg_replace('/<(li)([^>]*)>(.*?)<\/\1>/s', '<tr$2>$3</tr>', $table);
     $table = preg_replace('/<b>(.*)<\/b><br[^>]*>/', '<th>$1</th>', $table);
-    $table = preg_replace('/<span>(.*)<\/span>/', '<td>$1</td>', $table);
+    $table = preg_replace('/(<\/th>)(.*)/', '$1<td>$1</td>', $table);
 
     // convert divider to <hr>
-    $replace = '<tr>'."\n$s$s".'<td colspan="2"><hr$1 /></td>'."\n$s".'</tr>';
+    $replace = '<tr>'."$n$t$t".'<td colspan="2"><hr$1 /></td>'."$n$t".'</tr>';
     $table = preg_replace('/<tr([^<]*)>\s*<\/tr>/', $replace, $table);
 
     // append $table to html $content
-    $content .= "\n".$table."\n";
+    $content .= "$n$n".$table."$n";
 }
 
 if (empty($instance->config->title)) {
