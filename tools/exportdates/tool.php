@@ -156,6 +156,11 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
     $content .= "$n$n".$table."$n";
 }
 
+// TODO: add a settings page to select...
+//     (1) page/file output type
+//     (2) list/table output format 
+
+// On development sites, we show the output on the screen
 if (debugging('', DEBUG_DEVELOPER)) {
     $url = new moodle_url($SCRIPT, array('id' => $id));
     $strblockname = get_string('blockname', $plugin);
@@ -174,6 +179,7 @@ if (debugging('', DEBUG_DEVELOPER)) {
     die;
 }
 
+// On production sites, we send the output as a file
 if (empty($instance->config->title)) {
     $filename = $block->name;
 } else {

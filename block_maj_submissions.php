@@ -1229,14 +1229,10 @@ class block_maj_submissions extends block_base {
         }
 
         if (is_numeric(strpos($format, '%a'))) {
-            $w = intval(strftime('%w', $date));
-            $days = array('sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat');
-            $replace['%a'] = get_string($days[$w], 'calendar');
+            $replace['%a'] = self::get_day_name($date, true);
         }
         if (is_numeric(strpos($format, '%A'))) {
-            $w = intval(strftime('%w', $date));
-            $days = array('sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday');
-            $replace['%A'] = get_string($days[$w], 'calendar');
+            $replace['%A'] = self::get_day_name($date, false);
         }
 
         if (count($replace)) {
@@ -1350,6 +1346,23 @@ class block_maj_submissions extends block_base {
             case 'zh': return array('年', '月', '日'); // Chinese
             default : return array('', '', '');
         }
+    }
+
+    /**
+     * get_day_name
+     *
+     * This function serves as a replacement for %a and %A
+     * which do not seem to work reliably across platforms
+     * in the "strftime()" function.
+     */
+    static public function get_day_name($date, $shortname) {
+        $w = strftime('%w', $date); // weekday number (0=sun, 6=sat)
+        if ($shortname) {
+            $names = array('sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat');
+        } else {
+            $names = array('sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday');
+        }
+        return get_string($names[$w], 'calendar');
     }
 
     /**
@@ -1490,6 +1503,8 @@ class block_maj_submissions extends block_base {
      * Extract common $prefix and $suffix.
      * (this is particularly intended for dates with times)
      *
+     * NOTE: this method does seem to be used anywhere but it works
+     *
      * @param array $items
      * @return array ($items, $suffix, $prefix)
      */
@@ -1514,7 +1529,7 @@ class block_maj_submissions extends block_base {
         }
         if ($strlen) {
             $prefix = substr($prefix, 0, $strlen);
-            $items = array_map(function($value) use(&$strlen) {
+            $items = array_map(function($value) use($strlen) {
                 return substr($value, $strlen);
             }, $items);
         } else {
@@ -1538,7 +1553,7 @@ class block_maj_submissions extends block_base {
         if ($strlen) {
             $suffix = strrev($suffix);
             $suffix = substr($suffix, -$strlen);
-            $items = array_map(function($value) use(&$strlen) {
+            $items = array_map(function($value) use($strlen) {
                 return substr($value, 0, -$strlen);
             }, $items);
         } else {
