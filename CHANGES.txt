@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-07-06 (91)
+ - fix creation of multilang dates on systems that cannot generate them using appropriate locale
+
 2021-07-05 (90)
  - fix generation of multilingual dates on 'Important dates' page
 

@@ -706,10 +706,22 @@ class block_maj_submissions extends block_base {
 
         $date = '';
         if ($this->config->$timestart && $this->config->$timefinish) {
-            $date = (object)array(
-                'open'  => $this->multilang_userdate($this->config->$timestart, $dateformat, $plugin, $removetime, $removeyear),
-                'close' => $this->multilang_userdate($this->config->$timefinish, $dateformat, $plugin, $removetime, $removedate)
+            $date = array(
+                'open'  => $this->multilang_userdate($this->config->$timestart, $dateformat, $plugin, $removetime, $removeyear, true),
+                'close' => $this->multilang_userdate($this->config->$timefinish, $dateformat, $plugin, $removetime, $removedate, true)
             );
+            if (is_array($date['open'])) {
+                foreach ($date['open'] as $lang => $text) {
+                    $date[$lang] = new stdClass();
+                    $date[$lang]->open = $text;
+                    $text = $date['close'];
+                    if (is_array($text)) {
+                        $text = $text[$lang];
+                    }
+                    $date[$lang]->close = $text;
+                }
+                // unset($date['open'], $date['close']);
+            }
             $date = $this->get_string('dateopenclose', $plugin, $date);
         } else if ($this->config->$timestart) {
             $date = $this->multilang_userdate($this->config->$timestart, $dateformat, $plugin, $removestart, $removeyear, true);
@@ -1082,7 +1094,7 @@ class block_maj_submissions extends block_base {
      * @return string representation of $date
      */
     public function multilang_userdate($date, $formatstring, $plugin='', $removetime=false, $removedate=self::REMOVE_NONE, $returnarray=false) {
-        global $CFG;
+        global $CFG, $SESSION;
 
         if ($this->multilang==false) {
             if (strpos($formatstring, '%')===false) {
@@ -1093,6 +1105,7 @@ class block_maj_submissions extends block_base {
             return $this->userdate($date, $format, $removetime, $removedate);
         }
 
+        // cache the current language
         $currentlanguage = current_language();
 
         // get all langs and locales on this Moodle site
@@ -1100,7 +1113,7 @@ class block_maj_submissions extends block_base {
 
         $dates = array();
         foreach ($locales as $lang => $locale) {
-            // "moodle_setlocale($locale)";
+            // moodle_setlocale($locale);
             force_current_language($lang);
             $this->check_date_fixes();
             if (strpos($formatstring, '%')===false) {
@@ -1111,9 +1124,8 @@ class block_maj_submissions extends block_base {
             $dates[$lang] = $this->userdate($date, $format, $removetime, $removedate);
         }
 
+        // reset locale for current language, if any
         if ($lang = $currentlanguage) {
-            // $locale = $locales[$lang];
-            // "moodle_setlocale($locale)";
             force_current_language($lang);
             $this->check_date_fixes();
         }
@@ -1148,14 +1160,12 @@ class block_maj_submissions extends block_base {
 
         $times = array();
         foreach ($locales as $lang => $locale) {
-            moodle_setlocale($locale);
             force_current_language($lang);
             $times[$lang] = format_time($secs);
         }
 
         if ($lang = $currentlanguage) {
             $locale = $locales[$lang];
-            moodle_setlocale($locale);
             force_current_language($lang);
         }
 
@@ -1203,31 +1213,49 @@ class block_maj_submissions extends block_base {
         // set the $year, $month and $day characters for CJK languages
         list($year, $month, $day) = self::get_date_chars();
 
+        $replace = array();
+
         // add year, month and day characters for CJK languages
-        if ($this->fixyearchar || $this->fixmonthchar || $this->fixdaychar) {
-            $replace = array();
-            if ($this->fixyearchar) {
-                $replace['%y'] = '%y'.$year;
-                $replace['%Y'] = '%Y'.$year;
-            }
-            if ($this->fixmonthchar) {
-                $replace['%b'] = '%b'.$month;
-                $replace['%h'] = '%h'.$month;
-            }
-            if ($this->fixdaychar) {
-                $replace['%d'] = '%d'.$day;
-            }
+        if ($this->fixyearchar && $year) {
+            $replace['%y'] = '%y'.$year;
+            $replace['%Y'] = '%Y'.$year;
+        }
+        if ($this->fixmonthchar && $month) {
+            $replace['%b'] = '%m'.$month;
+            $replace['%h'] = '%m'.$month;
+        }
+        if ($this->fixdaychar && $day) {
+            $replace['%d'] = '%d'.$day;
+        }
+
+        if (is_numeric(strpos($format, '%a'))) {
+            $w = intval(strftime('%w', $date));
+            $days = array('sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat');
+            $replace['%a'] = get_string($days[$w], 'calendar');
+        }
+        if (is_numeric(strpos($format, '%A'))) {
+            $w = intval(strftime('%w', $date));
+            $days = array('sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday');
+            $replace['%A'] = get_string($days[$w], 'calendar');
+        }
+
+        if (count($replace)) {
             $format = strtr($format, $replace);
+            $replace = array();
         }
 
         if ($fixmonth = ($this->config->fixmonth && is_numeric(strpos($format, '%m')))) {
-            $format = str_replace('%m', 'MM', $format);
+            $replace['%m'] = 'MM';
         }
         if ($fixday = ($this->config->fixday && is_numeric(strpos($format, '%d')))) {
-            $format = str_replace('%d', 'DD', $format);
+            $replace['%d'] = 'DD';
         }
         if ($fixhour = ($this->config->fixhour && is_numeric(strpos($format, '%I')))) {
-            $format = str_replace('%I', 'II', $format);
+            $replace['%I'] = 'II';
+        }
+
+        if (count($replace)) {
+            $format = strtr($format, $replace);
         }
 
         $userdate = userdate($date, $format, 99, false, false);
@@ -1260,6 +1288,14 @@ class block_maj_submissions extends block_base {
         // remove unnecessary white space
         $userdate = trim($userdate);
         $userdate = preg_replace('/  +/', ' ', $userdate);
+
+        // Note that Chinese dates don't seem to use spaces at all.
+        // We could detect this by checking for spaces in "strftimedate":
+        // if (substr_count(get_string('strftimedate', 'langconfig'), ' ')) {
+        //     $userdate = preg_replace('/  +/', ' ', $userdate);
+        // } else {
+        //     $userdate = str_replace(' ', '', $userdate);
+        // }
 
         return $userdate;
     }
@@ -1435,8 +1471,30 @@ class block_maj_submissions extends block_base {
             return reset($items);
         }
 
-        // Extract common $prefix and $suffix.
-        // (this is particularly intended for dates with time)
+        // get common $prefix and $suffix, if any
+        $prefix = '';
+        $suffix = '';
+        //list($items, $prefix, $suffix) = self::get_items_prefix_suffix($items);
+
+        // format items as multilang $items
+        foreach ($items as $lang => $item) {
+            $params = array('lang' => $lang, 'class' => 'multilang');
+            $items[$lang] = html_writer::tag('span', $item, $params);
+        }
+
+        return $prefix.implode('', $items).$suffix;
+    }
+
+
+    /**
+     * Extract common $prefix and $suffix.
+     * (this is particularly intended for dates with times)
+     *
+     * @param array $items
+     * @return array ($items, $suffix, $prefix)
+     */
+    static public function get_items_prefix_suffix($items) {
+
         $strlen = 0;
         $prefix = null;
         $suffix = null;
@@ -1487,13 +1545,7 @@ class block_maj_submissions extends block_base {
             $suffix = '';
         }
 
-        // format items as multilang $items
-        foreach ($items as $lang => $item) {
-            $params = array('lang' => $lang, 'class' => 'multilang');
-            $items[$lang] = html_writer::tag('span', $item, $params);
-        }
-
-        return $prefix.implode('', $items).$suffix;
+        return array($items, $prefix, $suffix);
     }
 
     /**

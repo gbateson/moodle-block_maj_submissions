@@ -146,7 +146,7 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
     $table = preg_replace('/<(ul)([^>]*)>(.*?)<\/\1>/s', '<table$2"><tbody>$3</tbody></table>', $table);
     $table = preg_replace('/<(li)([^>]*)>(.*?)<\/\1>/s', '<tr$2>$3</tr>', $table);
     $table = preg_replace('/<b>(.*)<\/b><br[^>]*>/', '<th>$1</th>', $table);
-    $table = preg_replace('/(<\/th>)(.*)/', '$1<td>$1</td>', $table);
+    $table = preg_replace('/(<\/th>)(.*)/', '$1'."$n$t$t".'<td>$2</td>', $table);
 
     // convert divider to <hr>
     $replace = '<tr>'."$n$t$t".'<td colspan="2"><hr$1 /></td>'."$n$t".'</tr>';
@@ -154,6 +154,24 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
 
     // append $table to html $content
     $content .= "$n$n".$table."$n";
+}
+
+if (debugging('', DEBUG_DEVELOPER)) {
+    $url = new moodle_url($SCRIPT, array('id' => $id));
+    $strblockname = get_string('blockname', $plugin);
+    $strpagetitle = get_string($tool, $plugin);
+
+    $PAGE->set_url($url);
+    $PAGE->set_title($strpagetitle);
+    $PAGE->set_heading($course->fullname);
+    $PAGE->set_pagelayout('incourse');
+    $PAGE->navbar->add($strblockname);
+    $PAGE->navbar->add($strpagetitle, $url);
+
+    echo $OUTPUT->header();
+    echo html_writer::tag('pre', htmlspecialchars($content));
+    echo $OUTPUT->footer();
+    die;
 }
 
 if (empty($instance->config->title)) {
