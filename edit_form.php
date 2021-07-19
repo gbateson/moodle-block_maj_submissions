@@ -146,12 +146,12 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $this->add_header($mform, $plugin, 'registerparticipation');
         //-----------------------------------------------------------------------------
 
-        $this->add_cmid($mform, $plugin, 'data,page,resource', 'registerdelegatescmid');
         $this->add_cmid($mform, $plugin, 'data,page,resource', 'registerpresenterscmid');
+        $this->add_cmid($mform, $plugin, 'data,page,resource', 'registerdelegatescmid');
 
         $this->add_time_startfinish($mform, $plugin, 'registerearly');
-        $this->add_time_startfinish($mform, $plugin, 'registerdelegates');
         $this->add_time_startfinish($mform, $plugin, 'registerpresenters');
+        $this->add_time_startfinish($mform, $plugin, 'registerdelegates');
 
         $this->add_cmid($mform, $plugin, 'page,resource', 'membershipinfocmid');
         $this->add_cmid($mform, $plugin, 'page,resource', 'paymentinfocmid');

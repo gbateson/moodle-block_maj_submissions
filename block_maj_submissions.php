@@ -163,13 +163,13 @@ class block_maj_submissions extends block_base {
             'publishtimefinish' => 0,
             'publishcmid'       => 0,
 
-            'registerdelegatestimestart'  => 0,
-            'registerdelegatestimefinish' => 0,
-            'registerdelegatescmid'       => 0,
-
             'registerpresenterstimestart'  => 0,
             'registerpresenterstimefinish' => 0,
             'registerpresenterscmid'       => 0,
+
+            'registerdelegatestimestart'  => 0,
+            'registerdelegatestimefinish' => 0,
+            'registerdelegatescmid'       => 0,
 
             'registerearlytimestart'  => 0,
             'registerearlytimefinish' => 0,
@@ -306,8 +306,8 @@ class block_maj_submissions extends block_base {
                         case 'collectworkshops':
                         case 'collectsponsoreds':
                         case 'publish':
-                        case 'registerdelegates':
                         case 'registerpresenters':
+                        case 'registerdelegates':
                             $cmid = $type.'cmid';
                             break;
                     }
@@ -537,8 +537,8 @@ class block_maj_submissions extends block_base {
                         case 'collectworkshops':
                         case 'collectsponsoreds':
                         case 'publish':
-                        case 'registerdelegates':
                         case 'registerpresenters':
+                        case 'registerdelegates':
                             $cmid = $type.'cmid';
                             break;
 
@@ -798,6 +798,18 @@ class block_maj_submissions extends block_base {
             case 'publish':
                 break;
 
+            case 'registerpresenters':
+                if ($dataid) {
+                    $params = array('dataid' => $dataid, 'name' => 'presenter');
+                    if ($fieldid = $DB->get_field('data_fields', 'id', $params)) {
+                        $table = 'data_content';
+                        $field = 'COUNT(DISTINCT recordid)';
+                        $select  = 'fieldid = ? AND content IS NOT NULL AND content <> ?';
+                        $params  = array($fieldid, '');
+                    }
+                }
+                break;
+
             case 'registerdelegates':
                 if ($dataid) {
                     $params = array('dataid' => $dataid, 'name' => 'presenter');
@@ -811,18 +823,6 @@ class block_maj_submissions extends block_base {
                         $field = 'COUNT(id)';
                         $select = 'dataid = ?';
                         $params = array($dataid);
-                    }
-                }
-                break;
-
-            case 'registerpresenters':
-                if ($dataid) {
-                    $params = array('dataid' => $dataid, 'name' => 'presenter');
-                    if ($fieldid = $DB->get_field('data_fields', 'id', $params)) {
-                        $table = 'data_content';
-                        $field = 'COUNT(DISTINCT recordid)';
-                        $select  = 'fieldid = ? AND content IS NOT NULL AND content <> ?';
-                        $params  = array($fieldid, '');
                     }
                 }
                 break;
@@ -1679,11 +1679,11 @@ class block_maj_submissions extends block_base {
 
             // get cmids of conference registration databases
             $cmids = array();
-            if (isset($config->registerdelegatescmid)) {
-                $cmids[] = $config->registerdelegatescmid;
-            }
             if (isset($config->registerpresenterscmid)) {
                 $cmids[] = $config->registerpresenterscmid;
+            }
+            if (isset($config->registerdelegatescmid)) {
+                $cmids[] = $config->registerdelegatescmid;
             }
 
             $cmids = array_filter($cmids);
@@ -1761,8 +1761,8 @@ class block_maj_submissions extends block_base {
                   'revise',
                   'publish'),
             array('registerearly',
-                  'registerdelegates',
-                  'registerpresenters')
+                  'registerpresenters',
+                  'registerdelegates')
         );
     }
 
