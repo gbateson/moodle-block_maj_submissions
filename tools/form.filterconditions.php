@@ -405,7 +405,8 @@ abstract class block_maj_submissions_tool_filterconditions extends block_maj_sub
 
         $sortfieldname = '';
         $sortdirection = '';
-        if ($sortfield = $data->sortfield) {
+
+        if (isset($data->sortfield) && ($sortfield = $data->sortfield)) {
             $fieldparams = array('dataid' => $dataid, 'id' => $sortfield);
             if ($sortfieldname = $DB->get_field('data_fields', 'name', $fieldparams)) {
                 $sortdirection = ($data->sortdirection=='ASC' ? 'ASC' : 'DESC');
@@ -416,8 +417,12 @@ abstract class block_maj_submissions_tool_filterconditions extends block_maj_sub
             }
         }
 
+        // initialize array of params for $from
+        $fromparams = array();
+
+        // initialize counter to ensure unique aliases
         $i = count($data->filterconditionsfield);
-        $contentparams = array();
+
         foreach ($fieldnames as $name) {
             if ($name=='charcount' || $name=='wordcount') {
                 continue;
@@ -434,12 +439,16 @@ abstract class block_maj_submissions_tool_filterconditions extends block_maj_sub
                                     "$alias.id AS {$name}_contentid",
                                     "$alias.content AS $name");
                 $from[] = '{data_content}'." $alias ON $alias.recordid = dr.id AND $alias.fieldid = ?";
-                $params[] = $field->id;
+                $fromparams[] = $field->id;
                 $i++;
             } else {
                 // $name field does not exist in this database
                 unset($fields[$name]);
             }
+        }
+
+        if (count($fromparams)) {
+            $params = array_merge($fromparams, $params);
         }
     }
 }
