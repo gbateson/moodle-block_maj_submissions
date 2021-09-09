@@ -454,6 +454,7 @@ $string['reviewers'] = 'Group of reviewers';
 $string['reviewers_help'] = 'Select the group of real users who will review and assess the submisions in the target workshop. Each real user will be mapped to an anonymous reviewer. The system will not assign anonymous reviewers to submissions by the real users they represent.';
 $string['reviewersadded'] = '<b>{$a->count} reviewers were added</b> to workshop submission (id={$a->sid}).<br/ >Reviewer id list: <i>{$a->ids}</i>';
 $string['reviewersloginpage'] = 'Login details for anonymous reviewers ({$a})';
+$string['reviewersresponsibilities'] = 'Vetting responsibilties for reviewers ({$a})';
 $string['reviewersubject'] = 'Review proposals for {$a}';
 $string['reviewresultmessage'] = 'Dear {$a->fullname},
 

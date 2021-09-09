@@ -605,11 +605,10 @@ abstract class block_maj_submissions_tool_form extends moodleform {
     /**
      * get_cm
      *
-     * @param array   $msg
-     * @param object  $data
-     * @param string  $name
+     * @param array  $msg
+     * @param object $data
+     * @param string $name
      * @param mixed  $a, arguments for get_string(), if needed
-     * @param mixed  $aftermod, course_module id or object of mod after which the new cm is to be placed.
      * @return object newly added $cm object; otherwise false
      */
     public function get_cm(&$msg, $data, $name, $a=null) {

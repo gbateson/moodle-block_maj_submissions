@@ -47,7 +47,7 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
     //);
 
     protected $modulename = 'page';
-    protected $defaultname = 'reviewersloginpage';
+    protected $defaultname = 'reviewersresponsibilities';
     protected $defaultvalues = array(
         'intro' => '',
         'introformat' => FORMAT_HTML, // =1
@@ -499,7 +499,7 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                 $a = array();
                 $search = '/<span\b[^>]*lang="([^"]+)"[^>]*>(.*?)<\/span>/';
                 if (preg_match_all($search, $workshop->name, $spans)) {
-                    // generate multilang params for "reviewersloginpage"
+                    // generate multilang params for "reviewersresponsibilities"
                     $search = array('/^.*\((.*?)\)$/', // 1-byte trailing "()"
                                     '/^.*\[(.*?)\]$/', // 1-byte trailing "[]"
                                     '/^.*\{(.*?)\}$/', // 1-byte trailing "{}"
@@ -530,7 +530,7 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                 if (isset($data->$name) && is_numeric($data->$name)) {
                     $pagedata->$name = $data->$name;
                     $restrictions = (object)array(
-                        'op' => '!',
+                        'op' => '|',
                         'c' => array($this->get_group_restriction($data->$name)),
                         'show' => false
                     );

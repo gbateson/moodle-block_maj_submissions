@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-09-09 (95)
+ - fix errant accessibility operator when setting up vetting responsibilities
+
 2021-09-02 (94)
  - fix order of params in SQL to extract presenters from Submissions database
 

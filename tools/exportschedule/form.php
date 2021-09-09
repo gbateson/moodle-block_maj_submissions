@@ -367,7 +367,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
             'scheduletitle' => ['h_align' => 'center', 'v_align' => 'center', 'size' => 24, 'border' => 0],
             'bannerimage'  => ['h_align' => 'center', 'v_align' => 'center', 'size' => 12, 'border' => 0],
             'default'      => ['h_align' => 'left',   'v_align' => 'top',    'size' => 10],
-            'date'         => ['h_align' => 'left',   'v_align' => 'center', 'size' => 18],
+            'date'         => ['h_align' => 'left',   'v_align' => 'center', 'size' => 18, 'bg_color' => '#af2418'], // dark red
             'event'        => ['h_align' => 'left',   'v_align' => 'center', 'size' => 14, 'bg_color' => '#f2f2f2'], // grey (5%)
             'roomheading'  => ['h_align' => 'center', 'v_align' => 'center', 'size' => 14, 'bg_color' => '#eeddee'], // purple
             'smallevent'   => ['h_align' => 'left',   'v_align' => 'top',    'size' => 14, 'bg_color' => '#f2f2f2'], // grey (5%)
