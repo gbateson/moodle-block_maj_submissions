@@ -429,37 +429,37 @@ $string['renumberschedule'] = 'Renumber<br />schedule';
 $string['resetassessments'] = 'Reset review data';
 $string['resetassessments_help'] = 'This setting specifies whether or not to remove previous data from reviewers, including feedback and assessment scores, before setting up new reviewers.
 
-**No**
-: Current data about reviewers and their reviews will be left untouched and new reviewers will only be assigned if necessary.
+**No**  
+&nbsp; Current data about reviewers and their reviews will be left untouched and new reviewers will only be assigned if necessary.
 
-**Yes**
-: Current data about reviewers and their reviews will be removed from the target workshop before the new reviewers are assigned. In addition, review feedback and scores will be removed from the submissions database related to the target workshop.';
+**Yes**  
+&nbsp; Current data about reviewers and their reviews will be removed from the target workshop before the new reviewers are assigned. In addition, review feedback and scores will be removed from the submissions database related to the target workshop.';
 $string['resetforum'] = 'Reset forum';
 $string['resetforum_help'] = 'This setting specifies whether or not to reset the forum activity.
 
-**No**
-: Current posts and subscriptions to the forum will be left untouched.
+**No**  
+&nbsp; Current posts and subscriptions to the forum will be left untouched.
 
-**Yes**
-: All current posts and subscriptions to the forum will be removed.';
+**Yes**  
+&nbsp; All current posts and subscriptions to the forum will be removed.';
 $string['resetgroup'] = 'Reset group';
 $string['resetgroup_help'] = 'This setting specifies whether or not to reset the target group before adding the selected presenters.
 
-**No**
-: Existing members of the group will not be changed and selected presenters will be added if they are not already members.
+**No**  
+&nbsp; Existing members of the group will not be changed and selected presenters will be added if they are not already members.
 
-**Yes**
-: Any existing members of the group will be removed, and then the newly selected presenters will be added.';
+**Yes**  
+&nbsp; Any existing members of the group will be removed, and then the newly selected presenters will be added.';
 $string['resetpasswords'] = 'Regenerate passwords';
 $string['resetpasswords_help'] = 'If this setting is enabled, the passwords for the anonymous reviewers will be regenerated and included in the report of which real reviewer was assigned as which anonymous reviewer.';
 $string['resetsubmissions'] = 'Reset submissions';
 $string['resetsubmissions_help'] = 'This setting specifies whether or not to reset the target workshop before transferring submissions from the source database.
 
-**No**
-: Submissions that are currently in the workshop will be left untouched and any new submissions from the source database will be added to the workshop.
+**No**  
+&nbsp; Submissions that are currently in the workshop will be left untouched and any new submissions from the source database will be added to the workshop.
 
-**Yes**
-: All old submissions will be removed from the target workshop before new submissions are transferred from the source database. In addition, any links from other databases to the target workshop will be removed.';
+**Yes**  
+&nbsp; All old submissions will be removed from the target workshop before new submissions are transferred from the source database. In addition, any links from other databases to the target workshop will be removed.';
 $string['reviewcmids'] = 'Review activity [{no}]';
 $string['reviewcmids_help'] = 'A workshop activity that is used to peer review submissions.';
 $string['reviewdeadline'] = 'Review deadline';

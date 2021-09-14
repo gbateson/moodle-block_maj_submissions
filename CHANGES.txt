@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-09-14 (94)
+ - modify markdown syntax for long help messages (for compatability with Moodle 3.11)
+
 2021-09-09 (95)
  - fix errant accessibility operator when setting up vetting responsibilities
 
