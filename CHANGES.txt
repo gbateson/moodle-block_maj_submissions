@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-09-27 (96)
+ - remove confusing characters from the passwords for reviewers
+
 2021-09-14 (94)
  - modify markdown syntax for long help messages (for compatability with Moodle 3.11)
 

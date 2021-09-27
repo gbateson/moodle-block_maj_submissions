@@ -57,6 +57,13 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
         'displayoptions' => array('printheading' => 0, 'printintro' => 0)
     );
 
+    // Characters that can be used for a password.
+    // This will be initialized the first time it is needed.
+    protected $chars = null;
+
+    // Previously created pages that may contain passwords for anonymous reviewers
+    protected $pages = null;
+
     /**
      * The names of the form fields containing an id of a group of users
      *
@@ -85,6 +92,11 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
         $name = 'resetpasswords';
         $this->add_field($mform, $this->plugin, $name, 'selectyesno', PARAM_INT);
         $mform->disabledIf($name, 'targetworkshop', 'eq', 0);
+
+        $name = 'passwordlength';
+        $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, range(0, 8), 4);
+        $mform->disabledIf($name, 'targetworkshop', 'eq', 0);
+        $mform->disabledIf($name, 'resetpasswords', 'eq', 0);
 
         $name = 'reviewspersubmission';
         $this->add_field($mform, $this->plugin, $name, 'select', PARAM_INT, range(0, 10), 3);
@@ -194,12 +206,14 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                 $params = array('groupid' => $anonymous);
                 $anonymous = $DB->get_records_menu('groups_members', $params, null, 'id,userid');
             }
+            $passwordlength = $data->passwordlength;
             $resetpasswords = $data->resetpasswords;
             $resetassessments = $data->resetassessments;
             $reviewspersubmission = $data->reviewspersubmission;
         } else {
             $reviewers = null;
             $anonymous = null;
+            $passwordlength = 0;
             $resetpasswords = false;
             $resetassessments = false;
             $reviewspersubmission = 0;
@@ -228,15 +242,58 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
             // map $anonymous reviewers onto real $reviewers
             $reviewers = array_combine($anonymous, $reviewers);
 
+            // cache of search strings to remove trailing parentheses
+            $parentheses = array('/ *\(.*?\)$/', // 1-byte trailing "()"
+                                 '/ *\[.*?\]$/', // 1-byte trailing "[]"
+                                 '/ *\{.*?\}$/', // 1-byte trailing "{}"
+                                 '/ *（.*?）$/',  // 2-byte trailing "（）"
+                                 '/ *「.*?」$/',  // 2-byte trailing "「」"
+                                 '/ *『.*?』$/'); // 2-byte trailing "『』"
+
             // map anonymous reviewers to simple object
             // (realuserid, review and reviewcount)
             foreach ($reviewers as $userid => $realuserid) {
                 if ($resetpasswords) {
-                    // random string generator in "lib/moodlelib.php"
-                    $password = random_string(8);
+                    // The random string generator in "lib/moodlelib.php"
+                    // allows some confusing chars, such as "0" and "O",
+                    // so we use generate or own random string.
+                    $password = $this->random_string($passwordlength);
                     $DB->set_field('user', 'password', md5($password), array('id' => $userid));
                 } else {
+                    // Try to get password from previously created $this->pages
                     $password = '';
+                    if ($this->pages === null) {
+                        // (1) most recent page with name = get_string('reviewersresponsibilities', $this->plugin)
+                        //     e.g. "Vetting responsibilities for reviewers"
+                        // (2) most recent page with name = get_string('userlogindetailsgroup', 'tool_createusers', get_string('anonymousreviewers', $this->plugin))
+                        //     e.g. "User login details: Anonymous reviewers
+                        $name1 = get_string($this->defaultname, $this->plugin);
+                        $name1 = trim(preg_replace($parentheses, '', $name1));
+                        $name2 = get_string('userlogindetailsgroup', 'tool_createusers', '');
+                        $name2 = trim(preg_replace($parentheses, '', $name2));
+                        $select = 'course = :course '.
+                                  'AND ('.
+                                      $DB->sql_like('name', ':name1').
+                                      ' OR '.
+                                      $DB->sql_like('name', ':name2').
+                                   ')';
+                        $params = array('course' => $this->course->id,
+                                        'name1' => '%'.$name1.'%',
+                                        'name2' => '%'.$name2.'%');
+                        //$this->pages = $DB->get_records_select('page', $select, $params, 'timemodified DESC');
+                    }
+                    if ($this->pages) {
+                        foreach ($this->pages as $page) {
+                            // Find column of username
+                            //     <th class="header c1" style="" scope="col">Anonymous username</th>
+                            //     <th class="username">Username</th>
+                            // Find column of password
+                            //     <th class="header c2" style="" scope="col">Anonymous password</th>
+                            //     <th class="rawpassword">Password</th>
+                            // loop through the <tr> rows
+                            //     extract username => password
+                        }
+                    }
                 }
                 $reviewers[$userid] = (object)array(
                     'realuser'     => $DB->get_record('user', array('id' => $realuserid)),
@@ -298,7 +355,7 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                 // get database records that link to this submission
                 if ($records = self::get_database_records($workshop, $sid)) {
 
-                    // cache real authorids if for authors who are also reviewers
+                    // cache real authorids of authors who are also reviewers
                     $record = reset($records);
                     $submissions[$sid]->reviewerauthorids = self::get_reviewerauthorids($record, $reviewers);
 
@@ -549,6 +606,30 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
         }
 
         return $this->form_postprocessing_msg($msg);
+    }
+
+    /**
+     * Create a randomw series of chars to use as a password.
+     * Characters that might be confused, such as "0" (zero)
+     * and "O" (caiptal "o") are not included. 
+     *
+     * @param integer $length of password (optional, default = 8)
+     * @return string a random password containing $length chars
+     */
+    protected function random_string($length=8) {
+        if ($this->chars === null) {
+            $this->chars = '23456789'.
+                           'abdeghjmnpqrstuvyz'.
+                           'ABDEGHJLMNPQRSTUVWXYZ';
+            $this->chars = str_split($this->chars, 1);
+            $this->chars = array_flip($this->chars);
+        }
+        $str = array();
+        for ($i=0; $i<$length; $i++) {
+            $str[] = array_rand($this->chars);
+        }
+        shuffle($str);
+        return implode('', $str);
     }
 
     /**
