@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-10-05 (97)
+ - convert empty list items (e.g. dividers) to <HR> tags
+
 2021-09-27 (96)
  - remove confusing characters from the passwords for reviewers
 

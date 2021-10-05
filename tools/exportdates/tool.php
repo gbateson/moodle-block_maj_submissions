@@ -136,8 +136,9 @@ if ($instance = block_instance('maj_submissions', $block_instance, $PAGE)) {
     $replace = '<div class="container importantdates mx-0 my-2">$1</div>';
     $content = preg_replace($search, $replace, $content);
 
-    // remove empty list items (e.g. dividers)
-    $content = preg_replace('/\s*<li[^>]*><\/li>/s', '<hr>', $content);
+    // convert empty list items (e.g. dividers) to <HR> tags
+    $replace = '<hr size="2" class="ml-0" style="max-width: 420px;">';
+    $content = preg_replace('/\s*<li[^>]*><\/li>/s', $replace, $content);
 
     // remove link tags, i.e. <a...> and </a>
     $table = preg_replace('/<\/?a[^<]*>\s*/', '', $table);
