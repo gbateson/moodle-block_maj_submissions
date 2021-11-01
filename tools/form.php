@@ -780,6 +780,14 @@ abstract class block_maj_submissions_tool_form extends moodleform {
     }
 
     /**
+     * profile_link
+     */
+    protected function profile_link($userid) {
+        $url = new moodle_url('/user/profile.php', array('id' => $userid));
+        return html_writer::link($url, $this->fullname($userid), array('target' => 'MAJ'));
+    }
+
+    /**
      * get_fullname
      */
     protected function fullname($userid) {

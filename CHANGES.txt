@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-11-01 (98)
+ - (1) do not resend review results for proposals that have already been reviewed; (2) improve selection of users to be added to group of Presenters
+
 2021-10-05 (97)
  - convert empty list items (e.g. dividers) to <HR> tags
 

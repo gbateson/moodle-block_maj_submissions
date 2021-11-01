@@ -157,6 +157,7 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
             $countselected = 0;
             $countpresenters = 0;
             $countadded = 0;
+            $usersadded = array();
 
             // basic SQL to fetch records from database activity
             $select = array('dr.id AS recordid, dr.dataid');
@@ -175,9 +176,9 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
             // add SQL to fetch presentation content
             $fields = array('presentation_title' => '',
                             'presentation_type' => '',
+                            'presentation_abstract' => '',
                             'presentation_language' => '',
-                            'presentation_keywords' => '',
-                            'presentation_abstract' => '');
+                            'presentation_keywords' => '');
             $this->add_content_sql($data, $select, $from, $where, $order, $params, $fields, $dataid);
 
             $select = implode(', ', $select);
@@ -195,13 +196,14 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
                           'AND dc.content IS NOT NULL '.
                           'AND dc.content <> ? '.
                           'AND dc.fieldid = df.id '.
-                          'AND ('.$DB->sql_like('df.name', '?').' OR '.$DB->sql_like('df.name', '?').')';
-                array_push($params, '', 'name_given%', 'name_surname%');
+                          'AND ('.$DB->sql_like('df.name', '?').' OR '.$DB->sql_like('df.name', '?').' OR '.$DB->sql_like('df.name', '?').')';
+                array_push($params, '', 'email%', 'name_given%', 'name_surname%');
                 $records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params);
             }
 
-            // extract presenter names
+            // extract presenter names and emails
             $names = array();
+            $emails = array();
             if ($records) {
                 foreach ($records as $record) {
 
@@ -217,8 +219,15 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
 
                     $parts = explode('_', $field);
                     switch (count($parts)) {
+                        case 1:
+                            list($name) = $parts;
+                            break;
                         case 2:
-                            list($name, $type) = $parts;
+                            if (is_numeric($parts[1])) {
+                                list($name, $i) = $parts;
+                            } else {
+                                list($name, $type) = $parts;
+                            }
                             break;
                         case 3:
                             if (is_numeric($parts[2])) {
@@ -236,26 +245,52 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
                             break;
                     }
 
-                    if (empty($names[$rid])) {
-                        $names[$rid] = array();
+                    if ($name == 'email') {
+                        if (empty($emails[$rid])) {
+                            $emails[$rid] = array();
+                        }
+                        if (empty($emails[$rid][$i])) {
+                            $emails[$rid][$i] = array();
+                        }
+                        $emails[$rid][$i] = block_maj_submissions::textlib('strtolower', $value);
+                    } else {
+                        if (empty($names[$rid])) {
+                            $names[$rid] = array();
+                        }
+                        if (empty($names[$rid][$i])) {
+                            $names[$rid][$i] = array();
+                        }
+                        if (empty($names[$rid][$i][$lang])) {
+                            $names[$rid][$i][$lang] = array();
+                        }
+                        switch ($type) {
+                            case 'given': $type = 'firstname'; break;
+                            case 'surname': $type = 'lastname'; break;
+                        }
+                        $value = block_maj_submissions::textlib('strtoupper', $value);
+                        $names[$rid][$i][$lang][$type] = $value;
                     }
-                    if (empty($names[$rid][$i])) {
-                        $names[$rid][$i] = array();
-                    }
-                    if (empty($names[$rid][$i][$lang])) {
-                        $names[$rid][$i][$lang] = array();
-                    }
-                    switch ($type) {
-                        case 'given': $type = 'firstname'; break;
-                        case 'surname': $type = 'lastname'; break;
-                    }
-                    $value = block_maj_submissions::textlib('strtoupper', $value);
-                    $names[$rid][$i][$lang][$type] = $value;
                 }
 
                 $userids = array();
-                foreach ($names as $rid => $parts) {
-                    foreach ($parts as $i => $langs) {
+
+                foreach (array_keys($emails) as $rid) {
+                    foreach ($emails[$rid] as $i => $email) {
+                        if ($user = $DB->get_record('user', array('email' => $email), 'id,email')) {
+                            $userids[$user->id] = 1;
+                            if (isset($names[$rid])) {
+                                unset($names[$rid][$i]);
+                                if (empty($names[$rid])) {
+                                    unset($names[$rid]);
+                                }
+                            }
+                        }
+                    }
+                    unset($emails[$rid]);
+                }
+
+                foreach (array_keys($names) as $rid) {
+                    foreach ($names[$rid] as $i => $langs) {
                         foreach ($langs as $lang => $types) {
                             if (array_key_exists('firstname', $types) && array_key_exists('lastname', $types)) {
                                 $select = 'deleted = ? AND ((firstname = ? AND lastname = ?) OR (firstnamephonetic = ? AND lastnamephonetic = ?))';
@@ -286,7 +321,9 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
                             }
                         }
                     }
+                    unset($names[$rid]);
                 }
+
                 $countpresenters = count($userids);
                 $userids = array_keys($userids);
                 sort($userids); // ascending ID
@@ -301,6 +338,8 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
                             'itemid'    => 0
                         );
                         $DB->insert_record('groups_members', $user);
+                        $params = array('class' => 'col-sm-6 col-md-4'); //  col-lg-2 col-xl-1
+                        $usersadded[] = html_writer::tag('li', $this->profile_link($userid), $params);
                         $countadded++;
                     }
                 }
@@ -311,6 +350,9 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
                                    'added'       => $countadded,
                                    'group'       => $groupname);
                 $msg[] = get_string('presentersadded', $this->plugin, $a);
+                if ($usersadded = implode('', $usersadded)) {
+                    $msg[] = html_writer::tag('ol', $usersadded, array('class' => 'row'));
+                }
             }
         }
 

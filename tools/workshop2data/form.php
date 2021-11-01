@@ -224,6 +224,7 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
             // ids of data records that get updated
             $maxgrade = 0;
             $countselected = 0;
+            $countskipped = 0;
             $counttransferred = 0;
             $datarecords = array();
 
@@ -235,17 +236,25 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                 // We only expect one record - but there may be more!
                 if ($records = self::get_database_records($workshop, $sid, $database->id)) {
                     $record = reset($records);
-                    self::send_confirmation_email($this->plugin, $config, $data, $record, $submission, 'reviewresult', $datarecords, $workshop->id);
+                    if (self::send_confirmation_email($this->plugin, $config, $data, $record, $submission, 'reviewresult', $datarecords, $workshop->id)) {
+                        $counttransferred++;
+                    } else {
+                        $countskipped++;
+                    }
                 }
                 unset($records, $record);
             }
 
-            if ($counttransferred = count($datarecords)) {
+            if ($countskipped) {
+                $msg[] = get_string('reviewsskipped', $this->plugin, $countskipped);
+            }
+
+            if ($counttransferred) {
 
                 // format list of reviewed submissions
                 uksort($datarecords, 'strnatcmp'); // natural sort by grade (low -> high)
                 $datarecords = array_reverse($datarecords); // reverse order (high -> low)
-                $msg[] = html_writer::tag('p', get_string('reviewstransferred', $this->plugin)).
+                $msg[] = html_writer::tag('p', get_string('reviewstransferred', $this->plugin, $counttransferred)).
                          html_writer::alist($datarecords, null, 'ol');
 
                 $suffix = $workshop->name;
@@ -475,6 +484,20 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
             }
         }
 
+        // check that none of the review fields are already filled in.
+        //   peer_review_details
+        //   submission_status
+        //   peer_review_score
+        //   peer_review_notes
+        //   presentation_original
+        list($select, $params) = $DB->get_in_or_equal($reviewfields);
+        $select = "fieldid $select AND recordid = ? AND content IS NOT NULL AND content != ?";
+        $params[] = $record->recordid;
+        $params[] = '';
+        if ($DB->record_exists_select('data_content', $select, $params)) {
+            return false;
+        }
+
         // format and transfer each of the peer review fields
         foreach ($reviewfields as $name => $fieldid) {
 
@@ -698,5 +721,7 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
             $messagehtml = format_text($messagetext, FORMAT_MOODLE);
             email_to_user($author, $noreply, $subject, $messagetext, $messagehtml);
         }
+
+        return true;
     }
 }

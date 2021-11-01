@@ -486,9 +486,10 @@ Best regards,
 $string['reviewresultsubject'] = '{$a->conferencename}: Submission Review Results [{$a->author}, #{$a->recordid}]';
 $string['reviewsectionnum'] = 'Review section';
 $string['reviewsectionnum_help'] = 'The course section where the activities for reviewing submissions are located.';
-$string['reviewspersubmission'] = 'Reviews per submission';
 $string['reviewspersubmission_help'] = 'The number of reviews required for each submission. If this number if zero, then ALL reviewers will be assigned to ALL submissions. Otherwise, the system will try to assign this number of reviewers to each submission, and try to assign the same number of submissions to each anonymous reviewer.';
-$string['reviewstransferred'] = 'Reviews for the following submissions were transfered to the target database.';
+$string['reviewspersubmission'] = 'Reviews per submission';
+$string['reviewsskipped'] = 'Review results for {$a} submissions already existed in the target database, and were not transferred.';
+$string['reviewstransferred'] = 'Reviews for the following {$a} submissions were transfered to the target database.';
 $string['reviewsubmissions'] = 'Review submissions';
 $string['reviewsupdated'] = 'The the following submissions were updated in the source database.';
 $string['reviewteamname'] = 'Submission review team';

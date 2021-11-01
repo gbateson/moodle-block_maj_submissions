@@ -61,8 +61,8 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
     // This will be initialized the first time it is needed.
     protected $chars = null;
 
-    // Previously created pages that may contain passwords for anonymous reviewers
-    protected $pages = null;
+    // Previously created passwords of anonymous users.
+    protected $passwords_by_userid = array();
 
     /**
      * The names of the form fields containing an id of a group of users
@@ -236,19 +236,15 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                 $anonymous = array(); // shouldn't happen !!
             }
 
+            // If possible, fetch previous mappings for real => anonymous reviewers
+            // including previously assigned passwords for anonymous users. 
+            $this->get_settings_for_anonymous_users();
+
             // shuffle reviewerids so that they are mapped randomly to anonymous users
             shuffle($reviewers);
 
             // map $anonymous reviewers onto real $reviewers
             $reviewers = array_combine($anonymous, $reviewers);
-
-            // cache of search strings to remove trailing parentheses
-            $parentheses = array('/ *\(.*?\)$/', // 1-byte trailing "()"
-                                 '/ *\[.*?\]$/', // 1-byte trailing "[]"
-                                 '/ *\{.*?\}$/', // 1-byte trailing "{}"
-                                 '/ *（.*?）$/',  // 2-byte trailing "（）"
-                                 '/ *「.*?」$/',  // 2-byte trailing "「」"
-                                 '/ *『.*?』$/'); // 2-byte trailing "『』"
 
             // map anonymous reviewers to simple object
             // (realuserid, review and reviewcount)
@@ -260,40 +256,8 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
                     $password = $this->random_string($passwordlength);
                     $DB->set_field('user', 'password', md5($password), array('id' => $userid));
                 } else {
-                    // Try to get password from previously created $this->pages
-                    $password = '';
-                    if ($this->pages === null) {
-                        // (1) most recent page with name = get_string('reviewersresponsibilities', $this->plugin)
-                        //     e.g. "Vetting responsibilities for reviewers"
-                        // (2) most recent page with name = get_string('userlogindetailsgroup', 'tool_createusers', get_string('anonymousreviewers', $this->plugin))
-                        //     e.g. "User login details: Anonymous reviewers
-                        $name1 = get_string($this->defaultname, $this->plugin);
-                        $name1 = trim(preg_replace($parentheses, '', $name1));
-                        $name2 = get_string('userlogindetailsgroup', 'tool_createusers', '');
-                        $name2 = trim(preg_replace($parentheses, '', $name2));
-                        $select = 'course = :course '.
-                                  'AND ('.
-                                      $DB->sql_like('name', ':name1').
-                                      ' OR '.
-                                      $DB->sql_like('name', ':name2').
-                                   ')';
-                        $params = array('course' => $this->course->id,
-                                        'name1' => '%'.$name1.'%',
-                                        'name2' => '%'.$name2.'%');
-                        //$this->pages = $DB->get_records_select('page', $select, $params, 'timemodified DESC');
-                    }
-                    if ($this->pages) {
-                        foreach ($this->pages as $page) {
-                            // Find column of username
-                            //     <th class="header c1" style="" scope="col">Anonymous username</th>
-                            //     <th class="username">Username</th>
-                            // Find column of password
-                            //     <th class="header c2" style="" scope="col">Anonymous password</th>
-                            //     <th class="rawpassword">Password</th>
-                            // loop through the <tr> rows
-                            //     extract username => password
-                        }
-                    }
+                    // Try to get password from previously created pages of anonymous users.
+                    $password = $this->get_password_for_anonymous_user($userid);
                 }
                 $reviewers[$userid] = (object)array(
                     'realuser'     => $DB->get_record('user', array('id' => $realuserid)),
@@ -630,6 +594,122 @@ class block_maj_submissions_tool_setupvetting extends block_maj_submissions_tool
         }
         shuffle($str);
         return implode('', $str);
+    }
+
+    /**
+     * Get previously assigned passwords for anonymous users.
+     */
+    protected function get_settings_for_anonymous_users() {
+        global $DB;
+
+        // Array to map usernames to passwords.
+        $passwords_by_username = array();
+
+        // cache some useful strings
+        $str = (object)array(
+            'username' => get_string('username'),
+            'password' => get_string('password'),
+            'anonymoususername' => get_string('anonymoususername', $this->plugin),
+            'anonymouspassword' => get_string('anonymouspassword', $this->plugin)
+        );
+
+        // cache of regex patterns to remove trailing parentheses
+        $search = (object)array(
+            'parentheses' => array('/ *\(.*?\)$/', // 1-byte trailing "()"
+                                   '/ *\[.*?\]$/', // 1-byte trailing "[]"
+                                   '/ *\{.*?\}$/', // 1-byte trailing "{}"
+                                   '/ *（.*?）$/',  // 2-byte trailing "（）"
+                                   '/ *「.*?」$/',  // 2-byte trailing "「」"
+                                   '/ *『.*?』$/'), // 2-byte trailing "『』"
+
+            'rows' => '/<tr[^>]*>(.*?)<\/tr>/us',
+            'headcells' => '/<th[^>]*>(.*?)<\/th>/us',
+            'datacells' => '/<td[^>]*>(.*?)<\/td>/us',
+
+            'username' => '<th class="username">',
+            'password' => '<th class="password">',
+            'rawpassword' => '<th class="rawpassword">',
+        );
+
+        // (1) most recent page with name = get_string('reviewersresponsibilities', $this->plugin)
+        //     e.g. "Vetting responsibilities for reviewers"
+        $name1 = get_string($this->defaultname, $this->plugin);
+        $name1 = trim(preg_replace($search->parentheses, '', $name1));
+
+        // (2) most recent page with name = get_string('userlogindetailsgroup', 'tool_createusers', 'xxx')
+        //     e.g. "User login details: Anonymous reviewers
+        $name2 = get_string('userlogindetailsgroup', 'tool_createusers', '');
+        $name2 = trim(preg_replace($search->parentheses, '', $name2));
+
+        // Build SQL and select page resources that may hold usernames and passwords of anonymous users.
+        $select = implode(' OR ', array($DB->sql_like('name', ':name1'),
+                                        $DB->sql_like('name', ':name2')));
+        $select = 'course = :course AND ('.$select.')';
+        $params = array('course' => $this->course->id,
+                        'name1' => '%'.$name1.'%',
+                        'name2' => '%'.$name2.'%');
+
+        if ($pages = $DB->get_records_select_menu('page', $select, $params, 'timemodified DESC', 'id,content')) {
+
+            foreach ($pages as $pageid => $content) {
+
+                // initialize column numbers
+                $columns = (object)array('username' => null,
+                                         'password' => null);
+                if (preg_match_all($search->rows, $content, $rows)) {
+                    foreach ($rows[0] as $r => $row) {
+                        if ($r == 0) {
+                            if (preg_match_all($search->headcells, $row, $cells)) {
+                                for ($c=0; $c<count($cells[0]); $c++) {
+                                    switch (true) {
+                                        case is_numeric(strpos($cells[1][$c], $str->anonymoususername)):
+                                        case is_numeric(strpos($cells[0][$c], $search->username)):
+                                            $columns->username = $c;
+                                            break;
+                                        case is_numeric(strpos($cells[1][$c], $str->anonymouspassword)):
+                                        case is_numeric(strpos($cells[0][$c], $search->rawpassword)):
+                                        case is_numeric(strpos($cells[0][$c], $search->password)):
+                                            $columns->password = $c;
+                                            break;
+                                    }
+                                }
+                            }
+                            if ($columns->username === null || $columns->password === null) {
+                                break; // Stop looping through the $rows in this $content.
+                            }
+                        } else {
+                            if (preg_match_all($search->datacells, $row, $cells)) {
+                                $username = $cells[1][$columns->username];
+                                $password = $cells[1][$columns->password];
+                                if (empty($passwords_by_username[$username])) {
+                                    $passwords_by_username[$username] = $password;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (count($passwords_by_username)) {
+            list($select, $params) = $DB->get_in_or_equal(array_keys($passwords_by_username));
+            if ($users = $DB->get_records_select_menu('user', "username $select", $params, null, 'id,username')) {
+                foreach ($users as $userid => $username) {
+                    $this->passwords_by_userid[$userid] = $passwords_by_username[$username];
+                }
+            }
+        }
+    }
+
+    /**
+     * Get previously assigned password for a single anonymous user.
+     */
+    protected function get_password_for_anonymous_user($userid) {
+        if (array_key_exists($userid, $this->passwords_by_userid)) {
+            return $this->passwords_by_userid[$userid];
+        } else {
+            return ''; // Previous password was not found.
+        }
     }
 
     /**
