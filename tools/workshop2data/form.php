@@ -399,8 +399,9 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                 $registrationlink = 'registerpresenterscmid';
             }
             if ($registrationlink) {
+                $modname = get_fast_modinfo($this->course)->get_cm($this->cmid)->modname;
                 $params = array('id' => $config->$registrationlink);
-                $registrationlink = html_writer::link(new moodle_url('/mod/data/view.php', $params),
+                $registrationlink = html_writer::link(new moodle_url("/mod/$modname/view.php", $params),
                                                       get_string($registrationlink, $plugin),
                                                       array('target' => '_blank'));
             }
