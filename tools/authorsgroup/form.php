@@ -201,7 +201,7 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
                 $records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params);
             }
 
-            // extract presenter names and emails
+            // extract the names and emails of presenters
             $names = array();
             $emails = array();
             if ($records) {
@@ -220,9 +220,11 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
                     $parts = explode('_', $field);
                     switch (count($parts)) {
                         case 1:
+                            // e.g. email
                             list($name) = $parts;
                             break;
                         case 2:
+                            // e.g. email_2, name_given
                             if (is_numeric($parts[1])) {
                                 list($name, $i) = $parts;
                             } else {
@@ -230,6 +232,7 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
                             }
                             break;
                         case 3:
+                            // e.g. name_given_2, name_given_en
                             if (is_numeric($parts[2])) {
                                 list($name, $type, $i) = $parts;
                             } else {
@@ -237,6 +240,7 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
                             }
                             break;
                         case 4:
+                            // e.g. name_given_2_en, name_given_en_2
                             if (is_numeric($parts[2])) {
                                 list($name, $type, $i, $lang) = $parts;
                             } else {
@@ -248,9 +252,6 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
                     if ($name == 'email') {
                         if (empty($emails[$rid])) {
                             $emails[$rid] = array();
-                        }
-                        if (empty($emails[$rid][$i])) {
-                            $emails[$rid][$i] = array();
                         }
                         $emails[$rid][$i] = block_maj_submissions::textlib('strtolower', $value);
                     } else {
@@ -272,14 +273,19 @@ class block_maj_submissions_tool_authorsgroup extends block_maj_submissions_tool
                     }
                 }
 
+                // initialize array of userids of presenters
                 $userids = array();
 
+                // Detect users by email first, as this is more efficient.
                 foreach (array_keys($emails) as $rid) {
                     foreach ($emails[$rid] as $i => $email) {
                         if ($user = $DB->get_record('user', array('email' => $email), 'id,email')) {
                             $userids[$user->id] = 1;
+                            // We can now remove this presenter from the $names array.
                             if (isset($names[$rid])) {
                                 unset($names[$rid][$i]);
+                                // Furthermore, we can remove the presentation too,
+                                // if all presenters have been found by email address.
                                 if (empty($names[$rid])) {
                                     unset($names[$rid]);
                                 }

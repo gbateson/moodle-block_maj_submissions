@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-11-04 (00)
+ - remove 3 lines of superfluous code in tool to create presenters' group
+
 2021-11-01 (99)
  - fix setting of registration link in notes from reviewers to presenters
 
