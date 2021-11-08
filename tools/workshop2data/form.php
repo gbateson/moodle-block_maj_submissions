@@ -314,7 +314,15 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
      * send_confirmation_email
      *
      * @uses $DB
+     *
+     * @param string $plugin the name of this plugin, i.e. block_maj_submissions
+     * @param object $config
+     * @param object $data from recently submitted form
+     * @param object $record from "data_records" table
+     * @param object $submission from "workshop_submissions" table
      * @param string $emailtype "reviewresult" or "reviewupdate"
+     * @param array of $datarecords that were updated by this function (passed by reference)
+     * @param integer $workshopid (optional, default = 0)
      */
     static public function send_confirmation_email($plugin, $config, $data, $record, $submission, $emailtype, &$datarecords, $workshopid=0) {
         global $DB, $USER;
@@ -399,11 +407,16 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
                 $registrationlink = 'registerpresenterscmid';
             }
             if ($registrationlink) {
-                $modname = get_fast_modinfo($this->course)->get_cm($this->cmid)->modname;
-                $params = array('id' => $config->$registrationlink);
-                $registrationlink = html_writer::link(new moodle_url("/mod/$modname/view.php", $params),
-                                                      get_string($registrationlink, $plugin),
-                                                      array('target' => '_blank'));
+                $cmid = $config->$registrationlink;
+                if ($courseid = $DB->get_field('course_modules', 'course', array('id' => $cmid))) {
+                    $modname = get_fast_modinfo($courseid)->get_cm($cmid)->modname;
+                    $url = new moodle_url("/mod/$modname/view.php", array('id' => $cmid));
+                    $txt = get_string($registrationlink, $plugin);
+                    $registrationlink = html_writer::link($url, $txt, array('target' => '_blank'));
+                } else {
+                    // registration page/database has been removed - shouldn't happen !!
+                    $registrationlink = '';
+                }
             }
 
             if (empty($config->conferencetimestart)) {
@@ -485,18 +498,43 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
             }
         }
 
-        // check that none of the review fields are already filled in.
-        //   peer_review_details
-        //   submission_status
-        //   peer_review_score
-        //   peer_review_notes
-        //   presentation_original
-        list($select, $params) = $DB->get_in_or_equal($reviewfields);
-        $select = "fieldid $select AND recordid = ? AND content IS NOT NULL AND content != ?";
-        $params[] = $record->recordid;
-        $params[] = '';
-        if ($DB->record_exists_select('data_content', $select, $params)) {
-            return false;
+        if ($workshopid) {
+            // If $workshopid is set, then we are updating from the "workshop2data" tool
+            // and we should not update review fields again, or send emails again.
+            // Setup $select sql to detect review fields that are already filled in.
+            list($select, $params) = $DB->get_in_or_equal($reviewfields);
+            $select = "recordid = ? AND fieldid $select AND content IS NOT NULL AND content != ?";
+            array_unshift($params, $record->recordid);
+            array_push($params, '');
+            if ($DB->record_exists_select('data_content', $select, $params)) {
+                return false;
+            }
+        } else {
+            // If $workshopid is 0, then we are updating from the "updatevetting" tool.
+            // Setup $select sql to detect if current "submission_status" is same as new status
+            // and current "peer_review_score" is same as new score.
+            $select = array();
+            $params = array();
+            if ($data->newstatus && array_key_exists('submission_status', $reviewfields)) {
+                $select[] = 'fieldid = ? AND content = ?';
+                array_push($params, $reviewfields['submission_status'], $data->newstatus);
+            }
+            if ($data->newscore && array_key_exists('peer_review_score', $reviewfields)) {
+                $select[] = 'fieldid = ? AND content = ?';
+                array_push($params, $reviewfields['peer_review_score'], $data->newscore);
+            }
+            if ($count = count($select)) {
+                if ($count == 1) {
+                    $select = reset($select);
+                } else {
+                    $select = '('.implode(') OR (', $select).')';
+                }
+                $select = "recordid = ? AND $select";
+                array_unshift($params, $record->recordid);
+                if ($count == $DB->count_records_select('data_content', $select, $params)) {
+                    return false;
+                }
+            }
         }
 
         // format and transfer each of the peer review fields

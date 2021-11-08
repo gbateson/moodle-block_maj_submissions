@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-11-08 (03)
+ - fix error about using $this when not in object context while updating vetting results
+
 2021-11-04 (00)
  - remove 3 lines of superfluous code in tool to create presenters' group
 
