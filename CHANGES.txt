@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-11-15 (04)
+ - fix error when generating filename for schedule when block has no title
+
 2021-11-08 (03)
  - fix error about using $this when not in object context while updating vetting results
 

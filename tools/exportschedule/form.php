@@ -1298,13 +1298,22 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
      */
     protected function make_filename($filetype, $data) {
         $config = $this->instance->config;
-        if (empty($config->title)) {
-            $filename = '';
-        } else {
-            $filename = format_string($config->title, true);
-        }
-        if ($filename=='') {
-            $filename = $this->instance->blockname;
+        switch (true) {
+            case (! empty($config->title)):
+                $filename = format_string($config->title, true);
+                break;
+            case (! empty($config->conferencename)):
+                $filename = $config->conferencename;
+                break;
+            case (! empty($config->conferencenameen)):
+                $filename = $config->conferencenameen;
+                break;
+            case (! empty($this->instance->instance->blockname)):
+                $filename = $this->instance->instance->blockname;
+                break;
+            default:
+                $filename = get_class($this);
+
         }
         if (isset($data->language) && ($lang = $data->language)) {
             if ($options = $this->get_language_options()) {
