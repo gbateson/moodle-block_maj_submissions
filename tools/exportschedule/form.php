@@ -115,8 +115,8 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
         $plugin = $this->plugin;
         return array('csvshowgizmo' => get_string('filecsvshowgizmo', $plugin),
                      'excel' => get_string('fileexcel', $plugin),
+                     //'pdf' => get_string('filepdf', $plugin),
                      'html' => get_string('filehtml', $plugin));
-                     //'pdf' => get_string('filepdf', $plugin)
     }
 
     /**
@@ -408,13 +408,14 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
         $colwidth = (object)array('timeheading' => 15,
                                   'default' => 25);
 
-        $rowheight = (object)array('date' => 32,
+        $rowheight = (object)array('conferencename' => 42,
+                                   'date' => 32,
                                    'event' => 34,
                                    'multiroom' => 45,
                                    'roomheadings' => 40,
-                                   'sponsoredlunch' => 70,
-                                   'conferencename' => 42,
                                    'scheduletitle' => 30,
+                                   'sponsoredlunch' => 70,
+                                   'virtual' => 54,
                                    'default' => -1); // = autofit
 
         if (class_exists('\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup')) {
@@ -473,6 +474,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                             $row_is_multiroom = false;
                             $row_is_event = false;
                             $row_is_sponsoredlunch = false;
+                            $row_is_virtual = false;
 
                             $countcells = count($cells[0]);
                             if ($lastcol < $countcells) {
@@ -547,6 +549,9 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                 // Set flags that apply to the entire row
                                 if (preg_match($search->multiroom, $cellclass)) {
                                     $row_is_multiroom = true;
+                                }
+                                if (preg_match($search->virtual, $cellclass)) {
+                                    $row_is_virtual = true;
                                 }
                                 if (preg_match($search->event, $cellclass)) {
                                     $row_is_event = true;
@@ -771,6 +776,10 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                         $height = $rowheight->multiroom;
                                         break;
 
+                                    case $row_is_virtual:
+                                        $height = $rowheight->virtual;
+                                        break;
+
                                     default:
                                         $height = $rowheight->default;
                                         break;
@@ -892,15 +901,30 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
      * @param string $lang
      * @param array $data
      * @return array $msg
-     * @todo Finish documenting this function
+     * @todo Finish find a way to add the CSS styles to the PDF output
      */
     public function export_pdf($lang, $data) {
-        global $CFG;
+        global $CFG, $PAGE;
         require_once($CFG->libdir.'/pdflib.php');
 
         if ($html = $this->get_schedule($lang, false)) {
 
-            $doc = new pdf('L'); // landscape orientation
+            // generate/fetch css
+            // Currently the ful CSS causes a timeout
+            // while the styles.css for this plugin has no effect :-(
+            $css = '';
+            if ($css) {
+                if ($PAGE->theme->has_css_cached_content()) {
+                    $css = $PAGE->theme->get_css_cached_content();
+                } else {
+                    $css = $PAGE->theme->get_css_content();
+                    $PAGE->theme->set_css_content_cache($css);
+                }
+                $css = html_writer::tag('style', $css);
+            }
+
+            // Create new PDF doc (in landscape orientation)
+            $doc = new pdf('L');
 
             // basic info
             // $doc->SetTitle($value);
@@ -1298,6 +1322,11 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
      */
     protected function make_filename($filetype, $data) {
         $config = $this->instance->config;
+        if (empty($data->language)) {
+            $lang = '';
+        } else {
+            $lang = $data->language;
+        }
         switch (true) {
             case (! empty($config->title)):
                 $filename = format_string($config->title, true);
@@ -1305,17 +1334,19 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
             case (! empty($config->conferencename)):
                 $filename = $config->conferencename;
                 break;
-            case (! empty($config->conferencenameen)):
-                $filename = $config->conferencenameen;
+            case (! empty($config->{"conferencename$lang"})):
+                $filename = $config->{"conferencename$lang"};
                 break;
             case (! empty($this->instance->instance->blockname)):
                 $filename = $this->instance->instance->blockname;
                 break;
+            case (! empty($this->plugin)):
+                $filename = $this->plugin;
+                break;
             default:
                 $filename = get_class($this);
-
         }
-        if (isset($data->language) && ($lang = $data->language)) {
+        if ($lang) {
             if ($options = $this->get_language_options()) {
                 if (count($options)==1 && $lang==key($options)) {
                     // only one display language - do nothing
