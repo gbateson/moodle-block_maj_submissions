@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-11-25 (06)
+ - fix incorrect setting of NULL for visible field when creating new course_modules record
+
 2021-11-15 (05)
  - more robust code to create filename when exporting schedule
 

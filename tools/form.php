@@ -1079,8 +1079,18 @@ abstract class block_maj_submissions_tool_form extends moodleform {
         // If the section is hidden, we should also hide the new instance
         // but we retain the visibility in the "visibleold" field,
         // so that it can be restored when the section is unhidden.
-        $newrecord->visibleold = $newrecord->visible;
-        $newrecord->visible = $section->visible;
+        if (empty($newrecord->visible)) {
+            $newrecord->visible = 0;
+            $newrecord->visibleold = 0;
+        } else {
+            $newrecord->visibleold = $newrecord->visible;
+        }
+        if (empty($section->visible)) {
+            $section->visible = 0;
+            $newrecord->visible = 0;
+        } else {
+            $newrecord->visible = $section->visible;
+        }
 
         // add default values
         $columns = $DB->get_columns($modulename);
