@@ -1837,15 +1837,10 @@ class block_maj_submissions extends block_base {
      */
     static public function get_sectionname($section, $namelength=28, $headlength=10, $taillength=10) {
 
-        // extract section title from section name
-        if ($name = self::filter_text($section->name)) {
-            if ($name = trim(strip_tags($name))) {
-                return self::trim_text($name, $namelength, $headlength, $taillength);
-            }
-        }
-
-        // extract section title from section summary
-        if ($name = self::filter_text($section->summary)) {
+        if ($name = trim(strip_tags(self::filter_text($section->name)))) {
+            // use section name as title
+        } else if ($name = self::filter_text($section->summary)) {
+            // extract title from section summary
 
             // remove script and style blocks
             $select = '/\s*<(script|style)[^>]*>.*?<\/\1>\s*/is';
@@ -1867,9 +1862,23 @@ class block_maj_submissions extends block_base {
                     $name = reset($name);
                 }
             }
-            if ($name = trim(strip_tags($name))) {
-                return self::trim_text($name, $namelength, $headlength, $taillength);
+            $name = trim(strip_tags($name));
+        } else {
+            $name = ''; // shouldn't happen !!
+        }
+
+        if ($strlen = self::textlib('strlen', $name)) {
+            if ($strlen > $namelength) {
+                // remove parenthetic text
+                $name = preg_replace('/ *\([^\)]*?\)/', '', $name);
+                $strlen = self::textlib('strlen', $name);
+                if ($strlen > $namelength) {
+                    $name = preg_replace('/ *\[[^\]]*?\]/', '', $name);
+                    // we could also remove doube-byte parenthetic text
+                    //$strlen = self::textlib('strlen', $name);
+                }
             }
+            return self::trim_text($name, $namelength, $headlength, $taillength);
         }
 
         return ''; // section name and summary are empty
