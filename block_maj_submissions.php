@@ -1837,8 +1837,8 @@ class block_maj_submissions extends block_base {
      */
     static public function get_sectionname($section, $namelength=28, $headlength=10, $taillength=10) {
 
-        // extract section title from section name
-        if ($name = self::filter_text($section->name)) {
+        // extract section title from section name (strip tags inserted by filters)
+        if ($name = trim(strip_tags(self::filter_text($section->name)))) {
             return self::trim_text($name, $namelength, $headlength, $taillength);
         }
 
