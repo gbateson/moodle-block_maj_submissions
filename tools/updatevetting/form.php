@@ -283,6 +283,7 @@ class block_maj_submissions_tool_updatevetting extends block_maj_submissions_too
                     $record->fullname = html_writer::link($url, $this->fullname($record->userid), array('target' => '_blank'));
 
                     // format short version of presentation title
+                    $record->presentation_title = trim(strip_tags($record->presentation_title));
                     $record->presentation_title = block_maj_submissions::trim_text($record->presentation_title);
 
                     // prepare $text summary for this submission

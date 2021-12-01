@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-12-01 (08)
+ - ensure all strings are stripped of tags before being passed to trim_text
+
 2021-12-01 (07)
  - remove filter links from section titles, because they mess up the trim_text function, and therefore, the quick-links
 

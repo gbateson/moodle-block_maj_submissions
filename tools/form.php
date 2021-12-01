@@ -1508,6 +1508,7 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                             }
                             $name = $cm->name;
                             $name = block_maj_submissions::filter_text($name);
+                            $name = trim(strip_tags($name)); // remove links
                             $name = block_maj_submissions::trim_text($name);
                             if ($cm->modname=='data') {
                                 $params = array('dataid' => $cm->instance);

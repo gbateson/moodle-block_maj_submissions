@@ -676,6 +676,7 @@ class block_maj_submissions_edit_form extends block_edit_form {
                             }
                             $name = $cm->name;
                             $name = block_maj_submissions::filter_text($name);
+                            $name = trim(strip_tags($name)); // remove links
                             $name = block_maj_submissions::trim_text($name);
                             $options[$sectionname][$cmid] = $name;
                         }
