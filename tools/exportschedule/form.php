@@ -367,7 +367,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
             'scheduletitle' => ['h_align' => 'center', 'v_align' => 'center', 'size' => 24, 'border' => 0],
             'bannerimage'  => ['h_align' => 'center', 'v_align' => 'center', 'size' => 12, 'border' => 0],
             'default'      => ['h_align' => 'left',   'v_align' => 'top',    'size' => 10],
-            'date'         => ['h_align' => 'left',   'v_align' => 'center', 'size' => 18, 'bg_color' => '#af2418'], // dark red
+            'date'         => ['h_align' => 'left',   'v_align' => 'center', 'size' => 18, 'bg_color' => '#af2418', 'color' => 'white'], // dark red
             'event'        => ['h_align' => 'left',   'v_align' => 'center', 'size' => 14, 'bg_color' => '#f2f2f2'], // grey (5%)
             'roomheading'  => ['h_align' => 'center', 'v_align' => 'center', 'size' => 14, 'bg_color' => '#eeddee'], // purple
             'smallevent'   => ['h_align' => 'left',   'v_align' => 'top',    'size' => 14, 'bg_color' => '#f2f2f2'], // grey (5%)
@@ -487,6 +487,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
 
                             // cache the cell attributes (class, colspan, rowspan)
                             // for all cels in the current row
+                            $totalcolspan = 0;
                             $attributes = array();
                             for ($c=0; $c<$countcells; $c++) {
 
@@ -504,7 +505,11 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                         }
                                     }
                                 }
+                                $totalcolspan += $attribute[1];
                                 $attributes[$c] = $attribute;
+                            }
+                            if ($lastcol < $totalcolspan) {
+                                $lastcol = $totalcolspan;
                             }
 
                             // Process rowspan/colspan cells in the current row.
@@ -833,22 +838,28 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
 
                         // Add conference name, if required.
                         if ($data->addconferencename) {
-                            $text = $this->instance->config->title;
-                            $worksheet->insert_rows($row + 1);
-                            $worksheet->merge_cells($row, $col, $row, $lastcol - 1);
-                            $worksheet->write_string($row, $col, $text, $formats->conferencename);
-                            $worksheet->set_row($row, $rowheight->conferencename);
-                            $row++;
+                            if ($text = $this->get_conference_name($lang)) {
+                                $worksheet->insert_rows($row + 1);
+                                $worksheet->merge_cells($row, $col, $row, $lastcol - 1);
+                                $worksheet->write_string($row, $col, $text, $formats->conferencename);
+                                $worksheet->set_row($row, $rowheight->conferencename);
+                                $row++;
+                            } else {
+                                $data->addconferencename = 0;
+                            }
                         }
 
                         // Add schedule title, if required.
                         if ($data->addscheduletitle) {
-                            $text = $this->get_schedule_title($lang);
-                            $worksheet->insert_rows($row + 1);
-                            $worksheet->merge_cells($row, $col, $row, $lastcol - 1);
-                            $worksheet->write_string($row, $col, $text, $formats->scheduletitle);
-                            $worksheet->set_row($row, $rowheight->scheduletitle);
-                            $row++;
+                            if ($text = $this->get_schedule_title($lang)) {
+                                $worksheet->insert_rows($row + 1);
+                                $worksheet->merge_cells($row, $col, $row, $lastcol - 1);
+                                $worksheet->write_string($row, $col, $text, $formats->scheduletitle);
+                                $worksheet->set_row($row, $rowheight->scheduletitle);
+                                $row++;
+                            } else {
+                                $data->addscheduletitle = 0;
+                            }
                         }
 
                         // Add a spacer row, if required.
@@ -974,24 +985,34 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
         if ($html = $this->get_schedule($lang, true)) {
 
             $headers = array();
-            if ($data->addbannerimage && ($banner = $this->get_banner_image())) {
-                $header = base64_encode(file_get_contents($banner->filepath));
-                $header = '<img src="data:'.mime_content_type($banner->filepath).';base64,'.$header.'">';
-                $header = html_writer::tag('p', $header)."\n";
-                @unlink($banner->filepath);
-                $headers[] = $header;
+            if ($data->addbannerimage) {
+                if ($banner = $this->get_banner_image()) {
+                    $header = base64_encode(file_get_contents($banner->filepath));
+                    $header = '<img src="data:'.mime_content_type($banner->filepath).';base64,'.$header.'">';
+                    $header = html_writer::tag('p', $header)."\n";
+                    @unlink($banner->filepath);
+                    $headers[] = $header;
+                } else {
+                    $data->addbannerimage = 0;
+                }
             }
 
             if ($data->addconferencename) {
-                $header = $this->instance->config->title;
-                $header = html_writer::tag('h1', $header);
-                $headers[] = $header;
+                if ($header = $this->get_conference_name($lang)) {
+                    $header = html_writer::tag('h1', $header);
+                    $headers[] = $header;
+                } else {
+                    $data->addconferencename = 0;
+                }
             }
 
             if ($data->addscheduletitle) {
-                $header = $this->get_schedule_title($lang);
-                $header = html_writer::tag('h2', $header);
-                $headers[] = $header;
+                if ($header = $this->get_schedule_title($lang)) {
+                    $header = html_writer::tag('h2', $header);
+                    $headers[] = $header;
+                } else {
+                    $data->addscheduletitle = 0;
+                }
             }
 
             if ($headers = implode('', $headers)) {
@@ -1142,6 +1163,27 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
     }
 
     /**
+     * get_conference_name
+     *
+     * @param string $lang
+     * @return string conference name
+     * @todo Finish documenting this function
+     */
+    protected function get_conference_name($lang='') {
+        $config = $this->instance->config;
+        if (! empty($config->{'conferencename'.$lang})) {
+            return $config->{'conferencename'.$lang};
+        }
+        if (! empty($config->conferencename)) {
+            return $config->conferencename;
+        }
+        if (! empty($config->title)) {
+            return $config->title;
+        }
+        return '';
+    }
+
+    /**
      * get_schedule_title
      *
      * @param string $lang
@@ -1172,100 +1214,137 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
      */
     protected function get_banner_image() {
         global $DB;
-        if ($section = $DB->get_record('course_sections', array('course' => $this->course->id, 'section' => 0))) {
-            if (preg_match_all('/<img[^>]*>/', $section->summary, $images)) {
-                $search = '/(alt|height|src|width)="([^"]+)"/';
-                foreach ($images as $image) {
-                    if (preg_match_all($search, $image[0], $parts)) {
 
-                        // create the $banner image object.
-                        $image = (object)array_combine($parts[1], $parts[2]);
+        $course = $this->course;
 
-                        // Sanity checks on image src.
-                        if (empty($image->src)) {
-                            continue;
-                        }
-                        $parts = parse_url($image->src);
-                        if (empty($parts) || empty($parts['path'])) {
-                            continue;
-                        }
+        // Look for image in top section of course.
+        $params = array('course' => $course->id, 'section' => 0);
+        if ($section = $DB->get_record('course_sections', $params)) {
+            if ($image = $this->get_image($section->summary, $course->context->id, 'course', 'section', $section->id)) {
+                return $image;
+            }
+        }
 
-                        // Sanity checks on image filename and extension.
-                        $parts = pathinfo($parts['path']);
-                        if (empty($parts['basename'])) {
-                            continue;
+        // Look for image in content of HTML blocks.
+        $params = array('blockname' => 'html', 'parentcontextid' => $course->context->id, 'pagetypepattern' => 'course-view-*');
+        if ($instances = $DB->get_records('block_instances', $params, 'defaultweight')) {
+            foreach ($instances as $instance) {
+                if ($context = context_block::instance($instance->id)) {
+                    if ($config = unserialize(base64_decode($instance->configdata))) {
+                        if ($image = $this->get_image($config->text, $context->id, 'block_html', 'content')) {
+                            return $image;
                         }
-                        if (empty($parts['extension'])) {
-                            continue;
-                        }
+                    }
+                }
+            }
+        }
 
-                        // Standardize the dirname.
-                        if (empty($parts['dirname']) || $parts['dirname'] == '.') {
+        return null;
+    }
+
+    /**
+     * get_image
+     *
+     * @param string $text
+     * @param integer $contextid
+     * @param string $component
+     * @param string $filearea
+     * @param integer $itemid
+     * @todo Finish documenting this function
+     */
+    protected function get_image($text, $contextid, $component, $filearea, $itemid=0) {
+        if (preg_match_all('/<img[^>]*>/', $text, $images)) {
+            $search = '/(alt|height|src|width)="([^"]+)"/';
+            foreach ($images as $image) {
+                if (preg_match_all($search, $image[0], $parts)) {
+
+                    // create the $banner image object.
+                    $image = (object)array_combine($parts[1], $parts[2]);
+
+                    // Sanity checks on image src.
+                    if (empty($image->src)) {
+                        continue;
+                    }
+                    $parts = parse_url($image->src);
+                    if (empty($parts) || empty($parts['path'])) {
+                        continue;
+                    }
+
+                    // Sanity checks on image filename and extension.
+                    $parts = pathinfo($parts['path']);
+                    if (empty($parts['basename'])) {
+                        continue;
+                    }
+                    if (empty($parts['extension'])) {
+                        continue;
+                    }
+
+                    // Standardize the dirname.
+                    if (empty($parts['dirname']) || $parts['dirname'] == '.') {
+                        $parts['dirname'] = '/';
+                    } else {
+                        $parts['dirname'] = preg_replace('/@@PLUGINFILE@@/', '', $parts['dirname']);
+                        $parts['dirname'] = trim($parts['dirname'], '/');
+                        if ($parts['dirname'] == '') {
                             $parts['dirname'] = '/';
                         } else {
-                            $parts['dirname'] = preg_replace('/@@PLUGINFILE@@/', '', $parts['dirname']);
-                            $parts['dirname'] = trim($parts['dirname'], '/');
-                            if ($parts['dirname'] == '') {
-                                $parts['dirname'] = '/';
-                            } else {
-                                $parts['dirname'] = '/'.$parts['dirname'].'/';
-                            }
+                            $parts['dirname'] = '/'.$parts['dirname'].'/';
                         }
+                    }
 
-                        // Create $filerecord for use with Moodle file API
-                        $filerecord = (object)array(
-                            'contextid' => $this->course->context->id,
-                            'component' => 'course',
-                            'filearea'  => 'section',
-                            'itemid'    => $section->id,
-                            'filepath'  => $parts['dirname'],
-                            'filename'  => $parts['basename'],
-                            'filetype'  => $parts['extension']
-                        );
+                    // Create $filerecord for use with Moodle file API
+                    $filerecord = (object)array(
+                        'contextid' => $contextid,
+                        'component' => $component,
+                        'filearea'  => $filearea,
+                        'itemid'    => $itemid,
+                        'filepath'  => $parts['dirname'],
+                        'filename'  => $parts['basename'],
+                        'filetype'  => $parts['extension']
+                    );
 
-                        // Convert PLUGINFILE urls within $image->src.
-                        $image->src = file_rewrite_pluginfile_urls(
-                            $image->src, 'pluginfile.php',
-                            $filerecord->contextid,
-                            $filerecord->component,
-                            $filerecord->filearea,
-                            $filerecord->itemid
-                        );
+                    // Convert PLUGINFILE urls within $image->src.
+                    $image->src = file_rewrite_pluginfile_urls(
+                        $image->src, 'pluginfile.php',
+                        $filerecord->contextid,
+                        $filerecord->component,
+                        $filerecord->filearea,
+                        $filerecord->itemid
+                    );
 
-                        // Set the "alt" text, if required.
-                        if (empty($image->alt)) {
-                            $image->alt = $filerecord->filename;
-                        }
+                    // Set the "alt" text, if required.
+                    if (empty($image->alt)) {
+                        $image->alt = $filerecord->filename;
+                    }
 
-                        // Locate (or create) this file in the Moodle file system.
-                        $fs = get_file_storage();
-                        $pathnamehash = $fs->get_pathname_hash($filerecord->contextid,
-                                                               $filerecord->component,
-                                                               $filerecord->filearea,
-                                                               $filerecord->itemid,
-                                                               $filerecord->filepath,
-                                                               $filerecord->filename);
-                        if ($fs->file_exists_by_hash($pathnamehash)) {
-                            $image->file = $fs->get_file_by_hash($pathnamehash);
-                        } else {
-                            // Not a file on this Moodle site - unexpected!!
-                            $image->file = $fs->create_file_from_url($filerecord, $image->src, array('skipcertverify' => true), true);
-                        }
+                    // Locate (or create) this file in the Moodle file system.
+                    $fs = get_file_storage();
+                    $pathnamehash = $fs->get_pathname_hash($filerecord->contextid,
+                                                           $filerecord->component,
+                                                           $filerecord->filearea,
+                                                           $filerecord->itemid,
+                                                           $filerecord->filepath,
+                                                           $filerecord->filename);
+                    if ($fs->file_exists_by_hash($pathnamehash)) {
+                        $image->file = $fs->get_file_by_hash($pathnamehash);
+                    } else {
+                        // Not a file on this Moodle site - unexpected!!
+                        $image->file = $fs->create_file_from_url($filerecord, $image->src, array('skipcertverify' => true), true);
+                    }
 
-                        // Extract image's real width and height, if available
-                        if ($info = $image->file->get_imageinfo()) {
-                            $image->height = $info['height'];
-                            $image->width = $info['width'];
-                        }
+                    // Extract image's real width and height, if available
+                    if ($info = $image->file->get_imageinfo()) {
+                        $image->height = $info['height'];
+                        $image->width = $info['width'];
+                    }
 
-                        // Copy image to a temporary file - could also use "tmpfile()" for this.
-                        if ($dirpath = make_temp_directory($this->plugin)) {
-                            if ($filepath = tempnam($dirpath, 'bannerimage_'.$filerecord->contextid.'_')) {
-                                $image->filepath = $filepath.'.'.$filerecord->filetype;
-                                rename($filepath, $image->filepath);
-                                $image->file->copy_content_to($image->filepath);
-                                return $image;
-                            }
+                    // Copy image to a temporary file - could also use "tmpfile()" for this.
+                    if ($dirpath = make_temp_directory($this->plugin)) {
+                        if ($filepath = tempnam($dirpath, 'bannerimage_'.$filerecord->contextid.'_')) {
+                            $image->filepath = $filepath.'.'.$filerecord->filetype;
+                            rename($filepath, $image->filepath);
+                            $image->file->copy_content_to($image->filepath);
+                            return $image;
                         }
                     }
                 }

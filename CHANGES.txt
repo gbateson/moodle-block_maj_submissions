@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-12-06 (10)
+ - (1) extract conference from logo from block, if necessary; (2) get conference name from config->conferencename if necessary; (3) set lastcol correct on workshop day of Excel schedule
+
 2021-12-01 (08)
  - ensure all strings are stripped of tags before being passed to trim_text
 
