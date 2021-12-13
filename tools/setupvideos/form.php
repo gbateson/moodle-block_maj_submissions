@@ -156,6 +156,14 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
         $videomodname = '';
         $config = $this->instance->config;
 
+        // Cache list of lang codes used in this conference.
+        if (empty($config->displaylangs)) {
+            $langs = '';
+        } else {
+            $langs = $config->displaylangs;
+        }
+        $langs = block_maj_submissions::get_languages($langs);
+
         if (empty($config->workshopstimestart)) {
             $workshop_startday = 0;
         } else {
@@ -190,21 +198,33 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
             $countselected = 0;
             $countcreated = 0;
 
+            $select = 'dataid = ? AND ('.$DB->sql_like('name', '?').' OR '.$DB->sql_like('name', '?').')';
+            $params = array($dataid, 'name_%', 'affiliation%');
+            if ($fields = $DB->get_records_select_menu('data_fields', $select, $params, 'name', 'id,name')) {
+                $fields = array_combine($fields, array_fill(0, count($fields), ''));
+            } else {
+                $fields = array(); // shouldn't happen
+            }
+
             // specifiy the presentation fields that we want
-            $fields = array('presentation_title' => '',
-                            'presentation_type' => '',
-                            'presentation_language' => '',
-                            'presentation_abstract' => '',
-                            'presentation_handout_file' => '',
-                            'presentation_slides_file' => '',
-                            'presentation_url' => '',
-                            'schedule_number' => '',
-                            'schedule_day' => '',
-                            'schedule_time' => '',
-                            'schedule_duration' => '');
+            $fields = array_merge($fields, array('presentation_title' => '',
+                                                 'presentation_type' => '',
+                                                 'presentation_language' => '',
+                                                 'presentation_abstract' => '',
+                                                 'presentation_handout_file' => '',
+                                                 'presentation_slides_file' => '',
+                                                 'presentation_url' => '',
+                                                 'schedule_number' => '',
+                                                 'schedule_day' => '',
+                                                 'schedule_time' => '',
+                                                 'schedule_duration' => ''));
 
             // get all records matching the filters (may update $data and $fields)
             if ($records = $this->get_filtered_records($dataid, $data, $fields)) {
+
+                // Prepend "authornames" field to $fields.
+                $field = array('authornames' => get_string('authornames', $this->plugin));
+                $fields = array_merge($field, $fields);
 
                 $duplicaterecords = array();
                 $duplicatevideos = array();
@@ -221,7 +241,27 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                         unset($records[$id]);
                     } else {
                         $duplicaterecords[$title] = 0;
-                        $records[$id]->title = $title;
+                        $record->title = $title;
+
+                        // Remove unnecessary id fields.
+                        foreach (get_object_vars($record) as $name => $value) {
+                            if (preg_match('/_(fieldid|contentid)$/', $name)) {
+                                unset($record->$name);
+                            }
+                        }
+
+                        // Set author names using the name/affiliation fields.
+                        $record->authornames = block_maj_submissions::format_authornames($id, (array)$record);
+                        $record->authornames = strip_tags($record->authornames);
+
+                        // Remove unnecessary name/affiliation fields.
+                        foreach (get_object_vars($record) as $name => $value) {
+                            if (preg_match('/^(name|affiliation)_?/', $name)) {
+                                unset($record->$name);
+                            }
+                        }
+                        // Cache the streamlined version of the record. 
+                        $records[$id] = $record;
                     }
                 }
 
@@ -420,16 +460,20 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                     $video->coursesectionnum = $data->coursesectionnum;
                     $video->coursesectionname = $data->coursesectionname;
 
-                    // workaround for video mods, such as "mod_bigbluebuttonbn",
-                    // that do not handle multilang content in the "intro" field
-                    $video->intro = '<style>'."\n".
-                        '.lang-en .multilang:not([lang=en]),'.
-                        '.lang-ja .multilang:not([lang=ja])'.
-                        ' { display: none; }'."\n".
-                    '</style>'."\n";
+                    $video->intro = '';
                     $video->introformat = FORMAT_HTML; // = 1
 
-                    // add details of each field to intro
+                    // workaround for video mods, such as "mod_bigbluebuttonbn",
+                    // that do not handle multilang content in the "intro" field
+                    if (count($langs) > 1) {
+                        $video->intro = '<style>'."\n".
+                            '.lang-'.$langs[0].' .multilang:not([lang='.$langs[0].']),'.
+                            '.lang-'.$langs[1].' .multilang:not([lang='.$langs[1].'])'.
+                            ' { display: none; }'."\n".
+                        '</style>'."\n";
+                    }
+
+                    // Add details of each field to intro
                     foreach ($fields as $name => $field) {
                         if (isset($record->$name)) {
                             if ($name == 'presentation_title') {

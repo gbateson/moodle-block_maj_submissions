@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2021-12-13 (11)
+ - add authornames to intro field of video activities
+
 2021-12-06 (10)
  - (1) extract conference from logo from block, if necessary; (2) get conference name from config->conferencename if necessary; (3) set lastcol correct on workshop day of Excel schedule
 
