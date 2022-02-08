@@ -156,6 +156,9 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
         $videomodname = '';
         $config = $this->instance->config;
 
+        // file storage may be need for BBB
+        $fs = null;
+
         // Cache list of lang codes used in this conference.
         if (empty($config->displaylangs)) {
             $langs = '';
@@ -200,68 +203,62 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
 
             $select = 'dataid = ? AND ('.$DB->sql_like('name', '?').' OR '.$DB->sql_like('name', '?').')';
             $params = array($dataid, 'name_%', 'affiliation%');
-            if ($fields = $DB->get_records_select_menu('data_fields', $select, $params, 'name', 'id,name')) {
-                $fields = array_combine($fields, array_fill(0, count($fields), ''));
+            if ($namefields = $DB->get_records_select_menu('data_fields', $select, $params, 'name', 'id,name')) {
+                $namefields = array_combine($namefields, array_fill(0, count($namefields), ''));
             } else {
-                $fields = array(); // shouldn't happen
+                $namefields = array(); // shouldn't happen
             }
+            $namerecords = $this->get_filtered_records($dataid, $data, $namefields);
 
             // specifiy the presentation fields that we want
-            $fields = array_merge($fields, array('presentation_title' => '',
-                                                 'presentation_type' => '',
-                                                 'presentation_language' => '',
-                                                 'presentation_abstract' => '',
-                                                 'presentation_handout_file' => '',
-                                                 'presentation_slides_file' => '',
-                                                 'presentation_url' => '',
-                                                 'schedule_number' => '',
-                                                 'schedule_day' => '',
-                                                 'schedule_time' => '',
-                                                 'schedule_duration' => ''));
+            $fields = array('presentation_title' => '',
+                            'presentation_type' => '',
+                            'presentation_language' => '',
+                            'presentation_abstract' => '',
+                            'presentation_handout_file' => '',
+                            'presentation_slides_file' => '',
+                            'presentation_url' => '',
+                            'schedule_number' => '',
+                            'schedule_day' => '',
+                            'schedule_time' => '',
+                            'schedule_duration' => '');
 
             // get all records matching the filters (may update $data and $fields)
-            if ($records = $this->get_filtered_records($dataid, $data, $fields)) {
+            if ($records = $this->get_filtered_records($dataid, $data, $fields, false)) {
 
                 // Prepend "authornames" field to $fields.
-                $field = array('authornames' => get_string('authornames', $this->plugin));
-                $fields = array_merge($field, $fields);
+                $authornames = array('authornames' => get_string('authornames', $this->plugin));
+                $fields = array_merge($authornames, $fields);
 
                 $duplicaterecords = array();
                 $duplicatevideos = array();
 
-                // sanitize submission titles (and remove duplicates)
+                // Tidy title and authors and and remove duplicates
                 foreach ($records as $id => $record) {
+
+                    // Extract and format authornames from the namefields.
+                    $authornames = '';
+                    if (array_key_exists($id, $namerecords)) {
+                        $authornames = (array)$namerecords[$id];
+                        $authornames = block_maj_submissions::format_authornames($id, $authornames);
+                        $authornames = strip_tags($authornames);
+                        unset($namerecords[$id]);
+                    }
+
+                    // Sanitize submission titles
                     if (empty($record->presentation_title)) {
                         $title = get_string('notitle', $this->plugin, $record->recordid);
                     } else {
                         $title = block_maj_submissions::plain_text($record->presentation_title);
                     }
+
                     if (array_key_exists($title, $duplicaterecords)) {
                         $duplicaterecords[$title]++;
                         unset($records[$id]);
                     } else {
                         $duplicaterecords[$title] = 0;
-                        $record->title = $title;
-
-                        // Remove unnecessary id fields.
-                        foreach (get_object_vars($record) as $name => $value) {
-                            if (preg_match('/_(fieldid|contentid)$/', $name)) {
-                                unset($record->$name);
-                            }
-                        }
-
-                        // Set author names using the name/affiliation fields.
-                        $record->authornames = block_maj_submissions::format_authornames($id, (array)$record);
-                        $record->authornames = strip_tags($record->authornames);
-
-                        // Remove unnecessary name/affiliation fields.
-                        foreach (get_object_vars($record) as $name => $value) {
-                            if (preg_match('/^(name|affiliation)_?/', $name)) {
-                                unset($record->$name);
-                            }
-                        }
-                        // Cache the streamlined version of the record. 
-                        $records[$id] = $record;
+                        $records[$id]->title = $title;
+                        $records[$id]->authornames = $authornames;
                     }
                 }
 
@@ -475,18 +472,32 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
 
                     // Add details of each field to intro
                     foreach ($fields as $name => $field) {
-                        if (isset($record->$name)) {
-                            if ($name == 'presentation_title') {
-                                // do nothing
-                            } else if ($name == 'presentation_abstract') {
-                                $params = array('style' => 'text-align: justify; '.
-                                                           'text-indent: 20px; '.
-                                                           'max-width: 960px;');
-                                $video->intro .= html_writer::tag('p', block_maj_submissions::plain_text($record->$name), $params)."\n";
-                            } else if ($record->$name) {
-                                $field = html_writer::tag('b', $field.': ', array('class' => 'text-info'));
-                                $video->intro .= html_writer::tag('p', $field.$record->$name)."\n";
+                        if (substr($name, -10) == '_contentid') {
+                            continue;
+                        }
+                        if (substr($name, -8) == '_fieldid') {
+                            continue;
+                        }
+                        if ($name == 'presentation_title') {
+                            continue;
+                        }
+                        if (empty($record->$name)) {
+                            continue;
+                        }
+                        $content = $record->$name;
+                        if ($name == 'presentation_abstract') {
+                            $params = array('style' => 'text-align: justify; '.
+                                                       'text-indent: 20px; '.
+                                                       'max-width: 960px;');
+                            $video->intro .= html_writer::tag('p', block_maj_submissions::plain_text($content), $params)."\n";
+                        } else {
+                            if ($name == 'presentation_slides_file' || $name == 'presentation_handout_file') {
+                                $contentid = $record->{$name.'_contentid'};
+                                $url = '/pluginfile.php/'.$cm->context->id.'/mod_data/content/'.$contentid.'/'.$content;
+                                $content = html_writer::tag('a', $content, array('href' => new moodle_url($url)));
                             }
+                            $field = html_writer::tag('b', $field.': ', array('class' => 'text-info'));
+                            $video->intro .= html_writer::tag('p', $field.$content)."\n";
                         }
                     }
 
@@ -552,6 +563,50 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                             }
                         }
 
+                        // Note, that the slides will only be visible if the following sitewide setting is enabled:
+                        // $CFG->bigbluebuttonbn_preuploadpresentation_editable.
+                        $name = 'presentation_slides_file';
+                        if ($videomodname == 'bigbluebuttonbn' && isset($record->$name) && $record->$name) {
+
+                            $filepath = '/';
+                            $filename = $record->$name;
+
+                            // Check for valid filetypes ("... any office document or PDF file")
+                            $filetype = pathinfo($filename, PATHINFO_EXTENSION);
+                            if (in_array($filetype, array('pdf', 'pptx', 'ppt', 'docx', 'doc', 'xlsx', 'xls'))) {
+
+                                if ($fs === null) {
+                                    $fs = get_file_storage();
+                                }
+
+                                // Define settings to identify the slides file in the submission database.
+                                $component = 'mod_data';
+                                $filearea = 'content';
+                                $itemid = $record->{$name.'_contentid'};
+                                if ($oldfile = $fs->get_file($cm->context->id, $component, $filearea, $itemid, $filepath, $filename)) {
+
+                                    // Define the target settings for "pre-ploading" the the slides file to the BBB activity. 
+                                    $context = context_module::instance($newcm->id);
+                                    $component = "mod_$videomodname";
+                                    $filearea = 'presentation';
+                                    $itemid = 0;
+                                    if ($fs->file_exists($context->id, $component, $filearea, $itemid, $filepath, $filename)) {
+                                        // Hmm, file already exists. This should not happen on a live site,
+                                        // but may occur during development development of this plugin.
+                                    } else {
+                                        $newfile = array(
+                                            'contextid' => $context->id,
+                                            'component' => $component,
+                                            'filearea'  => $filearea,
+                                            'itemid'    => $itemid,
+                                            'filepath'  => $filepath,
+                                            'filename'  => $filename
+                                        );
+                                        $newfile = $fs->create_file_from_storedfile($newfile, $oldfile);
+                                    }
+                                }
+                            }
+                        }
                         $countcreated++;
                     }
                 }

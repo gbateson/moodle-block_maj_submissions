@@ -203,10 +203,14 @@ abstract class block_maj_submissions_tool_filterconditions extends block_maj_sub
     /**
      * add_filter_sql
      *
-     * @param object $data (passed by reference)
+     * @param integer$dataid
+     * @param object $data   (passed by reference)
+     * @param array  $fields (passed by reference)
+     * @param boolean removeids (optional, default=TRUE)
+     * @param boolean recordids (optional, default=null)
      * @return array of filtered records, and may modify $data and $fields
      */
-    protected function get_filtered_records($dataid, &$data, &$fields, $recordids=null) {
+    protected function get_filtered_records($dataid, &$data, &$fields, $removeids=true, $recordids=null) {
         global $DB;
 
         if (empty($data)) {
@@ -268,7 +272,29 @@ abstract class block_maj_submissions_tool_filterconditions extends block_maj_sub
             $sql .= " LIMIT 0,$data->displayperpage";
         }
 
-        return $DB->get_records_sql($sql, $params);
+        if ($records = $DB->get_records_sql($sql, $params)) {
+            if ($removeids) {
+                foreach ($records as $id => $record) {
+                    $records[$id] = $this->remove_fieldid_contentid($record);
+                }
+            }
+        }
+        return $records;
+    }
+
+    /**
+     * remove_fieldid_contentid
+     *
+     * @param object $record
+     * @return the $record object without any fields ending in "_fieldid" or "_contentid".
+     */
+    protected function remove_fieldid_contentid($record) {
+        foreach (get_object_vars($record) as $name => $value) {
+            if (preg_match('/_(fieldid|contentid)$/', $name)) {
+                unset($record->$name);
+            }
+        }
+        return $record;
     }
 
     /**

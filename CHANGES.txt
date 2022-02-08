@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2022-02-08 (12)
+ - modify tool to setup videos: (1) add links to files in the submissions database; (2) overcome limitation of 61 table names in MySQL statement
+
 2021-12-13 (11)
  - add authornames to intro field of video activities
 
