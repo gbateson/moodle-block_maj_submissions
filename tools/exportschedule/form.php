@@ -411,6 +411,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
         $rowheight = (object)array('conferencename' => 42,
                                    'date' => 32,
                                    'event' => 34,
+                                   'keynote' => 44,
                                    'multiroom' => 45,
                                    'roomheadings' => 40,
                                    'scheduletitle' => 30,
@@ -473,6 +474,7 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                             $row_is_roomheadings = preg_match($search->roomheadings, $rowclass);
                             $row_is_multiroom = false;
                             $row_is_event = false;
+                            $row_is_keynote = false;
                             $row_is_sponsoredlunch = false;
                             $row_is_virtual = false;
 
@@ -554,6 +556,9 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                                 // Set flags that apply to the entire row
                                 if (preg_match($search->multiroom, $cellclass)) {
                                     $row_is_multiroom = true;
+                                }
+                                if (preg_match($search->keynote, $cellclass)) {
+                                    $row_is_keynote = true;
                                 }
                                 if (preg_match($search->virtual, $cellclass)) {
                                     $row_is_virtual = true;
@@ -763,6 +768,10 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
 
                                     case $row_is_date:
                                         $height = $rowheight->date;
+                                        break;
+
+                                    case $row_is_keynote:
+                                        $height = $rowheight->keynote;
                                         break;
 
                                     case $row_is_sponsoredlunch:
@@ -1050,8 +1059,9 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
     /**
      * get_schedule
      *
-     * @uses $CFG
+     * @uses $DB
      * @param string $lang
+     * @param boolean $keep_thead
      * @return string HTML content from the conference schedule page resource
      * @todo Finish documenting this function
      */
@@ -1109,6 +1119,18 @@ class block_maj_submissions_tool_exportschedule extends block_maj_submissions_to
                     // remove unwanted multilang strings
                     $html = $this->remove_multilang_spans($html, $lang);
 
+                    // format non-empty DIV.roomtopic within TH.roomheading cells
+                    $search = '/<th class="[^"]*roomheading[^"]*"[^>]*>(.+?)<\/th>/isu';
+                    if (preg_match_all($search, $html, $matches, PREG_OFFSET_CAPTURE)) {
+                        $search = '/<div[^>]*class="roomtopic"[^>]*>(.+?)<\/div>/isu';
+                        $i_max = count($matches[0]);
+                        for ($i = ($i_max - 1); $i >= 0; $i--) {
+                            list($match, $start) = $matches[0][$i];
+                            $length = strlen($match);
+                            $match = preg_replace($search, '<br>$1', $match);
+                            $html = substr_replace($html, $match, $start, $length);
+                        }
+                    }
 
                     // remove SPAN.category|topic (within DIV.categorytypetopic)
                     // remove SPAN:empty
