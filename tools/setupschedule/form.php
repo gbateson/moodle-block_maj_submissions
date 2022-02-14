@@ -357,78 +357,82 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
     public function set_schedule_menus($shorten_texts=false) {
         global $DB;
 
-        $config = $this->instance->config;
-        $modinfo = get_fast_modinfo($this->course);
+        // check we are only do this once
+        if (empty($this->dataids)) {
 
-        // the database types
-        $types = array('presentation',
-                       'workshop',
-                       'sponsored',
-                       'event');
+            $config = $this->instance->config;
+            $modinfo = get_fast_modinfo($this->course);
 
-        // database field types
-        $names = array('schedule_day',
-                       'schedule_time',
-                       'schedule_duration',
-                       'schedule_roomname',
-                       'schedule_roomseats',
-                       'schedule_roomtype',
-                       'presentation_category',
-                       'presentation_type',
-                       'presentation_topic');
+            // the database types
+            $types = array('presentation',
+                           'workshop',
+                           'sponsored',
+                           'event');
 
-        foreach ($types as $type) {
-            if ($type=='event') {
-                $types_cmid = $type.'scmid';
-            } else {
-                $types_cmid = 'collect'.$type.'scmid';
-            }
-            if (empty($config->$types_cmid)) {
-                continue;
-            }
-            $cmid = $config->$types_cmid;
-            if (! array_key_exists($cmid, $modinfo->cms)) {
-                continue;
-            }
-            $cm = $modinfo->get_cm($cmid);
-            if ($cm->modname != 'data') {
-                continue;
-            }
-            $dataid = $cm->instance;
-            $this->dataids[$dataid] = true;
-            foreach ($names as $name) {
-                if ($this->$name) {
-                    continue; // this menu has already been set up
+            // database field types
+            $names = array('schedule_day',
+                           'schedule_time',
+                           'schedule_duration',
+                           'schedule_roomname',
+                           'schedule_roomseats',
+                           'schedule_roomtype',
+                           'presentation_category',
+                           'presentation_type',
+                           'presentation_topic');
+
+            foreach ($types as $type) {
+                if ($type=='event') {
+                    $types_cmid = 'register'.$type.'scmid';
+                } else {
+                    $types_cmid = 'collect'.$type.'scmid';
                 }
-                $params = array('dataid' => $dataid, 'name' => $name);
-                if (! $field = $DB->get_record('data_fields', $params)) {
+                if (empty($config->$types_cmid)) {
                     continue;
                 }
-                if (self::is_menu_field($field)) {
-                    $array = preg_split('/[\\r\\n]+/', $field->param1);
-                    $array = array_filter($array);
-                    $array = array_combine($array, $array);
-                    foreach ($array as $key => $value) {
-                        $value = self::convert_to_multilang($value, $config);
-                        $value = block_maj_submissions::filter_text($value);
-                        $array[$key] = $value;
+                $cmid = $config->$types_cmid;
+                if (! array_key_exists($cmid, $modinfo->cms)) {
+                    continue;
+                }
+                $cm = $modinfo->get_cm($cmid);
+                if ($cm->modname != 'data') {
+                    continue;
+                }
+                $dataid = $cm->instance;
+                $this->dataids[$dataid] = true;
+                foreach ($names as $name) {
+                    if ($this->$name) {
+                        continue; // this menu has already been set up
                     }
-                    array_unshift($array, '');
-                    $this->$name = $array;
+                    $params = array('dataid' => $dataid, 'name' => $name);
+                    if (! $field = $DB->get_record('data_fields', $params)) {
+                        continue;
+                    }
+                    if (self::is_menu_field($field)) {
+                        $array = preg_split('/[\\r\\n]+/', $field->param1);
+                        $array = array_filter($array);
+                        $array = array_combine($array, $array);
+                        foreach ($array as $key => $value) {
+                            $value = self::convert_to_multilang($value, $config);
+                            $value = block_maj_submissions::filter_text($value);
+                            $array[$key] = $value;
+                        }
+                        array_unshift($array, '');
+                        $this->$name = $array;
+                    }
                 }
-            }
 
-            $params = array('dataid' => $dataid, 'name' => $type.'_title');
-            if ($field = $DB->get_record('data_fields', $params)) {
-                $params = array('fieldid' => $field->id);
-                if ($menu = $DB->get_records_menu('data_content', $params, 'content', 'id,content')) {
-                    $name = get_string($types_cmid, $this->plugin);
-                    $this->schedule_event[$name] = array_filter($menu);
+                $params = array('dataid' => $dataid, 'name' => $type.'_title');
+                if ($field = $DB->get_record('data_fields', $params)) {
+                    $params = array('fieldid' => $field->id);
+                    if ($menu = $DB->get_records_menu('data_content', $params, 'content', 'id,content')) {
+                        $name = get_string($types_cmid, $this->plugin);
+                        $this->schedule_event[$name] = array_filter($menu);
+                    }
                 }
             }
+            $this->dataids = array_keys($this->dataids);
+            $this->dataids = array_filter($this->dataids);
         }
-        $this->dataids = array_keys($this->dataids);
-        $this->dataids = array_filter($this->dataids);
     }
 
     /**
@@ -554,8 +558,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                     $d_max = 0; // number of days in conference
 
                     // prepare SQL to select database fields associated with this block
-                    if (count($this->dataids)) {
-                        list($dataidselect, $dataidparams) = $DB->get_in_or_equal($this->dataids);
+                    foreach ($this->dataids as $dataid) {
 
                         // search strings to parse HTML table
                         $search = new stdClass();
@@ -573,6 +576,8 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                         // search string to detect recordid
                         $search->recordid = '/(?<=id="id_recordid_)(\d+)(?=")/';
 
+                        $search->title = '/<div class="title">(.*?)<\/div>/isu';
+
                         // search string to extract multilang spans
                         $search->multilang = '/(<span[^>]*lang="([^"]*)"[^>]*>)(.*?)\s*(<\/span>)/us';
                         $search->ascii = '/^[[:ascii:]]*$/us';
@@ -582,38 +587,44 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                         $value = '((<span[^>]*class="multilang"[^>]*>.*?<\/span>)+|.*?)';
 
                         // map CSS class names to database fields
-                        $fields = array('day'       => 'schedule_day',
-                                        'startfinish' => 'schedule_time',
-                                        'duration'  => 'schedule_duration',
-                                        'roomname'  => 'schedule_roomname',
-                                        'roomseats' => 'schedule_roomseats',
-                                        'roomtopic' => 'schedule_topic',
-                                        'title'     => 'presentation_title',
-                                        'category'  => 'presentation_category',
-                                        'type'      => 'presentation_type',
-                                        'topic'     => 'presentation_topic',
-                                        'schedulenumber' => 'schedule_number');
-                        foreach ($fields as $name => $field) {
+                        $fieldids[$dataid] = array();
+                        $fields[$dataid] = array('day'       => 'schedule_day',
+                                                 'startfinish' => 'schedule_time',
+                                                 'duration'  => 'schedule_duration',
+                                                 'roomname'  => 'schedule_roomname',
+                                                 'roomseats' => 'schedule_roomseats',
+                                                 'roomtopic' => 'schedule_topic',
+                                                 'title'     => 'presentation_title',
+                                                 'category'  => 'presentation_category',
+                                                 'type'      => 'presentation_type',
+                                                 'topic'     => 'presentation_topic',
+                                                 'schedulenumber' => 'schedule_number');
+                        foreach ($fields[$dataid] as $name => $field) {
                             if ($name=='title') {
                                 $tag = 'div';
                             } else {
                                 $tag = 'span';
                             }
                             $search->$name = '/<'.$tag.'[^>]*class="[^"]*\b('.$name.')\b[^"]*"[^>]*>'.$value.'<\/'.$tag.'>/us';
-                            $select = 'dataid '.$dataidselect.' AND name = ?';
-                            $params = array_merge($dataidparams, array($field));
-                            $fieldid = $DB->get_field_select('data_fields', 'id', $select, $params);
-                            if (empty($fieldid)) {
-                                unset($fields[$name]);
+                            $params = array('dataid' => $dataid, 'name' => $field);
+                            if ($fieldid = $DB->get_field('data_fields', 'id', $params)) {
+                                $fieldids[$dataid][$field] = $fieldid;
                             } else {
-                                $fieldids[$field] = $fieldid;
+                                unset($fields[$dataid][$name]);
                             }
                         }
+                    }
 
-                        // update room/session info
-                        if (preg_match_all($search->tbody, $html, $days)) {
-                            $d_max = count($days[0]);
-                        }
+                    // Map recordids onto their respective dataid
+                    $recordids = array();
+                    if (count($this->dataids)) {
+                        list($select, $params) = $DB->get_in_or_equal($this->dataids);
+                        $recordids = $DB->get_records_select_menu('data_records', "dataid $select", $params, 'id', 'id,dataid');
+                    }
+
+                    // update room/session info
+                    if (preg_match_all($search->tbody, $html, $days)) {
+                        $d_max = count($days[0]);
                     }
 
                     // initialize $update flag
@@ -666,78 +677,91 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                                     }
                                 } else if (preg_match($search->recordid, $cells[1][$c], $recordid)) {
                                     $recordid = $recordid[1];
-                                    $values = array();
-                                    foreach ($fields as $name => $field) {
-                                        if ($name=='day') {
-                                            $values[$name] = $daytext;
-                                        } else if (preg_match($search->$name, $cells[2][$c], $value)) {
-                                            if (strpos($value[2], '##')===false) {
-                                                $values[$name] = $value[2];
+
+                                    if (! array_key_exists($recordid, $recordids)) {
+                                        // Oops, the recordid is invalid.
+                                        // This can happen in a restored course/activity
+
+                                        $newrecordid = 0;
+
+                                        // Extract the title from the HTML.
+                                        if (preg_match($search->title, $cells[0][$c], $match)) {
+
+                                            // Locate the correct recordid using the title.
+                                            list($where, $params) = $DB->get_in_or_equal($this->dataids);
+                                            $select = 'dc.id, dc.recordid';
+                                            $from   = '{data_content} dc, {data_fields} df';
+                                            $where  = "df.dataid $where ".
+                                                      'AND df.name = ? '.
+                                                      'AND dc.fieldid = df.id '.
+                                                      'AND dc.content = ?';
+                                            array_push($params, 'presentation_title', $match[1]);
+                                            if ($ids = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
+                                                $newrecordid = reset($ids)->recordid;
+                                                $html = preg_replace("/(?<=id_recordid_)$recordid\\b/u", $newrecordid, $html);
+                                                $update = true;
                                             } else {
-                                                $values[$name] = explode('##', $value[2]);
+                                                // Hmm, we couldn't locate this record in any of the databases
+                                                // that have schedule fields. Maybe this is an event database?
                                             }
                                         }
+                                        $recordid = $newrecordid;
                                     }
-                                    if (array_key_exists('roomname', $values) && array_key_exists('roomseats', $values)) {
-                                        if ($values['roomname']=='undefined') {
-                                            $values['roomname']=='';
-                                        }
-                                        if ($values['roomseats']=='undefined') {
-                                            $values['roomseats']=='';
-                                        }
-                                        $value = $values['roomname'].$values['roomseats'];
-                                        if (preg_match_all($search->multilang, $value, $value)) {
-                                            // $1 : opening SPAN tag
-                                            // $2 : lang code
-                                            // $3 : text
-                                            // $4 : closing SPAN tag
-                                            $langs = array();
-                                            $i_max = count($value[0]);
-                                            for ($i=0; $i<$i_max; $i++) {
-                                                $lang = $value[2][$i];
-                                                $text = $value[3][$i];
-                                                $text = block_maj_submissions::textlib('entities_to_utf8', $text);
-                                                if (! array_key_exists($lang, $langs)) {
-                                                    $langs[$lang] = $i;
-                                                } else if (preg_match($search->ascii, $value[3][$i])) {
-                                                    $value[3][$langs[$lang]] .= ' ('.$text.')';
+
+                                    if (array_key_exists($recordid, $recordids)) {
+                                        $dataid = $recordids[$recordid];
+
+                                        $values = array();
+                                        foreach ($fields[$dataid] as $name => $field) {
+                                            if ($name=='day') {
+                                                $values[$name] = $daytext;
+                                            } else if (preg_match($search->$name, $cells[2][$c], $value)) {
+                                                if ($value[2] == 'undefined') {
+                                                    // Probably caused by a Javascript error.
+                                                    $values[$name] = '';
+                                                } else if (strpos($value[2], '##')===false) {
+                                                    $values[$name] = $value[2];
                                                 } else {
-                                                    $value[3][$langs[$lang]] .= "\u{FF08}".$text."\u{FF09}";
+                                                    $values[$name] = explode('##', $value[2]);
                                                 }
                                             }
-                                            foreach ($langs as $lang => $i) {
-                                                $langs[$lang] = $value[1][$i].$value[3][$i].$value[4][$i];
+                                        }
+
+                                        if (array_key_exists('roomname', $values) && array_key_exists('roomseats', $values)) {
+                                            if ($values['roomname']=='undefined') {
+                                                $values['roomname']=='';
                                             }
-                                            $values['roomname'] = implode('', $langs);
+                                            if ($values['roomseats']=='undefined') {
+                                                $values['roomseats']=='';
+                                            }
+                                            $value = $values['roomname'].$values['roomseats'];
+                                            if (preg_match_all($search->multilang, $value, $value)) {
+                                                // $1 : opening SPAN tag
+                                                // $2 : lang code
+                                                // $3 : text
+                                                // $4 : closing SPAN tag
+                                                $langs = array();
+                                                $i_max = count($value[0]);
+                                                for ($i=0; $i<$i_max; $i++) {
+                                                    $lang = $value[2][$i];
+                                                    $text = $value[3][$i];
+                                                    $text = block_maj_submissions::textlib('entities_to_utf8', $text);
+                                                    if (! array_key_exists($lang, $langs)) {
+                                                        $langs[$lang] = $i;
+                                                    } else if (preg_match($search->ascii, $value[3][$i])) {
+                                                        $value[3][$langs[$lang]] .= ' ('.$text.')';
+                                                    } else {
+                                                        $value[3][$langs[$lang]] .= "\u{FF08}".$text."\u{FF09}";
+                                                    }
+                                                }
+                                                foreach ($langs as $lang => $i) {
+                                                    $langs[$lang] = $value[1][$i].$value[3][$i].$value[4][$i];
+                                                }
+                                                $values['roomname'] = implode('', $langs);
+                                            }
                                         }
-                                    }
 
-                                    // ensure $recordid is valid
-                                    list($select, $params) = $DB->get_in_or_equal($this->dataids);
-                                    $select = "id = ? AND dataid $select";
-                                    array_unshift($params, $recordid);
-                                    if (! $DB->record_exists_select('data_records', $select, $params)) {
-                                        // Oops, wrong recordid. This can happen in a restored course/activity
-                                        // we can try to locate the correct recordid using the $record->presentation_title
-                                        list($where, $params) = $DB->get_in_or_equal($this->dataids);
-                                        $select = 'dc.id, dc.recordid';
-                                        $from   = '{data_content} dc, {data_fields} df';
-                                        $where  = "df.dataid $where ".
-                                                  'AND df.name = ? '.
-                                                  'AND dc.fieldid = df.id '.
-                                                  'AND dc.content = ?';
-                                        array_push($params, 'presentation_title', $values['title']);
-                                        if ($ids = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
-                                            $html = preg_replace("/(?<=id_recordid_)$recordid\\b/u", reset($ids)->recordid, $html);
-                                            $update = true;
-                                            $recordid = reset($ids)->recordid;
-                                        } else {
-                                            $recordid = 0;
-                                        }
-                                    }
-
-                                    if ($recordid) {
-                                        foreach ($fields as $name => $field) {
+                                        foreach ($fields[$dataid] as $name => $field) {
                                             if (array_key_exists($name, $values)) {
                                                 $value = $values[$name];
                                                 if (is_scalar($value)) {
@@ -759,7 +783,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                                                 }
                                                 // add/update the content of this data field in the Moodle DB
                                                 $value = implode('##', $value);
-                                                if ($fieldid = $fieldids[$field]) {
+                                                if ($fieldid = $fieldids[$dataid][$field]) {
                                                     $params = array('fieldid' => $fieldid, 'recordid' => $recordid);
                                                     if ($DB->record_exists('data_content', $params)) {
                                                         $DB->set_field('data_content', 'content', $value, $params);
@@ -783,25 +807,40 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                     }
 
                     // add new values to menu/select/radio fields in database
-                    foreach ($fields as $name => $field) {
-                        if (isset($this->$field) && ($fieldid = $fieldids[$field])) {
-                            foreach ($this->$field as $value => $link) {
-                                if ($value=='0' || $link) {
-                                    continue;
+                    foreach ($this->dataids as $dataid) {
+                        foreach ($fields[$dataid] as $name => $field) {
+                            if (isset($this->$field) && ($fieldid = $fieldids[$dataid][$field])) {
+                                foreach ($this->$field as $value => $link) {
+                                    if ($value=='0' || $link) {
+                                        continue;
+                                    }
+                                    $field = $DB->get_record('data_fields', array('id' => $fieldid));
+                                    $field->param1 = rtrim($field->param1)."\n".$value;
+                                    $field = $DB->update_record('data_fields', $field);
                                 }
-                                $field = $DB->get_record('data_fields', array('id' => $fieldid));
-                                $field->param1 = rtrim($field->param1)."\n".$value;
-                                $field = $DB->update_record('data_fields', $field);
                             }
                         }
                     }
 
-                    // remove schedule settings for any unassigned sessions
+                    // Remove schedule settings for any unassigned sessions.
                     if ($ids = $data->schedule_unassigned) {
                         $ids = explode(',', $ids);
                         $ids = array_map('trim', $ids);
                         $ids = array_filter($ids);
-                        if (count($ids)) {
+
+                        // Create array of recordids grouped by dataid.
+                        $dataids = array();
+                        foreach ($ids as $id) {
+                            if (array_key_exists($id, $recordids)) {
+                                $dataid = $recordids[$id];
+                                if (empty($dataids[$dataid])) {
+                                    $dataids[$dataid] = array();
+                                }
+                                $dataids[$dataid][] = $id;
+                            }
+                        }
+                        // Unset schedule settings for all unassigned records.
+                        foreach ($dataids as $dataid => $ids) {
                             list($recordselect, $recordparams) = $DB->get_in_or_equal($ids);
                             $fields = array('schedule_time'      => 0,
                                             'schedule_duration'  => 0,
@@ -809,8 +848,8 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                                             'schedule_roomseats' => 0,
                                             'schedule_topic'     => 0);
                             foreach ($fields as $field => $fieldid) {
-                                if (array_key_exists($field, $fieldids)) {
-                                    $fields[$field] = $fieldids[$field];
+                                if (array_key_exists($field, $fieldids[$dataid])) {
+                                    $fields[$field] = $fieldids[$dataid][$field];
                                 } else {
                                     unset($fields[$field]);
                                 }

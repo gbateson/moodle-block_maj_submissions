@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2022-02-11 (14)
+ - fix updating of schedule fields in databases for sponsored presentations and events
+
 2022-02-10 (13)
  - add roomtopic to room headings on Excel version of schedule
 

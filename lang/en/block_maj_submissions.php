@@ -574,6 +574,8 @@ $string['sendername'] = 'Sender name';
 $string['sendername_help'] = 'Optional name to use as the sender name in confirmation email messages.
 
 If this field is left blank, then the name of the current user, i.e. YOUR name, will be used as the sender\'s name.';
+$string['separatesections'] = 'Separate sections for each day';
+$string['separatesections_help'] = 'If this box is checked, this tool will create (or reuse) a separate couse section for each day.';
 $string['sessioninfo'] = 'Session information';
 $string['sessiontitlex'] = 'Presentation {$a}';
 $string['sessiontypes'] = 'Session types';

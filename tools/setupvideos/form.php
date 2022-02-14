@@ -107,11 +107,36 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                 $sectionnum = 0;
             }
 
+            // Fields to include in the filter conditions.
+            $include = array(
+                'presentation_category',
+                'presentation_language',
+                'presentation_method',
+                'presentation_title',
+                'presentation_type',
+                'presentation_video',
+                'schedule_status',
+                'schedule_number',
+                'schedule_duration',
+                'schedule_day',
+                'schedule_time',
+                'schedule_roomname',
+                'schedule_roomtype',
+                'schedule_roomseats'
+            );
+            // We could also exclude the "peer_review_*" fields, but
+            // they will be ignored anyway, if $include is not empty.
+
             $name = 'sourcedatabase';
             $this->add_field_sourcedatabase($mform, $name, $this->cmid);
-            $this->add_field_filterconditions($mform, 'filterconditions', $name);
+            $this->add_field_filterconditions($mform, 'filterconditions', $name, $include);
             $this->add_field_section($mform, $this->course, $this->plugin, 'coursesection', $name, $sectionnum);
 
+            $name = 'separatesections';
+            $this->add_field($mform, $this->plugin, $name, 'checkbox', PARAM_INT);
+            $mform->disabledIf('coursesectionnum', $name, 'checked');
+            $mform->disabledIf('coursesectionname', $name, 'checked');
+ 
             $name = 'restrictgroupid';
             list($groupids, $defaultgroupid) = $this->get_group_options($name);
             if (count($groupids)) {
@@ -352,8 +377,8 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
 
                     if ($record->schedule_starttime == 0) {
                         $record->schedule_startday = 0;
+                        $record->schedule_starttime = 0;
                         $record->schedule_startdate_multilang = block_maj_submissions::get_multilang_string('missingstarttime', $this->plugin);
-                        $record->schedule_starttime_multilang = '';
                     } else {
                         // format start DAY (integer from 1 - 31)
                         $record->schedule_startday = intval(date('j', $record->schedule_starttime));
@@ -405,19 +430,72 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                     // create new label for $record->schedule_startday_multilang
                     if ($startday != $record->schedule_startday) {
                         $startday = $record->schedule_startday;
-                        $label = (object)array(
-                            'course' => $this->course->id,
-                            'modname' => 'label',
-                            'labelnum' => self::CREATE_NEW,
-                            'labelname' => format_text($record->schedule_startdate_multilang),
-                            'coursesectionnum' => $data->coursesectionnum,
-                            'coursesectionname' => $data->coursesectionname,
-                            'intro' => html_writer::tag('h3', $record->schedule_startdate_multilang, array('class' => 'bg-info text-light rounded px-2 py-1')),
-                            'introformat' => FORMAT_HTML, // = 1
-                            'reusename' => true, // reuse name, if possible
-                            'aftermod' => $newcm
-                        );
-                        $newcm = $this->get_cm($msg, $label, 'label');
+
+                        if ($data->separatesections) {
+                            $data->coursesectionnum = 0;
+                            $data->coursesectionname = '';
+
+                            $section = null;
+                            $sectionname = '';
+                            if (empty($record->schedule_startdate_multilang)) {
+                                $sectionname = block_maj_submissions::get_multilang_string('missingstarttime', $this->plugin);
+                            } else {
+                                $sectionname = $record->schedule_startdate_multilang;
+                                $sectionname = preg_replace('/<\/?(big|small)[^>]*>/', '', $sectionname);
+                            }
+                            if ($sectionname) {
+                                $strlen = 255;
+                                if (strlen($sectionname) > $strlen) {
+                                    $search = '/<span[^>]*class="multilang"[^>]*>(.+?)<\/span>/isu';
+                                    if (preg_match_all($search, $sectionname, $matches)) {
+                                        $sectionname = '';
+                                        $matches = $matches[0];
+                                        while ($match = array_shift($matches)) {
+                                            $strlen -= strlen($match);
+                                            if ($sectionname == '') {
+                                                $sectionname = $match;
+                                            } else if ($strlen >= 0) {
+                                                $sectionname .= $match;
+                                            }
+                                        }
+                                    }
+                                }
+                                if (strlen($sectionname) > 255) {
+                                    $sectionname = format_text($record->schedule_startdate_multilang);
+                                    $sectionname = shorten_text($sectionname);
+                                    // default is 30 chars, which should be no more than 120 bytes.
+                                }
+                                $section = self::get_section($msg, $this->plugin, $this->course, $sectionname);
+                            }
+                            if ($section) {
+                                // Note that sectionnum is not the "id".
+                                $data->coursesectionnum = $section->section;
+                                $data->coursesectionname = $sectionname;
+                            } else {
+                                // The section could not be created for some reason - shouldn't happen !!
+                                $sectionname = get_string('cannotcreateorfindstructs', 'error');
+                                if (in_array($sectionname, $msg) === false) {
+                                    $msg[] = $sectionname;
+                                }
+                                $data->coursesectionname = $sectionname;
+                                $data->coursesectionnum = self::CREATE_NEW;
+                                // Maybe a new section can be created later.
+                            }
+                        } else {
+                            $label = (object)array(
+                                'course' => $this->course->id,
+                                'modname' => 'label',
+                                'labelnum' => self::CREATE_NEW,
+                                'labelname' => format_text($record->schedule_startdate_multilang),
+                                'coursesectionnum' => $data->coursesectionnum,
+                                'coursesectionname' => $data->coursesectionname,
+                                'intro' => html_writer::tag('h3', $record->schedule_startdate_multilang, array('class' => 'bg-info text-light rounded px-2 py-1')),
+                                'introformat' => FORMAT_HTML, // = 1
+                                'reusename' => true, // reuse name, if possible
+                                'aftermod' => $newcm
+                            );
+                            $newcm = $this->get_cm($msg, $label, 'label');
+                        }
                     }
 
                     // add label for $record->schedule_starttime
@@ -491,6 +569,7 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                                                        'max-width: 960px;');
                             $video->intro .= html_writer::tag('p', block_maj_submissions::plain_text($content), $params)."\n";
                         } else {
+                            // Add link to file in submissions database.
                             if ($name == 'presentation_slides_file' || $name == 'presentation_handout_file') {
                                 $contentid = $record->{$name.'_contentid'};
                                 $url = '/pluginfile.php/'.$cm->context->id.'/mod_data/content/'.$contentid.'/'.$content;
@@ -563,8 +642,9 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                             }
                         }
 
-                        // Note, that the slides will only be visible if the following sitewide setting is enabled:
-                        // $CFG->bigbluebuttonbn_preuploadpresentation_editable.
+                        // If the slides file is available, we "preload" it into the BBB actvities.
+                        // Note that the slides will only be actually visible if the following BBB
+                        // setting is enabled: $CFG->bigbluebuttonbn_preuploadpresentation_editable.
                         $name = 'presentation_slides_file';
                         if ($videomodname == 'bigbluebuttonbn' && isset($record->$name) && $record->$name) {
 
@@ -613,7 +693,7 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
 
                 // Collect $params required to extract $section info from $DB
                 $params = array();
-                if (isset($newcm)) {
+                if (isset($newcm) && is_object($newcm)) {
                     $params['id'] = $newcm->section;
                     $params['course'] = $newcm->course;
                 } else if (empty($data->coursesectionnum) || $data->coursesectionnum == self::CREATE_NEW) {

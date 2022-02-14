@@ -693,7 +693,13 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                 if ($sectionnum==self::CREATE_NEW) {
                     $section = self::get_section($msg, $this->plugin, $this->course, $sectionname);
                 } else {
+                    // What out - if section was recently created, it will not be in the modinfo!
                     $section = get_fast_modinfo($this->course)->get_section_info($sectionnum);
+                    if (empty($section)) {
+                        $params = array('course' => $this->course->id,
+                                        'section' =>  $sectionnum);
+                        $section = $DB->get_record('course_sections', $params);
+                    }
                 }
 
                 if ($section) {
@@ -954,6 +960,9 @@ abstract class block_maj_submissions_tool_form extends moodleform {
     static public function get_section(&$msg, $plugin, $course, $sectionname) {
         global $DB;
 
+        // if se add or modify a section, we need to rebuild the course cache.
+        $rebuild_course_cache = false;
+
         // some DBs (e.g. MSSQL) cannot compare TEXT fields
         // so we must CAST them to something else (e.g. CHAR)
         $summary = $DB->sql_compare_text('summary');
@@ -976,6 +985,7 @@ abstract class block_maj_submissions_tool_form extends moodleform {
                 $section = reset($section);
                 $section->name = $sectionname;
                 $DB->update_record('course_sections', $section);
+                $rebuild_course_cache = true;
             }
         }
 
@@ -998,13 +1008,21 @@ abstract class block_maj_submissions_tool_form extends moodleform {
             if ($section->id = $DB->insert_record('course_sections', $section, $sectionname)) {
                 $url = block_maj_submissions::get_sectionlink($course->id, $sectionnum);
                 $msg[] = get_string('newsectioncreated', $plugin, html_writer::link($url, $sectionname));
+                $rebuild_course_cache = true;
             }
         }
 
         if ($section) {
             if ($section->section > self::get_numsections($course)) {
                 self::set_numsections($course, $section->section);
+                $rebuild_course_cache = true;
             }
+        }
+
+        // rebuild_course_cache
+        if ($rebuild_course_cache) {
+            rebuild_course_cache($course->id);
+            course_modinfo::clear_instance_cache($course);
         }
 
         return $section;
