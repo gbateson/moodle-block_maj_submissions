@@ -842,7 +842,8 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
                         // Unset schedule settings for all unassigned records.
                         foreach ($dataids as $dataid => $ids) {
                             list($recordselect, $recordparams) = $DB->get_in_or_equal($ids);
-                            $fields = array('schedule_time'      => 0,
+                            $fields = array('schedule_day'       => 0,
+                                            'schedule_time'      => 0,
                                             'schedule_duration'  => 0,
                                             'schedule_roomname'  => 0,
                                             'schedule_roomseats' => 0,

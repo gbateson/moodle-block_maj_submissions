@@ -2554,7 +2554,7 @@ class block_maj_submissions extends block_base {
      * @param array $item
      * @return string of HTML to represent the authornames in the conference schedule
      */
-    static public function format_authornames($recordid, $item) {
+    static public function format_authornames($recordid, $item, $requireauthors=true) {
 
         static $nametemplates = null;
         if ($nametemplates===null) {
@@ -2718,7 +2718,7 @@ class block_maj_submissions extends block_base {
 
         if (isset($item['event_facilitator'])) {
             $authornames = trim($item['event_facilitator']);
-        } else if ($authornames=='') {
+        } else if ($authornames=='' && $requireauthors) {
             $authornames = get_string('noauthors', 'block_maj_submissions', $recordid);
         }
 

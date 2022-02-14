@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2022-02-14 (14)
+ - fix creation of video activities for record in the Events database
+
 2022-02-11 (14)
  - fix updating of schedule fields in databases for sponsored presentations and events
 

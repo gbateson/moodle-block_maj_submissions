@@ -115,6 +115,8 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                 'presentation_title',
                 'presentation_type',
                 'presentation_video',
+                'event_name',
+                'event_type',
                 'schedule_status',
                 'schedule_number',
                 'schedule_duration',
@@ -243,6 +245,10 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                             'presentation_handout_file' => '',
                             'presentation_slides_file' => '',
                             'presentation_url' => '',
+                            'event_name' => '',
+                            'event_type' => '',
+                            'event_description' => '',
+                            'event_facilitator' => '',
                             'schedule_number' => '',
                             'schedule_day' => '',
                             'schedule_time' => '',
@@ -263,18 +269,29 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
 
                     // Extract and format authornames from the namefields.
                     $authornames = '';
+                    if (property_exists($record, 'event_name')) {
+                        $requireauthors = false;
+                    } else {
+                        $requireauthors = true;
+                    }
                     if (array_key_exists($id, $namerecords)) {
                         $authornames = (array)$namerecords[$id];
-                        $authornames = block_maj_submissions::format_authornames($id, $authornames);
+                        $authornames = block_maj_submissions::format_authornames($id, $authornames, $requireauthors);
                         $authornames = strip_tags($authornames);
                         unset($namerecords[$id]);
                     }
 
                     // Sanitize submission titles
-                    if (empty($record->presentation_title)) {
-                        $title = get_string('notitle', $this->plugin, $record->recordid);
-                    } else {
+                    if (isset($record->presentation_title)) {
                         $title = block_maj_submissions::plain_text($record->presentation_title);
+                    } else if (isset($record->event_name)) {
+                        $title = block_maj_submissions::plain_text($record->event_name);
+                    } else {
+                        $title = '';
+                    }
+                    if (trim($title) == '') {
+                        $title = get_string('notitle', $this->plugin, $record->recordid);
+                        $records[$id]->presentation_title = $title;
                     }
 
                     if (array_key_exists($title, $duplicaterecords)) {
@@ -293,7 +310,11 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                 } else {
                     $data->resetvideos = false;
                     foreach ($records as $id => $record) {
-                        $title = $record->presentation_title;
+                        if ($record->presentation_title) {
+                            $title = $record->presentation_title;
+                        } else {
+                            $title = $record->event_name;
+                        }
                         if (array_key_exists($title, $duplicatevideos)) {
                             $duplicatevideos[$title]++;
                             unset($records[$id]);
@@ -519,7 +540,14 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                             $params = array('class' => 'bg-light text-info d-inline-block border border-dark ml-2 px-2 py-0');
                             $label->intro .= ' '.html_writer::tag('big', $text, $params);
                         }
-                        if (is_numeric(strpos($record->presentation_type, 'Keynote'))) {
+                        if (isset($record->presentation_type)) {
+                            $type = $record->presentation_type;
+                        } else if (isset($record->event_type)) {
+                            $type = $record->event_type;
+                        } else {
+                            $type = '';
+                        }
+                        if (is_numeric(strpos($type, 'Keynote'))) {
                             $text = block_maj_submissions::get_multilang_string('keynotespeech', $this->plugin);
                             $params = array('class' => 'bg-light text-danger d-inline-block border border-dark ml-2 px-2 py-0');
                             $label->intro .= ' '.html_writer::tag('big', $text, $params);
@@ -550,13 +578,10 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
 
                     // Add details of each field to intro
                     foreach ($fields as $name => $field) {
-                        if (substr($name, -10) == '_contentid') {
+                        if (substr($name, -10) == '_contentid' || substr($name, -8) == '_fieldid') {
                             continue;
                         }
-                        if (substr($name, -8) == '_fieldid') {
-                            continue;
-                        }
-                        if ($name == 'presentation_title') {
+                        if ($name == 'presentation_title' || $name == 'event_name') {
                             continue;
                         }
                         if (empty($record->$name)) {
