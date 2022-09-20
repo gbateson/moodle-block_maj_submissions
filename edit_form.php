@@ -651,6 +651,14 @@ class block_maj_submissions_edit_form extends block_edit_form {
         $modnames = array_filter($modnames);
         $count = count($modnames);
 
+        // Cache the label seperator.
+        // If the seperator is just a single-byte colon, ":", we append a space,
+        // to ensure that the string does actually separate the label and text.
+        $labelsep = get_string('labelsep', 'langconfig');
+        if ($labelsep ==':') {
+            $labelsep .= ' ';
+        }
+
         $modinfo = $this->get_course_modinfo();
         $sections = $modinfo->get_section_info_all();
         foreach ($sections as $sectionnum => $section) {
@@ -672,6 +680,8 @@ class block_maj_submissions_edit_form extends block_edit_form {
                                     $course = $this->get_course();
                                     $sectionname = block_maj_submissions::get_sectionname_default($course, $sectionnum);
                                 }
+                                // Prepend the section number to ensure uniqueness.
+                                $sectionname = $section->section.$labelsep.$sectionname;
                                 $options[$sectionname] = array();
                             }
                             $name = $cm->name;

@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2022-09-20 (15)
+ - prepend section number to list of course activities, to ensure uniqueness even when sections have duplicate names.
+
 2022-02-14 (14)
  - fix creation of video activities for record in the Events database
 
