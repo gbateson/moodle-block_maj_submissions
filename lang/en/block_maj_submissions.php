@@ -237,7 +237,7 @@ $string['manageevents'] = 'Manage calendar events';
 $string['manageevents_help'] = 'If this option is enabled, then calendar events for start and finish times will automatically be added, updated or removed when this block\'s settings are saved.';
 $string['membershipinfocmid'] = 'Membership information';
 $string['membershipinfocmid_help'] = 'The page resource that displays information on membership';
-$string['missingconfig'] = 'Before proceeding, please <a href="{$a}">add the following settings</a>:';
+$string['missingconfig'] = 'Before proceeding, please <a href="{$a}">add, or check, the following settings</a>:';
 $string['missingcoursesectionname'] = 'Please give a name for the new course section';
 $string['missingcoursesectionnum'] = 'Please select an existing section, or choose "Create new section"';
 $string['missingdatabaseactivityname'] = 'Please give a name for the new database';
@@ -713,7 +713,7 @@ $string['videomodname_help'] = 'Select the type of video activity to be used for
 $string['videoscreated'] = 'Created {$a->created} video activities from {$a->selected} records selected from {$a->total} database records.';
 $string['waitingforreview'] = 'Your proposal is <u>waiting to be reviewed</u>.';
 $string['warning'] = 'Warning';
-$string['warning_help'] = 'If you proceed without setting up the items in this list, the automatic feedback to presenters regarding the revision deadline or/and the registration database will not be generated.';
+$string['warning_help'] = 'If you proceed without setting up the items in this list, then automatic feedback regarding those items will be omitted from the email sent to presenters.';
 $string['warningoverwritedatabase'] = 'The selected database is already used for {$a->databasedescription}. Please select another database or choose "{$a->createnewactivity}"';
 $string['warningrecordsexist'] = 'The selected database contains {$a} live records. Please empty the database and try again.';
 $string['wordcount'] = 'Number of words';

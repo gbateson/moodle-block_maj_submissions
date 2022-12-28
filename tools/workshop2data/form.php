@@ -399,23 +399,26 @@ class block_maj_submissions_tool_workshop2data extends block_maj_submissions_too
             }
             $revisetimefinish = userdate($revisetimefinish, $dateformat);
 
-            $registrationlink = '';
-            if (! empty($config->registerdelegatescmid)) {
-                $registrationlink = 'registerdelegatescmid';
-            }
-            if (! empty($config->registerpresenterscmid)) {
-                $registrationlink = 'registerpresenterscmid';
-            }
-            if ($registrationlink) {
-                $cmid = $config->$registrationlink;
-                if ($courseid = $DB->get_field('course_modules', 'course', array('id' => $cmid))) {
-                    $modname = get_fast_modinfo($courseid)->get_cm($cmid)->modname;
-                    $url = new moodle_url("/mod/$modname/view.php", array('id' => $cmid));
-                    $txt = get_string($registrationlink, $plugin);
-                    $registrationlink = html_writer::link($url, $txt, array('target' => '_blank'));
-                } else {
-                    // registration page/database has been removed - shouldn't happen !!
-                    $registrationlink = '';
+            // Set up registration link (1st time only)
+            if ($registrationlink === null) {
+                $registrationlink == '';
+                if (! empty($config->registerdelegatescmid)) {
+                    $registrationlink = 'registerdelegatescmid';
+                }
+                if (! empty($config->registerpresenterscmid)) {
+                    $registrationlink = 'registerpresenterscmid';
+                }
+                if ($registrationlink) {
+                    $cmid = $config->$registrationlink;
+                    if ($courseid = $DB->get_field('course_modules', 'course', array('id' => $cmid))) {
+                        $modname = get_fast_modinfo($courseid)->get_cm($cmid)->modname;
+                        $url = new moodle_url("/mod/$modname/view.php", array('id' => $cmid));
+                        $txt = get_string($registrationlink, $plugin);
+                        $registrationlink = html_writer::link($url, $txt, array('target' => '_blank'));
+                    } else {
+                        // registration page/database has been removed - shouldn't happen !!
+                        $registrationlink = '';
+                    }
                 }
             }
 

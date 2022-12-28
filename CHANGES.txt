@@ -2,6 +2,9 @@
 Change log for block_maj_submissions
 ========================================
 
+2022-12-28 (16)
+ - optimized code to registrationlink variable in tools/workshop2data/form.php
+
 2022-09-20 (15)
  - prepend section number to list of course activities, to ensure uniqueness even when sections have duplicate names.
 
