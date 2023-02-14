@@ -117,14 +117,15 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                 'presentation_video',
                 'event_name',
                 'event_type',
-                'schedule_status',
+                'schedule_status', // replaced by "submission_status"
                 'schedule_number',
                 'schedule_duration',
                 'schedule_day',
                 'schedule_time',
                 'schedule_roomname',
                 'schedule_roomtype',
-                'schedule_roomseats'
+                'schedule_roomseats',
+                'submission_status'
             );
             // We could also exclude the "peer_review_*" fields, but
             // they will be ignored anyway, if $include is not empty.
@@ -207,13 +208,26 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
             if ($videomodname = $data->videomodname) {
                 $videomodid = $DB->get_field('modules', 'id', array('name' => $videomodname));
             }
+
+            // Prevent "undefined property" error later on.
+            if (empty($data-separatesections)) {
+                $data-separatesections = 0;
+            }
         }
 
         if ($cm && $videomodid) {
 
-            // get the "lib.php" file for the selected video mod
-            require_once($CFG->dirroot."/mod/$videomodname/lib.php");
-            require_once($CFG->dirroot."/mod/$videomodname/locallib.php");
+            // get the "lib.php" files for the selected video mod
+            $file = $CFG->dirroot."/mod/$videomodname/lib.php";
+            if (file_exists($file)) {
+                require_once($file);
+            }
+            $file = $CFG->dirroot."/mod/$videomodname/locallib.php";
+            if (file_exists($file)) {
+                // Big Blue Button on Moodle <= 3.9
+                require_once($file);
+            }
+            unset($file);
 
             // cache the database id
             $databasenum = $data->sourcedatabase;
@@ -530,14 +544,14 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                             'labelname' => format_text($record->schedule_starttime_multilang),
                             'coursesectionnum' => $data->coursesectionnum,
                             'coursesectionname' => $data->coursesectionname,
-                            'intro' => $record->schedule_starttime_multilang,
+                            'intro' => '<div class="inline pl-2">'.$record->schedule_starttime_multilang.'</div>',
                             'introformat' => FORMAT_HTML, // = 1
                             'reusename' => true, // reuse name, if possible
                             'aftermod' => $newcm
                         );
                         if ($workshop_startday && $workshop_startday == $record->schedule_startday) {
                             $text = block_maj_submissions::get_multilang_string('workshops', $this->plugin);
-                            $params = array('class' => 'bg-light text-info d-inline-block border border-dark ml-2 px-2 py-0');
+                            $params = array('class' => 'bg-light text-info d-inline-block border border-dark ml-2 px-1 py-0');
                             $label->intro .= ' '.html_writer::tag('big', $text, $params);
                         }
                         if (isset($record->presentation_type)) {
@@ -549,7 +563,7 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                         }
                         if (is_numeric(strpos($type, 'Keynote'))) {
                             $text = block_maj_submissions::get_multilang_string('keynotespeech', $this->plugin);
-                            $params = array('class' => 'bg-light text-danger d-inline-block border border-dark ml-2 px-2 py-0');
+                            $params = array('class' => 'bg-light text-danger d-inline-block border border-dark ml-2 px-1 py-0');
                             $label->intro .= ' '.html_writer::tag('big', $text, $params);
                         }
                         $newcm = $this->get_cm($msg, $label, 'label');
@@ -625,18 +639,35 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                                 $video->openingtime -= (MINSECS * 10); // open 10 mins before start
                             }
                             $video->closingtime = $record->schedule_finishtime; // may be zero
+
+                            // In Moodle <= 3.9, we can use the following global constants:
+                            //     BIGBLUEBUTTONBN_ROLE_VIEWER
+                            //     BIGBLUEBUTTONBN_ROLE_MODERATOR
+                            // However, in Moodle >= 3.10, we must use the following:
+                            //     \mod_bigbluebuttonbn\local\helpers\roles::ROLE_VIEWER
+                            //     \mod_bigbluebuttonbn\local\helpers\roles::ROLE_MODERATOR
+                            // It is simplest to use just the raw text strings, "viewer" and "moderator"
                             $participants = array(
                                 array('selectiontype' => 'all',
                                       'selectionid' => 'all',
-                                      'role' => BIGBLUEBUTTONBN_ROLE_VIEWER),
+                                      'role' => 'viewer'),
                                 array('selectiontype' => 'user',
                                       'selectionid' => $record->userid,
-                                      'role' => BIGBLUEBUTTONBN_ROLE_MODERATOR)
+                                      'role' => 'moderator')
                             );
+                            
                             $video->participants = json_encode($participants);
-                            $video->moderatorpass = bigbluebuttonbn_random_password(12);
-                            $video->viewerpass = bigbluebuttonbn_random_password(12, $video->moderatorpass);
-                            $video->meetingid = bigbluebuttonbn_unique_meetingid_seed();
+                            if (function_exists('bigbluebuttonbn_random_password')) {
+                                // Moodle <= 3.9
+                                $video->moderatorpass = bigbluebuttonbn_random_password(12);
+                                $video->viewerpass = bigbluebuttonbn_random_password(12, $video->moderatorpass);
+                                $video->meetingid = bigbluebuttonbn_unique_meetingid_seed();
+                            } else {
+                                // Moodle >= 3.10
+                                $video->moderatorpass = \mod_bigbluebuttonbn\plugin::random_password(12);
+                                $video->viewerpass = \mod_bigbluebuttonbn\plugin::random_password(12, $video->moderatorpass);
+                                $video->meetingid = \mod_bigbluebuttonbn\meeting::get_unique_meetingid_seed();
+                            }
                             $video->recordings_html = 1;
                             $video->recordings_deleted = 1;
                             $video->recordings_imported = 0;
