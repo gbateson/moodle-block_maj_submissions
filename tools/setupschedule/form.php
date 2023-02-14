@@ -77,7 +77,7 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
      * definition
      */
     public function definition() {
-        global $PAGE;
+        global $DB, $PAGE;
 
         if (method_exists($PAGE->requires, 'js_call_amd')) {
             // Moodle >= 2.9
@@ -117,13 +117,27 @@ class block_maj_submissions_tool_setupschedule extends block_maj_submissions_too
         $finish = array_filter($finish);
         $finish = (empty($finish) ? 0 : max($finish));
 
-        // extract the module context and course section, if possible
+        // Make sure cmid is something sensible.
+        $ok = false;
         if ($this->cmid) {
+            if (array_key_exists($this->cmid, get_fast_modinfo($this->course)->cms)) {
+                $cm = get_fast_modinfo($this->course)->get_cm($this->cmid);
+                if ($cm->modname == 'page') {
+                    if ($content = $DB->get_field('page', 'content', array('id' => $cm->instance))) {
+                        $ok = is_numeric(strpos($content, '<table class="schedule">'));
+                    }
+                }
+            }
+        }
+
+        // extract the module context and course section, if possible
+        if ($ok) {
             $context = block_maj_submissions::context(CONTEXT_MODULE, $this->cmid);
             $sectionnum = get_fast_modinfo($this->course)->get_cm($this->cmid)->sectionnum;
         } else {
             $context = $this->course->context;
             $sectionnum = 0;
+            $this->cmid = 0;
         }
 
         $this->set_schedule_menus();

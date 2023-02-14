@@ -488,6 +488,15 @@
         display:           none;
     }
 
+    /* for keynotes, show the room */
+    /* ... but hide the room topic */
+    .schedule .keynote .room {
+        display:          block;
+    }
+    .schedule .keynote .roomtopic {
+        display:           none;
+    }
+
     .schedule .multiroom .summary {
         display:   inline-block;
         max-height:        24px;
