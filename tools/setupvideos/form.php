@@ -210,8 +210,8 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
             }
 
             // Prevent "undefined property" error later on.
-            if (empty($data-separatesections)) {
-                $data-separatesections = 0;
+            if (empty($data->separatesections)) {
+                $data->separatesections = 0;
             }
         }
 
