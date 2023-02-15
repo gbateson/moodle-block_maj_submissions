@@ -635,10 +635,26 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                         case 'bigbluebuttonbn':
                             $video->type = 0; // room with recordings
                             $video->record = 1;
+
+                            if (function_exists('bigbluebuttonbn_random_password')) {
+                                // Moodle <= 3.9
+                                $video->meetingid = bigbluebuttonbn_unique_meetingid_seed();
+                                $video->moderatorpass = bigbluebuttonbn_random_password(12);
+                                $video->viewerpass = bigbluebuttonbn_random_password(12, $video->moderatorpass);
+                            } else {
+                                // Moodle >= 3.10
+                                $video->meetingid = \mod_bigbluebuttonbn\meeting::get_unique_meetingid_seed();
+                                $video->moderatorpass = \mod_bigbluebuttonbn\plugin::random_password(12);
+                                $video->viewerpass = \mod_bigbluebuttonbn\plugin::random_password(12, $video->moderatorpass);
+                            }
+
                             if ($video->openingtime = $record->schedule_starttime) {
                                 $video->openingtime -= (MINSECS * 10); // open 10 mins before start
                             }
                             $video->closingtime = $record->schedule_finishtime; // may be zero
+
+                            // The presentation field must be initialized, to prevent errors about unknown property
+                            $video->presentation = '';
 
                             // In Moodle <= 3.9, we can use the following global constants:
                             //     BIGBLUEBUTTONBN_ROLE_VIEWER
@@ -655,19 +671,8 @@ class block_maj_submissions_tool_setupvideos extends block_maj_submissions_tool_
                                       'selectionid' => $record->userid,
                                       'role' => 'moderator')
                             );
-                            
                             $video->participants = json_encode($participants);
-                            if (function_exists('bigbluebuttonbn_random_password')) {
-                                // Moodle <= 3.9
-                                $video->moderatorpass = bigbluebuttonbn_random_password(12);
-                                $video->viewerpass = bigbluebuttonbn_random_password(12, $video->moderatorpass);
-                                $video->meetingid = bigbluebuttonbn_unique_meetingid_seed();
-                            } else {
-                                // Moodle >= 3.10
-                                $video->moderatorpass = \mod_bigbluebuttonbn\plugin::random_password(12);
-                                $video->viewerpass = \mod_bigbluebuttonbn\plugin::random_password(12, $video->moderatorpass);
-                                $video->meetingid = \mod_bigbluebuttonbn\meeting::get_unique_meetingid_seed();
-                            }
+
                             $video->recordings_html = 1;
                             $video->recordings_deleted = 1;
                             $video->recordings_imported = 0;
