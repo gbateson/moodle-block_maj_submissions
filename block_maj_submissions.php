@@ -59,7 +59,7 @@ class block_maj_submissions extends block_base {
      */
     function init() {
         $this->title = get_string('blockname', 'block_maj_submissions');
-        $this->version = 2016090100;
+        // $this->version = 2016090100;
     }
 
     /**

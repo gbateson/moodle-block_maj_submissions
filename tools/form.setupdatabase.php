@@ -611,7 +611,18 @@ abstract class block_maj_submissions_tool_setupdatabase extends block_maj_submis
                 $preset->userid = 0;
                 $preset->description = $preset->name;
             } else {
-                $fields = get_all_user_name_fields(true);
+
+                if (class_exists('\core_user\fields')) {
+                    // Moodle >= 3.11
+                    $fields = \core_user\fields::get_name_fields();
+                    $fields = implode(',', $fields);
+                } else if (function_exists('get_all_user_name_fields')) {
+                    // Moodle >= 2.6
+                    $fields = get_all_user_name_fields(true);
+                } else {
+                    // Moodle <= 2.5
+                    $fields = 'firstname,lastname';
+                }
                 $params = array('id' => $preset->userid);
                 $user = $DB->get_record('user', $params, "id, $fields", MUST_EXIST);
                 $preset->description = $preset->name.' ('.fullname($user, true).')';
